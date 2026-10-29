@@ -2,9 +2,14 @@
 const {
   shortDisplayName,
   tokenize,
+  eventSearchTokens,
+  looksLikeEventAttendeeQuery,
   scoreAgainstQuery,
+  scoreEventTitle,
   eventBoost,
+  matchedEventBoost,
   rankCandidates,
+  emptyStateCopy,
   MAX_SHORTLIST,
 } = require('../api/_lib/hubert-matchmaker-search');
 
@@ -17,6 +22,17 @@ function assert(cond, msg) {
 
 assert(shortDisplayName('Alex Morgan') === 'Alex M.', 'display name');
 assert(tokenize('Fintech founders in Manchester').includes('fintech'), 'tokenize');
+
+const evolutionQ = 'Who attended evolution virtual networking this morning';
+assert(looksLikeEventAttendeeQuery(evolutionQ) === true, 'event-intent query');
+assert(looksLikeEventAttendeeQuery('fintech founders in Manchester') === false, 'role query not event-intent');
+const evTokens = eventSearchTokens(evolutionQ);
+assert(evTokens.includes('evolution'), 'keeps evolution');
+assert(evTokens.includes('virtual'), 'keeps virtual');
+assert(evTokens.includes('networking'), 'keeps networking');
+assert(!evTokens.includes('attended'), 'drops attended stopword');
+assert(!evTokens.includes('morning'), 'drops morning stopword');
+assert(scoreEventTitle('Evolution Virtual Networking', evTokens) >= 3, 'event title scores');
 
 const person = {
   fullName: 'Alex Morgan',
@@ -60,4 +76,49 @@ assert(ranked.length === MAX_SHORTLIST, 'caps at 5');
 assert(ranked[0].id === 'member:0', 'same-event ranks first');
 assert(!ranked.some((m) => m.email || m.linkedinUrl || m.phone), 'no contact fields');
 
-console.log('ok — hubert matchmaker search ranking');
+const attendeeOnly = {
+  id: 'member:att',
+  kind: 'member',
+  fullName: 'Jordan Lee',
+  displayName: 'Jordan L.',
+  role: 'Operator',
+  company: 'Acme',
+  industry: '',
+  professionalRole: '',
+  lookingToMeet: [],
+  blurb: '',
+  nextEvent: null,
+  matchedEvent: {
+    eventId: 'evt-evo',
+    title: 'Evolution Virtual Networking',
+    dateLabel: '29 Oct 2026',
+  },
+  onHub: true,
+};
+assert(matchedEventBoost(attendeeOnly) === 55, 'matched-event boost');
+const evoRanked = rankCandidates([attendeeOnly], evolutionQ, []);
+assert(evoRanked.length === 1, 'event attendee returns without profile keywords');
+assert(evoRanked[0].id === 'member:att', 'event attendee id');
+assert(/Booked for Evolution/i.test(evoRanked[0].why || ''), 'why cites event');
+assert(evoRanked[0].nextEvent && evoRanked[0].nextEvent.title.indexOf('Evolution') === 0, 'surfaces matched event');
+
+const emptyEvent = emptyStateCopy({
+  eventQuery: true,
+  matchedEvents: [{ title: 'Evolution Virtual Networking' }],
+  eventAttendeeCount: 0,
+  candidateCount: 2,
+});
+assert(/No bookings/i.test(emptyEvent.title), 'empty: matched event, no bookings');
+
+const noEvent = emptyStateCopy({
+  eventQuery: true,
+  matchedEvents: [],
+  eventAttendeeCount: 0,
+  candidateCount: 0,
+});
+assert(/couldn’t match that Hub event/i.test(noEvent.title), 'empty: no event match');
+
+const thinPool = emptyStateCopy({ eventQuery: false, candidateCount: 0 });
+assert(/still thin/i.test(thinPool.text), 'empty: thin pool');
+
+console.log('ok — hubert matchmaker search ranking + event attendees');

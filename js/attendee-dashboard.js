@@ -107,7 +107,7 @@
     },
     meet: {
       title: 'Meet people',
-      sub: 'I can introduce you to anyone — customers, investors, hires, or someone who’s already solved your problem. Try me.',
+      sub: 'I can introduce you to the people you need — customers, investors, hires, or someone who’s already solved your problem.',
     },
     'reviews-pending': {
       title: 'Reviews to write',
@@ -167,6 +167,32 @@
     const empty = emptyId ? document.getElementById(emptyId) : null;
     if (table) table.hidden = isEmpty;
     if (empty) empty.hidden = !isEmpty;
+  }
+
+  /**
+   * Safari throws SyntaxError "The string did not match the expected pattern"
+   * when Response.json() receives an empty or non-JSON body (HTML 502/504, 204, etc).
+   */
+  function readResponseJson(res) {
+    return res.json().catch(function () {
+      return null;
+    });
+  }
+
+  function showDashboardLoadError(data) {
+    dashboardReady = true;
+    registrations = [];
+    opportunityEnquiries = [];
+    renderStats({});
+    renderRouteTables(routeTablesKey(currentRoute), { force: true });
+    const sub = document.getElementById('ad-welcome-sub');
+    if (sub) {
+      sub.hidden = false;
+      sub.dataset.lockedError = '1';
+      sub.textContent =
+        (data && (data.message || data.error)) ||
+        'Could not load your dashboard right now. Try refreshing the page.';
+    }
   }
 
   const TICKETS_SCOPES = ['upcoming', 'past', 'payments', 'cancellations'];
@@ -5305,8 +5331,8 @@
     setDashboardLoading(true);
     try {
       const res = await fetch('/api/auth/attendee-dashboard', { credentials: 'include' });
-      const data = await res.json();
-      if (!data.ok) return;
+      const data = await readResponseJson(res);
+      if (!data || !data.ok) return;
       applyDashboardData(data);
     } finally {
       setDashboardLoading(false);
@@ -5432,15 +5458,10 @@
         fetch('/api/auth/opportunity-favourites', { credentials: 'include' }),
         fetch('/api/auth/opportunity-saved-searches', { credentials: 'include' }),
       ]);
-      const data = await dashRes.json();
-      if (!data.ok) {
-        dashboardReady = true;
-        registrations = [];
-        opportunityEnquiries = [];
-        renderStats({});
-        renderRouteTables(routeTablesKey(currentRoute), { force: true });
+      const data = await readResponseJson(dashRes);
+      if (!data || !data.ok) {
         try {
-          const favData = await favRes.json();
+          const favData = await readResponseJson(favRes);
           if (favData && favData.ok && Array.isArray(favData.favourites)) {
             savedEvents = favData.favourites;
           }
@@ -5448,13 +5469,13 @@
           savedEvents = [];
         }
         try {
-          const orgFavData = await orgFavRes.json();
+          const orgFavData = await readResponseJson(orgFavRes);
           applySavedOrganiserData(orgFavData);
         } catch {
           savedOrganisers = [];
         }
         try {
-          const oppFavData = await oppFavRes.json();
+          const oppFavData = await readResponseJson(oppFavRes);
           await ensureOpportunitiesCatalog();
           applySavedOpportunityData(oppFavData);
         } catch {
@@ -5462,20 +5483,12 @@
           applySavedOpportunityData(null);
         }
         openCompareFromQuery();
-        const sub = document.getElementById('ad-welcome-sub');
-        if (sub) {
-          sub.hidden = false;
-          sub.dataset.lockedError = '1';
-          sub.textContent =
-            data.message ||
-            data.error ||
-            'Could not load your dashboard right now. Try refreshing the page.';
-        }
+        showDashboardLoadError(data);
         return;
       }
 
       try {
-        const favData = await favRes.json();
+        const favData = await readResponseJson(favRes);
         if (favData && favData.ok && Array.isArray(favData.favourites)) {
           savedEvents = favData.favourites;
         } else if (favData && favData.ok && Array.isArray(favData.eventIds)) {
@@ -5489,7 +5502,7 @@
       }
 
       try {
-        const orgFavData = await orgFavRes.json();
+        const orgFavData = await readResponseJson(orgFavRes);
         applySavedOrganiserData(orgFavData);
       } catch {
         savedOrganisers = window.HubOrganiserFavourites
@@ -5498,7 +5511,7 @@
       }
 
       try {
-        const oppFavData = await oppFavRes.json();
+        const oppFavData = await readResponseJson(oppFavRes);
         await ensureOpportunitiesCatalog();
         applySavedOpportunityData(oppFavData);
       } catch {
@@ -5507,7 +5520,7 @@
       }
 
       try {
-        const oppSearchData = await oppSearchRes.json();
+        const oppSearchData = await readResponseJson(oppSearchRes);
         if (oppSearchData && oppSearchData.ok && Array.isArray(oppSearchData.searches)) {
           savedOpportunitySearches = oppSearchData.searches;
         } else {
@@ -5579,10 +5592,19 @@
 
       openPaymentFromQuery();
       openReviewFromQuery();
+    } catch {
+      showDashboardLoadError(null);
     } finally {
       setDashboardLoading(false);
     }
   }
 
-  init();
+  init().catch(function () {
+    try {
+      showDashboardLoadError(null);
+    } catch {
+      /* ignore */
+    }
+    setDashboardLoading(false);
+  });
 })();

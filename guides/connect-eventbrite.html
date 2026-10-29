@@ -147,10 +147,15 @@
 
       <article class="ceb-slide" data-ceb-slide id="api-token" aria-hidden="true">
         <span class="ceb-slide-step">3</span>
-        <h2>Save your Eventbrite private token</h2>
+        <h2>Connect Eventbrite (OAuth or token)</h2>
         <p>
-          Eventbrite’s ping is only a link to the order — not the buyer’s email. A
-          <strong>private token</strong> from Eventbrite’s developer settings lets us load the buyer safely.
+          Preferred: on your organiser page under <strong>Where do people book?</strong>, click
+          <strong>Connect with Eventbrite</strong> and approve The Networker UK. We import live events
+          automatically and use the connection to load buyers after each sale.
+        </p>
+        <p>
+          Fallback: paste a <strong>private token</strong> from Eventbrite’s developer settings
+          (Eventbrite’s ping is only a link to the order — not the buyer’s email).
         </p>
         <ol>
           <li>Profile menu → <strong>Account Settings</strong></li>
@@ -160,7 +165,7 @@
             <strong>Show API key, client secret and tokens</strong>
           </li>
           <li>Copy the <strong>Private token</strong> (not the public key / client secret)</li>
-          <li>On Connected setup, paste it under <strong>Save API token</strong> and save</li>
+          <li>On the organiser page advanced panel (or Connected setup), paste and save</li>
         </ol>
         <div class="ceb-shot-stack">
           <figure class="ceb-shot ceb-shot--photo">
@@ -211,7 +216,13 @@
 
       <article class="ceb-slide" data-ceb-slide id="link-event" aria-hidden="true">
         <span class="ceb-slide-step">4</span>
-        <h2>Link each event</h2>
+        <h2>Events import automatically</h2>
+        <p>
+          After connect, live Eventbrite events for your organisation are imported onto that organiser
+          page. Complete listings (date + price + booking URL) publish; incomplete ones stay drafts.
+          New events also arrive via hourly sync or when Eventbrite publishes them.
+        </p>
+        <p>To link an existing Networker UK listing by hand:</p>
         <ol>
           <li>Open the event → <strong>Set up tickets</strong></li>
           <li>Choose <strong>Eventbrite</strong> → <strong>Continue to Connected setup</strong></li>

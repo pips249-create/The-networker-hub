@@ -8,12 +8,18 @@ const {
   isConnectedPlanActive,
   accountHasAdminConnectedGrant,
   accountHasLinkOutGrant,
+  connectedBookingFreeEnabled,
+  connectedBookingFreeDefaultPlan,
 } = require('./connected-booking-util');
 
 const ACCOUNT_GRANT_SELECT =
   'id, email, supabase_user_id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret, connected_booking_stripe_subscription_id, connected_booking_stripe_customer_id, connected_booking_granted_at, connected_booking_granted_by, connected_booking_grant_note, link_out_granted_at, link_out_granted_by, link_out_grant_note';
 
 function normalizePlan(plan) {
+  // Free Connected has no page caps — Command Centre grants should not reintroduce Starter limits.
+  if (connectedBookingFreeEnabled()) {
+    return connectedBookingFreeDefaultPlan();
+  }
   const key = String(plan || 'starter').trim().toLowerCase();
   return key in PLAN_GROUP_LIMITS ? key : 'starter';
 }

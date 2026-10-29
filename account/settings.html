@@ -16,7 +16,7 @@
     />
     <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260626" />
-    <link rel="stylesheet" href="../css/account-settings.css?v=20261015country" />
+    <link rel="stylesheet" href="../css/account-settings.css?v=20261029matchprof1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20261016signin1" />
 
   </head>
@@ -242,6 +242,40 @@
             <button type="submit" class="as-btn as-btn-primary" id="as-save-profile">Save changes</button>
           </div>
         </section>
+
+        <section class="as-card" id="as-hubert-matchmaker">
+          <h2>Hubert introductions</h2>
+          <p class="as-card-sub">
+            Help Hubert put you forward for the right intros. Shortlist cards show your first name and last initial only —
+            never your email, phone, or LinkedIn.
+          </p>
+          <div class="as-field">
+            <label for="as-matchmaker-blurb">Your headline</label>
+            <textarea
+              id="as-matchmaker-blurb"
+              name="matchmakerBlurb"
+              rows="3"
+              maxlength="280"
+              placeholder="e.g. Fintech founder in Manchester raising seed — looking for angels and warm intros"
+            ></textarea>
+            <p class="as-field-hint">One or two lines on what you do and who you help. Max 280 characters.</p>
+          </div>
+          <fieldset class="as-field as-looking-fieldset">
+            <legend>Who you&rsquo;re looking to meet</legend>
+            <p class="as-field-hint" style="margin-top:0">Pick all that apply. Hubert uses these when matching.</p>
+            <div class="as-looking-chips" id="as-looking-to-meet" role="group" aria-label="Looking to meet"></div>
+          </fieldset>
+          <label class="as-choice as-discoverable-choice">
+            <input type="checkbox" id="as-discoverable" name="discoverable" />
+            <span>
+              <strong>Include me so Hubert can put me forward</strong>
+              <span class="as-field-hint" style="display:block;margin:4px 0 0">
+                Opt in to appear in Matchmaker shortlists. You can turn this off anytime.
+              </span>
+            </span>
+          </label>
+          <p class="as-field-hint" id="as-matchmaker-status" hidden></p>
+        </section>
       </form>
 
       <div class="as-sticky-save" id="as-sticky-save" hidden>
@@ -381,6 +415,6 @@
     <script src="../js/site-nav.js?v=20261022listacc1" data-root="../" data-page="settings"></script>
     <script src="../js/hub-profile-industries.js?v=20260902other2"></script>
     <script src="../js/profile-countries.js?v=20261015country"></script>
-    <script src="../js/account-settings.js?v=20261021confirm2"></script>
+    <script src="../js/account-settings.js?v=20261029matchprof1"></script>
   </body>
 </html>

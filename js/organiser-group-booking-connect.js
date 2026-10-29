@@ -1,5 +1,5 @@
 /**
- * Organiser page — connect Eventbrite and import events onto this page.
+ * Organiser page — connect Eventbrite (OAuth primary) and import events onto this page.
  */
 (function () {
   'use strict';
@@ -69,6 +69,40 @@
     });
   }
 
+  function showConnectedControls(connected) {
+    var refresh = qs('ge-eb-refresh');
+    var sync = qs('ge-eb-sync');
+    var importWrap = qs('ge-eb-import');
+    if (refresh) refresh.hidden = !connected;
+    if (sync) sync.hidden = !connected;
+    if (importWrap) importWrap.hidden = !connected;
+  }
+
+  function consumeOAuthReturnParams() {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      var status = String(params.get('eb_oauth') || '').trim();
+      if (!status) return null;
+      var imported = Number(params.get('eb_imported') || 0) || 0;
+      var published = Number(params.get('eb_published') || 0) || 0;
+      var error = String(params.get('eb_error') || '').trim();
+      params.delete('eb_oauth');
+      params.delete('eb_imported');
+      params.delete('eb_published');
+      params.delete('eb_webhook');
+      params.delete('eb_attendees');
+      params.delete('eb_error');
+      var next =
+        window.location.pathname +
+        (params.toString() ? '?' + params.toString() : '') +
+        window.location.hash;
+      window.history.replaceState({}, '', next);
+      return { status: status, imported: imported, published: published, error: error };
+    } catch (_e) {
+      return null;
+    }
+  }
+
   function loadConnectionState() {
     return fetch('/api/organiser/connected-booking-providers', {
       credentials: 'include',
@@ -78,20 +112,33 @@
         return r.json();
       })
       .then(function (data) {
-        if (!data || !data.ok) return false;
+        if (!data || !data.ok) return { connected: false, oauthAvailable: false };
         var eb = (data.providers || []).find(function (p) {
           return p && p.id === 'eventbrite';
         });
         var connected = Boolean(eb && eb.eventbriteApiTokenConfigured);
+        var oauthAvailable = Boolean(
+          (data.eventbriteOAuth && data.eventbriteOAuth.available) ||
+            (eb && eb.eventbriteOAuthAvailable)
+        );
         setConnectedPill(connected);
-        var refresh = qs('ge-eb-refresh');
-        var importWrap = qs('ge-eb-import');
-        if (refresh) refresh.hidden = !connected;
-        if (importWrap) importWrap.hidden = !connected;
-        return connected;
+        showConnectedControls(connected);
+        var oauthBtn = qs('ge-eb-oauth');
+        if (oauthBtn) {
+          oauthBtn.textContent = connected ? 'Reconnect Eventbrite' : 'Connect with Eventbrite';
+          if (!oauthAvailable && !connected) {
+            oauthBtn.title =
+              'OAuth app credentials are not configured yet — use a private token below, or ask an admin to set EVENTBRITE_CLIENT_ID / SECRET.';
+          }
+        }
+        return {
+          connected: connected,
+          oauthAvailable: oauthAvailable,
+          authMethod: eb && eb.eventbriteAuthMethod,
+        };
       })
       .catch(function () {
-        return false;
+        return { connected: false, oauthAvailable: false };
       });
   }
 
@@ -116,7 +163,8 @@
         '</div>' +
         '<button type="button" class="ee-btn ee-btn-outline ge-eb-import-btn"></button>';
       li.querySelector('strong').textContent = evt.title || 'Eventbrite event';
-      li.querySelector('.ge-eb-event-meta').textContent = meta || (already ? 'Already on The Networker UK' : '');
+      li.querySelector('.ge-eb-event-meta').textContent =
+        meta || (already ? 'Already on The Networker UK' : '');
       var btn = li.querySelector('button');
       btn.textContent = already ? 'Already linked' : 'Import & publish';
       btn.disabled = already;
@@ -145,14 +193,54 @@
         renderEvents(res.data.events || []);
         setMsg(
           (res.data.events || []).length
-            ? 'Select an event to import onto this organiser page. Complete listings publish automatically.'
-            : 'No Eventbrite events found for this account.',
+            ? 'Live Eventbrite events for this account. New ones also import automatically after connect.'
+            : 'No live Eventbrite events found for this account.',
           'ok'
         );
       })
       .catch(function () {
         if (refresh) refresh.disabled = false;
         setMsg('Could not load Eventbrite events.', 'error');
+      });
+  }
+
+  function syncNewEvents() {
+    var groupId = groupIdFromPage();
+    if (!groupId) {
+      setMsg('Save this organiser page first, then sync Eventbrite events.', 'error');
+      return;
+    }
+    var btn = qs('ge-eb-sync');
+    if (btn) btn.disabled = true;
+    setMsg('Importing new Eventbrite events…');
+    return patchProviders({
+      action: 'sync_eventbrite_org_events',
+      groupId: groupId,
+    })
+      .then(function (res) {
+        if (btn) btn.disabled = false;
+        if (!res.ok) {
+          setMsg(res.data.message || res.data.error || 'Could not sync Eventbrite events.', 'error');
+          return;
+        }
+        var sync = res.data.orgSync || {};
+        var created = Number(sync.created) || 0;
+        var published = Number(sync.published) || 0;
+        setMsg(
+          created
+            ? 'Imported ' +
+                created +
+                ' event' +
+                (created === 1 ? '' : 's') +
+                (published ? ' (' + published + ' published).' : ' as draft(s).')
+            : 'No new Eventbrite events to import.',
+          'ok'
+        );
+        return refreshEvents();
+      })
+      .catch(function () {
+        if (btn) btn.disabled = false;
+        setMsg('Could not sync Eventbrite events.', 'error');
       });
   }
 
@@ -195,8 +283,7 @@
           return;
         }
         if (published) {
-          window.location.href =
-            '/organiser/event-edit?id=' + encodeURIComponent(eventId);
+          window.location.href = '/organiser/event-edit?id=' + encodeURIComponent(eventId);
           return;
         }
         window.location.href =
@@ -210,6 +297,45 @@
       });
   }
 
+  function startOAuth() {
+    var groupId = groupIdFromPage();
+    if (!groupId) {
+      setMsg('Save this organiser page first, then connect Eventbrite.', 'error');
+      return;
+    }
+    var btn = qs('ge-eb-oauth');
+    if (btn) btn.disabled = true;
+    setMsg('Opening Eventbrite…');
+    patchProviders({
+      action: 'start_eventbrite_oauth',
+      groupId: groupId,
+      returnPath: '/organiser/group-edit?id=' + encodeURIComponent(groupId),
+    })
+      .then(function (res) {
+        if (btn) btn.disabled = false;
+        if (!res.ok) {
+          var advanced = qs('ge-eb-advanced');
+          if (advanced) advanced.open = true;
+          setMsg(
+            res.data.message ||
+              res.data.error ||
+              'Eventbrite OAuth is not available. Use a private token below.',
+            'error'
+          );
+          return;
+        }
+        if (res.data.authorizeUrl) {
+          window.location.href = res.data.authorizeUrl;
+          return;
+        }
+        setMsg('Could not start Eventbrite connect.', 'error');
+      })
+      .catch(function () {
+        if (btn) btn.disabled = false;
+        setMsg('Could not start Eventbrite connect.', 'error');
+      });
+  }
+
   function saveConnection() {
     var input = qs('ge-eb-token');
     var token = input ? String(input.value || '').trim() : '';
@@ -217,10 +343,15 @@
       setMsg('Paste your Eventbrite private token first.', 'error');
       return;
     }
+    var groupId = groupIdFromPage();
     var btn = qs('ge-eb-save');
     if (btn) btn.disabled = true;
     setMsg('Saving connection…');
-    patchProviders({ action: 'save_eventbrite_private_token', token: token })
+    patchProviders({
+      action: 'save_eventbrite_private_token',
+      token: token,
+      groupId: groupId,
+    })
       .then(function (res) {
         if (btn) btn.disabled = false;
         if (!res.ok) {
@@ -229,9 +360,15 @@
         }
         if (input) input.value = '';
         setConnectedPill(true);
-        var refresh = qs('ge-eb-refresh');
-        if (refresh) refresh.hidden = false;
-        setMsg('Connected. Loading your Eventbrite events…', 'ok');
+        showConnectedControls(true);
+        var sync = res.data.orgSync || {};
+        var created = Number(sync.created) || 0;
+        setMsg(
+          created
+            ? 'Connected. Imported ' + created + ' Eventbrite event' + (created === 1 ? '' : 's') + '.'
+            : 'Connected. Loading your Eventbrite events…',
+          'ok'
+        );
         return refreshEvents();
       })
       .catch(function () {
@@ -248,6 +385,11 @@
     card.hidden = !groupId;
     if (!groupId) return;
 
+    var oauthBtn = qs('ge-eb-oauth');
+    if (oauthBtn && !oauthBtn.dataset.bound) {
+      oauthBtn.dataset.bound = '1';
+      oauthBtn.addEventListener('click', startOAuth);
+    }
     var saveBtn = qs('ge-eb-save');
     if (saveBtn && !saveBtn.dataset.bound) {
       saveBtn.dataset.bound = '1';
@@ -258,9 +400,52 @@
       refreshBtn.dataset.bound = '1';
       refreshBtn.addEventListener('click', refreshEvents);
     }
+    var syncBtn = qs('ge-eb-sync');
+    if (syncBtn && !syncBtn.dataset.bound) {
+      syncBtn.dataset.bound = '1';
+      syncBtn.addEventListener('click', syncNewEvents);
+    }
 
-    loadConnectionState().then(function (connected) {
-      if (connected) refreshEvents();
+    var oauthReturn = consumeOAuthReturnParams();
+    loadConnectionState().then(function (state) {
+      if (oauthReturn) {
+        if (oauthReturn.status === 'connected') {
+          setConnectedPill(true);
+          showConnectedControls(true);
+          setMsg(
+            oauthReturn.imported
+              ? 'Eventbrite connected. Imported ' +
+                  oauthReturn.imported +
+                  ' event' +
+                  (oauthReturn.imported === 1 ? '' : 's') +
+                  (oauthReturn.published
+                    ? ' (' + oauthReturn.published + ' published).'
+                    : '.')
+              : 'Eventbrite connected. Loading your events…',
+            'ok'
+          );
+          refreshEvents();
+          return;
+        }
+        if (oauthReturn.status === 'denied') {
+          setMsg('Eventbrite connection was cancelled.', 'error');
+        } else if (oauthReturn.status === 'not_configured') {
+          var advanced = qs('ge-eb-advanced');
+          if (advanced) advanced.open = true;
+          setMsg(
+            'Eventbrite OAuth is not configured on this environment. Use a private token below.',
+            'error'
+          );
+        } else {
+          setMsg(
+            'Could not connect Eventbrite' +
+              (oauthReturn.error ? ' (' + oauthReturn.error + ')' : '') +
+              '.',
+            'error'
+          );
+        }
+      }
+      if (state.connected) refreshEvents();
     });
   }
 
@@ -270,5 +455,9 @@
     init();
   }
 
-  window.HubGroupBookingConnect = { init: init, refreshEvents: refreshEvents };
+  window.HubGroupBookingConnect = {
+    init: init,
+    refreshEvents: refreshEvents,
+    syncNewEvents: syncNewEvents,
+  };
 })();

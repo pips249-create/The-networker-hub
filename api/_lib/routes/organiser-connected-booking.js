@@ -254,6 +254,19 @@ async function ensureComplimentaryConnectedIfEligible(sb, account, sessionEmail)
   };
 }
 
+/**
+ * Free Connected = unlimited organiser pages. Upgrade legacy starter/growth/scale
+ * complimentary accounts (no Stripe sub) so they stop seeing slot assignment.
+ */
+async function ensureFreeUnlimitedPlanIfNeeded(sb, account) {
+  if (!account?.id || !connectedBookingFreeEnabled()) return account;
+  if (!isConnectedPlanActive(account)) return account;
+  if (String(account.connected_booking_stripe_subscription_id || '').trim()) return account;
+  const limit = groupLimitForPlan(account.connected_booking_plan);
+  if (limit == null) return account;
+  return activateConnectedBookingComplimentary(sb, account, connectedBookingFreeDefaultPlan());
+}
+
 function stripeCheckoutPublicMessage(err) {
   const msg = String(err?.message || err?.raw?.message || '').trim();
   if (msg === 'stripe_not_configured') {
@@ -380,6 +393,14 @@ module.exports = async function handler(req, res) {
       );
       account = grantResult.account;
       complimentaryGranted = Boolean(grantResult.complimentaryGranted);
+      try {
+        account = await ensureFreeUnlimitedPlanIfNeeded(sb, account);
+      } catch (upgradeErr) {
+        console.warn(
+          '[organiser-connected-booking] free unlimited upgrade',
+          upgradeErr?.message || upgradeErr
+        );
+      }
     }
 
     if (req.method === 'GET') {

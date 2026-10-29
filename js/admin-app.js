@@ -34409,18 +34409,31 @@
     if (!contacts || !contacts.length) {
       return (
         '<tr><td colspan="6" class="px-3 py-8 text-sm text-slate-500 text-center">' +
-        'No seed contacts yet. Add people Rosie knows here — they are never a public directory.' +
+        'No seed contacts yet. Paste people from LinkedIn below — they are never a public directory.' +
         '</td></tr>'
       );
     }
     return contacts
       .map(function (c) {
+        var li =
+          c.linkedinUrl
+            ? '<a class="text-xs font-semibold text-sky-800 hover:underline" href="' +
+              esc(c.linkedinUrl) +
+              '" target="_blank" rel="noopener noreferrer">LinkedIn</a>'
+            : '<span class="text-xs text-slate-400">No LinkedIn</span>';
+        var inviteBtn = c.email
+          ? '<button type="button" class="rounded border border-violet-200 text-violet-800 px-2 py-1 text-xs font-semibold hover:bg-violet-50" data-hmm-seed-invite="' +
+            esc(c.id) +
+            '">Invite to Hub</button> '
+          : '<span class="text-xs text-slate-400 mr-1" title="Add an email to invite">No email</span> ';
         return (
           '<tr class="border-t border-slate-100 align-top">' +
           '<td class="px-3 py-3"><div class="font-semibold text-brand-900">' +
           esc(c.fullName || '') +
           '</div><div class="text-xs text-slate-500 mt-0.5">' +
           esc(c.email || 'No email') +
+          '</div><div class="mt-1">' +
+          li +
           '</div></td>' +
           '<td class="px-3 py-3 text-sm text-slate-700">' +
           esc([c.jobTitle, c.company].filter(Boolean).join(' · ') || '—') +
@@ -34438,6 +34451,7 @@
           esc((c.updatedAt || '').slice(0, 10) || '—') +
           '</td>' +
           '<td class="px-3 py-3 text-right whitespace-nowrap">' +
+          inviteBtn +
           (c.status === 'active'
             ? '<button type="button" class="rounded border border-slate-200 px-2 py-1 text-xs font-semibold hover:bg-slate-50" data-hmm-seed-pause="' +
               esc(c.id) +
@@ -34462,6 +34476,7 @@
       form.addEventListener('submit', function (e) {
         e.preventDefault();
         var fd = new FormData(form);
+        var inviteNow = Boolean(form.querySelector('[name="inviteNow"]') && form.querySelector('[name="inviteNow"]').checked);
         var payload = {
           fullName: String(fd.get('fullName') || '').trim(),
           email: String(fd.get('email') || '').trim(),
@@ -34473,13 +34488,19 @@
           linkedinUrl: String(fd.get('linkedinUrl') || '').trim(),
           blurb: String(fd.get('blurb') || '').trim(),
           notes: String(fd.get('notes') || '').trim(),
-          source: 'rosie',
+          source: 'linkedin',
           status: 'active',
+          inviteNow: inviteNow,
         };
         var errEl = root.querySelector('#hmm-seed-form-error');
+        var okEl = root.querySelector('#hmm-seed-form-ok');
         if (errEl) {
           errEl.hidden = true;
           errEl.textContent = '';
+        }
+        if (okEl) {
+          okEl.hidden = true;
+          okEl.textContent = '';
         }
         adminPost('/api/admin/hubert-matchmaker', payload)
           .then(function (data) {
@@ -34487,6 +34508,15 @@
               throw new Error((data && data.message) || (data && data.error) || 'save_failed');
             }
             form.reset();
+            if (okEl) {
+              var msg = 'Saved to seed list.';
+              if (inviteNow) {
+                if (data.invite && data.invite.ok) msg = 'Saved and Hub invite sent.';
+                else if (data.invite && data.invite.message) msg = 'Saved. Invite: ' + data.invite.message;
+              }
+              okEl.hidden = false;
+              okEl.textContent = msg;
+            }
             loadHubertMatchmakerSeed();
           })
           .catch(function (err) {
@@ -34497,6 +34527,27 @@
           });
       });
     }
+
+    root.querySelectorAll('[data-hmm-seed-invite]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.getAttribute('data-hmm-seed-invite');
+        if (!id) return;
+        if (!window.confirm('Send a Hubert Hub invite email to this person?')) return;
+        btn.disabled = true;
+        adminPost('/api/admin/hubert-matchmaker', { action: 'invite', id: id })
+          .then(function (data) {
+            if (!data || data.ok === false) {
+              throw new Error((data && data.message) || (data && data.error) || 'invite_failed');
+            }
+            window.alert('Invite sent.');
+            loadHubertMatchmakerSeed();
+          })
+          .catch(function (err) {
+            window.alert((err && err.message) || 'Could not send invite.');
+            btn.disabled = false;
+          });
+      });
+    });
 
     root.querySelectorAll('[data-hmm-seed-pause]').forEach(function (btn) {
       btn.addEventListener('click', function () {
@@ -34572,9 +34623,14 @@
     main.innerHTML =
       '<div class="space-y-6">' +
       '<div class="rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-sky-50 p-5">' +
-      '<p class="text-xs font-bold uppercase tracking-wider text-violet-800">Ask Hubert to introduce you</p>' +
-      '<h3 class="text-lg font-bold text-brand-900 mt-1">Private seed list</h3>' +
-      '<p class="text-sm text-slate-600 mt-1 max-w-3xl">Rosie and ops add warm contacts here. They only appear in back-of-house shortlists (max 5, first name + initial). Not a public directory.</p>' +
+      '<p class="text-xs font-bold uppercase tracking-wider text-violet-800">Hubert Matchmaker</p>' +
+      '<h3 class="text-lg font-bold text-brand-900 mt-1">Add people from LinkedIn</h3>' +
+      '<p class="text-sm text-slate-600 mt-1 max-w-3xl">Paste a LinkedIn profile into the seed list for back-of-house matching (first name + initial only). Optionally send a Hubert Hub invite so they can join and become discoverable. Never scrape — copy fields by hand.</p>' +
+      '<ol class="mt-3 text-sm text-slate-700 list-decimal list-inside space-y-1 max-w-3xl">' +
+      '<li>Open their LinkedIn → copy name, role, company, About blurb, and profile URL</li>' +
+      '<li>Add their email if you have it (needed to invite)</li>' +
+      '<li>Save to seed — tick <strong>Also send Hub invite</strong> when you want Hubert to email them</li>' +
+      '</ol>' +
       '<div class="mt-4 flex flex-wrap gap-3 text-sm">' +
       '<span class="rounded-full bg-white/80 border border-violet-200 px-3 py-1 font-semibold text-violet-900">Active ' +
       esc(String(totals.active || 0)) +
@@ -34585,22 +34641,29 @@
       '<span class="rounded-full bg-white/80 border border-slate-200 px-3 py-1 font-semibold text-slate-700">Converted ' +
       esc(String(totals.converted || 0)) +
       '</span>' +
+      '<a class="rounded-full bg-white/80 border border-sky-200 px-3 py-1 font-semibold text-sky-900 hover:bg-white" href="https://www.linkedin.com/feed/" target="_blank" rel="noopener noreferrer">Open LinkedIn</a>' +
       '</div></div>' +
       '<section class="rounded-xl border border-slate-200 bg-white shadow-sm p-5">' +
-      '<h3 class="font-bold text-brand-900">Add seed contact</h3>' +
+      '<h3 class="font-bold text-brand-900">Add from LinkedIn</h3>' +
+      '<p class="text-sm text-slate-500 mt-1">Manual paste only — LinkedIn About as a research aid. Not a public directory.</p>' +
       '<form id="hmm-seed-form" class="mt-4 grid gap-3 sm:grid-cols-2">' +
-      '<label class="text-sm font-semibold text-slate-700">Full name<input required name="fullName" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>' +
-      '<label class="text-sm font-semibold text-slate-700">Email<input name="email" type="email" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>' +
+      '<label class="text-sm font-semibold text-slate-700">Full name<input required name="fullName" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="As on LinkedIn" /></label>' +
+      '<label class="text-sm font-semibold text-slate-700">Email <span class="font-normal text-slate-500">(needed to invite)</span><input name="email" type="email" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="alex@example.com" /></label>' +
       '<label class="text-sm font-semibold text-slate-700">Company<input name="company" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>' +
       '<label class="text-sm font-semibold text-slate-700">Job title<input name="jobTitle" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>' +
       '<label class="text-sm font-semibold text-slate-700">Industry<input name="industry" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>' +
       '<label class="text-sm font-semibold text-slate-700">I am a<input name="professionalRole" placeholder="Founder, Investor…" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>' +
       '<label class="text-sm font-semibold text-slate-700 sm:col-span-2">Looking to meet<input name="lookingToMeet" placeholder="Clients, Investors (comma-separated)" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>' +
-      '<label class="text-sm font-semibold text-slate-700 sm:col-span-2">LinkedIn URL<input name="linkedinUrl" type="url" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>' +
+      '<label class="text-sm font-semibold text-slate-700 sm:col-span-2">LinkedIn URL<input name="linkedinUrl" type="url" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="https://www.linkedin.com/in/…" /></label>' +
       '<label class="text-sm font-semibold text-slate-700 sm:col-span-2">Short blurb<textarea name="blurb" rows="3" maxlength="800" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Paste/edit from LinkedIn About — do not scrape"></textarea></label>' +
-      '<label class="text-sm font-semibold text-slate-700 sm:col-span-2">Internal notes<textarea name="notes" rows="2" maxlength="1000" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></textarea></label>' +
-      '<div class="sm:col-span-2 flex items-center gap-3">' +
+      '<label class="text-sm font-semibold text-slate-700 sm:col-span-2">Internal notes<textarea name="notes" rows="2" maxlength="1000" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Why you’re adding them, event context, etc."></textarea></label>' +
+      '<label class="sm:col-span-2 flex items-start gap-2 text-sm text-slate-700">' +
+      '<input type="checkbox" name="inviteNow" class="mt-1 rounded border-slate-300" />' +
+      '<span><strong>Also send Hub invite now</strong> — Hubert emails them a join link (needs email). They won’t see your details.</span>' +
+      '</label>' +
+      '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-800">Save to seed list</button>' +
+      '<p id="hmm-seed-form-ok" class="text-sm text-emerald-700" hidden></p>' +
       '<p id="hmm-seed-form-error" class="text-sm text-red-700" hidden></p>' +
       '</div></form></section>' +
       '<section class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">' +

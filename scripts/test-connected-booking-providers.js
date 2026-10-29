@@ -5,7 +5,12 @@ const { normalizeTicketTailorWebhook } = require('../api/_lib/connected-booking-
 const { normalizeLumaWebhook } = require('../api/_lib/connected-booking-providers/adapters/luma');
 const { normalizeTryBookingWebhook } = require('../api/_lib/connected-booking-providers/adapters/trybooking');
 const { normalizeOwnSiteWebhook } = require('../api/_lib/connected-booking-providers/adapters/own-site');
-const { isConnectedBookingProviderId, CONNECTED_BOOKING_PROVIDERS } = require('../api/_lib/connected-booking-providers');
+const {
+  isConnectedBookingProviderId,
+  isLiveConnectedBookingProvider,
+  CONNECTED_BOOKING_PROVIDERS,
+  listOrganiserSelectableProviders,
+} = require('../api/_lib/connected-booking-providers');
 const {
   normalizeExternalBookingUrl,
   preferEventbriteCheckoutUrl,
@@ -62,6 +67,17 @@ assert.strictEqual(
 assert.strictEqual(isConnectedBookingProviderId('eventbrite'), true);
 assert.strictEqual(isConnectedBookingProviderId('nope'), false);
 assert.ok(CONNECTED_BOOKING_PROVIDERS.length >= 5);
+assert.strictEqual(isLiveConnectedBookingProvider('eventbrite'), true);
+assert.strictEqual(isLiveConnectedBookingProvider('own_site'), true);
+assert.strictEqual(isLiveConnectedBookingProvider('ticket_tailor'), false);
+assert.ok(
+  listOrganiserSelectableProviders().every(function (p) {
+    return p.status === 'live';
+  })
+);
+assert.ok(listOrganiserSelectableProviders().some(function (p) {
+  return p.id === 'eventbrite';
+}));
 
 const eb = normalizeEventbriteWebhook({
   api_url: 'https://www.eventbrite.com/api/v3/events/123456789/',
@@ -536,8 +552,31 @@ async function runEventbriteWebhookSubscriptionChecks() {
     assert.strictEqual(subscribed.ok, true);
     assert.strictEqual(subscribed.created, true);
     assert.strictEqual(posts.length, 1);
-    assert.strictEqual(posts[0].actions, 'attendee.updated');
+    assert.strictEqual(posts[0].actions, 'attendee.updated,event.published');
     assert.strictEqual(posts[0].endpoint_url, endpoint);
+  } finally {
+    global.fetch = original;
+  }
+
+  const postsPublished = [];
+  global.fetch = async function (url, opts) {
+    const method = (opts && opts.method) || 'GET';
+    if (method === 'GET' && String(url).endsWith('/v3/webhooks/')) {
+      return jsonResponse({
+        webhooks: [{ endpoint_url: endpoint + '/', actions: ['order.placed', 'attendee.updated'] }],
+      });
+    }
+    if (method === 'POST' && String(url).endsWith('/v3/webhooks/')) {
+      postsPublished.push(JSON.parse(opts.body));
+      return jsonResponse({ id: 'wh_2' });
+    }
+    throw new Error('unexpected fetch');
+  };
+  try {
+    const needsPublished = await ensureEventbriteAttendeeWebhook('tok', endpoint);
+    assert.strictEqual(needsPublished.created, true);
+    assert.strictEqual(postsPublished.length, 1);
+    assert.strictEqual(postsPublished[0].actions, 'event.published');
   } finally {
     global.fetch = original;
   }
@@ -547,7 +586,12 @@ async function runEventbriteWebhookSubscriptionChecks() {
     const method = (opts && opts.method) || 'GET';
     if (method === 'GET' && String(url).endsWith('/v3/webhooks/')) {
       return jsonResponse({
-        webhooks: [{ endpoint_url: endpoint + '/', actions: ['order.placed', 'attendee.updated'] }],
+        webhooks: [
+          {
+            endpoint_url: endpoint + '/',
+            actions: ['order.placed', 'attendee.updated', 'event.published'],
+          },
+        ],
       });
     }
     if (method === 'POST') postsAgain.push(1);

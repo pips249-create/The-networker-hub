@@ -139,6 +139,12 @@
     if (roleEls.otherInput && !roleWritable) roleEls.otherInput.disabled = true;
     setFieldWritable('as-location', w.location !== false);
     setFieldWritable('as-country', w.countryCode !== false);
+    setFieldWritable('as-matchmaker-blurb', w.matchmakerBlurb !== false);
+    const disc = document.getElementById('as-discoverable');
+    if (disc) disc.disabled = w.discoverable === false;
+    document.querySelectorAll('#as-looking-to-meet input[type="checkbox"]').forEach(function (el) {
+      el.disabled = w.lookingToMeet === false;
+    });
   }
 
   const UK_LOCATION_TIP =
@@ -241,6 +247,79 @@
     return checked && checked.value === 'anonymous' ? 'anonymous' : 'name';
   }
 
+  const DEFAULT_LOOKING_TO_MEET = [
+    'Clients',
+    'Investors',
+    'Co-founders',
+    'Hires',
+    'Suppliers',
+    'Mentors',
+    'Partners',
+    'Press',
+  ];
+
+  function renderLookingToMeetOptions(options) {
+    const wrap = document.getElementById('as-looking-to-meet');
+    if (!wrap || wrap.dataset.ready === '1') return;
+    const list = Array.isArray(options) && options.length ? options : DEFAULT_LOOKING_TO_MEET;
+    wrap.innerHTML = list
+      .map(function (label) {
+        const id = 'as-look-' + String(label).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        return (
+          '<label class="as-looking-chip">' +
+          '<input type="checkbox" name="lookingToMeet" value="' +
+          String(label).replace(/"/g, '&quot;') +
+          '" id="' +
+          id +
+          '" />' +
+          '<span>' +
+          String(label) +
+          '</span>' +
+          '</label>'
+        );
+      })
+      .join('');
+    wrap.dataset.ready = '1';
+  }
+
+  function selectedLookingToMeet() {
+    return Array.from(document.querySelectorAll('#as-looking-to-meet input[type="checkbox"]:checked')).map(
+      function (el) {
+        return el.value;
+      }
+    );
+  }
+
+  function fillLookingToMeet(selected) {
+    const set = new Set((Array.isArray(selected) ? selected : []).map(function (s) {
+      return String(s).toLowerCase();
+    }));
+    document.querySelectorAll('#as-looking-to-meet input[type="checkbox"]').forEach(function (el) {
+      el.checked = set.has(String(el.value).toLowerCase());
+    });
+  }
+
+  function fillMatchmaker(profile) {
+    renderLookingToMeetOptions(profile.lookingToMeetOptions);
+    setFieldValue('as-matchmaker-blurb', profile.matchmakerBlurb || '');
+    fillLookingToMeet(profile.lookingToMeet || []);
+    const disc = document.getElementById('as-discoverable');
+    if (disc) disc.checked = profile.discoverable === true;
+    const status = document.getElementById('as-matchmaker-status');
+    if (status) {
+      if (profile.matchmakerReady) {
+        status.hidden = false;
+        status.textContent = 'You’re ready for Hubert to put you forward.';
+      } else if (profile.discoverable) {
+        status.hidden = false;
+        status.textContent = 'Add a headline and who you’re looking to meet so matches are stronger.';
+      } else {
+        status.hidden = true;
+        status.textContent = '';
+      }
+    }
+  }
+
   function fillForm(profile) {
     setFieldValue('as-email', profile.email || '');
     setFieldValue('as-name', profile.name || '');
@@ -264,6 +343,7 @@
     applyProfessionalRoleSelection(profile.professionalRole || '');
     fillCountrySelect(profile.countryCode || 'GB');
     setFieldValue('as-location', profile.location || '');
+    fillMatchmaker(profile);
     fillEmailPrefs(profile);
     rememberProfileBaseline();
   }
@@ -596,6 +676,9 @@
       professionalRole: resolvedProfessionalRole(),
       location: document.getElementById('as-location')?.value.trim() || '',
       countryCode: selectedCountryCode(),
+      matchmakerBlurb: document.getElementById('as-matchmaker-blurb')?.value.trim() || '',
+      lookingToMeet: selectedLookingToMeet(),
+      discoverable: Boolean(document.getElementById('as-discoverable')?.checked),
     });
   }
 
@@ -679,6 +762,9 @@
           professionalRole: roleValue,
           location: document.getElementById('as-location').value.trim(),
           countryCode: selectedCountryCode(),
+          matchmakerBlurb: document.getElementById('as-matchmaker-blurb')?.value.trim() || '',
+          lookingToMeet: selectedLookingToMeet(),
+          discoverable: Boolean(document.getElementById('as-discoverable')?.checked),
         }),
       });
       const data = await res.json();

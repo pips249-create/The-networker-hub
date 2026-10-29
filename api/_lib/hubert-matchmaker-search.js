@@ -1,9 +1,72 @@
 /**
  * Hubert Matchmaker — back-of-house shortlist (max 5).
  * Never returns email, phone, or LinkedIn.
+ *
+ * Pool: discoverable members + private seed + Hub attendees of events
+ * matched from the query (so “who attended Evolution…” works against
+ * existing bookings, still privacy-safe).
  */
 const MAX_SHORTLIST = 5;
 const MIN_QUERY_LEN = 3;
+
+const EVENT_QUERY_HINT =
+  /\b(attended|attendee|attendees|attending|who went|who was at|who'?s going|going to|this morning|this afternoon|yesterday|last night|today)\b/i;
+
+const EVENT_STOP = new Set([
+  'who',
+  'want',
+  'meet',
+  'like',
+  'looking',
+  'for',
+  'the',
+  'and',
+  'with',
+  'this',
+  'that',
+  'from',
+  'someone',
+  'people',
+  'person',
+  'attended',
+  'attendee',
+  'attendees',
+  'attending',
+  'went',
+  'was',
+  'were',
+  'are',
+  'is',
+  'at',
+  'to',
+  'a',
+  'an',
+  'of',
+  'in',
+  'on',
+  'or',
+  'my',
+  'me',
+  'i',
+  'morning',
+  'afternoon',
+  'evening',
+  'yesterday',
+  'today',
+  'tonight',
+  'last',
+  'next',
+  'week',
+  'month',
+  'event',
+  'events',
+  'please',
+  'find',
+  'show',
+  'list',
+  'any',
+  'some',
+]);
 
 function shortDisplayName(fullName) {
   const parts = String(fullName || '')
@@ -25,6 +88,14 @@ function tokenize(query) {
     .slice(0, 24);
 }
 
+function eventSearchTokens(query) {
+  return tokenize(query).filter((t) => t.length >= 3 && !EVENT_STOP.has(t));
+}
+
+function looksLikeEventAttendeeQuery(query) {
+  return EVENT_QUERY_HINT.test(String(query || ''));
+}
+
 function haystackFor(person) {
   return [
     person.fullName,
@@ -33,6 +104,7 @@ function haystackFor(person) {
     person.industry,
     person.professionalRole,
     person.blurb,
+    person.matchedEvent && person.matchedEvent.title,
     ...(Array.isArray(person.lookingToMeet) ? person.lookingToMeet : []),
   ]
     .filter(Boolean)
@@ -47,7 +119,6 @@ function scoreAgainstQuery(person, tokens) {
   let score = 0;
   tokens.forEach((t) => {
     if (hay.includes(t)) score += 3;
-    // Light partial: token as whole word-ish
     if (new RegExp('(?:^|\\s)' + t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(hay)) score += 1;
   });
   return score;
@@ -64,17 +135,28 @@ function eventBoost(person, requesterEventIds) {
   return 0;
 }
 
+function matchedEventBoost(person) {
+  return person && person.matchedEvent && person.matchedEvent.eventId ? 55 : 0;
+}
+
 function rankCandidates(candidates, query, requesterEventIds) {
   const tokens = tokenize(query);
   return (candidates || [])
     .map((person) => {
       const textScore = scoreAgainstQuery(person, tokens);
       const boost = eventBoost(person, requesterEventIds);
-      const total = textScore + boost;
-      return { person, textScore, boost, total };
+      const matchedBoost = matchedEventBoost(person);
+      const total = textScore + boost + matchedBoost;
+      return { person, textScore, boost, matchedBoost, total };
     })
-    .filter((row) => row.textScore > 0 || row.boost >= 15)
-    .sort((a, b) => b.total - a.total || b.boost - a.boost || String(a.person.displayName).localeCompare(String(b.person.displayName)))
+    .filter((row) => row.textScore > 0 || row.boost >= 15 || row.matchedBoost > 0)
+    .sort(
+      (a, b) =>
+        b.total - a.total ||
+        b.matchedBoost - a.matchedBoost ||
+        b.boost - a.boost ||
+        String(a.person.displayName).localeCompare(String(b.person.displayName))
+    )
     .slice(0, MAX_SHORTLIST)
     .map((row) => ({
       id: row.person.id,
@@ -87,17 +169,25 @@ function rankCandidates(candidates, query, requesterEventIds) {
         ? {
             title: row.person.nextEvent.title,
             dateLabel: row.person.nextEvent.dateLabel || '',
-            // eventId kept server-side for later intro context; omit from client if preferred —
-            // include for ticket-upsell attribution later; safe (not PII contact).
             eventId: row.person.nextEvent.eventId || '',
           }
-        : null,
+        : row.person.matchedEvent
+          ? {
+              title: row.person.matchedEvent.title,
+              dateLabel: row.person.matchedEvent.dateLabel || '',
+              eventId: row.person.matchedEvent.eventId || '',
+            }
+          : null,
       onHub: Boolean(row.person.onHub),
       score: row.total,
     }));
 }
 
 function buildWhy(row) {
+  if (row.matchedBoost > 0) {
+    const title = row.person.matchedEvent && row.person.matchedEvent.title;
+    return title ? 'Booked for ' + title : 'Booked for a matching Hub event';
+  }
   if (row.boost >= 40) return 'You’ll both be at the same upcoming event';
   if (row.boost >= 15) return 'Has an upcoming event on the Hub';
   if (row.textScore > 0) return 'Matches what you asked Hubert for';
@@ -125,12 +215,14 @@ function mapSeedRow(row) {
     lookingToMeet: Array.isArray(row.looking_to_meet) ? row.looking_to_meet : [],
     blurb: row.blurb || '',
     nextEvent: null,
+    matchedEvent: null,
     onHub: false,
     why: 'Hubert can invite them to join',
   };
 }
 
-function mapMemberRow(row, nextEvent) {
+function mapMemberRow(row, nextEvent, matchedEvent) {
+  const discoverable = Boolean(row.discoverable_at);
   return {
     id: 'member:' + row.id,
     kind: 'member',
@@ -144,9 +236,142 @@ function mapMemberRow(row, nextEvent) {
     lookingToMeet: Array.isArray(row.looking_to_meet) ? row.looking_to_meet : [],
     blurb: row.matchmaker_blurb || '',
     nextEvent: nextEvent || null,
+    matchedEvent: matchedEvent || null,
     onHub: true,
-    why: 'On the Hub',
+    why: matchedEvent
+      ? 'Booked for ' + (matchedEvent.title || 'this event')
+      : discoverable
+        ? 'On the Hub'
+        : 'On the Hub',
   };
+}
+
+function scoreEventTitle(title, tokens) {
+  const hay = String(title || '').toLowerCase();
+  if (!hay || !tokens.length) return 0;
+  let score = 0;
+  tokens.forEach((t) => {
+    if (hay.includes(t)) score += t.length >= 6 ? 3 : 2;
+  });
+  return score;
+}
+
+function isUsableEventStatus(status) {
+  const s = String(status || '')
+    .trim()
+    .toLowerCase();
+  // Past Hub nights are often archived; still useful for “who attended…”.
+  return s !== 'cancelled' && s !== 'draft' && s !== 'rejected';
+}
+
+async function findMatchingEvents(sb, query) {
+  const tokens = eventSearchTokens(query);
+  if (!tokens.length) return [];
+
+  const fromIso = new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString();
+  const toIso = new Date(Date.now() + 120 * 24 * 60 * 60 * 1000).toISOString();
+
+  let rows = [];
+  try {
+    const { data, error } = await sb
+      .from('events')
+      .select('id, title, starts_at, status')
+      .gte('starts_at', fromIso)
+      .lte('starts_at', toIso)
+      .order('starts_at', { ascending: false })
+      .limit(400);
+    if (error) return [];
+    rows = (data || []).filter((ev) => isUsableEventStatus(ev.status));
+  } catch {
+    return [];
+  }
+
+  const scored = rows
+    .map((ev) => ({
+      event: ev,
+      score: scoreEventTitle(ev.title, tokens),
+    }))
+    .filter((row) => row.score > 0)
+    .sort((a, b) => b.score - a.score || String(b.event.starts_at).localeCompare(String(a.event.starts_at)));
+
+  // Prefer a clear title match: at least one solid token hit.
+  const minScore = tokens.some((t) => t.length >= 6) ? 3 : 2;
+  return scored
+    .filter((row) => row.score >= minScore)
+    .slice(0, 5)
+    .map((row) => ({
+      id: String(row.event.id),
+      title: row.event.title || 'Event',
+      startsAt: row.event.starts_at,
+      dateLabel: formatDateLabel(row.event.starts_at),
+      score: row.score,
+    }));
+}
+
+function isActiveRegistration(row) {
+  if (!row) return false;
+  if (row.cancelled_at) return false;
+  const app = String(row.application_status || 'Approved').trim();
+  if (app && app !== 'Approved') return false;
+  const pay = String(row.payment_status || '').trim();
+  if (pay === 'Refunded') return false;
+  return true;
+}
+
+async function loadAttendeesForEvents(sb, events, excludeAttendeeId) {
+  const out = [];
+  const eventList = Array.isArray(events) ? events : [];
+  if (!eventList.length) return out;
+
+  const eventIds = eventList.map((e) => e.id).filter(Boolean);
+  const byId = new Map(eventList.map((e) => [e.id, e]));
+
+  const richSelect =
+    'attendee_id, event_id, cancelled_at, application_status, payment_status, attendees!inner(id, name, company, job_title, business_sector, professional_role, looking_to_meet, matchmaker_blurb, discoverable_at)';
+  const basicSelect =
+    'attendee_id, event_id, cancelled_at, application_status, payment_status, attendees!inner(id, name, company, job_title, business_sector)';
+
+  let data = null;
+  let error = null;
+  try {
+    const rich = await sb.from('registrations').select(richSelect).in('event_id', eventIds).is('cancelled_at', null).limit(400);
+    data = rich.data;
+    error = rich.error;
+  } catch (e) {
+    error = e;
+  }
+  if (error) {
+    try {
+      const basic = await sb
+        .from('registrations')
+        .select(basicSelect)
+        .in('event_id', eventIds)
+        .is('cancelled_at', null)
+        .limit(400);
+      data = basic.data;
+      error = basic.error;
+    } catch {
+      return out;
+    }
+  }
+  if (error) return out;
+
+  const seen = new Set();
+  (data || []).forEach((row) => {
+    if (!isActiveRegistration(row)) return;
+    const att = row.attendees;
+    if (!att || !att.id || !att.name) return;
+    if (excludeAttendeeId && String(att.id) === String(excludeAttendeeId)) return;
+    const key = String(att.id);
+    if (seen.has(key)) return;
+    seen.add(key);
+    const ev = byId.get(String(row.event_id)) || null;
+    const matchedEvent = ev
+      ? { eventId: ev.id, title: ev.title, dateLabel: ev.dateLabel || formatDateLabel(ev.startsAt) }
+      : null;
+    out.push(mapMemberRow(att, null, matchedEvent));
+  });
+  return out;
 }
 
 async function loadRequesterUpcomingEventIds(sb, attendeeId) {
@@ -199,7 +424,12 @@ async function searchMatchmaker(opts) {
   }
   const query = String(opts.query || '').trim();
   if (query.length < MIN_QUERY_LEN) {
-    return { ok: false, error: 'query_too_short', message: 'Tell Hubert a bit more about who you want to meet.', matches: [] };
+    return {
+      ok: false,
+      error: 'query_too_short',
+      message: 'Tell Hubert a bit more about who you want to meet.',
+      matches: [],
+    };
   }
 
   const sb = getSupabaseAdmin();
@@ -207,6 +437,21 @@ async function searchMatchmaker(opts) {
   const requesterEventIds = await loadRequesterUpcomingEventIds(sb, excludeAttendeeId);
 
   const candidates = [];
+  const byId = new Map();
+
+  function addCandidate(person) {
+    if (!person || !person.id) return;
+    const existing = byId.get(person.id);
+    if (!existing) {
+      byId.set(person.id, person);
+      candidates.push(person);
+      return;
+    }
+    // Prefer richer row (matched event / discoverable blurb).
+    if (!existing.matchedEvent && person.matchedEvent) existing.matchedEvent = person.matchedEvent;
+    if (!existing.nextEvent && person.nextEvent) existing.nextEvent = person.nextEvent;
+    if (!existing.blurb && person.blurb) existing.blurb = person.blurb;
+  }
 
   // Active seed contacts
   try {
@@ -218,7 +463,7 @@ async function searchMatchmaker(opts) {
       .eq('status', 'active')
       .limit(200);
     if (!seedRes.error) {
-      (seedRes.data || []).forEach((row) => candidates.push(mapSeedRow(row)));
+      (seedRes.data || []).forEach((row) => addCandidate(mapSeedRow(row)));
     }
   } catch {
     /* seed table may be missing pre-migration */
@@ -243,23 +488,76 @@ async function searchMatchmaker(opts) {
       );
       rows.forEach((row) => {
         if (!row.name) return;
-        candidates.push(mapMemberRow(row, nextMap.get(row.id) || null));
+        addCandidate(mapMemberRow(row, nextMap.get(row.id) || null, null));
       });
     }
   } catch {
     /* discoverable columns may be missing pre-migration */
   }
 
+  // Existing Hub bookings: only for attendee-intent asks (“who attended Evolution…”)
+  let matchedEvents = [];
+  let eventAttendeeCount = 0;
+  const eventQuery = looksLikeEventAttendeeQuery(query);
+  if (eventQuery) {
+    matchedEvents = await findMatchingEvents(sb, query);
+    if (matchedEvents.length) {
+      const eventPeople = await loadAttendeesForEvents(sb, matchedEvents, excludeAttendeeId);
+      eventAttendeeCount = eventPeople.length;
+      eventPeople.forEach(addCandidate);
+    }
+  }
+
   const matches = rankCandidates(candidates, query, requesterEventIds);
+  const meta = {
+    max: MAX_SHORTLIST,
+    candidateCount: candidates.length,
+    requesterUpcomingEvents: requesterEventIds.length,
+    matchedEvents: matchedEvents.map((e) => ({ id: e.id, title: e.title, dateLabel: e.dateLabel })),
+    eventAttendeeCount,
+    eventQuery,
+  };
+  meta.empty = emptyStateCopy(meta);
   return {
     ok: true,
     query,
     matches,
-    meta: {
-      max: MAX_SHORTLIST,
-      candidateCount: candidates.length,
-      requesterUpcomingEvents: requesterEventIds.length,
-    },
+    meta,
+  };
+}
+
+/**
+ * Empty-state copy for the Meet people UI (shared with client tests).
+ */
+function emptyStateCopy(meta) {
+  const m = meta || {};
+  if (m.eventQuery) {
+    const titles = Array.isArray(m.matchedEvents) ? m.matchedEvents.map((e) => e && e.title).filter(Boolean) : [];
+    if (titles.length && Number(m.eventAttendeeCount || 0) === 0) {
+      return {
+        title: 'No bookings I can introduce yet',
+        text:
+          'I matched “' +
+          titles[0] +
+          '” on the Hub, but nobody’s booked that I can show. Try another session, or ask who you need by role.',
+      };
+    }
+    if (!titles.length) {
+      return {
+        title: 'I couldn’t match that Hub event',
+        text: 'Try the event name as it appears on The Networker — or describe who you need (role, city, problem).',
+      };
+    }
+  }
+  if (Number(m.candidateCount || 0) === 0) {
+    return {
+      title: 'No one came back yet',
+      text: 'The Hub pool is still thin for that ask. Try another description, or check back after more members opt in.',
+    };
+  }
+  return {
+    title: 'No one came back yet',
+    text: 'Try another way of describing who you need — a bit more context helps.',
   };
 }
 
@@ -268,10 +566,15 @@ module.exports = {
   MIN_QUERY_LEN,
   shortDisplayName,
   tokenize,
+  eventSearchTokens,
+  looksLikeEventAttendeeQuery,
   scoreAgainstQuery,
+  scoreEventTitle,
   eventBoost,
+  matchedEventBoost,
   rankCandidates,
   mapSeedRow,
   mapMemberRow,
+  emptyStateCopy,
   searchMatchmaker,
 };
