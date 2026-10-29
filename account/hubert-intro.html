@@ -130,7 +130,7 @@
 
   <main class="auth-main">
     <div class="auth-card" id="hi-card">
-      <p class="hi-kicker">Hubert</p>
+      <p class="hi-kicker">Hubert · matchmaker</p>
       <p class="hi-status" id="hi-status" role="status">Introduction</p>
       <h1 id="hi-title">Loading…</h1>
       <p class="auth-lede" id="hi-body">Checking your introduction link.</p>
@@ -149,7 +149,7 @@
         <a class="hi-btn--ghost" href="/account/">Back to your dashboard</a>
       </div>
 
-      <p class="hi-brand-foot">Contact details are never shared via Hubert — intros stay on the Hub.</p>
+      <p class="hi-brand-foot">Hubert is The Networker UK’s matchmaker. Contact details are never shared — intros stay on the Hub.</p>
     </div>
   </main>
 
@@ -218,7 +218,7 @@
           setStatus('', 'From your email');
           titleEl.textContent = 'Accept introduction from ' + who + '?';
           bodyEl.textContent =
-            'If you Accept, Hubert opens a Hub intro thread. Email, phone, and LinkedIn stay private.';
+            'Hubert is our matchmaker. If you Accept, he opens a Hub intro thread — email, phone, and LinkedIn stay private.';
           acceptBtn.hidden = false;
           declineBtn.hidden = true;
           return;
@@ -226,14 +226,16 @@
         if (intended === 'decline' || intended === 'no') {
           setStatus('', 'From your email');
           titleEl.textContent = 'Decline this introduction?';
-          bodyEl.textContent = 'Hubert will not open a thread. You can ignore future requests from this person.';
+          bodyEl.textContent =
+            'Hubert is our matchmaker. Declining means no thread is opened, and contact details stay private.';
           acceptBtn.hidden = true;
           declineBtn.hidden = false;
           return;
         }
         setStatus('', 'Choose an answer');
         titleEl.textContent = who + ' would like to connect';
-        bodyEl.textContent = 'Accept to open a Hubert intro on the Hub, or Decline.';
+        bodyEl.textContent =
+          'Hubert is The Networker UK’s matchmaker. Accept to open a Hub intro thread, or Decline — contact details stay private either way.';
         acceptBtn.hidden = false;
         declineBtn.hidden = false;
       }
