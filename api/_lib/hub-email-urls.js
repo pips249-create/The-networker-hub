@@ -63,6 +63,11 @@ function hubAccountUrl(siteUrl) {
   return siteBase(siteUrl) + '/account/';
 }
 
+/** My account → Past tickets (claim attended events / Most networked). */
+function hubClaimAttendedUrl(siteUrl) {
+  return hubAccountUrl(siteUrl) + '#past';
+}
+
 function plainEmailAddress(value) {
   const raw = String(value || '').trim();
   const angled = raw.match(/<([^<>]+)>/);
@@ -324,6 +329,7 @@ module.exports = {
   browseEventsUrl,
   opportunitiesBrowseUrl,
   hubAccountUrl,
+  hubClaimAttendedUrl,
   unsubscribeUrl,
   oneClickUnsubscribeUrl,
   welcomeUrl,
