@@ -257,6 +257,16 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v3-purple-attendance-claim',
     subject: 'Confirmed — leave a review for {{organiser_name}}',
   },
+  hubert_intro_request: {
+    file: 'hubert-intro-request.html',
+    marker: 'hub-email-layout-v3-purple-hubert-intro',
+    subject: 'Hubert: {{requester_name}} would like to connect',
+  },
+  hubert_intro_accepted: {
+    file: 'hubert-intro-accepted.html',
+    marker: 'hub-email-layout-v3-purple-hubert-intro',
+    subject: 'Hubert: {{counterpart_name}} accepted your introduction',
+  },
   account_welcome: {
     file: 'account-welcome.html',
     marker: 'hub-email-layout-v3-purple',

@@ -148,6 +148,8 @@ const GATE_BYPASS_PREFIXES = [
   '/api/health',
   '/api/email-review',
   '/api/attendance-claim',
+  '/api/hubert-intro',
+  '/account/hubert-intro.html',
   '/api/track',
   '/api/sponsor-out',
   '/api/sponsor-analytics',
