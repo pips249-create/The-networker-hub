@@ -1094,6 +1094,89 @@ body.hub-page-organiser.organiser-opportunity-edit-page {
   margin-top: 12px;
 }
 
+.oe-listing-billing-actions .ee-btn {
+  text-decoration: none;
+}
+
+.oe-listing-invoices {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(28, 32, 64, 0.12);
+  scroll-margin-top: 88px;
+}
+
+.oe-listing-invoices-title {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1c2040;
+}
+
+.oe-listing-invoices-lead {
+  margin: 0 0 10px;
+}
+
+.oe-listing-invoices-status {
+  margin: 0 0 8px;
+}
+
+.oe-listing-invoices-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.oe-listing-invoice-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(28, 32, 64, 0.1);
+}
+
+.oe-listing-invoice-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.oe-listing-invoice-date {
+  font-weight: 700;
+  color: #1c2040;
+  font-size: 0.95rem;
+}
+
+.oe-listing-invoice-detail {
+  font-size: 0.85rem;
+  color: #635c5e;
+}
+
+.oe-listing-invoice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.oe-listing-invoice-actions a {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1a7a4c;
+  text-decoration: none;
+}
+
+.oe-listing-invoice-actions a:hover,
+.oe-listing-invoice-actions a:focus-visible {
+  text-decoration: underline;
+}
+
 .oe-listing-billing-note {
   margin-top: 10px;
 }

@@ -132,10 +132,11 @@
       pill.classList.toggle('org-eb-status--ready', connected);
     }
     if (connectBtn) {
-      connectBtn.hidden = false;
-      connectBtn.textContent = connected ? 'Reconnect' : 'Connect Eventbrite';
-      connectBtn.classList.toggle('org-btn-primary', !connected);
-      connectBtn.classList.toggle('org-btn-outline', connected);
+      // Keep OAuth reconnect out of the main toolbar once connected — Refresh stays primary.
+      connectBtn.hidden = connected;
+      connectBtn.textContent = 'Connect Eventbrite';
+      connectBtn.classList.add('org-btn-primary');
+      connectBtn.classList.remove('org-btn-outline');
     }
     if (refreshBtn) refreshBtn.hidden = !connected;
     if (dedupeBtn) dedupeBtn.hidden = !connected;
@@ -480,6 +481,7 @@
     var connectBtn = qs('org-eb-connect');
     if (connectBtn) {
       connectBtn.addEventListener('click', function (e) {
+        e.preventDefault();
         e.stopPropagation();
         fillGroupSelect(selectedGroupId());
         startOAuth();
@@ -488,7 +490,9 @@
 
     var refreshBtn = qs('org-eb-refresh');
     if (refreshBtn) {
-      refreshBtn.addEventListener('click', function () {
+      refreshBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
         refreshEvents();
       });
     }
@@ -496,7 +500,9 @@
     var dedupeBtn = qs('org-eb-dedupe');
     if (dedupeBtn && !dedupeBtn.dataset.bound) {
       dedupeBtn.dataset.bound = '1';
-      dedupeBtn.addEventListener('click', function () {
+      dedupeBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
         dedupeImports();
       });
     }
