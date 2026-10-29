@@ -8,12 +8,11 @@ const { emailGreetingName } = require('./email-display-name');
 const {
   emailSiteBase,
   hubertIconUrl,
+  logoEmailOnDarkUrl,
   supportEmail,
 } = require('./hub-email-urls');
 const { isAdminRole } = require('./auth');
 const { resolveHubInvitePersona } = require('./hubert-hub-invite-personas');
-const hubertInviteHeaderLogoDataUri = require('./hubert-hub-invite-header-logo-datauri');
-const hubertInviteOnDarkLogoDataUri = require('./hubert-hub-invite-logo-datauri');
 
 const MEMBER_WEEKLY_CAP = 5;
 const ADMIN_WEEKLY_CAP = 50;
@@ -179,10 +178,10 @@ async function sendHubInvite({
     register_url: registerUrl,
     account_url: site + '/account/',
     hubert_icon_url: hubertIconUrl(),
-    // Inline logos so cream header + purple footer always render (no remote block).
-    logo_url: hubertInviteHeaderLogoDataUri,
-    logo_footer_url: hubertInviteOnDarkLogoDataUri,
-    logo_footer_light_url: hubertInviteOnDarkLogoDataUri,
+    // Hosted on-dark wordmark — purple header + footer (data URIs often stripped by Gmail).
+    logo_url: logoEmailOnDarkUrl(site),
+    logo_footer_url: logoEmailOnDarkUrl(site),
+    logo_footer_light_url: logoEmailOnDarkUrl(site),
     support_email: supportEmail(),
     site_url: site,
   };

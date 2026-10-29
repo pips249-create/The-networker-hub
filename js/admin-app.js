@@ -34421,10 +34421,14 @@
               esc(c.linkedinUrl) +
               '" target="_blank" rel="noopener noreferrer">LinkedIn</a>'
             : '<span class="text-xs text-slate-400">No LinkedIn</span>';
+        var inviteAsLabel =
+          hubertSeedState.inviteAs === 'catherine' ? 'Catherine' : 'Rosie';
         var inviteBtn = c.email
           ? '<button type="button" class="rounded border border-violet-200 text-violet-800 px-2 py-1 text-xs font-semibold hover:bg-violet-50" data-hmm-seed-invite="' +
             esc(c.id) +
-            '">Invite to Hub</button> '
+            '" title="Uses the Invite as picker above">Invite as ' +
+            inviteAsLabel +
+            '</button> '
           : '<span class="text-xs text-slate-400 mr-1" title="Add an email to invite">No email</span> ';
         return (
           '<tr class="border-t border-slate-100 align-top">' +
@@ -34580,6 +34584,15 @@
       inviteAsSel.addEventListener('change', function () {
         var v = String(inviteAsSel.value || 'rosie').trim().toLowerCase();
         hubertSeedState.inviteAs = v === 'catherine' ? 'catherine' : 'rosie';
+        var live = root.querySelector('#hmm-seed-invite-as-live');
+        if (live) {
+          live.textContent =
+            hubertSeedState.inviteAs === 'catherine' ? 'Catherine Hancher' : 'Rosie McGilvray';
+        }
+        root.querySelectorAll('[data-hmm-seed-invite]').forEach(function (b) {
+          b.textContent =
+            'Invite as ' + (hubertSeedState.inviteAs === 'catherine' ? 'Catherine' : 'Rosie');
+        });
       });
     }
 
@@ -34703,7 +34716,9 @@
       '<label class="text-sm font-semibold text-slate-700 sm:col-span-2">Internal notes<textarea name="notes" rows="2" maxlength="1000" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Why you’re adding them, event context, etc."></textarea></label>' +
       '<label class="sm:col-span-2 flex items-start gap-2 text-sm text-slate-700">' +
       '<input type="checkbox" name="inviteNow" class="mt-1 rounded border-slate-300" />' +
-      '<span><strong>Also send Hub invite now</strong> — Hubert emails them a join link as Catherine or Rosie (from the picker above). They won’t see ops details.</span>' +
+      '<span><strong>Also send Hub invite now</strong> — attributed to <strong id="hmm-seed-invite-as-live">' +
+      (hubertSeedState.inviteAs === 'catherine' ? 'Catherine Hancher' : 'Rosie McGilvray') +
+      '</strong> (picker above). Member invites from the dashboard still use that individual&apos;s name. They won&apos;t see ops details.</span>' +
       '</label>' +
       '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-800">Save to seed list</button>' +
