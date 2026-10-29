@@ -932,6 +932,12 @@
           listEl.hidden = true;
           return;
         }
+        if (data.migrationRequired) {
+          listEl.hidden = false;
+          listEl.innerHTML =
+            '<p class="hmm-error" role="status">Intro tracking isn’t live yet — an admin needs to run migration 335, then reload the schema (337/338).</p>';
+          return;
+        }
         var connections = Array.isArray(data.connections)
           ? data.connections
           : [].concat(data.outbound || [], data.inbound || []).filter(function (r) {

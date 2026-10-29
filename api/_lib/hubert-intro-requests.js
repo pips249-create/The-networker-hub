@@ -106,13 +106,35 @@ function parseTargetId(raw) {
   return { kind: m[1].toLowerCase(), uuid: m[2].toLowerCase() };
 }
 
+function isMissingIntroTableError(error) {
+  const msg = String((error && (error.message || error.details || error.hint)) || '').toLowerCase();
+  const code = String((error && error.code) || '');
+  return (
+    code === 'PGRST205' ||
+    code === 'PGRST204' ||
+    msg.includes("could not find the table 'public.hubert_intro_requests'") ||
+    (msg.includes('hubert_intro_requests') && msg.includes('schema cache')) ||
+    (msg.includes('relation') && msg.includes('hubert_intro_requests') && msg.includes('does not exist'))
+  );
+}
+
+function missingIntroTableError() {
+  const err = new Error(
+    'Intro requests aren’t set up yet. Run migration 335_hubert_intro_requests.sql, then 337_reload_postgrest_schema_matchmaker.sql (or NOTIFY pgrst, \'reload schema\'), and try again.'
+  );
+  err.code = 'intro_migration_required';
+  err.status = 503;
+  return err;
+}
+
 async function expireStaleIntros(sb) {
   const now = new Date().toISOString();
-  await sb
+  const { error } = await sb
     .from('hubert_intro_requests')
     .update({ status: 'expired', updated_at: now })
     .eq('status', 'pending')
     .lt('expires_at', now);
+  if (error && isMissingIntroTableError(error)) throw missingIntroTableError();
 }
 
 async function assertIntroQuota(sb, requesterAttendeeId) {
@@ -122,7 +144,10 @@ async function assertIntroQuota(sb, requesterAttendeeId) {
     .eq('requester_attendee_id', requesterAttendeeId)
     .gte('created_at', weekAgoIso())
     .neq('status', 'blocked');
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (isMissingIntroTableError(error)) throw missingIntroTableError();
+    throw new Error(error.message);
+  }
   if ((count || 0) >= INTROS_PER_WEEK) {
     const err = new Error('intro_quota_exceeded');
     err.code = 'intro_quota_exceeded';
@@ -373,7 +398,10 @@ async function createIntroRequest(session, input) {
     openQ = openQ.eq('target_seed_id', loadedTarget.seedId);
   }
   const { count: openCount, error: openErr } = await openQ;
-  if (openErr) throw new Error(openErr.message);
+  if (openErr) {
+    if (isMissingIntroTableError(openErr)) throw missingIntroTableError();
+    throw new Error(openErr.message);
+  }
   if ((openCount || 0) > 0) {
     const err = new Error('intro_already_pending');
     err.code = 'intro_already_pending';
@@ -408,7 +436,10 @@ async function createIntroRequest(session, input) {
     })
     .select('*')
     .single();
-  if (ins.error) throw new Error(ins.error.message);
+  if (ins.error) {
+    if (isMissingIntroTableError(ins.error)) throw missingIntroTableError();
+    throw new Error(ins.error.message);
+  }
 
   const intro = ins.data;
   try {
@@ -437,7 +468,10 @@ async function createIntroRequest(session, input) {
 
 async function loadIntroById(sb, introId) {
   const { data, error } = await sb.from('hubert_intro_requests').select('*').eq('id', introId).maybeSingle();
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (isMissingIntroTableError(error)) throw missingIntroTableError();
+    throw new Error(error.message);
+  }
   return data || null;
 }
 
@@ -674,7 +708,14 @@ async function listIntrosForSession(session) {
     return { connections: [], requests: [], outbound: [], inbound: [] };
   }
 
-  await expireStaleIntros(sb);
+  try {
+    await expireStaleIntros(sb);
+  } catch (e) {
+    if (e && e.code === 'intro_migration_required') {
+      return { connections: [], requests: [], outbound: [], inbound: [], migrationRequired: true };
+    }
+    throw e;
+  }
 
   const { data: outboundRows, error: outErr } = await sb
     .from('hubert_intro_requests')
@@ -682,7 +723,12 @@ async function listIntrosForSession(session) {
     .eq('requester_attendee_id', attendeeId)
     .order('created_at', { ascending: false })
     .limit(40);
-  if (outErr) throw new Error(outErr.message);
+  if (outErr) {
+    if (isMissingIntroTableError(outErr)) {
+      return { connections: [], requests: [], outbound: [], inbound: [], migrationRequired: true };
+    }
+    throw new Error(outErr.message);
+  }
 
   const { data: inboundRows, error: inErr } = await sb
     .from('hubert_intro_requests')
@@ -690,7 +736,12 @@ async function listIntrosForSession(session) {
     .eq('target_attendee_id', attendeeId)
     .order('created_at', { ascending: false })
     .limit(40);
-  if (inErr) throw new Error(inErr.message);
+  if (inErr) {
+    if (isMissingIntroTableError(inErr)) {
+      return { connections: [], requests: [], outbound: [], inbound: [], migrationRequired: true };
+    }
+    throw new Error(inErr.message);
+  }
 
   const outbound = [];
   for (const row of outboundRows || []) {
