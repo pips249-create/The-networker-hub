@@ -17,6 +17,14 @@ const {
   isAnalyticsProfileComplete,
 } = require('./hub-profile-industries');
 const { normalizeCountryCode } = require('./profile-countries');
+const {
+  cleanLookingToMeet,
+  cleanMatchmakerBlurb,
+  parseDiscoverable,
+  matchmakerProfileFromAttendee,
+  LOOKING_TO_MEET_OPTIONS,
+  BLURB_MAX,
+} = require('./hubert-matchmaker-profile');
 
 const WRITABLE = {
   name: true,
@@ -28,6 +36,9 @@ const WRITABLE = {
   professionalRole: true,
   marketPreferences: true,
   businessSector: true,
+  matchmakerBlurb: true,
+  lookingToMeet: true,
+  discoverable: true,
 };
 
 function resolvePublicReviewNameInput(body) {
@@ -188,6 +199,7 @@ function rowToProfile(session, hub, attendee) {
     professionalRole: String(attendee?.professional_role || '').trim(),
     marketPreferences: marketFromRow,
     businessSector: String(attendee?.business_sector || '').trim(),
+    ...matchmakerProfileFromAttendee(attendee),
     emailsEnabled: hub?.emails_enabled !== false,
     emailPrefEventReminders: hub?.email_pref_event_reminders !== false,
     emailPrefOrganiserAlerts: hub?.email_pref_organiser_alerts !== false,
@@ -295,6 +307,29 @@ async function updateProfile(session, body) {
     attendeePatch.market_preferences = prefs || null;
     attendeePatch.interests = preferencesToInterests(prefs);
   }
+  if (body.matchmakerBlurb !== undefined || body.matchmaker_blurb !== undefined) {
+    const raw = body.matchmakerBlurb !== undefined ? body.matchmakerBlurb : body.matchmaker_blurb;
+    const blurb = cleanMatchmakerBlurb(raw);
+    if (String(raw || '').trim().length > BLURB_MAX) {
+      const e = new Error('Headline must be ' + BLURB_MAX + ' characters or fewer.');
+      e.status = 400;
+      e.code = 'invalid_matchmaker_blurb';
+      throw e;
+    }
+    attendeePatch.matchmaker_blurb = blurb || null;
+  }
+  if (body.lookingToMeet !== undefined || body.looking_to_meet !== undefined) {
+    attendeePatch.looking_to_meet = cleanLookingToMeet(
+      body.lookingToMeet !== undefined ? body.lookingToMeet : body.looking_to_meet
+    );
+  }
+  if (body.discoverable !== undefined || body.discoverableAt !== undefined || body.discoverable_at !== undefined) {
+    const next = parseDiscoverable(
+      body.discoverable !== undefined ? body.discoverable : body.discoverableAt !== undefined ? body.discoverableAt : body.discoverable_at,
+      attendee?.discoverable_at || null
+    );
+    if (next !== undefined) attendeePatch.discoverable_at = next;
+  }
 
   if (Object.keys(attendeePatch).length) {
     let updated = null;
@@ -330,7 +365,10 @@ async function updateProfile(session, body) {
         msg.includes('market_preferences') ||
         msg.includes('job_title') ||
         msg.includes('professional_role') ||
-        msg.includes('public_review_name')
+        msg.includes('public_review_name') ||
+        msg.includes('matchmaker_blurb') ||
+        msg.includes('looking_to_meet') ||
+        msg.includes('discoverable_at')
       ) {
         const fallback = { ...attendeePatch };
         delete fallback.business_sector;
@@ -339,6 +377,9 @@ async function updateProfile(session, body) {
         if (msg.includes('job_title')) delete fallback.job_title;
         if (msg.includes('professional_role')) delete fallback.professional_role;
         if (msg.includes('public_review_name')) delete fallback.public_review_name;
+        if (msg.includes('matchmaker_blurb')) delete fallback.matchmaker_blurb;
+        if (msg.includes('looking_to_meet')) delete fallback.looking_to_meet;
+        if (msg.includes('discoverable_at')) delete fallback.discoverable_at;
         if (Object.keys(fallback).length) {
           const retry = await sb
             .from('attendees')

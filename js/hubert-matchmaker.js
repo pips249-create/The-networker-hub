@@ -510,6 +510,193 @@
       });
   }
 
+  var DEFAULT_LOOKING = [
+    'Clients',
+    'Investors',
+    'Co-founders',
+    'Hires',
+    'Suppliers',
+    'Mentors',
+    'Partners',
+    'Press',
+  ];
+  var NUDGE_KEY = 'hmm_profile_nudge_dismissed_v1';
+
+  function renderLookingChips(wrap, options, selected) {
+    if (!wrap) return;
+    var list = Array.isArray(options) && options.length ? options : DEFAULT_LOOKING;
+    var selectedSet = {};
+    (Array.isArray(selected) ? selected : []).forEach(function (s) {
+      selectedSet[String(s).toLowerCase()] = true;
+    });
+    wrap.innerHTML = list
+      .map(function (label) {
+        var checked = selectedSet[String(label).toLowerCase()] ? ' checked' : '';
+        return (
+          '<label class="hmm-profile-chip">' +
+          '<input type="checkbox" value="' +
+          esc(label) +
+          '"' +
+          checked +
+          ' />' +
+          '<span>' +
+          esc(label) +
+          '</span>' +
+          '</label>'
+        );
+      })
+      .join('');
+  }
+
+  function selectedLookingFrom(wrap) {
+    if (!wrap) return [];
+    return Array.prototype.map
+      .call(wrap.querySelectorAll('input[type="checkbox"]:checked'), function (el) {
+        return el.value;
+      })
+      .filter(Boolean);
+  }
+
+  function setProfileStatus(ok, message) {
+    var status = document.querySelector('[data-hmm-profile-status]');
+    var err = document.querySelector('[data-hmm-profile-error]');
+    if (err) {
+      err.hidden = ok || !message;
+      err.textContent = ok ? '' : message || '';
+    }
+    if (status) {
+      status.hidden = !ok || !message;
+      status.textContent = ok ? message || '' : '';
+    }
+  }
+
+  function updateProfileNudge(profile) {
+    var nudge = document.querySelector('[data-hmm-profile-nudge]');
+    if (!nudge) return;
+    var dismissed = false;
+    try {
+      dismissed = window.localStorage.getItem(NUDGE_KEY) === '1';
+    } catch (e) {
+      dismissed = false;
+    }
+    var incomplete = !(profile && profile.matchmakerReady);
+    nudge.hidden = !incomplete || dismissed;
+  }
+
+  function fillProfilePanel(profile) {
+    var blurb = document.querySelector('[data-hmm-profile-blurb]');
+    var looking = document.querySelector('[data-hmm-profile-looking]');
+    var disc = document.querySelector('[data-hmm-profile-discoverable]');
+    if (blurb) blurb.value = (profile && profile.matchmakerBlurb) || '';
+    renderLookingChips(
+      looking,
+      (profile && profile.lookingToMeetOptions) || DEFAULT_LOOKING,
+      (profile && profile.lookingToMeet) || []
+    );
+    if (disc) disc.checked = Boolean(profile && profile.discoverable);
+    updateProfileNudge(profile || {});
+    if (profile && profile.matchmakerReady) {
+      setProfileStatus(true, 'You’re ready for Hubert to put you forward.');
+    } else {
+      setProfileStatus(true, '');
+    }
+  }
+
+  function loadMatchmakerProfile() {
+    var panel = document.querySelector('[data-hmm-profile-panel]');
+    if (!panel) return;
+    fetch('/api/auth/profile', { credentials: 'include' })
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        if (!data || !data.ok) return;
+        fillProfileForm(data.profile || {});
+      })
+      .catch(function () {
+        /* optional */
+      });
+  }
+
+  function saveMatchmakerProfile(e) {
+    if (e) e.preventDefault();
+    var blurbEl = document.querySelector('[data-hmm-profile-blurb]');
+    var looking = document.querySelector('[data-hmm-profile-looking]');
+    var disc = document.querySelector('[data-hmm-profile-discoverable]');
+    var saveBtn = document.querySelector('[data-hmm-profile-save]');
+    var payload = {
+      matchmakerBlurb: blurbEl ? String(blurbEl.value || '').trim() : '',
+      lookingToMeet: selectedLookingFrom(looking),
+      discoverable: Boolean(disc && disc.checked),
+    };
+    if (saveBtn) saveBtn.disabled = true;
+    setProfileStatus(true, 'Saving…');
+    fetch('/api/auth/profile', {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+      .then(function (res) {
+        return res.json().then(function (data) {
+          return { status: res.status, data: data };
+        });
+      })
+      .then(function (result) {
+        var data = result.data || {};
+        if (!data.ok) {
+          setProfileStatus(false, (data && data.message) || 'Could not save your profile.');
+          return;
+        }
+        fillProfileForm(data.profile || {});
+        setProfileStatus(true, 'Profile saved.');
+        try {
+          if (data.profile && data.profile.matchmakerReady) {
+            window.localStorage.setItem(NUDGE_KEY, '1');
+          }
+        } catch (err) {
+          /* ignore */
+        }
+      })
+      .catch(function () {
+        setProfileStatus(false, 'Connection issue — try again.');
+      })
+      .finally(function () {
+        if (saveBtn) saveBtn.disabled = false;
+      });
+  }
+
+  function bindProfilePanel() {
+    var form = document.querySelector('[data-hmm-profile-form]');
+    if (form && form.dataset.hmmBound !== '1') {
+      form.dataset.hmmBound = '1';
+      form.addEventListener('submit', saveMatchmakerProfile);
+    }
+    var openBtn = document.querySelector('[data-hmm-profile-nudge-open]');
+    if (openBtn && openBtn.dataset.hmmBound !== '1') {
+      openBtn.dataset.hmmBound = '1';
+      openBtn.addEventListener('click', function () {
+        var panel = document.querySelector('[data-hmm-profile-panel]');
+        if (panel && panel.scrollIntoView) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        var blurb = document.querySelector('[data-hmm-profile-blurb]');
+        if (blurb) blurb.focus();
+      });
+    }
+    var dismissBtn = document.querySelector('[data-hmm-profile-nudge-dismiss]');
+    if (dismissBtn && dismissBtn.dataset.hmmBound !== '1') {
+      dismissBtn.dataset.hmmBound = '1';
+      dismissBtn.addEventListener('click', function () {
+        try {
+          window.localStorage.setItem(NUDGE_KEY, '1');
+        } catch (e) {
+          /* ignore */
+        }
+        var nudge = document.querySelector('[data-hmm-profile-nudge]');
+        if (nudge) nudge.hidden = true;
+      });
+    }
+  }
+
   function loadMyIntros() {
     var listEl = document.querySelector('[data-hmm-intros]');
     if (!listEl) return;
@@ -820,6 +1007,8 @@
       },
     });
 
+    bindProfilePanel();
+    loadMatchmakerProfile();
     loadMyIntros();
     maybeOpenIntroFromUrl();
 
