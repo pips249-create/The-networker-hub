@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Connect Eventbrite – How-to guides – The Networker UK</title>
-<meta name="description" content="Connect Eventbrite once with OAuth — The Networker UK imports your live events automatically and syncs ticket buyers to your attendee list.">
+<meta name="description" content="Connect Eventbrite on My events, then Import each event onto your organiser page. Checkout stays on Eventbrite; ticket buyers sync to your attendee list.">
 <!-- hub-static-seo -->
 <link rel="canonical" href="https://www.thenetworkeruk.com/guides/connect-eventbrite">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="The Networker UK">
 <meta property="og:title" content="Connect Eventbrite – How-to guides – The Networker UK">
-<meta property="og:description" content="Connect Eventbrite once with OAuth — The Networker UK imports your live events automatically and syncs ticket buyers to your attendee list.">
+<meta property="og:description" content="Connect Eventbrite on My events, then Import each event onto your organiser page. Checkout stays on Eventbrite; ticket buyers sync to your attendee list.">
 <meta property="og:url" content="https://www.thenetworkeruk.com/guides/connect-eventbrite">
 <meta property="og:image" content="https://www.thenetworkeruk.com/assets/logo-networker-uk-og.png?v=20260908og">
 <meta property="og:image:width" content="1200">
@@ -18,7 +18,7 @@
 <meta property="og:image:alt" content="The Networker UK">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Connect Eventbrite – How-to guides – The Networker UK">
-<meta name="twitter:description" content="Connect Eventbrite once with OAuth — The Networker UK imports your live events automatically and syncs ticket buyers to your attendee list.">
+<meta name="twitter:description" content="Connect Eventbrite on My events, then Import each event onto your organiser page. Checkout stays on Eventbrite; ticket buyers sync to your attendee list.">
 <meta name="twitter:image" content="https://www.thenetworkeruk.com/assets/logo-networker-uk-og.png">
 <!-- /hub-static-seo -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26,7 +26,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/hub.css?v=20261016signin1">
 <link rel="stylesheet" href="../css/content-page.css">
-<link rel="stylesheet" href="../css/connect-eventbrite-guide.css?v=20261029oauth1">
+<link rel="stylesheet" href="../css/connect-eventbrite-guide.css?v=20261029import1">
 <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml">
 <link rel="icon" href="/assets/favicon-32.png?v=20260823uk" type="image/png" sizes="32x32">
@@ -50,12 +50,13 @@
       <div class="ceb-hero-grid">
         <div class="ceb-hero-copy">
           <h1 id="ceb-hero-heading">Connect Eventbrite</h1>
-          <p class="ceb-hero-pill">One click · Events import automatically</p>
+          <p class="ceb-hero-pill">Connect once · Then Import each event</p>
           <div class="ceb-hero-panel">
             <p class="ceb-hero-panel-title">Checkout stays on Eventbrite</p>
             <p class="ceb-hero-lede">
-              Connect once with OAuth. We import your live Eventbrite events onto your organiser page
-              and sync ticket buyers to your Networker UK attendee list — reviews and round-ups included.
+              On <strong>My events</strong>, connect your Eventbrite account, then Import each event onto your
+              organiser page — same pattern as a recurring series list. Ticket buyers sync to your Networker UK
+              attendee list for reviews and round-ups.
             </p>
           </div>
           <div class="ceb-hero-actions">
@@ -64,7 +65,7 @@
               >Open My events</a
             >
           </div>
-          <p class="ceb-hero-trust">Connect once · Auto-import · About 2 minutes</p>
+          <p class="ceb-hero-trust">My events · Connect · Import · About 5 minutes</p>
         </div>
         <div class="ceb-hero-art" aria-hidden="true">
           <svg class="ceb-hero-illus" viewBox="0 0 280 240" xmlns="http://www.w3.org/2000/svg" focusable="false">
@@ -99,37 +100,28 @@
     <div class="ceb-stage" role="region" aria-roledescription="carousel" aria-label="Eventbrite setup steps">
       <article class="ceb-slide is-active" data-ceb-slide id="open-my-events" aria-hidden="false">
         <span class="ceb-slide-step">1</span>
-        <h2>Open My events on The Networker UK</h2>
-        <p>Do this on our site first (not on Eventbrite yet):</p>
+        <h2>Open My events</h2>
+        <p>Eventbrite connect lives on <strong>My events</strong> — not on Connected booking webhooks, and not on the organiser page Edit form.</p>
         <ol>
           <li>Sign in to The Networker UK</li>
           <li>Open your <strong>organiser dashboard</strong></li>
           <li>In the sidebar, click <strong>My events</strong></li>
         </ol>
-        <figure class="ceb-shot" aria-label="Where Connect Eventbrite sits on My events">
+        <figure class="ceb-shot" aria-label="Connect Eventbrite row on My events">
           <div class="ceb-shot-frame">
             <div class="ceb-shot-chrome"><i></i><i></i><i></i><span>thenetworkeruk.com · Organiser → My events</span></div>
-            <div class="ceb-ui-mock">
-              <aside class="ceb-ui-side" aria-hidden="true">
-                <span class="ceb-ui-side-brand">The Networker UK</span>
-                <span class="ceb-ui-side-link">Home</span>
-                <span class="ceb-ui-side-link is-hot">My events</span>
-                <span class="ceb-ui-side-link">Organiser pages</span>
-              </aside>
-              <div class="ceb-ui-main">
-                <p class="ceb-ui-kicker">My events</p>
-                <div class="ceb-ui-eb-panel">
-                  <div class="ceb-ui-eb-trigger">
-                    <span class="ceb-ui-eb-chev">▸</span>
-                    <strong>Connect Eventbrite</strong>
-                    <span class="ceb-ui-eb-status">Not connected</span>
-                  </div>
+            <div class="ceb-ui-mock ceb-ui-mock--panel">
+              <div class="ceb-ui-eb-panel">
+                <div class="ceb-ui-eb-trigger">
+                  <span class="ceb-ui-eb-chev">▸</span>
+                  <strong>Connect Eventbrite</strong>
+                  <span class="ceb-ui-eb-status">Not connected</span>
                 </div>
-                <p class="ceb-ui-hint">Look for this row near the top of My events.</p>
               </div>
+              <p class="ceb-ui-hint">Near the top of My events — same style as a recurring series row.</p>
             </div>
           </div>
-          <figcaption>On our site: My events → the <strong>Connect Eventbrite</strong> row.</figcaption>
+          <figcaption>Look for the <strong>Connect Eventbrite</strong> row on My events.</figcaption>
         </figure>
         <div class="ceb-slide-actions">
           <a class="btn btn-primary" href="../login?next=/organiser/%23events-list&amp;intent=organiser"
@@ -138,19 +130,19 @@
         </div>
       </article>
 
-      <article class="ceb-slide" data-ceb-slide id="connect-oauth" aria-hidden="true">
+      <article class="ceb-slide" data-ceb-slide id="connect-account" aria-hidden="true">
         <span class="ceb-slide-step">2</span>
-        <h2>Click Connect Eventbrite</h2>
-        <p>Still on The Networker UK:</p>
+        <h2>Connect your Eventbrite account</h2>
+        <p>On My events:</p>
         <ol>
-          <li>Click the <strong>Connect Eventbrite</strong> row so it expands</li>
+          <li>Click the <strong>Connect Eventbrite</strong> row so it expands (this only opens the panel)</li>
+          <li>Under <strong>Import onto</strong>, choose the organiser page that should receive events</li>
           <li>
-            Under <strong>Import onto</strong>, pick the organiser page that should receive your Eventbrite
-            events
+            Click the primary <strong>Connect Eventbrite</strong> button inside the panel — that starts the
+            connection (OAuth). Approve The Networker UK when Eventbrite asks.
           </li>
-          <li>Click the gold/teal <strong>Connect Eventbrite</strong> button</li>
         </ol>
-        <figure class="ceb-shot" aria-label="Connect Eventbrite panel expanded">
+        <figure class="ceb-shot" aria-label="Expanded Connect Eventbrite panel">
           <div class="ceb-shot-frame">
             <div class="ceb-shot-chrome"><i></i><i></i><i></i><span>thenetworkeruk.com · Connect Eventbrite</span></div>
             <div class="ceb-ui-mock ceb-ui-mock--panel">
@@ -162,7 +154,7 @@
                 </div>
                 <div class="ceb-ui-eb-body">
                   <p class="ceb-ui-eb-lede">
-                    Connect once — we import your live Eventbrite events automatically and sync ticket buyers.
+                    Connect once. Your Eventbrite list drops down — then Import each event onto an organiser page.
                   </p>
                   <div class="ceb-ui-eb-toolbar">
                     <label>
@@ -176,55 +168,25 @@
             </div>
           </div>
           <figcaption>
-            Pick the page under <strong>Import onto</strong>, then click <strong>Connect Eventbrite</strong>.
+            Expanding the row does <strong>not</strong> connect you. The button inside the panel does.
           </figcaption>
         </figure>
         <p class="ceb-slide-note">
-          You do <strong>not</strong> need to paste a webhook or private token for the normal path. We handle
-          that after you approve on Eventbrite.
+          If OAuth is unavailable, open <strong>Use a private API token instead</strong> in the same panel and
+          follow the Eventbrite screenshots in step 3’s fallback.
         </p>
       </article>
 
-      <article class="ceb-slide" data-ceb-slide id="approve-eventbrite" aria-hidden="true">
+      <article class="ceb-slide" data-ceb-slide id="event-list" aria-hidden="true">
         <span class="ceb-slide-step">3</span>
-        <h2>Allow access on Eventbrite</h2>
-        <p>Eventbrite opens (new tab or same window). This is the only step on their site:</p>
-        <ol>
-          <li>Check you are signed into the <strong>correct Eventbrite organiser account</strong></li>
-          <li>Click <strong>Allow</strong> so The Networker UK can import events and sync buyers</li>
-          <li>You are sent straight back to My events</li>
-        </ol>
-        <figure class="ceb-shot ceb-shot--photo">
-          <img
-            src="../assets/guides/eventbrite/05-oauth-approve.webp"
-            alt="Eventbrite authorization screen asking you to Allow The Networker UK access"
-            width="1280"
-            height="720"
-            loading="lazy"
-          />
-          <figcaption>
-            On Eventbrite: click the orange <strong>Allow</strong> button. If you see Deny, you have not
-            connected yet.
-          </figcaption>
-        </figure>
-        <p class="ceb-slide-note">
-          Wrong Eventbrite account? Sign out of Eventbrite, sign into the organiser account that owns your
-          events, then click <strong>Connect Eventbrite</strong> again on our site.
+        <h2>Your Eventbrite list drops down</h2>
+        <p>
+          After a successful connect you return to My events. The panel status shows <strong>Connected</strong>
+          and your Eventbrite events appear in the list underneath — ready to Import.
         </p>
-      </article>
-
-      <article class="ceb-slide" data-ceb-slide id="events-import" aria-hidden="true">
-        <span class="ceb-slide-step">4</span>
-        <h2>Events appear automatically</h2>
-        <p>Back on The Networker UK you should see something like:</p>
-        <ul>
-          <li>Status <strong>Connected</strong> on the Connect Eventbrite row</li>
-          <li>A message such as <strong>Connected. Imported 3 events.</strong></li>
-          <li>Your live Eventbrite events listed under that panel (and on My events)</li>
-        </ul>
-        <figure class="ceb-shot" aria-label="Connected Eventbrite with imported events">
+        <figure class="ceb-shot" aria-label="Connected Eventbrite event list">
           <div class="ceb-shot-frame">
-            <div class="ceb-shot-chrome"><i></i><i></i><i></i><span>thenetworkeruk.com · Eventbrite connected</span></div>
+            <div class="ceb-shot-chrome"><i></i><i></i><i></i><span>thenetworkeruk.com · Eventbrite events</span></div>
             <div class="ceb-ui-mock ceb-ui-mock--panel">
               <div class="ceb-ui-eb-panel is-open">
                 <div class="ceb-ui-eb-trigger">
@@ -233,7 +195,6 @@
                   <span class="ceb-ui-eb-status is-ready">Connected</span>
                 </div>
                 <div class="ceb-ui-eb-body">
-                  <p class="ceb-ui-eb-msg">Connected. Imported 3 events.</p>
                   <div class="ceb-ui-eb-toolbar">
                     <label>
                       Import onto
@@ -245,38 +206,137 @@
                     <li>
                       <span>
                         <strong>Leeds Breakfast Club</strong>
-                        <em>Live · already on your page</em>
+                        <em>Tue 20 May · Leeds</em>
                       </span>
-                      <span class="ceb-ui-pill is-live">Live</span>
+                      <span class="ceb-ui-btn-outline ceb-ui-btn-sm">Import</span>
                     </li>
                     <li>
                       <span>
                         <strong>Manchester Mixer</strong>
-                        <em>Live · already on your page</em>
+                        <em>Thu 12 Jun · Manchester</em>
                       </span>
-                      <span class="ceb-ui-pill is-live">Live</span>
+                      <span class="ceb-ui-btn-outline ceb-ui-btn-sm">Import</span>
                     </li>
                     <li>
                       <span>
                         <strong>Sheffield After Hours</strong>
-                        <em>Needs a price — stays draft until complete</em>
+                        <em>Fri 27 Jun · Sheffield</em>
                       </span>
-                      <span class="ceb-ui-pill">Draft</span>
+                      <span class="ceb-ui-btn-outline ceb-ui-btn-sm">Import</span>
                     </li>
                   </ul>
                 </div>
               </div>
             </div>
           </div>
+          <figcaption>Connected ≠ listed yet. Use <strong>Import</strong> on each row you want on the site.</figcaption>
+        </figure>
+        <details class="ceb-fallback" id="ceb-private-token">
+          <summary>Fallback: connect with a private API token</summary>
+          <p>
+            Use this if the Connect Eventbrite button cannot open Eventbrite. Same result: Connected status +
+            event list.
+          </p>
+          <ol>
+            <li>On Eventbrite: Profile → <strong>Account Settings</strong></li>
+            <li>Left menu → <strong>Developer Links</strong> → <strong>API Keys</strong></li>
+            <li>
+              <strong>Create API Key</strong> if needed, or open an app →
+              <strong>Show API key, client secret and tokens</strong>
+            </li>
+            <li>Copy the <strong>Private token</strong> (not the public key / client secret)</li>
+            <li>
+              Back on My events → Connect Eventbrite → <strong>Use a private API token instead</strong> → paste
+              → <strong>Save token &amp; load events</strong>
+            </li>
+          </ol>
+          <div class="ceb-shot-stack">
+            <figure class="ceb-shot ceb-shot--photo">
+              <img
+                src="../assets/guides/eventbrite/01-account-settings-menu-full.webp"
+                alt="Eventbrite profile menu open on Account Settings"
+                width="1200"
+                height="266"
+                loading="lazy"
+              />
+              <figcaption>1. Profile → Account Settings</figcaption>
+            </figure>
+            <figure class="ceb-shot ceb-shot--photo">
+              <img
+                src="../assets/guides/eventbrite/02-developer-links-full.webp"
+                alt="Eventbrite Account Information page with Developer Links in the sidebar"
+                width="1200"
+                height="537"
+                loading="lazy"
+              />
+              <figcaption>2. Open Developer Links in the left menu</figcaption>
+            </figure>
+            <figure class="ceb-shot ceb-shot--photo">
+              <img
+                src="../assets/guides/eventbrite/03-api-keys-full.webp"
+                alt="Eventbrite API Keys list with Show API key, client secret and tokens"
+                width="1200"
+                height="340"
+                loading="lazy"
+              />
+              <figcaption>3. API Keys → Show API key, client secret and tokens</figcaption>
+            </figure>
+            <figure class="ceb-shot ceb-shot--photo">
+              <img
+                src="../assets/guides/eventbrite/04-create-api-key-full.webp"
+                alt="Eventbrite Request a new key form"
+                width="1200"
+                height="561"
+                loading="lazy"
+              />
+              <figcaption>4. Or Create API Key, then copy the Private token</figcaption>
+            </figure>
+          </div>
+        </details>
+      </article>
+
+      <article class="ceb-slide" data-ceb-slide id="import-events" aria-hidden="true">
+        <span class="ceb-slide-step">4</span>
+        <h2>Import each event onto your page</h2>
+        <p>This is how events get onto The Networker UK:</p>
+        <ol>
+          <li>Confirm <strong>Import onto</strong> is the right organiser page</li>
+          <li>On each Eventbrite row you want listed, click <strong>Import</strong></li>
+          <li>
+            Complete listings (date + price + booking URL) publish; incomplete ones stay
+            <strong>drafts</strong> until you finish them
+          </li>
+          <li>Rows already on the site show <strong>Already linked</strong></li>
+        </ol>
+        <figure class="ceb-shot" aria-label="Import button on an Eventbrite event row">
+          <div class="ceb-shot-frame">
+            <div class="ceb-shot-chrome"><i></i><i></i><i></i><span>thenetworkeruk.com · Import</span></div>
+            <div class="ceb-ui-mock ceb-ui-mock--panel">
+              <ul class="ceb-ui-eb-list">
+                <li>
+                  <span>
+                    <strong>Leeds Breakfast Club</strong>
+                    <em>Click Import to add it to your organiser page</em>
+                  </span>
+                  <span class="ceb-ui-btn-primary ceb-ui-btn-sm">Import</span>
+                </li>
+                <li>
+                  <span>
+                    <strong>Manchester Mixer</strong>
+                    <em>Already on The Networker UK</em>
+                  </span>
+                  <span class="ceb-ui-pill is-live">Already linked</span>
+                </li>
+              </ul>
+            </div>
+          </div>
           <figcaption>
-            Complete listings (date + price + booking URL) publish automatically. Incomplete ones stay drafts
-            until you finish them.
+            New Eventbrite events later: open the panel → <strong>Refresh list</strong> → Import anything new.
           </figcaption>
         </figure>
         <p class="ceb-slide-note">
-          Keep creating events on Eventbrite as usual. New <strong>live</strong> events keep arriving on The
-          Networker UK (hourly sync + when Eventbrite publishes). Use <strong>Refresh list</strong> or
-          <strong>Import</strong> on a row if something is missing.
+          You do <strong>not</strong> paste webhooks per event. Connecting the account once is enough for buyer
+          sync after you Import (and publish) the listing.
         </p>
       </article>
 
@@ -285,15 +345,13 @@
         <h2>Check a ticket sale synced</h2>
         <p>Place a small test order on Eventbrite (or wait for a real booking), then on our site:</p>
         <ul>
+          <li>Open the imported event → <strong>Attendees</strong> — the buyer should be there</li>
           <li>
-            Open the event → <strong>Attendees</strong> — the buyer should be there
-          </li>
-          <li>
-            Or <strong>Connected booking → Recent sync attempts</strong> should show
+            Or check <strong>Booking system → Recent sync attempts</strong> for
             <code>eventbrite:accepted</code>
           </li>
         </ul>
-        <figure class="ceb-shot" aria-label="Where to confirm a synced buyer">
+        <figure class="ceb-shot" aria-label="Attendees list after an Eventbrite sale">
           <div class="ceb-shot-frame">
             <div class="ceb-shot-chrome"><i></i><i></i><i></i><span>thenetworkeruk.com · Event → Attendees</span></div>
             <div class="ceb-ui-mock ceb-ui-mock--panel">
@@ -303,16 +361,12 @@
                   <strong>Alex Buyer</strong>
                   <span>alex@example.com · via Eventbrite</span>
                 </div>
-                <p class="ceb-ui-hint">After a sale on Eventbrite, the buyer lands here automatically.</p>
+                <p class="ceb-ui-hint">Checkout stayed on Eventbrite; the buyer still lands here.</p>
               </div>
             </div>
           </div>
-          <figcaption>Ticket checkout stays on Eventbrite; buyers still appear on your Networker UK list.</figcaption>
+          <figcaption>If the buyer is missing, reconnect Eventbrite or confirm the event was Imported.</figcaption>
         </figure>
-        <p class="ceb-slide-note">
-          Only seeing <code>eventbrite:webhook_ping</code>? The ping arrived but we could not load the full
-          order — reconnect Eventbrite (or use the private-token fallback below) and try again.
-        </p>
         <div class="ceb-slide-actions">
           <a class="btn btn-primary" href="../login?next=/organiser/%23events-list&amp;intent=organiser"
             >Back to My events</a
@@ -340,112 +394,40 @@
         </thead>
         <tbody>
           <tr>
-            <td>Connect button fails / <code>eventbrite_oauth_not_configured</code></td>
+            <td>Connect button fails / OAuth unavailable</td>
             <td>
-              Use the private-token fallback below, or email
-              <a href="mailto:hi@thenetworkeruk.com">hi@thenetworkeruk.com</a>.
+              Use <strong>Use a private API token instead</strong> in the same My events panel (screenshots in
+              step 3).
             </td>
           </tr>
           <tr>
-            <td>Connected but no events</td>
+            <td>Connected but empty list</td>
             <td>
-              Confirm the events are <strong>live</strong> on Eventbrite (drafts are not auto-imported). Click
-              <strong>Refresh list</strong>, then <strong>Import</strong> on a row if needed.
+              Confirm events are live on Eventbrite. Click <strong>Refresh list</strong>. Draft Eventbrite
+              events may not appear until they are live.
             </td>
           </tr>
           <tr>
-            <td>Event stuck as draft</td>
-            <td>
-              Add the missing price, booking URL, or date on the Networker UK listing, then publish.
-            </td>
-          </tr>
-          <tr>
-            <td><code>event_not_linked</code></td>
-            <td>
-              Import that Eventbrite event from the Connect panel, or link it once under Connected setup.
-            </td>
+            <td>Import leaves a draft</td>
+            <td>Add the missing price, booking URL, or date on the Networker UK listing, then publish.</td>
           </tr>
           <tr>
             <td>Buyer missing on Attendees</td>
             <td>
-              Reconnect Eventbrite (or save a private token). Confirm Recent sync attempts shows
-              <code>accepted</code>.
+              Confirm the event is Imported (not only Connected). Check Recent sync attempts for
+              <code>accepted</code>. Reconnect if needed.
             </td>
           </tr>
           <tr>
-            <td><code>invalid_webhook_token</code> / sync stopped</td>
+            <td><code>invalid_webhook_token</code></td>
             <td>
-              Rare after OAuth. If shown, copy the webhook URL from Connected booking and paste it into
-              Eventbrite → Account settings → Webhooks (keep <strong>www</strong> in the URL; action
+              Rare after connect. If shown, copy the webhook URL from Booking system / Connected booking and
+              paste it into Eventbrite → Account settings → Webhooks (keep <strong>www</strong>; action
               <strong>order.placed</strong>).
             </td>
           </tr>
         </tbody>
       </table>
-
-      <details class="ceb-fallback" id="ceb-private-token">
-        <summary>Fallback: paste a private API token instead of OAuth</summary>
-        <p>
-          Only if Connect Eventbrite / Allow is unavailable. Same auto-import and buyer sync once the token is
-          saved.
-        </p>
-        <ol>
-          <li>On Eventbrite: Profile → <strong>Account Settings</strong></li>
-          <li>Left menu → <strong>Developer Links</strong> → <strong>API Keys</strong></li>
-          <li>
-            <strong>Create API Key</strong> if needed, or open an app →
-            <strong>Show API key, client secret and tokens</strong>
-          </li>
-          <li>Copy the <strong>Private token</strong> (not the public key / client secret)</li>
-          <li>
-            On My events → Connect Eventbrite → <strong>Use a private API token instead</strong> → paste and
-            <strong>Save token &amp; load events</strong>
-          </li>
-        </ol>
-        <div class="ceb-shot-stack">
-          <figure class="ceb-shot ceb-shot--photo">
-            <img
-              src="../assets/guides/eventbrite/01-account-settings-menu-full.webp"
-              alt="Eventbrite profile menu open on Account Settings"
-              width="1200"
-              height="266"
-              loading="lazy"
-            />
-            <figcaption>1. Profile → Account Settings</figcaption>
-          </figure>
-          <figure class="ceb-shot ceb-shot--photo">
-            <img
-              src="../assets/guides/eventbrite/02-developer-links-full.webp"
-              alt="Eventbrite Account Information page with Developer Links in the sidebar"
-              width="1200"
-              height="537"
-              loading="lazy"
-            />
-            <figcaption>2. Open Developer Links in the left menu</figcaption>
-          </figure>
-          <figure class="ceb-shot ceb-shot--photo">
-            <img
-              src="../assets/guides/eventbrite/03-api-keys-full.webp"
-              alt="Eventbrite API Keys list with Show API key, client secret and tokens"
-              width="1200"
-              height="340"
-              loading="lazy"
-            />
-            <figcaption>3. API Keys → Show API key, client secret and tokens</figcaption>
-          </figure>
-          <figure class="ceb-shot ceb-shot--photo">
-            <img
-              src="../assets/guides/eventbrite/04-create-api-key-full.webp"
-              alt="Eventbrite Request a new key form"
-              width="1200"
-              height="561"
-              loading="lazy"
-            />
-            <figcaption>4. Or Create API Key, then copy the Private token</figcaption>
-          </figure>
-        </div>
-      </details>
-
       <p style="margin: 14px 0 0; color: var(--ceb-muted); font-size: 0.95rem">
         Stuck? Email
         <a href="mailto:hi@thenetworkeruk.com">hi@thenetworkeruk.com</a>
@@ -467,6 +449,6 @@
 
 <div id="hub-site-footer"></div>
 <script src="../js/site-footer.js?v=20260910pp1" data-root="../"></script>
-<script src="../js/connect-eventbrite-guide.js?v=20261029oauth1" defer></script>
+<script src="../js/connect-eventbrite-guide.js?v=20261029import1" defer></script>
 </body>
 </html>

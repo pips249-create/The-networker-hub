@@ -671,6 +671,13 @@
   border-radius: 8px;
   font-size: 0.85rem;
   font-weight: 700;
+  flex-shrink: 0;
+}
+
+.ceb-ui-btn-sm {
+  min-height: 30px;
+  padding: 0 10px;
+  font-size: 0.78rem;
 }
 
 .ceb-ui-btn-primary {

@@ -98,7 +98,7 @@ const GUIDE_PAGES = {
     path: '/guides/connect-eventbrite',
     title: 'Connect Eventbrite – How-to guides – The Networker UK',
     description:
-      'Connect Eventbrite once with OAuth — The Networker UK imports your live events automatically and syncs ticket buyers to your attendee list.',
+      'Connect Eventbrite on My events, then Import each event onto your organiser page. Checkout stays on Eventbrite; ticket buyers sync to your attendee list.',
     name: 'Connect Eventbrite',
     howToName: 'How to connect Eventbrite to The Networker UK',
     steps: [
@@ -108,24 +108,24 @@ const GUIDE_PAGES = {
         text: 'Sign in to The Networker UK, open the organiser dashboard, and go to My events.',
       },
       {
-        id: 'connect-oauth',
+        id: 'connect-account',
         name: 'Connect Eventbrite',
-        text: 'Expand Connect Eventbrite, choose which organiser page to import onto, then click Connect Eventbrite.',
+        text: 'Expand the Connect Eventbrite row, choose which organiser page to Import onto, then click Connect Eventbrite and approve access on Eventbrite (or paste a private token).',
       },
       {
-        id: 'approve-eventbrite',
-        name: 'Allow access on Eventbrite',
-        text: 'On Eventbrite, confirm you are signed into the right organiser account and click Allow so The Networker UK can import events and sync buyers.',
+        id: 'event-list',
+        name: 'Your Eventbrite list drops down',
+        text: 'After connect, the panel shows your Eventbrite events under My events — same idea as a recurring series list.',
       },
       {
-        id: 'events-import',
-        name: 'Events import automatically',
-        text: 'You return to My events with Eventbrite Connected. Live events import onto your organiser page; complete ones publish; incomplete ones stay drafts. New live events keep arriving automatically.',
+        id: 'import-events',
+        name: 'Import each event',
+        text: 'Click Import on each Eventbrite event you want on The Networker UK. Complete listings publish; incomplete ones stay drafts until you add price, date, or booking URL.',
       },
       {
         id: 'check-it-worked',
-        name: 'Check it worked',
-        text: 'After a test or real Eventbrite order, Recent sync attempts should show eventbrite:accepted and the buyer should appear on the event Attendees list.',
+        name: 'Check a sale synced',
+        text: 'After a test or real Eventbrite order, the buyer should appear on the event Attendees list and Recent sync attempts should show eventbrite:accepted.',
       },
     ],
   },

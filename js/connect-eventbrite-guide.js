@@ -97,12 +97,15 @@
     }
   });
 
-  /* Old webhook-first deep links still land on the closest OAuth step. */
+  /* Older guide deep links still land on the closest current step. */
   var hashAliases = {
     'enable-eventbrite': 'open-my-events',
-    'paste-webhook': 'connect-oauth',
-    'api-token': 'approve-eventbrite',
-    'link-event': 'events-import',
+    'paste-webhook': 'connect-account',
+    'api-token': 'connect-account',
+    'connect-oauth': 'connect-account',
+    'approve-eventbrite': 'event-list',
+    'link-event': 'import-events',
+    'events-import': 'import-events',
   };
 
   var startHash = (location.hash || '').replace(/^#/, '');
