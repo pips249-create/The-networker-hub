@@ -88,9 +88,10 @@ function mapIntroError(e) {
     invalid_message: 400,
     no_contact_details: 400,
     missing_intro_id: 400,
+    intro_migration_required: 503,
   };
   return {
-    status: statusMap[code] || 500,
+    status: statusMap[code] || (e && e.status) || 500,
     error: code,
     message: e && e.message ? e.message : 'Something went wrong.',
     profile: e && e.profile ? e.profile : undefined,
