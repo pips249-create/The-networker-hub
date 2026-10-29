@@ -10,6 +10,8 @@ const {
   buildVatBreakdownHtml,
   buildInvoiceCtaHtml,
   resolveOpportunityListingInvoice,
+  serializeOpportunityListingInvoice,
+  listOpportunityListingInvoices,
   formatGbpFromPence,
 } = require('../api/_lib/opportunity-listing-vat-receipt');
 
@@ -59,6 +61,13 @@ assert.ok(cta.includes('Download VAT invoice'));
 assert.ok(cta.includes(fromInvoice.invoiceUrl));
 assert.strictEqual(buildInvoiceCtaHtml({}), '');
 
+const serialized = serializeOpportunityListingInvoice(invoice);
+assert.ok(serialized);
+assert.strictEqual(serialized.number, 'ABC-123');
+assert.strictEqual(serialized.amountPaid, '£30');
+assert.strictEqual(serialized.invoicePdfUrl, 'https://pay.stripe.com/invoice/test/pdf');
+assert.strictEqual(serializeOpportunityListingInvoice({ id: 'in_open', status: 'open' }), null);
+
 async function testResolve() {
   const retrieved = [];
   const stripe = {
@@ -66,6 +75,16 @@ async function testResolve() {
       retrieve: async (id) => {
         retrieved.push(id);
         return { id, number: 'R-1', amount_paid: 3000, invoice_pdf: 'https://pdf' };
+      },
+      list: async (params) => {
+        assert.strictEqual(params.subscription, 'sub_list');
+        assert.strictEqual(params.status, 'paid');
+        return {
+          data: [
+            invoice,
+            { id: 'in_open', status: 'open', amount_paid: 0 },
+          ],
+        };
       },
     },
     subscriptions: {
@@ -92,6 +111,11 @@ async function testResolve() {
 
   const passthrough = await resolveOpportunityListingInvoice(stripe, { invoice });
   assert.strictEqual(passthrough.number, 'ABC-123');
+
+  const listed = await listOpportunityListingInvoices(stripe, 'sub_list');
+  assert.strictEqual(listed.length, 1);
+  assert.strictEqual(listed[0].number, 'ABC-123');
+  assert.strictEqual(listed[0].invoiceUrl, 'https://pay.stripe.com/invoice/test/pdf');
 }
 
 testResolve()

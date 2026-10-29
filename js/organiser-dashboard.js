@@ -18202,6 +18202,10 @@
     let html = '';
     if (o.listingStripeSubscriptionId || o.listing_stripe_subscription_id) {
       html +=
+        '<a class="org-btn org-btn-outline org-btn-sm" href="' +
+        esc(opportunityEditUrl(o) + '#vat-invoices') +
+        '">VAT invoices</a> ';
+      html +=
         '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-opp-manage-billing="' +
         esc(o.id) +
         '">Manage / cancel billing</button> ';

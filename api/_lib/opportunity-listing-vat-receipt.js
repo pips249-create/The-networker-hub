@@ -204,6 +204,73 @@ function buildInvoiceCtaHtml(receipt) {
   );
 }
 
+function invoicePaidAtIso(invoice) {
+  const ts =
+    Number(invoice?.status_transitions?.paid_at) ||
+    Number(invoice?.effective_at) ||
+    Number(invoice?.created) ||
+    0;
+  if (!Number.isFinite(ts) || ts <= 0) return null;
+  return new Date(ts * 1000).toISOString();
+}
+
+function invoicePeriodLabel(invoice) {
+  const paidAt = invoicePaidAtIso(invoice);
+  if (!paidAt) return '';
+  try {
+    return new Date(paidAt).toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  } catch {
+    return '';
+  }
+}
+
+/** Public invoice row for organiser UI / API. */
+function serializeOpportunityListingInvoice(invoice) {
+  if (!invoice || !invoice.id) return null;
+  const status = String(invoice.status || '').toLowerCase();
+  if (status && status !== 'paid') return null;
+  const receipt = buildOpportunityListingVatReceipt(invoice);
+  return {
+    id: String(invoice.id),
+    number: receipt.invoiceNumber || String(invoice.number || invoice.id),
+    status: 'paid',
+    paidAt: invoicePaidAtIso(invoice),
+    periodLabel: invoicePeriodLabel(invoice),
+    amountExVat: receipt.amountExVat,
+    amountVat: receipt.amountVat,
+    amountPaid: receipt.amountPaid,
+    amountPaidPence: receipt.amountPaidPence,
+    vatNumber: receipt.vatNumber,
+    invoicePdfUrl: receipt.invoicePdfUrl || null,
+    hostedInvoiceUrl: receipt.hostedInvoiceUrl || null,
+    invoiceUrl: receipt.invoiceUrl || null,
+  };
+}
+
+/**
+ * List paid Stripe invoices for a listing subscription (newest first).
+ */
+async function listOpportunityListingInvoices(stripe, subscriptionId, options) {
+  const subId = String(subscriptionId || '').trim();
+  if (!stripe || !subId) return [];
+  const limit = Math.min(Math.max(parseInt(options?.limit, 10) || 24, 1), 100);
+  const listed = await stripe.invoices.list({
+    subscription: subId,
+    status: 'paid',
+    limit,
+  });
+  const rows = [];
+  for (const invoice of listed.data || []) {
+    const row = serializeOpportunityListingInvoice(invoice);
+    if (row) rows.push(row);
+  }
+  return rows;
+}
+
 module.exports = {
   NETWORKER_VAT_NUMBER,
   NETWORKER_COMPANY_NAME,
@@ -212,4 +279,8 @@ module.exports = {
   resolveOpportunityListingInvoice,
   buildVatBreakdownHtml,
   buildInvoiceCtaHtml,
+  invoicePaidAtIso,
+  invoicePeriodLabel,
+  serializeOpportunityListingInvoice,
+  listOpportunityListingInvoices,
 };
