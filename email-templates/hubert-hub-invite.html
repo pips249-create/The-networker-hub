@@ -18,6 +18,8 @@
       .mobile-header-pad { padding:24px 16px 0 !important; }
       .mobile-footer-pad { padding:24px 16px 30px !important; }
       .email-cta a { display:block !important; width:100% !important; box-sizing:border-box !important; text-align:center !important; }
+      .email-logo-header { max-width:200px !important; width:200px !important; }
+      .email-logo-footer { max-width:168px !important; width:168px !important; }
     }
   </style>
 </head>
@@ -56,15 +58,41 @@
                 </td>
               </tr>
             </table>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:700;color:#9d60a7;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 8px;">Hubert</p>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:700;color:#9d60a7;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 8px;">Hubert · matchmaker</p>
             <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#1c2040;margin:0 0 12px;line-height:1.2;">
               {{inviter_first_name}} thought you&apos;d like The Networker UK
             </h1>
             <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0 0 12px;">
-              Hi {{invitee_first_name}} — I&apos;m Hubert. <strong style="color:#1c2040;">{{inviter_name}}</strong> asked me to invite you to join The Networker UK — events, introductions, and people worth meeting.
+              Hi {{invitee_first_name}} — I&apos;m Hubert. <strong style="color:#1c2040;">{{inviter_name}}</strong> asked me to invite you.
+            </p>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0 0 16px;">
+              The Networker UK is where you find events worth going to — and get introduced, for free, to people and business owners you actually want to meet.
             </p>
             {{invite_note_section}}
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">
+          </td>
+        </tr>
+
+        <tr>
+          <td class="mobile-pad" style="padding:0 40px 20px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f7f4fb;border-radius:16px;">
+              <tr>
+                <td style="padding:18px 20px;text-align:left;">
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:12px;font-weight:700;color:#7a3d8a;text-transform:uppercase;letter-spacing:0.06em;margin:0 0 12px;">What you get free</p>
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.6;color:#1c2040;margin:0 0 10px;">
+                    <strong>Introductions via Hubert</strong> — ask who you want to meet; we put people forward and open an intro when both sides say yes. Contact details stay private.
+                  </p>
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.6;color:#1c2040;margin:0;">
+                    <strong>UK networking events</strong> — discover sessions, exhibitions, and groups worth showing up to.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="mobile-pad" style="padding:0 40px 8px;text-align:center;">
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.7;color:#635c5e;margin:0;">
               Create a free account with this email. They won&apos;t see your details from this invite — you choose what to share when you&apos;re ready.
             </p>
           </td>
@@ -88,7 +116,7 @@
         <tr>
           <td class="mobile-footer-pad" style="background:#452d5c;padding:28px 40px 40px;text-align:center;border-radius:0 0 20px 20px;">
             <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
-              <img src="{{logo_footer_url}}" alt="The Networker UK" width="200" class="email-logo-footer" style="height:auto;display:inline-block;margin:0 auto 16px;border:0;max-width:200px;">
+              <img src="{{logo_footer_light_url}}" alt="The Networker UK" width="200" class="email-logo-footer" style="height:auto;display:inline-block;margin:0 auto 16px;border:0;max-width:200px;">
             </a>
             <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:rgba(255,255,255,0.55);line-height:1.7;margin:0 0 10px;">
               Operated by The Networker Group Ltd &nbsp;&middot;&nbsp; Company No. 15252227<br>

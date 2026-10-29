@@ -200,6 +200,14 @@ function logoEmailHeaderUrl(siteUrl) {
   return toPublicAssetUrl('/assets/logo-nav-transparent.png?v=' + LOGO_ASSET_VERSION, siteUrl);
 }
 
+/**
+ * Dark wordmark for cream / pale headers — lavender nav logo disappears on #f5f0e8.
+ * Prefer this when the header background is light and brand contrast matters.
+ */
+function logoEmailHeaderDarkUrl(siteUrl) {
+  return toPublicAssetUrl('/assets/logo-networker-uk-partner-dark.png?v=' + LOGO_ASSET_VERSION, siteUrl);
+}
+
 function logoFooterUrl(siteUrl) {
   return toPublicAssetUrl('/assets/logo-email-footer.png?v=' + LOGO_ASSET_VERSION, siteUrl);
 }
@@ -331,6 +339,7 @@ module.exports = {
   opportunityPublicUrl,
   logoNavUrl,
   logoEmailHeaderUrl,
+  logoEmailHeaderDarkUrl,
   logoFooterUrl,
   logoFooterLightUrl,
   hubertIconUrl,

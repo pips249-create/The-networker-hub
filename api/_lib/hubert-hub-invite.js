@@ -7,8 +7,8 @@ const { emailGreetingName } = require('./email-display-name');
 const {
   emailSiteBase,
   hubertIconUrl,
-  logoNavUrl,
-  logoFooterUrl,
+  logoEmailHeaderDarkUrl,
+  logoFooterLightUrl,
   supportEmail,
 } = require('./hub-email-urls');
 const { isAdminRole } = require('./auth');
@@ -135,8 +135,9 @@ async function sendHubInvite({
     register_url: registerUrl,
     account_url: site + '/account/',
     hubert_icon_url: hubertIconUrl(),
-    logo_url: logoNavUrl(),
-    logo_footer_url: logoFooterUrl(),
+    logo_url: logoEmailHeaderDarkUrl(),
+    logo_footer_url: logoFooterLightUrl(),
+    logo_footer_light_url: logoFooterLightUrl(),
     support_email: supportEmail(),
     site_url: site,
   };
