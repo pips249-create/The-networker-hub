@@ -260,12 +260,12 @@ const BRANDED_EMAIL_TEMPLATES = {
   hubert_intro_request: {
     file: 'hubert-intro-request.html',
     marker: 'hub-email-layout-v3-purple-hubert-intro',
-    subject: 'Hubert: {{requester_name}} would like to connect',
+    subject: 'Introduction via Hubert: {{requester_label}} would like to be introduced',
   },
   hubert_intro_accepted: {
     file: 'hubert-intro-accepted.html',
     marker: 'hub-email-layout-v3-purple-hubert-intro',
-    subject: 'Hubert: {{counterpart_name}} accepted your introduction',
+    subject: 'Hubert intro accepted: {{counterpart_name}} said yes',
   },
   account_welcome: {
     file: 'account-welcome.html',

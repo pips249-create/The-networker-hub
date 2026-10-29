@@ -19,13 +19,29 @@
   <link rel="stylesheet" href="../css/auth.css?v=20260727ux" />
   <link rel="stylesheet" href="../css/hub-mobile.css?v=20261016signin1" />
   <style>
+    .hi-brand {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 10px;
+      margin: 0 0 14px;
+    }
+    .hi-logo {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      object-fit: cover;
+      display: block;
+      box-shadow: 0 6px 18px rgba(69, 45, 92, 0.12);
+    }
     .hi-kicker {
       font-size: 13px;
       font-weight: 700;
       letter-spacing: 0.04em;
       text-transform: uppercase;
       color: var(--gold, #b8860b);
-      margin: 0 0 8px;
+      margin: 0;
     }
     .hi-status {
       font-size: 13px;
@@ -130,7 +146,16 @@
 
   <main class="auth-main">
     <div class="auth-card" id="hi-card">
-      <p class="hi-kicker">Hubert</p>
+      <div class="hi-brand">
+        <img
+          class="hi-logo"
+          src="../assets/hubert-icon.png?v=20261029intro1"
+          width="72"
+          height="72"
+          alt="Hubert"
+        />
+        <p class="hi-kicker">Hubert · matchmaker</p>
+      </div>
       <p class="hi-status" id="hi-status" role="status">Introduction</p>
       <h1 id="hi-title">Loading…</h1>
       <p class="auth-lede" id="hi-body">Checking your introduction link.</p>
@@ -149,13 +174,14 @@
         <a class="hi-btn--ghost" href="/account/">Back to your dashboard</a>
       </div>
 
-      <p class="hi-brand-foot">Contact details are never shared via Hubert — intros stay on the Hub.</p>
+      <p class="hi-brand-foot">Contact details are never shared via Hubert — intros stay on The Networker UK’s Hubert.</p>
     </div>
   </main>
 
   <script>
     (function () {
-      var REQUEST_MS = 15000;
+      var REQUEST_MS = 10000;
+      var PREVIEW_MS = 8000;
       var params = new URLSearchParams(window.location.search);
       var token = params.get('token') || '';
       var decision = (params.get('decision') || params.get('action') || '').toLowerCase();
@@ -170,6 +196,24 @@
       var declineBtn = document.getElementById('hi-decline');
       var openThread = document.getElementById('hi-open-thread');
       var busy = false;
+
+      function withTimeout(ms) {
+        var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        var timer = null;
+        if (controller) {
+          timer = setTimeout(function () {
+            try {
+              controller.abort();
+            } catch (e) {}
+          }, ms);
+        }
+        return {
+          signal: controller ? controller.signal : undefined,
+          clear: function () {
+            if (timer) clearTimeout(timer);
+          },
+        };
+      }
 
       function setStatus(kind, text) {
         statusEl.className =
@@ -213,12 +257,13 @@
         topicEl.hidden = !(preview && preview.topic);
         if (preview && preview.topic) topicText.textContent = preview.topic;
 
-        var who = (preview && preview.requesterDisplayName) || 'Someone';
+        var who =
+          (preview && (preview.requesterLabel || preview.requesterDisplayName)) || 'Someone';
         if (intended === 'accept' || intended === 'yes') {
           setStatus('', 'From your email');
           titleEl.textContent = 'Accept introduction from ' + who + '?';
           bodyEl.textContent =
-            'If you Accept, Hubert opens a Hub intro thread. Email, phone, and LinkedIn stay private.';
+            'Hubert is our matchmaker. If you Accept, he opens a Hub intro thread — email, phone, and LinkedIn stay private.';
           acceptBtn.hidden = false;
           declineBtn.hidden = true;
           return;
@@ -226,14 +271,16 @@
         if (intended === 'decline' || intended === 'no') {
           setStatus('', 'From your email');
           titleEl.textContent = 'Decline this introduction?';
-          bodyEl.textContent = 'Hubert will not open a thread. You can ignore future requests from this person.';
+          bodyEl.textContent =
+            'Hubert is our matchmaker. Declining means no thread is opened, and contact details stay private.';
           acceptBtn.hidden = true;
           declineBtn.hidden = false;
           return;
         }
         setStatus('', 'Choose an answer');
-        titleEl.textContent = who + ' would like to connect';
-        bodyEl.textContent = 'Accept to open a Hubert intro on the Hub, or Decline.';
+        titleEl.textContent = who + ' would like to be introduced';
+        bodyEl.textContent =
+          'Hubert is The Networker UK’s matchmaker. Accept to open a Hub intro thread, or Decline — contact details stay private either way.';
         acceptBtn.hidden = false;
         declineBtn.hidden = false;
       }
@@ -323,16 +370,20 @@
       }
 
       setStatus('pending', 'Loading…');
-      fetch('/api/hubert-intro?token=' + encodeURIComponent(token), {
+      var previewGate = withTimeout(PREVIEW_MS);
+      var previewOpts = {
         credentials: 'same-origin',
         headers: { Accept: 'application/json' },
-      })
+      };
+      if (previewGate.signal) previewOpts.signal = previewGate.signal;
+      fetch('/api/hubert-intro?token=' + encodeURIComponent(token), previewOpts)
         .then(function (r) {
           return parseJsonSafe(r).then(function (data) {
             return { status: r.status, data: data };
           });
         })
         .then(function (result) {
+          previewGate.clear();
           var data = result.data || {};
           if (!data.ok || !data.intro) {
             showDone(false, 'Link unavailable', data.message || 'This introduction link is invalid or expired.');
@@ -352,7 +403,17 @@
           showPrompt(data.intro, decision);
         })
         .catch(function () {
-          showPrompt(null, decision);
+          previewGate.clear();
+          if (decision === 'accept' || decision === 'yes' || decision === 'decline' || decision === 'no') {
+            showPrompt(null, decision);
+            setStatus('err', 'Couldn’t preload details — you can still Accept or Decline');
+            return;
+          }
+          showDone(
+            false,
+            'Taking too long',
+            'Hubert couldn’t load this introduction quickly. Open the email link again, or use Accept / Decline in the email.'
+          );
         });
     })();
   </script>
