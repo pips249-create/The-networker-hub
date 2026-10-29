@@ -6,6 +6,10 @@ const {
   validateTopic,
   parseTargetId,
   shortDisplayName,
+  firstName,
+  introDisplayName,
+  softIntroStatus,
+  publicIntroCard,
   TOPIC_MIN_LEN,
   INTROS_PER_WEEK,
 } = require('../api/_lib/hubert-intro-requests');
@@ -26,6 +30,42 @@ assert(TOPIC_MIN_LEN === 25, 'topic min 25');
 assert(INTROS_PER_WEEK === 5, '5 intros / week');
 
 assert(shortDisplayName('Alex Morgan') === 'Alex M.', 'short name');
+assert(firstName('Alex Morgan') === 'Alex', 'first name');
+assert(introDisplayName('Alex Morgan', 'pending') === 'Alex M.', 'pending keeps initial');
+assert(introDisplayName('Alex Morgan', 'accepted') === 'Alex', 'accepted = first name only');
+assert(softIntroStatus('declined').label.indexOf('Didn’t come through') === 0, 'soft decline label');
+assert(softIntroStatus('pending').key === 'waiting', 'pending → waiting');
+assert(softIntroStatus('accepted').key === 'connected', 'accepted → connected');
+
+const pendingCard = publicIntroCard(
+  {
+    id: '1',
+    status: 'pending',
+    topic: 'Compare notes on seed raises in Manchester',
+    target_full_name: 'Jordan Lee',
+    requester: { name: 'Alex Morgan' },
+  },
+  { direction: 'outbound' }
+);
+assert(pendingCard.counterpartDisplayName === 'Jordan L.', 'pending card short name');
+assert(pendingCard.connected === false, 'pending not connected');
+assert(pendingCard.statusLabel === 'Waiting to hear back', 'pending soft label');
+
+const acceptedCard = publicIntroCard(
+  {
+    id: '2',
+    status: 'accepted',
+    topic: 'Compare notes on seed raises in Manchester',
+    target_full_name: 'Jordan Lee',
+    requester: { name: 'Alex Morgan' },
+    accepted_at: '2026-10-29T12:00:00Z',
+  },
+  { direction: 'outbound' }
+);
+assert(acceptedCard.displayName === 'Jordan', 'connection shows first name');
+assert(acceptedCard.connected === true, 'accepted is connected');
+assert(acceptedCard.statusKey === 'connected', 'status key connected');
+
 assert(parseTargetId('member:11111111-1111-1111-1111-111111111111').kind === 'member', 'member id');
 assert(parseTargetId('seed:22222222-2222-2222-2222-222222222222').kind === 'seed', 'seed id');
 assert(parseTargetId('nope') === null, 'bad id');

@@ -450,34 +450,50 @@
       });
   }
 
-  function renderIntroRow(intro) {
-    var who =
-      intro.direction === 'inbound'
-        ? intro.requesterDisplayName || 'Someone'
-        : intro.counterpartDisplayName || 'Someone';
-    var status = String(intro.status || 'pending');
+  function introWho(intro) {
+    return intro.displayName || intro.counterpartDisplayName || intro.requesterDisplayName || 'Someone';
+  }
+
+  function renderConnectionRow(intro) {
     return (
-      '<li class="hmm-intro-row" data-intro-id="' +
+      '<li class="hmm-intro-row hmm-intro-row--connection" data-intro-id="' +
+      esc(intro.id) +
+      '">' +
+      '<div class="hmm-intro-row-main">' +
+      '<strong class="hmm-connection-name">' +
+      esc(introWho(intro)) +
+      '</strong>' +
+      '<span class="hmm-intro-status hmm-intro-status--connected">Connected</span>' +
+      '<p class="hmm-intro-topic">' +
+      esc(intro.topic || '') +
+      '</p>' +
+      (intro.eventTitle
+        ? '<p class="hmm-intro-event">' + esc(intro.eventTitle) + '</p>'
+        : '') +
+      '</div>' +
+      '<button type="button" class="ad-btn ad-btn-ghost hmm-intro-open" data-hmm-open-thread="' +
+      esc(intro.id) +
+      '">Open conversation</button>' +
+      '</li>'
+    );
+  }
+
+  function renderWaitingRow(intro) {
+    return (
+      '<li class="hmm-intro-row hmm-intro-row--waiting" data-intro-id="' +
       esc(intro.id) +
       '">' +
       '<div class="hmm-intro-row-main">' +
       '<strong>' +
-      esc(who) +
+      esc(introWho(intro)) +
       '</strong>' +
-      '<span class="hmm-intro-status hmm-intro-status--' +
-      esc(status) +
-      '">' +
-      esc(status) +
+      '<span class="hmm-intro-status hmm-intro-status--waiting">' +
+      esc(intro.statusLabel || 'Waiting to hear back') +
       '</span>' +
       '<p class="hmm-intro-topic">' +
       esc(intro.topic || '') +
       '</p>' +
       '</div>' +
-      (status === 'accepted'
-        ? '<button type="button" class="ad-btn ad-btn-ghost hmm-intro-open" data-hmm-open-thread="' +
-          esc(intro.id) +
-          '">Open thread</button>'
-        : '') +
       '</li>'
     );
   }
@@ -492,7 +508,7 @@
       '<div class="hmm-thread-head">' +
       '<p class="hmm-thread-kicker">Hubert intro</p>' +
       '<h3 class="hmm-thread-title">' +
-      esc(intro.counterpartDisplayName || intro.requesterDisplayName || 'Introduction') +
+      esc(introWho(intro) || 'Introduction') +
       '</h3>' +
       '<p class="hmm-thread-topic">' +
       esc(intro.topic || '') +
@@ -779,14 +795,24 @@
           listEl.hidden = true;
           return;
         }
-        var rows = [].concat(data.outbound || [], data.inbound || []);
-        if (!rows.length) {
+        var connections = Array.isArray(data.connections)
+          ? data.connections
+          : [].concat(data.outbound || [], data.inbound || []).filter(function (r) {
+              return r.status === 'accepted';
+            });
+        var requests = Array.isArray(data.requests)
+          ? data.requests
+          : (data.outbound || []).filter(function (r) {
+              return r.status === 'pending';
+            });
+
+        if (!connections.length && !requests.length) {
           listEl.hidden = true;
           listEl.innerHTML = '';
           return;
         }
-        (data.outbound || []).forEach(function (intro) {
-          // Best-effort: mark pending targets if we still have matches painted
+
+        requests.forEach(function (intro) {
           if (intro.status === 'pending') {
             lastMatches.forEach(function (p) {
               if (intro.counterpartDisplayName && personLabel(p) === intro.counterpartDisplayName) {
@@ -795,12 +821,31 @@
             });
           }
         });
+
+        var html = '';
+        if (connections.length) {
+          html +=
+            '<section class="hmm-connections" data-hmm-connections>' +
+            '<p class="hmm-connections-kicker">Your connections</p>' +
+            '<h3 class="hmm-intros-title">People you’ve both said yes to</h3>' +
+            '<p class="hmm-connections-copy">First names only — email, phone, and LinkedIn stay private.</p>' +
+            '<ul class="hmm-intros-list hmm-connections-list">' +
+            connections.map(renderConnectionRow).join('') +
+            '</ul>' +
+            '</section>';
+        }
+        if (requests.length) {
+          html +=
+            '<section class="hmm-waiting" data-hmm-waiting>' +
+            '<h3 class="hmm-intros-title hmm-intros-title--quiet">Waiting to hear back</h3>' +
+            '<ul class="hmm-intros-list hmm-waiting-list">' +
+            requests.map(renderWaitingRow).join('') +
+            '</ul>' +
+            '</section>';
+        }
+
         listEl.hidden = false;
-        listEl.innerHTML =
-          '<h3 class="hmm-intros-title">My intros</h3>' +
-          '<ul class="hmm-intros-list">' +
-          rows.map(renderIntroRow).join('') +
-          '</ul>';
+        listEl.innerHTML = html;
         listEl.querySelectorAll('[data-hmm-open-thread]').forEach(function (btn) {
           btn.addEventListener('click', function () {
             openThread(btn.getAttribute('data-hmm-open-thread'));

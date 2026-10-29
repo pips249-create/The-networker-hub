@@ -23,7 +23,7 @@ Implementation branch: `cursor/hubert-matchmaker-8ac8` (off `main` after this sp
 3. ~~Real BOH match API~~ · `/api/auth/hubert-matchmaker` (admin-gated; seed + discoverable members; max 5; no contacts)
 4. ~~Request intro → Hubert email → Accept/Decline · **no contact share** · Hub intro thread · persist + count~~
 5. ~~**Introduce someone to The Networker UK & Hubert**~~ · name + email (+ optional note) → Hubert join invite · 5/week (50 admin) · migration `336_hubert_hub_invites.sql`
-6. Intro tracking surfaces (admin totals + member “My intros”)
+6. Intro tracking surfaces (admin totals + member **Connections** = accepted only; soft “Waiting”)
 7. ~~Member Matchmaker profile~~ · headline + looking-to-meet + discoverable opt-in (Settings + Meet people; soft nudge)
 8. Public site teaser (still gated until launch)
 
@@ -119,9 +119,10 @@ If there is no upcoming event, omit that block; do not invent one. Event presenc
 2. Copy pattern: *“[First name] would like to connect about [topic]. Create a free Networker UK account to see the request and Accept or Decline.”*  
 3. B lands on claim/sign-in → sees full request context → **Accept introduction** / **Decline**.  
 4. On Accept (especially non-member B): **2 quick tag taps** — Industry / I am a, and Looking to meet. No essay fields.  
-5. **No email / phone / LinkedIn exchange.** Both parties get a Hubert intro on the Hub: topic, first names, role/company, and shared/upcoming event if any — plus a short in-Hub message thread (or “meet at [event]” prompt).  
+5. **No email / phone / LinkedIn exchange.** Both parties get a Hubert intro on the Hub: topic, **first names** (only after Accept), role/company, and shared/upcoming event if any — plus a short in-Hub message thread (or “meet at [event]” prompt).  
 6. Prompt **Discoverable** on so B becomes supply for future searches.  
-7. Decline / ignore: no intro thread. Seed path: one reminder (day 5–7), then pause in BOH.
+7. Decline / ignore: no intro thread · **no decline email to A** · asker’s Connections list never shows a harsh “declined”. Soft “Didn’t come through” only if we surface closed asks at all. Seed path: one reminder (day 5–7), then pause in BOH.  
+8. **Connections list** on Meet people = people who said yes only.
 
 ### Introduce someone to The Networker UK & Hubert
 
@@ -266,7 +267,7 @@ Also report **requested** (all sends) and **pending** for ops.
 | Surface | Who | What |
 |---------|-----|------|
 | **Admin → Hubert Matchmaker** | Rosie / platform admins | **Seed list** (add Rosie’s contacts) · intro totals (requested / accepted / declined / pending) · accept rate · recent intros |
-| **Meet people** (`#meet`) | The signed-in member | “My intros”: requested · pending · accepted (their outbound + inbound) |
+| **Meet people** (`#meet`) | The signed-in member | **Connections**: accepted intros only (first name once both said yes). Quiet **Waiting** list for pending asks. Declines never shown as “declined” to the asker. |
 | **Overview** (optional strip) | Member | Small line under Hubert: e.g. `3 intros accepted` once they have any |
 | **Email / ops** | Staff | Same admin totals for weekly Hub health |
 
