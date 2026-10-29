@@ -188,12 +188,10 @@
       el.hidden = !show;
       if (show) {
         if (state.connectedBooking && state.connectedBooking.uiMode === 'link_out') {
-          if (el.id === 'org-nav-connected-booking') el.textContent = 'Link Out';
-          else el.textContent = 'Link Out';
-        } else if (el.id === 'org-nav-connected-booking') {
-          el.textContent = 'Connected booking';
+          el.textContent = 'Link Out';
         } else {
-          el.textContent = 'Connected booking';
+          // Never overwrite the sidebar with "Connected booking".
+          el.textContent = 'Booking system';
         }
       }
     });
@@ -18591,7 +18589,7 @@
     if (page === 'social' || page === 'social-spotlight') return 'Loading Promote…';
     if (page === 'memberships') return 'Loading memberships…';
     if (page === 'groups') return 'Loading organiser pages…';
-    if (page === 'connected-booking') return 'Loading Connected booking…';
+    if (page === 'connected-booking') return 'Loading booking system…';
     if (page === 'team') return 'Loading team…';
     if (page === 'ticket-widget') return 'Loading ticket widget…';
     if (page === 'business-list') return 'Loading listing form…';

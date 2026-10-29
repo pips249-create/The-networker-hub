@@ -1,7 +1,14 @@
 /** Supported Connected checkout providers (adapters in ./adapters/). */
 
-/** Shown in organiser UI (picker, enable, link form). Webhooks for other ids still work if already configured. */
-const ORGANISER_PICKER_PROVIDER_IDS = ['eventbrite', 'ticket_tailor', 'own_site'];
+/** Shown in organiser UI (picker tiles). Webhooks for other ids still work if already configured. */
+const ORGANISER_PICKER_PROVIDER_IDS = [
+  'eventbrite',
+  'ticket_tailor',
+  'trybooking',
+  'own_site',
+  'luma',
+  'meetup',
+];
 
 const CONNECTED_BOOKING_PROVIDERS = [
   {
@@ -11,29 +18,24 @@ const CONNECTED_BOOKING_PROVIDERS = [
     status: 'live',
     webhookPath: '/api/integrations/providers/eventbrite/webhook',
     docsHint:
-      'Connect with Eventbrite (OAuth) — or paste a private token. We import live organisation events automatically and sync ticket holders from order.placed / attendee.updated webhooks.',
+      'Connect on My events (OAuth or private token). We import live Eventbrite events and sync ticket holders.',
+    guidePath: '/guides/connect-eventbrite',
   },
   {
     id: 'ticket_tailor',
     label: 'Ticket Tailor',
     status: 'beta',
     webhookPath: '/api/integrations/providers/ticket_tailor/webhook',
-    docsHint:
-      'Coming soon — Ticket Tailor connect is not selectable yet. Webhooks for already-configured accounts still work.',
-  },
-  {
-    id: 'luma',
-    label: 'Luma',
-    status: 'beta',
-    webhookPath: '/api/integrations/providers/luma/webhook',
-    docsHint: 'Use the Luma event api id (from lu.ma admin / API).',
+    docsHint: 'Coming soon — Ticket Tailor will connect the same way as Eventbrite.',
+    guidePath: '',
   },
   {
     id: 'trybooking',
     label: 'TryBooking',
     status: 'beta',
     webhookPath: '/api/integrations/providers/trybooking/webhook',
-    docsHint: 'Use the TryBooking event id from your booking admin.',
+    docsHint: 'Coming soon — connect TryBooking when this tile unlocks.',
+    guidePath: '',
   },
   {
     id: 'own_site',
@@ -41,7 +43,24 @@ const CONNECTED_BOOKING_PROVIDERS = [
     status: 'live',
     webhookPath: '/api/integrations/providers/own_site/webhook',
     docsHint:
-      'Use your own booking/checkout URL on the listing. After each sale, POST JSON with TNH eventId, orderId, and email to your webhook URL (no Zapier).',
+      'WordPress, Wix, or custom checkout — list on The Networker UK and POST bookings to your webhook URL.',
+    guidePath: '/guides/connect-own-website',
+  },
+  {
+    id: 'luma',
+    label: 'Luma',
+    status: 'beta',
+    webhookPath: '/api/integrations/providers/luma/webhook',
+    docsHint: 'Coming soon — Luma connect is not selectable yet.',
+    guidePath: '',
+  },
+  {
+    id: 'meetup',
+    label: 'Meetup',
+    status: 'beta',
+    webhookPath: '/api/integrations/providers/meetup/webhook',
+    docsHint: 'Coming soon — Meetup connect is not selectable yet.',
+    guidePath: '',
   },
   {
     id: 'custom',
@@ -49,6 +68,7 @@ const CONNECTED_BOOKING_PROVIDERS = [
     status: 'live',
     webhookPath: '/api/integrations/booking',
     docsHint: 'Developer POST with X-Networker-Signature — advanced integrations.',
+    guidePath: '',
   },
 ];
 
