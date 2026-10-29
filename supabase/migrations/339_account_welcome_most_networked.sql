@@ -1,10 +1,10 @@
--- Welcome email: Hubert profile CTA + Already networking? / Most networked claim.
+-- Welcome email: Already networking? / Most networked networker claim CTA.
 -- File remains source of truth for branded sends; keep DB body in sync for admin preview.
 
 update public.email_templates
 set
   name = 'Account welcome',
-  description = 'Sent after email confirm when someone creates a new Account. Hubert profile + claim-attended / Most networked CTAs.',
+  description = 'Sent after email confirm when someone creates a new Account. Includes claim-attended / Most networked CTA.',
   subject = 'Welcome to The Networker UK',
   body_html = '<!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
@@ -81,23 +81,8 @@ set
             <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Welcome</p>
             <h1 class="hero-title" style="font-family:''DM Sans'',system-ui,sans-serif;font-size:28px;font-weight:600;color:#452d5c;letter-spacing:-0.03em;line-height:1.15;margin:0 0 10px;">Your Account is ready</h1>
             <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:400;color:#635c5e;line-height:1.7;margin:0;">
-              Hi {{user_name}}, welcome to <strong style="color:#9a7aa8;font-weight:600;">The Networker UK</strong>. Start with your Hubert profile, then browse events, claim ones you&rsquo;ve already attended, and keep everything in one place.
+              Hi {{user_name}}, welcome to <strong style="color:#9a7aa8;font-weight:600;">The Networker UK</strong>. Browse events, book tickets, claim ones you&rsquo;ve already attended, explore business opportunities, and keep everything in one place.
             </p>
-          </td>
-        </tr>
-
-        <tr>
-          <td class="mobile-pad" style="padding:0 48px 20px;">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#452d5c;border-radius:14px;">
-              <tr>
-                <td style="padding:22px 24px;">
-                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:700;color:#d9c4e0;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;">Hubert Matchmaker</p>
-                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0 0 8px;line-height:1.35;">Start with your profile</p>
-                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:15px;font-weight:400;color:rgba(255,255,255,0.82);line-height:1.65;margin:0 0 14px;">Add a short headline, who you want to meet, and tick <strong style="color:#ffffff;font-weight:600;">Include me</strong> so Hubert can put you forward for introductions. Takes a minute — you can edit it anytime.</p>
-                  <a href="{{hubert_profile_url}}" style="display:inline-block;padding:14px 28px;background:#9a7aa8;border-radius:999px;color:#ffffff;font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:700;text-decoration:none;">Set up your Hubert profile &rarr;</a>
-                </td>
-              </tr>
-            </table>
           </td>
         </tr>
 
@@ -110,12 +95,6 @@ set
                   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                     <tr>
                       <td class="feature-cell" style="padding:0 0 12px;vertical-align:top;">
-                        <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:600;color:#452d5c;margin:0 0 4px;">Hubert profile</p>
-                        <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:15px;font-weight:400;color:#635c5e;line-height:1.6;margin:0;">Headline, who you want to meet, and opt in for introductions.</p>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td class="feature-cell" style="padding:12px 0;vertical-align:top;">
                         <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:600;color:#452d5c;margin:0 0 4px;">Upcoming events &amp; tickets</p>
                         <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:15px;font-weight:400;color:#635c5e;line-height:1.6;margin:0;">See what you&rsquo;ve booked and open event details any time.</p>
                       </td>
@@ -180,14 +159,7 @@ set
             <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 12px;">
               <tr>
                 <td style="background:#452d5c;border-radius:999px;">
-                  <a href="{{hubert_profile_url}}" style="display:inline-block;padding:14px 32px;font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;">Set up your Hubert profile &rarr;</a>
-                </td>
-              </tr>
-            </table>
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 12px;">
-              <tr>
-                <td style="background:#ffffff;border:1px solid #d9c4e0;border-radius:999px;">
-                  <a href="{{hub_account_url}}" style="display:inline-block;padding:14px 28px;font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:600;color:#452d5c;text-decoration:none;">Go to My account</a>
+                  <a href="{{hub_account_url}}" style="display:inline-block;padding:14px 32px;font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;">Go to My account &rarr;</a>
                 </td>
               </tr>
             </table>
@@ -238,7 +210,6 @@ set
     'user_name',
     'user_email',
     'hub_account_url',
-    'hubert_profile_url',
     'claim_attended_url',
     'browse_events_url',
     'opportunities_url',
