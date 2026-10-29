@@ -20,7 +20,7 @@
     <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20261021eealias1" />
     <!-- hub-mobile last so phone overrides win over dashboard table min-widths -->
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812footer10" />
-    <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="../css/organiser-event-edit.css?v=20261029book1|../css/organiser-flow-tour.css?v=20260716layout|../css/hubert-widget.css?v=20260805bottom2|../css/hub-ranking-badge.css?v=20260728lb2|../css/hub-partner-badge.css?v=20261008profile1|../css/rankings-page.css?v=20260807rank|../css/organiser-opportunity-edit.css?v=20260829premium1|https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&family=Playfair+Display:wght@400;700&family=Source+Sans+3:wght@400;600;700&family=Oswald:wght@500;600&family=Nunito:wght@400;600;700&display=swap"></script>
+    <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="../css/organiser-event-edit.css?v=20261029drawer-eb1|../css/organiser-flow-tour.css?v=20260716layout|../css/hubert-widget.css?v=20260805bottom2|../css/hub-ranking-badge.css?v=20260728lb2|../css/hub-partner-badge.css?v=20261008profile1|../css/rankings-page.css?v=20260807rank|../css/organiser-opportunity-edit.css?v=20260829premium1|https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&family=Playfair+Display:wght@400;700&family=Source+Sans+3:wght@400;600;700&family=Oswald:wght@500;600&family=Nunito:wght@400;600;700&display=swap"></script>
   </head>
   <body class="organiser-dashboard-page">
     <div
@@ -4095,6 +4095,119 @@
                   Skip this if you only have one organiser page — “This page only” is fine.
                 </p>
               </fieldset>
+
+              <div class="ee-card org-group-drawer-booking" id="ge-booking-card" hidden>
+                <h3 class="ge-booking-panel-title" style="margin-top:0">Already use a booking system?</h3>
+                <p class="ee-hint" style="margin:0 0 14px">
+                  Connect Eventbrite here — no separate “enable” step. Checkout stays on Eventbrite; we import live
+                  events onto this page and sync buyers to your attendee list.
+                </p>
+
+                <div class="ge-booking-choices" role="listbox" aria-label="Booking system for this organiser page">
+                  <div class="ge-booking-choice is-default" role="option" aria-selected="false">
+                    <div>
+                      <strong>The Networker UK</strong>
+                      <span>Sell tickets here. No connection needed.</span>
+                    </div>
+                    <span class="ge-booking-tag">Easiest</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="ge-booking-choice is-selected"
+                    id="ge-booking-eventbrite"
+                    data-ge-booking="eventbrite"
+                    role="option"
+                    aria-selected="true"
+                  >
+                    <span>
+                      <strong>Eventbrite</strong>
+                      <span>Keep Eventbrite checkout. Import events and sync buyers.</span>
+                    </span>
+                    <span class="ge-booking-status" id="ge-eb-status-pill">Not connected</span>
+                  </button>
+                  <div
+                    class="ge-booking-choice ge-booking-choice--muted"
+                    role="option"
+                    aria-disabled="true"
+                    aria-selected="false"
+                    title="Coming soon"
+                  >
+                    <div>
+                      <strong>Ticket Tailor</strong>
+                      <span>Not available to choose yet.</span>
+                    </div>
+                    <span class="ge-booking-status ge-booking-status--soon">Coming soon</span>
+                  </div>
+                  <div
+                    class="ge-booking-choice ge-booking-choice--muted"
+                    role="option"
+                    aria-disabled="true"
+                    aria-selected="false"
+                    title="Coming soon"
+                  >
+                    <div>
+                      <strong>Your own website</strong>
+                      <span>Connect from Booking system for now.</span>
+                    </div>
+                    <span class="ge-booking-status ge-booking-status--soon">Soon</span>
+                  </div>
+                </div>
+
+                <div class="ge-booking-panel" id="ge-eb-panel">
+                  <h3 class="ge-booking-panel-title">Connect Eventbrite</h3>
+                  <p class="ee-hint" style="margin:0 0 12px">
+                    Click connect and approve The Networker UK in Eventbrite. We turn on sync for this account
+                    automatically and import matching live events onto this page.
+                  </p>
+                  <div class="ge-booking-actions">
+                    <button type="button" class="ee-btn ee-btn-primary" id="ge-eb-oauth">Connect with Eventbrite</button>
+                    <button type="button" class="ee-btn ee-btn-outline" id="ge-eb-refresh" hidden>
+                      Refresh Eventbrite events
+                    </button>
+                    <button type="button" class="ee-btn ee-btn-outline" id="ge-eb-sync" hidden>Import new events</button>
+                  </div>
+                  <p class="ee-hint" style="margin:10px 0 0">
+                    <a href="/guides/connect-eventbrite" target="_blank" rel="noopener">Open full guide →</a>
+                  </p>
+                  <details class="ge-eb-advanced" id="ge-eb-advanced" style="margin-top:14px">
+                    <summary>Use a private API token instead</summary>
+                    <ol class="ge-booking-steps" style="margin-top:10px">
+                      <li>
+                        In Eventbrite: profile → <strong>Account Settings</strong> →
+                        <strong>Developer Links</strong> → <strong>API Keys</strong>
+                      </li>
+                      <li>
+                        Open <strong>Show API key, client secret and tokens</strong> and copy the
+                        <strong>Private token</strong>
+                      </li>
+                      <li>Paste it below, then save</li>
+                    </ol>
+                    <div class="ee-field" style="margin:0">
+                      <label for="ge-eb-token">Eventbrite private token</label>
+                      <input
+                        type="password"
+                        id="ge-eb-token"
+                        autocomplete="off"
+                        placeholder="Paste Private token from API Keys"
+                      />
+                    </div>
+                    <div class="ge-booking-actions" style="margin-top:10px">
+                      <button type="button" class="ee-btn ee-btn-outline" id="ge-eb-save">Save private token</button>
+                    </div>
+                  </details>
+                  <p class="ge-booking-msg" id="ge-eb-msg" role="status" hidden></p>
+
+                  <div class="ge-eb-import" id="ge-eb-import" hidden>
+                    <h3 class="ge-booking-panel-title">Your Eventbrite events</h3>
+                    <p class="ee-hint" style="margin:0 0 10px">
+                      Matching live events are imported automatically after connect. You can still import one by
+                      hand if needed.
+                    </p>
+                    <ul class="ge-eb-event-list" id="ge-eb-event-list"></ul>
+                    <p class="ee-hint" id="ge-eb-empty" hidden>No Eventbrite events found for this account.</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </form>
         </div>
@@ -4213,7 +4326,8 @@
     <script src="../js/organiser-flow-tour.js?v=20260723onboard" defer></script>
     <script src="../js/organiser-onboarding.js?v=20260825tourheal1" defer></script>
     <script src="../js/organiser-launch-setup.js?v=20260820hubreview1" defer></script>
-    <script src="../js/organiser-group-edit.js?v=20261022listacc1" defer></script>
+    <script src="../js/organiser-group-edit.js?v=20261029drawer-eb1" defer></script>
+    <script src="../js/organiser-group-booking-connect.js?v=20261029drawer-eb1" defer></script>
     <script src="../js/organiser-payment-setup.js?v=20260909impersonate1" defer></script>
     <script src="../js/review-report.js?v=20260708" defer></script>
     <script src="../js/hub-event-timezone.js?v=20260812dst" defer></script>
