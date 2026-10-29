@@ -158,6 +158,37 @@
                 <p class="hmm-preview-note" data-hmm-preview hidden role="status"></p>
                 <div class="hmm-results" data-hmm-results hidden role="list"></div>
                 <div class="hmm-empty" data-hmm-empty hidden></div>
+                <div class="hmm-invite-panel" data-hmm-invite-panel>
+                  <p class="hmm-invite-kicker">Know someone great?</p>
+                  <h3 class="hmm-invite-title">Introduce them to The Networker UK &amp; Hubert</h3>
+                  <p class="hmm-invite-copy">
+                    I&rsquo;ll invite them to join The Networker UK. They won&rsquo;t see your details — just a note from me to get started.
+                  </p>
+                  <button type="button" class="ad-btn ad-btn-ghost hmm-invite-cta" data-hmm-invite>
+                    Introduce someone
+                  </button>
+                  <form class="hmm-invite-form" data-hmm-invite-form hidden>
+                    <label class="hmm-invite-field">
+                      <span>Their name</span>
+                      <input type="text" name="inviteeName" data-hmm-invite-name maxlength="120" required autocomplete="name" placeholder="Alex Morgan" />
+                    </label>
+                    <label class="hmm-invite-field">
+                      <span>Their email</span>
+                      <input type="email" name="inviteeEmail" data-hmm-invite-email maxlength="200" required autocomplete="email" placeholder="alex@example.com" />
+                    </label>
+                    <label class="hmm-invite-field">
+                      <span>Optional note <span class="hmm-invite-optional">(shown as from Hubert)</span></span>
+                      <textarea name="note" data-hmm-invite-note maxlength="500" rows="3" placeholder="A short note to help them get started"></textarea>
+                    </label>
+                    <p class="hmm-invite-error" data-hmm-invite-error hidden role="alert"></p>
+                    <p class="hmm-invite-quota" data-hmm-invite-quota hidden></p>
+                    <div class="hmm-invite-actions">
+                      <button type="button" class="ad-btn ad-btn-ghost" data-hmm-invite-cancel>Cancel</button>
+                      <button type="submit" class="ad-btn ad-btn-primary" data-hmm-invite-submit>Send invite</button>
+                    </div>
+                  </form>
+                  <p class="hmm-invite-done" data-hmm-invite-done hidden role="status"></p>
+                </div>
               </div>
             </section>
           </div>
@@ -165,7 +196,7 @@
       </div>
     </div>
 
-    <script src="../js/hubert-matchmaker.js?v=20261028meet4"></script>
+    <script src="../js/hubert-matchmaker.js?v=20261029invite1"></script>
     <script>
       (function () {
         var mm = window.HubHubertMatchmaker;
