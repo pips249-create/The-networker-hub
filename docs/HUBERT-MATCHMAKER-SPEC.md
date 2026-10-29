@@ -187,8 +187,8 @@ After Accept, B owns and edits their Hub profile text.
 | Search | Account required (and admin during build); soft reciprocity — tags + discoverable before full search |
 | Results per search | **Max 5** people put forward |
 | Search quota (members) | **3 searches / week** |
-| Intro requests (members) | **5 intro requests / week** (not more to start — see Quotas) |
-| Staff / Rosie | Higher seed nominate + reminder quotas (not bound by the member 5) |
+| Intro requests (members) | **10 intro requests / week** (raised for habit-forming soft launch — see Quotas) |
+| Staff / Rosie | Higher seed nominate + reminder quotas (not bound by the member 10) |
 | Intent field | **≥ 25 characters** on “what I’d like to discuss”; soft-reject generics (“hi”, “networking”, “sales”) |
 | Shortlist identity | **First name + surname initial** only |
 | Contact after Accept | **None** — Hubert-mediated Hub intro / thread only |
@@ -196,13 +196,13 @@ After Accept, B owns and edits their Hub profile text.
 | Seed non-response | **1** Hubert reminder at day 5–7; then **pause** in BOH pool |
 | Prefer | Tiered event boost: same event > B has another upcoming event > cold |
 
-### Quotas — do we want more than 5 intros / week?
+### Quotas — intros / week
 
-**Not at launch.** **5 intro requests / week** for members is the locked default:
+**Soft launch default: 10 intro requests / week** for members (raised from 5 so people can form the habit before monetisation):
 
-- Enough for 1–2 real connections around an event  
-- Stops Hubert becoming a free lead-scraping tool  
-- We can raise later (e.g. 8–10) if accept rates stay healthy and abuse is low  
+- Enough for a busy event week without feeling blocked mid-week  
+- Still capped — quality gates (topic length / soft-reject generics) do more against scraping than a tiny cap  
+- Later: free tier can sit at ~5–10; paid can go higher  
 
 **Separate from member intros:** Rosie/admin seed outreach is staff tooling with its own higher limits.
 
@@ -290,7 +290,7 @@ Ship the `hubert_intro_requests` (name TBD) table in the same slice as Request i
 
 | Decision | Locked choice |
 |----------|----------------|
-| Member quotas | **3 searches / week**, **5 intro requests / week** (+ separate Hub invite cap) |
+| Member quotas | **3 searches / week**, **10 intro requests / week** (+ separate Hub invite cap) |
 | Placements | Dashboard (Overview + Meet) · public teaser on **Home** and **Event browse** |
 | UI framing | **“Ask Hubert to introduce you”** (concierge) + **“Introduce someone to The Networker UK & Hubert”** |
 | Event boost | Same event > B attending another event > cold |
@@ -314,4 +314,4 @@ Ship the `hubert_intro_requests` (name TBD) table in the same slice as Request i
 
 ## One-line summary
 
-**Ask Hubert to introduce you — no contact details ever exchanged; Accept opens a Hubert Hub intro; members can also introduce someone to The Networker UK & Hubert; quotas 3 searches / 5 intros per week; Rosie seeds in Admin; BOH shortlist max five; Phase 1 metrics = funnel + shared-event Accept % + search-to-ticket.**
+**Ask Hubert to introduce you — no contact details ever exchanged; Accept opens a Hubert intro on The Networker UK; members can also introduce someone to The Networker UK & Hubert; quotas 3 searches / 10 intros per week; Rosie seeds in Admin; BOH shortlist max five; Phase 1 metrics = funnel + shared-event Accept % + search-to-ticket.**

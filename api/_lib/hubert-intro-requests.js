@@ -4,7 +4,7 @@
 const { createHubertIntroToken, verifyHubertIntroToken, DEFAULT_TTL_DAYS } = require('./hubert-intro-token');
 const { isUuid } = require('./uuid');
 
-const INTROS_PER_WEEK = 5;
+const INTROS_PER_WEEK = 10;
 const TOPIC_MIN_LEN = 25;
 const RESPONSE_TTL_DAYS = DEFAULT_TTL_DAYS;
 const GENERIC_TOPICS = new Set(['hi', 'hello', 'hey', 'networking', 'sales', 'connect', 'connection', 'meet']);
@@ -194,7 +194,8 @@ async function assertIntroQuota(sb, requesterAttendeeId) {
   if ((count || 0) >= INTROS_PER_WEEK) {
     const err = new Error('intro_quota_exceeded');
     err.code = 'intro_quota_exceeded';
-    err.message = 'You’ve used this week’s intro requests (5). Try again next week.';
+    err.message =
+      'You’ve used this week’s intro requests (' + INTROS_PER_WEEK + '). Try again next week.';
     throw err;
   }
 }
