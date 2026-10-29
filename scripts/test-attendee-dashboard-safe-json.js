@@ -45,8 +45,8 @@ if (!/\}\s*catch\s*\{[\s\S]*showDashboardLoadError\(null\);/.test(src)) {
 if (!/init\(\)\.catch\(/.test(src)) {
   fail('init() must have a top-level .catch to avoid unhandled rejection');
 }
-if (!/attendee-dashboard\.js\?v=20261029safarjson1/.test(account)) {
-  fail('account/index.html cache-buster not bumped for safe-json fix');
+if (!/attendee-dashboard\.js\?v=20261029ticketsnav1/.test(account)) {
+  fail('account/index.html cache-buster not bumped for Event tickets nav fix');
 }
 
 console.log('ok: attendee dashboard Safari-safe JSON parsing guards present');
