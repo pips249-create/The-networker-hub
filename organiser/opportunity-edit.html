@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260608c" />
-    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20261029vatinv1" />
+    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20261029vatfind1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20261016signin1" />
     <style>
       /* Prevent browse-page nav padding flash before organiser form CSS loads */
@@ -81,6 +81,37 @@
           <a href="/organiser/#business-open-days">Open days &amp; talks</a>).
         </p>
       </div>
+
+      <div class="oe-listing-billing" id="oe-listing-billing" hidden>
+        <h2 class="oe-listing-payment-title">Billing &amp; VAT invoices</h2>
+        <p class="oe-listing-payment-lead" id="oe-listing-billing-lead">
+          Your listing is billed <strong>£25/month + VAT</strong> (£30) via Stripe until you cancel.
+        </p>
+        <p class="ee-hint" id="oe-listing-billing-expiry" hidden></p>
+        <div class="oe-listing-billing-actions">
+          <a class="ee-btn ee-btn-gold" href="#vat-invoices" id="oe-view-vat-invoices">
+            VAT invoices
+          </a>
+          <button type="button" class="ee-btn ee-btn-outline" id="oe-manage-listing-billing">
+            Manage or cancel subscription
+          </button>
+        </div>
+        <section class="oe-listing-invoices" id="vat-invoices" aria-labelledby="oe-listing-invoices-title">
+          <h3 class="oe-listing-invoices-title" id="oe-listing-invoices-title">VAT invoices</h3>
+          <p class="ee-hint oe-listing-invoices-lead">
+            Private to your organiser account — not shown on the public listing. Download past monthly VAT invoices here. We also email a receipt each month when you renew.
+          </p>
+          <p class="ee-hint oe-listing-invoices-status" id="oe-listing-invoices-status" role="status">
+            Loading invoices…
+          </p>
+          <ul class="oe-listing-invoices-list" id="oe-listing-invoices-list" hidden></ul>
+        </section>
+        <p class="ee-hint oe-listing-billing-note">
+          <strong>Manage or cancel subscription</strong> opens Stripe’s billing portal to update your card or cancel.
+          Cancellation takes effect at the end of the current billing period unless Stripe shows otherwise.
+        </p>
+      </div>
+
       <div id="oe-rejection-banner" class="oe-rejection-banner" hidden role="alert"></div>
       <div id="oe-moderation-warnings" class="oe-moderation-warnings" hidden role="status" aria-live="polite"></div>
 
@@ -451,34 +482,8 @@
             <button type="button" class="ee-btn ee-btn-gold oe-listing-pay-stripe" id="oe-pay-stripe" hidden>
               <span class="oe-pay-stripe-label">Pay with <img src="../assets/stripe-wordmark.png" alt="Stripe" width="56" height="24" decoding="async"></span>
             </button>
-          </div>
-          <div class="oe-listing-billing" id="oe-listing-billing" hidden>
-            <h2 class="oe-listing-payment-title">Your subscription</h2>
-            <p class="oe-listing-payment-lead" id="oe-listing-billing-lead">
-              Your listing is billed <strong>£25/month + VAT</strong> (£30) via Stripe until you cancel.
-            </p>
-            <p class="ee-hint" id="oe-listing-billing-expiry" hidden></p>
-            <div class="oe-listing-billing-actions">
-              <a class="ee-btn ee-btn-gold" href="#vat-invoices" id="oe-view-vat-invoices">
-                VAT invoices
-              </a>
-              <button type="button" class="ee-btn ee-btn-outline" id="oe-manage-listing-billing">
-                Manage or cancel subscription
-              </button>
-            </div>
-            <section class="oe-listing-invoices" id="vat-invoices" aria-labelledby="oe-listing-invoices-title">
-              <h3 class="oe-listing-invoices-title" id="oe-listing-invoices-title">VAT invoices</h3>
-              <p class="ee-hint oe-listing-invoices-lead">
-                Private to your organiser account — not shown on the public listing. Download past monthly VAT invoices here. We also email a receipt each month when you renew.
-              </p>
-              <p class="ee-hint oe-listing-invoices-status" id="oe-listing-invoices-status" role="status">
-                Loading invoices…
-              </p>
-              <ul class="oe-listing-invoices-list" id="oe-listing-invoices-list" hidden></ul>
-            </section>
-            <p class="ee-hint oe-listing-billing-note">
-              <strong>Manage or cancel subscription</strong> opens Stripe’s billing portal to update your card or cancel.
-              Cancellation takes effect at the end of the current billing period unless Stripe shows otherwise.
+            <p class="ee-hint" id="oe-listing-billing-step-hint" hidden>
+              Billing and VAT invoices are at the <a href="#vat-invoices">top of this page</a> while your subscription is active.
             </p>
           </div>
           <div class="oe-fca-attest-panel" id="oe-fca-attest-panel" hidden>
@@ -526,6 +531,6 @@
     <script src="../js/opportunities-catalog.js?v=20260910cat2" defer></script>
     <script src="../js/hub-event-timezone.js?v=20260812dst" defer></script>
     <script src="../js/organiser-quarter-time.js?v=20260828openday5" defer></script>
-    <script src="../js/organiser-opportunity-edit.js?v=20261029vatinv3" defer></script>
+    <script src="../js/organiser-opportunity-edit.js?v=20261029vatfind1" defer></script>
   </body>
 </html>

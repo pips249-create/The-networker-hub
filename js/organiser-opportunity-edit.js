@@ -855,11 +855,21 @@
     return true;
   }
 
+  function listingShowsBillingPanel(opp) {
+    if (!opp) return false;
+    if (opp.listingPaymentActive) return true;
+    return listingHasStripeSubscription(opp);
+  }
+
   function syncListingBillingPanel(forceShow) {
     const billing = document.getElementById('oe-listing-billing');
     if (!billing) return;
-    const active = Boolean(forceShow || (currentOpportunity && currentOpportunity.listingPaymentActive));
+    const active = Boolean(
+      forceShow || listingShowsBillingPanel(currentOpportunity)
+    );
     billing.hidden = !active;
+    const stepHint = document.getElementById('oe-listing-billing-step-hint');
+    if (stepHint) stepHint.hidden = !active;
     if (!active) return;
 
     const lead = document.getElementById('oe-listing-billing-lead');
@@ -871,7 +881,7 @@
     if (lead) {
       lead.innerHTML = hasSub
         ? 'Your listing is billed <strong>£25/month + VAT</strong> (£30) via Stripe until you cancel. VAT invoices below are private to your organiser account (not on the public listing). Use Manage or cancel for card updates or cancellation.'
-        : 'Your listing fee is marked paid. If you need to stop billing, email <a href="mailto:hi@thenetworkeruk.com">hi@thenetworkeruk.com</a> and we will help straight away.';
+        : 'Your listing fee is marked paid. If a Stripe subscription is missing, email <a href="mailto:hi@thenetworkeruk.com">hi@thenetworkeruk.com</a> and we will help with invoices or cancellation.';
     }
     if (expiry) {
       const until = currentOpportunity && currentOpportunity.listingExpiresAt;
@@ -895,10 +905,11 @@
       manageBtn.disabled = !hasSub;
     }
     if (invoicesBtn) {
-      invoicesBtn.hidden = !hasSub;
-      if (hasSub) invoicesBtn.setAttribute('href', '#vat-invoices');
+      invoicesBtn.hidden = false;
+      invoicesBtn.setAttribute('href', '#vat-invoices');
     }
     loadListingVatInvoices({ force: false });
+    maybeScrollToVatInvoices();
   }
 
   let listingInvoicesLoadedFor = '';
@@ -989,11 +1000,12 @@
     const list = document.getElementById('oe-listing-invoices-list');
     const billing = document.getElementById('oe-listing-billing');
     if (!billing || billing.hidden) return;
-    if (!editId || !listingHasStripeSubscription(currentOpportunity)) {
+    if (!editId) return;
+    if (!listingHasStripeSubscription(currentOpportunity)) {
       if (status) {
         status.hidden = false;
         status.textContent =
-          'VAT invoices appear here once your Stripe subscription is linked.';
+          'No Stripe subscription is linked on this listing yet, so invoices cannot be loaded automatically. Email hi@thenetworkeruk.com and we will send your VAT receipts.';
       }
       if (list) {
         list.hidden = true;
@@ -1260,7 +1272,8 @@
     const canUnpublish = opportunityCanUnpublish(currentOpportunity);
     const canDelete = opportunityCanDeleteDraft(currentOpportunity);
     const canManageBilling = listingHasStripeSubscription(currentOpportunity);
-    if (!canUnpublish && !canDelete && !canManageBilling) {
+    const canShowInvoices = listingShowsBillingPanel(currentOpportunity);
+    if (!canUnpublish && !canDelete && !canManageBilling && !canShowInvoices) {
       zone.hidden = true;
       return;
     }
@@ -1269,16 +1282,16 @@
     if (deleteBtn) deleteBtn.hidden = !canDelete;
     if (billingBtn) billingBtn.hidden = !canManageBilling;
     if (invoicesBtn) {
-      invoicesBtn.hidden = !canManageBilling;
-      if (canManageBilling) invoicesBtn.setAttribute('href', '#vat-invoices');
+      invoicesBtn.hidden = !canShowInvoices;
+      if (canShowInvoices) invoicesBtn.setAttribute('href', '#vat-invoices');
     }
     if (lede) {
-      if (canManageBilling && canUnpublish) {
+      if (canShowInvoices && canUnpublish) {
         lede.textContent =
-          'Download VAT invoices, cancel billing any time, or hide this listing from the public directory without stopping the subscription.';
-      } else if (canManageBilling) {
+          'Download VAT invoices near the top of this page, cancel billing any time, or hide this listing from the public directory without stopping the subscription.';
+      } else if (canShowInvoices) {
         lede.textContent =
-          'Download VAT invoices, or manage your card / cancel the monthly listing subscription.';
+          'Download VAT invoices near the top of this page, or manage your card / cancel the monthly listing subscription.';
       } else if (canUnpublish) {
         lede.textContent = 'Hide this listing from the public directory.';
       } else {

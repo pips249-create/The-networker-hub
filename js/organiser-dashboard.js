@@ -18196,17 +18196,27 @@
     renderOpportunitiesList();
   }
 
+  function opportunityHasListingBilling(o) {
+    if (!o) return false;
+    if (o.listingPaymentActive || o.listing_payment_active) return true;
+    return Boolean(
+      String(o.listingStripeSubscriptionId || o.listing_stripe_subscription_id || '').trim()
+    );
+  }
+
   function opportunityManageSecondaryActionHtml(o) {
     let html = '';
-    if (o.listingStripeSubscriptionId || o.listing_stripe_subscription_id) {
+    if (opportunityHasListingBilling(o)) {
       html +=
-        '<a class="org-btn org-btn-outline org-btn-sm" href="' +
+        '<a class="org-btn org-btn-gold org-btn-sm" href="' +
         esc(opportunityEditUrl(o) + '#vat-invoices') +
         '">VAT invoices</a> ';
-      html +=
-        '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-opp-manage-billing="' +
-        esc(o.id) +
-        '">Manage / cancel billing</button> ';
+      if (o.listingStripeSubscriptionId || o.listing_stripe_subscription_id) {
+        html +=
+          '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-opp-manage-billing="' +
+          esc(o.id) +
+          '">Manage / cancel billing</button> ';
+      }
     }
     if (opportunityCanUnpublish(o)) {
       html +=
@@ -18358,6 +18368,69 @@
     return { key: 'draft', label: status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Draft' };
   }
 
+  function renderOpportunityBillingPanel() {
+    const panel = document.getElementById('org-opp-billing-panel');
+    const listEl = document.getElementById('org-opp-billing-list');
+    if (!panel || !listEl) return;
+    const paid = (state.opportunities || []).filter(opportunityHasListingBilling);
+    if (!paid.length) {
+      panel.hidden = true;
+      listEl.innerHTML = '';
+      return;
+    }
+    panel.hidden = false;
+    listEl.innerHTML = paid
+      .map(function (o) {
+        const title = esc(o.title || 'Untitled listing');
+        const hasSub = Boolean(
+          String(o.listingStripeSubscriptionId || o.listing_stripe_subscription_id || '').trim()
+        );
+        const until = o.listingExpiresAt || o.listing_expires_at;
+        let note = hasSub
+          ? 'Monthly subscription · VAT receipts emailed each renewal'
+          : 'Marked paid · contact support if invoices are missing';
+        if (until) {
+          try {
+            note +=
+              ' · paid until ' +
+              new Date(until).toLocaleDateString('en-GB', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+              });
+          } catch (e) {
+            /* ignore */
+          }
+        }
+        let actions =
+          '<a class="org-btn org-btn-gold org-btn-sm" href="' +
+          esc(opportunityEditUrl(o) + '#vat-invoices') +
+          '">Open VAT invoices</a>';
+        if (hasSub) {
+          actions +=
+            ' <button type="button" class="org-btn org-btn-outline org-btn-sm" data-opp-manage-billing="' +
+            esc(o.id) +
+            '">Manage / cancel</button>';
+        }
+        return (
+          '<li class="org-opp-billing-row">' +
+          '<div class="org-opp-billing-meta">' +
+          '<span class="org-opp-billing-name">' +
+          title +
+          '</span>' +
+          '<span class="org-opp-billing-note">' +
+          esc(note) +
+          '</span>' +
+          '</div>' +
+          '<div class="org-opp-billing-actions">' +
+          actions +
+          '</div>' +
+          '</li>'
+        );
+      })
+      .join('');
+  }
+
   function renderOpportunitiesList() {
     const body = document.getElementById('opp-listings-body');
     const empty = document.getElementById('opp-listings-empty');
@@ -18368,6 +18441,7 @@
       setOrgEmpty(empty, { show: true });
       renderOpportunityExpiryBanner();
       renderOpportunityAwaitingPayBanner();
+      renderOpportunityBillingPanel();
       return;
     }
     setOrgEmpty(empty, { show: false });
@@ -18422,6 +18496,7 @@
     });
     renderOpportunityExpiryBanner();
     renderOpportunityAwaitingPayBanner();
+    renderOpportunityBillingPanel();
     renderOpportunityPerformance();
     renderOpportunityRoiInsights();
     renderOpportunityCompare();
