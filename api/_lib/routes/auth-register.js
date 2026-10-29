@@ -59,6 +59,9 @@ module.exports = async function handler(req, res) {
   const password = String(body.password || '');
   const name = String(body.name || '').trim();
   const marketingOptIn = Boolean(body.marketingOptIn ?? body.marketing_opt_in);
+  const hubertOptIn = Boolean(
+    body.hubertOptIn ?? body.hubert_opt_in ?? body.hubertIntros ?? body.hubert_intros
+  );
   const termsAccepted =
     body.termsAccepted === true ||
     body.terms_accepted === true ||
@@ -109,7 +112,7 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const user = await sbAuth.registerUser({ email, password, name, marketingOptIn });
+    const user = await sbAuth.registerUser({ email, password, name, marketingOptIn, hubertOptIn });
 
     const sessionUser = {
       sub: user.id,

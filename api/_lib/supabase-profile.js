@@ -39,6 +39,8 @@ const WRITABLE = {
   matchmakerBlurb: true,
   lookingToMeet: true,
   discoverable: true,
+  hubertIntrosInterest: true,
+  hubertIntrosPromptDismiss: true,
 };
 
 function resolvePublicReviewNameInput(body) {
@@ -330,6 +332,23 @@ async function updateProfile(session, body) {
     );
     if (next !== undefined) attendeePatch.discoverable_at = next;
   }
+  if (
+    body.hubertIntrosInterest === true ||
+    body.hubert_intros_interest === true ||
+    body.hubertOptIn === true ||
+    body.hubert_opt_in === true
+  ) {
+    attendeePatch.hubert_intros_interest_at =
+      attendee?.hubert_intros_interest_at || new Date().toISOString();
+  }
+  if (
+    body.hubertIntrosPromptDismiss === true ||
+    body.hubert_intros_prompt_dismiss === true ||
+    body.hubertPromptDismiss === true
+  ) {
+    attendeePatch.hubert_intros_prompt_dismissed_at =
+      attendee?.hubert_intros_prompt_dismissed_at || new Date().toISOString();
+  }
 
   if (Object.keys(attendeePatch).length) {
     let updated = null;
@@ -371,6 +390,8 @@ async function updateProfile(session, body) {
         msg.includes('matchmaker_blurb') ||
         msg.includes('looking_to_meet') ||
         msg.includes('discoverable_at') ||
+        msg.includes('hubert_intros_interest_at') ||
+        msg.includes('hubert_intros_prompt_dismissed_at') ||
         msg.includes('schema cache') ||
         code === 'PGRST204'
       ) {
@@ -381,20 +402,30 @@ async function updateProfile(session, body) {
         if (msg.includes('job_title')) delete fallback.job_title;
         if (msg.includes('professional_role')) delete fallback.professional_role;
         if (msg.includes('public_review_name')) delete fallback.public_review_name;
-        // If any Hubert column is missing / schema cache stale, drop all three together.
+        // If any Hubert column is missing / schema cache stale, drop Hubert fields together.
         const matchmakerMissing =
           msg.includes('matchmaker_blurb') ||
           msg.includes('looking_to_meet') ||
           msg.includes('discoverable_at') ||
+          msg.includes('hubert_intros_interest_at') ||
+          msg.includes('hubert_intros_prompt_dismissed_at') ||
           msg.includes('schema cache') ||
           code === 'PGRST204';
         if (matchmakerMissing) {
           delete fallback.matchmaker_blurb;
           delete fallback.looking_to_meet;
           delete fallback.discoverable_at;
+          delete fallback.hubert_intros_interest_at;
+          delete fallback.hubert_intros_prompt_dismissed_at;
         }
         const matchmakerOnlyPatch = Object.keys(attendeePatch).every((k) =>
-          ['matchmaker_blurb', 'looking_to_meet', 'discoverable_at'].includes(k)
+          [
+            'matchmaker_blurb',
+            'looking_to_meet',
+            'discoverable_at',
+            'hubert_intros_interest_at',
+            'hubert_intros_prompt_dismissed_at',
+          ].includes(k)
         );
         if (matchmakerMissing && matchmakerOnlyPatch) {
           const e = new Error(
