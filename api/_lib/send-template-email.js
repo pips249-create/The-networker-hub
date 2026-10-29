@@ -28,6 +28,7 @@ const {
   contactUrl,
   logoNavUrl,
   logoEmailHeaderUrl,
+  logoEmailOnDarkUrl,
   logoFooterUrl,
   logoFooterLightUrl,
   hubertIconUrl,
@@ -408,6 +409,13 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
 
   merged.logo_url = logoEmailHeaderUrl(siteUrl);
   merged.logo_footer_url = logoFooterUrl(siteUrl);
+  if (slug === 'hubert_hub_invite') {
+    // Purple header/footer bands — use the near-white wordmark for contrast.
+    const onDark = logoEmailOnDarkUrl(siteUrl);
+    merged.logo_url = onDark;
+    merged.logo_footer_url = onDark;
+    merged.logo_footer_light_url = onDark;
+  }
   if (
     slug === 'franchise_claim_invite' ||
     slug === 'franchise_claim_invite_followup' ||

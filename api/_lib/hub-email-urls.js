@@ -200,6 +200,14 @@ function logoEmailHeaderUrl(siteUrl) {
   return toPublicAssetUrl('/assets/logo-nav-transparent.png?v=' + LOGO_ASSET_VERSION, siteUrl);
 }
 
+/**
+ * Near-white Networker UK wordmark for dark purple / navy email bands.
+ * Use on #452d5c / #1c2040 — not on cream headers.
+ */
+function logoEmailOnDarkUrl(siteUrl) {
+  return toPublicAssetUrl('/assets/logo-networker-uk-on-dark.png?v=' + LOGO_ASSET_VERSION, siteUrl);
+}
+
 function logoFooterUrl(siteUrl) {
   return toPublicAssetUrl('/assets/logo-email-footer.png?v=' + LOGO_ASSET_VERSION, siteUrl);
 }
@@ -331,6 +339,7 @@ module.exports = {
   opportunityPublicUrl,
   logoNavUrl,
   logoEmailHeaderUrl,
+  logoEmailOnDarkUrl,
   logoFooterUrl,
   logoFooterLightUrl,
   hubertIconUrl,
