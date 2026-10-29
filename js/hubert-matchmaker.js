@@ -279,17 +279,192 @@
       empty: root.querySelector('[data-hmm-empty]'),
       previewNote: root.querySelector('[data-hmm-preview]'),
       adminBadge: root.querySelector('[data-hmm-admin-badge]'),
+      invitePanel: root.querySelector('[data-hmm-invite-panel]'),
+      inviteCta: root.querySelector('[data-hmm-invite]'),
+      inviteForm: root.querySelector('[data-hmm-invite-form]'),
+      inviteName: root.querySelector('[data-hmm-invite-name]'),
+      inviteEmail: root.querySelector('[data-hmm-invite-email]'),
+      inviteNote: root.querySelector('[data-hmm-invite-note]'),
+      inviteError: root.querySelector('[data-hmm-invite-error]'),
+      inviteQuota: root.querySelector('[data-hmm-invite-quota]'),
+      inviteCancel: root.querySelector('[data-hmm-invite-cancel]'),
+      inviteSubmit: root.querySelector('[data-hmm-invite-submit]'),
+      inviteDone: root.querySelector('[data-hmm-invite-done]'),
     };
+  }
+
+  function setInviteError(mount, message) {
+    var err = mount.els.inviteError;
+    if (!err) return;
+    if (message) {
+      err.textContent = message;
+      err.hidden = false;
+    } else {
+      err.textContent = '';
+      err.hidden = true;
+    }
+  }
+
+  function openInviteForm(mount) {
+    if (!mount.els.inviteForm) return;
+    if (mount.els.inviteCta) mount.els.inviteCta.hidden = true;
+    if (mount.els.inviteDone) {
+      mount.els.inviteDone.hidden = true;
+      mount.els.inviteDone.textContent = '';
+    }
+    setInviteError(mount, '');
+    mount.els.inviteForm.hidden = false;
+    if (mount.els.inviteName) mount.els.inviteName.focus();
+    refreshInviteQuota(mount);
+  }
+
+  function closeInviteForm(mount) {
+    if (!mount.els.inviteForm) return;
+    mount.els.inviteForm.hidden = true;
+    if (mount.els.inviteCta) mount.els.inviteCta.hidden = false;
+    setInviteError(mount, '');
+  }
+
+  function refreshInviteQuota(mount) {
+    var quotaEl = mount.els.inviteQuota;
+    if (!quotaEl) return;
+    fetch('/api/auth/hubert-matchmaker', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'invite_quota' }),
+    })
+      .then(function (res) {
+        return res.json().then(function (data) {
+          return { status: res.status, data: data };
+        });
+      })
+      .then(function (result) {
+        var data = result.data || {};
+        if (!data.ok) {
+          quotaEl.hidden = true;
+          return;
+        }
+        var remaining = Number(data.remaining);
+        var cap = Number(data.cap);
+        if (!isFinite(remaining) || !isFinite(cap)) {
+          quotaEl.hidden = true;
+          return;
+        }
+        quotaEl.hidden = false;
+        quotaEl.textContent =
+          remaining <= 0
+            ? 'You’ve used your ' + cap + ' introductions this week.'
+            : remaining + ' of ' + cap + ' introductions left this week.';
+      })
+      .catch(function () {
+        quotaEl.hidden = true;
+      });
+  }
+
+  function submitInvite(mount) {
+    var name = mount.els.inviteName ? String(mount.els.inviteName.value || '').trim() : '';
+    var email = mount.els.inviteEmail ? String(mount.els.inviteEmail.value || '').trim() : '';
+    var note = mount.els.inviteNote ? String(mount.els.inviteNote.value || '').trim() : '';
+    setInviteError(mount, '');
+    if (!name || name.length < 2) {
+      setInviteError(mount, 'Add their name.');
+      return;
+    }
+    if (!email) {
+      setInviteError(mount, 'Add a valid email address.');
+      return;
+    }
+
+    var submitBtn = mount.els.inviteSubmit;
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending…';
+    }
+
+    fetch('/api/auth/hubert-matchmaker', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'invite',
+        inviteeName: name,
+        inviteeEmail: email,
+        note: note,
+      }),
+    })
+      .then(function (res) {
+        return res.json().then(function (data) {
+          return { status: res.status, data: data };
+        });
+      })
+      .then(function (result) {
+        var data = result.data || {};
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Send invite';
+        }
+        if (!data.ok) {
+          setInviteError(mount, (data && data.message) || 'Hubert couldn’t send that invite just now.');
+          if (data.error === 'quota_exceeded') refreshInviteQuota(mount);
+          return;
+        }
+        if (mount.els.inviteForm) {
+          mount.els.inviteForm.reset();
+          mount.els.inviteForm.hidden = true;
+        }
+        if (mount.els.inviteCta) mount.els.inviteCta.hidden = false;
+        if (mount.els.inviteDone) {
+          mount.els.inviteDone.hidden = false;
+          mount.els.inviteDone.textContent =
+            'Invite sent to ' +
+            (data.inviteeName || name) +
+            '. They’ll get an email from Hubert to join The Networker UK.';
+        }
+        refreshInviteQuota(mount);
+      })
+      .catch(function () {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Send invite';
+        }
+        setInviteError(mount, 'Hubert couldn’t send that invite just now. Try again shortly.');
+      });
+  }
+
+  function bindInvite(mount) {
+    var panel = mount.els.invitePanel;
+    if (!panel || panel.dataset.hmmInviteBound === '1') return;
+    panel.dataset.hmmInviteBound = '1';
+
+    if (mount.els.inviteCta) {
+      mount.els.inviteCta.addEventListener('click', function () {
+        openInviteForm(mount);
+      });
+    }
+    if (mount.els.inviteCancel) {
+      mount.els.inviteCancel.addEventListener('click', function () {
+        closeInviteForm(mount);
+      });
+    }
+    if (mount.els.inviteForm) {
+      mount.els.inviteForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        submitInvite(mount);
+      });
+    }
   }
 
   function bind(mount) {
     var form = mount.els.form;
-    if (!form || form.dataset.hmmBound === '1') return;
-    form.dataset.hmmBound = '1';
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      runSearch(mount);
-    });
+    if (form && form.dataset.hmmBound !== '1') {
+      form.dataset.hmmBound = '1';
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        runSearch(mount);
+      });
+    }
+    bindInvite(mount);
   }
 
   function setNavVisibility(isVisible) {
