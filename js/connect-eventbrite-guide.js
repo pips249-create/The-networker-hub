@@ -97,7 +97,16 @@
     }
   });
 
+  /* Old webhook-first deep links still land on the closest OAuth step. */
+  var hashAliases = {
+    'enable-eventbrite': 'open-my-events',
+    'paste-webhook': 'connect-oauth',
+    'api-token': 'approve-eventbrite',
+    'link-event': 'events-import',
+  };
+
   var startHash = (location.hash || '').replace(/^#/, '');
+  if (startHash && hashAliases[startHash]) startHash = hashAliases[startHash];
   if (startHash) {
     var match = slides.findIndex(function (slide) {
       return slide.id === startHash;

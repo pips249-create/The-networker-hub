@@ -98,29 +98,29 @@ const GUIDE_PAGES = {
     path: '/guides/connect-eventbrite',
     title: 'Connect Eventbrite – How-to guides – The Networker UK',
     description:
-      'Link Eventbrite to The Networker UK so ticket sales sync to your attendee list — one-time webhook setup, then link each event.',
+      'Connect Eventbrite once with OAuth — The Networker UK imports your live events automatically and syncs ticket buyers to your attendee list.',
     name: 'Connect Eventbrite',
     howToName: 'How to connect Eventbrite to The Networker UK',
     steps: [
       {
-        id: 'enable-eventbrite',
-        name: 'Enable Eventbrite on Connected booking',
-        text: 'Open Connected booking in the organiser dashboard, enable Eventbrite under Booking providers, and copy the webhook URL (keep www in https://www.thenetworkeruk.com/w/eb/…).',
+        id: 'open-my-events',
+        name: 'Open My events',
+        text: 'Sign in to The Networker UK, open the organiser dashboard, and go to My events.',
       },
       {
-        id: 'paste-webhook',
-        name: 'Paste the webhook URL into Eventbrite',
-        text: 'In Eventbrite Account settings → Webhooks, paste the Networker UK URL as the Payload URL and set the action to order.placed. Do this once per Eventbrite account.',
+        id: 'connect-oauth',
+        name: 'Connect Eventbrite',
+        text: 'Expand Connect Eventbrite, choose which organiser page to import onto, then click Connect Eventbrite.',
       },
       {
-        id: 'api-token',
-        name: 'Save your Eventbrite private token',
-        text: 'Save the Eventbrite private API token on Connected booking so we can load buyer email and ticket holders after each order.placed ping.',
+        id: 'approve-eventbrite',
+        name: 'Allow access on Eventbrite',
+        text: 'On Eventbrite, confirm you are signed into the right organiser account and click Allow so The Networker UK can import events and sync buyers.',
       },
       {
-        id: 'link-event',
-        name: 'Link each event',
-        text: 'On Connected setup for the event, choose Eventbrite, add the display price and Eventbrite URL, confirm the numeric event id, save the link, and publish.',
+        id: 'events-import',
+        name: 'Events import automatically',
+        text: 'You return to My events with Eventbrite Connected. Live events import onto your organiser page; complete ones publish; incomplete ones stay drafts. New live events keep arriving automatically.',
       },
       {
         id: 'check-it-worked',

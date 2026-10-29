@@ -34,8 +34,8 @@ For local/preview, add the matching `SITE_URL` callback as well.
 
 ### Preferred — OAuth
 
-1. **Organiser → Edit page → Where do people book? → Eventbrite** → **Connect with Eventbrite**.
-2. Approve The Networker UK in Eventbrite.
+1. **Organiser → My events → Connect Eventbrite** → choose **Import onto** page → **Connect Eventbrite**.
+2. Approve The Networker UK in Eventbrite (click **Allow**).
 3. On return, TNH stores the access token, ensures webhooks (`order.placed`, `attendee.updated`, `event.published`), and **auto-imports** live/started organisation events onto that organiser page.
 
 ### Fallback — private token

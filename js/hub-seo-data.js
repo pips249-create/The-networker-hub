@@ -2527,7 +2527,7 @@ window.HUB_SEO_DATA = {
           "@id": "https://www.thenetworkeruk.com/guides/connect-eventbrite#webpage",
           "url": "https://www.thenetworkeruk.com/guides/connect-eventbrite",
           "name": "Connect Eventbrite – How-to guides – The Networker UK",
-          "description": "Link Eventbrite to The Networker UK so ticket sales sync to your attendee list — one-time webhook setup, then link each event.",
+          "description": "Connect Eventbrite once with OAuth — The Networker UK imports your live events automatically and syncs ticket buyers to your attendee list.",
           "isPartOf": {
             "@type": "WebSite",
             "name": "The Networker UK",
@@ -2539,35 +2539,35 @@ window.HUB_SEO_DATA = {
           "@id": "https://www.thenetworkeruk.com/guides/connect-eventbrite#howto",
           "url": "https://www.thenetworkeruk.com/guides/connect-eventbrite",
           "name": "How to connect Eventbrite to The Networker UK",
-          "description": "Link Eventbrite to The Networker UK so ticket sales sync to your attendee list — one-time webhook setup, then link each event.",
+          "description": "Connect Eventbrite once with OAuth — The Networker UK imports your live events automatically and syncs ticket buyers to your attendee list.",
           "step": [
             {
               "@type": "HowToStep",
               "position": 1,
-              "name": "Enable Eventbrite on Connected booking",
-              "text": "Open Connected booking in the organiser dashboard, enable Eventbrite under Booking providers, and copy the webhook URL (keep www in https://www.thenetworkeruk.com/w/eb/…).",
-              "url": "https://www.thenetworkeruk.com/guides/connect-eventbrite#enable-eventbrite"
+              "name": "Open My events",
+              "text": "Sign in to The Networker UK, open the organiser dashboard, and go to My events.",
+              "url": "https://www.thenetworkeruk.com/guides/connect-eventbrite#open-my-events"
             },
             {
               "@type": "HowToStep",
               "position": 2,
-              "name": "Paste the webhook URL into Eventbrite",
-              "text": "In Eventbrite Account settings → Webhooks, paste the Networker UK URL as the Payload URL and set the action to order.placed. Do this once per Eventbrite account.",
-              "url": "https://www.thenetworkeruk.com/guides/connect-eventbrite#paste-webhook"
+              "name": "Connect Eventbrite",
+              "text": "Expand Connect Eventbrite, choose which organiser page to import onto, then click Connect Eventbrite.",
+              "url": "https://www.thenetworkeruk.com/guides/connect-eventbrite#connect-oauth"
             },
             {
               "@type": "HowToStep",
               "position": 3,
-              "name": "Save your Eventbrite private token",
-              "text": "Save the Eventbrite private API token on Connected booking so we can load buyer email and ticket holders after each order.placed ping.",
-              "url": "https://www.thenetworkeruk.com/guides/connect-eventbrite#api-token"
+              "name": "Allow access on Eventbrite",
+              "text": "On Eventbrite, confirm you are signed into the right organiser account and click Allow so The Networker UK can import events and sync buyers.",
+              "url": "https://www.thenetworkeruk.com/guides/connect-eventbrite#approve-eventbrite"
             },
             {
               "@type": "HowToStep",
               "position": 4,
-              "name": "Link each event",
-              "text": "On Connected setup for the event, choose Eventbrite, add the display price and Eventbrite URL, confirm the numeric event id, save the link, and publish.",
-              "url": "https://www.thenetworkeruk.com/guides/connect-eventbrite#link-event"
+              "name": "Events import automatically",
+              "text": "You return to My events with Eventbrite Connected. Live events import onto your organiser page; complete ones publish; incomplete ones stay drafts. New live events keep arriving automatically.",
+              "url": "https://www.thenetworkeruk.com/guides/connect-eventbrite#events-import"
             },
             {
               "@type": "HowToStep",
@@ -2657,7 +2657,7 @@ window.HUB_SEO_DATA = {
               "@type": "HowToStep",
               "position": 5,
               "name": "Check it worked",
-              "text": "Recent sync attempts should show own_site:accepted and the buyer should appear on Attendees. Verified reviews follow after the event ends.",
+              "text": "Use Send test booking on Connected setup (or Booking providers), then confirm Recent sync attempts shows own_site:accepted and the buyer appears on Attendees. Verified reviews follow after the event ends.",
               "url": "https://www.thenetworkeruk.com/guides/connect-own-website#check-it-worked"
             }
           ]
