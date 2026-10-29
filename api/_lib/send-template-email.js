@@ -2,7 +2,10 @@ const { getEmailTemplateBySlug } = require('./supabase-email-templates');
 const { getEmailsEnabledForEmail, getHubAccountForEmail, canSendEmailCategory } = require('./supabase-auth');
 const { getBookingEmailDefaultVars } = require('./email-booking-defaults');
 const { resolveBookingConfirmationBody } = require('./booking-confirmation-template');
-const { resolveBookingReminderBody } = require('./booking-reminder-template');
+const {
+  resolveBookingReminderBody,
+  resolveBookingReminderSubject,
+} = require('./booking-reminder-template');
 const { resolveOrganiserNewBookingBody } = require('./organiser-new-booking-template');
 const { resolveOrganiserNewApplicationBody } = require('./organiser-new-application-template');
 const { resolveApplicationReceivedBody } = require('./application-received-template');
@@ -448,6 +451,10 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
     const resolved = resolveBookingReminderBody(template.body_html);
     bodyHtml = resolved.bodyHtml;
     templateSource = resolved.source;
+    const subjectResolved = resolveBookingReminderSubject(template.subject);
+    if (subjectResolved.source === 'file') {
+      template = { ...template, subject: subjectResolved.subject };
+    }
   } else if (slug === 'organiser_new_registration') {
     const resolved = resolveOrganiserNewBookingBody(template.body_html);
     bodyHtml = resolved.bodyHtml;

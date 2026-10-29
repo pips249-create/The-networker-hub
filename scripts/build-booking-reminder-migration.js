@@ -36,8 +36,8 @@ comment on column public.registrations.reminder_email_sent_at is
 const updateSql = `update public.email_templates
 set
   name = '24-hour event reminder',
-  description = 'Sent to attendees 24 hours before their event starts.',
-  subject = 'Your event is tomorrow – {{event_name}}',
+  description = 'Sent to attendees about 24 hours before their event starts (catch-up window closer to start). Timing-agnostic copy: happening soon.',
+  subject = 'Your event is happening soon – {{event_name}}',
   body_html = '${escaped}',
   placeholders = array[
     'user_name', 'user_email', 'event_name', 'event_date', 'event_time',

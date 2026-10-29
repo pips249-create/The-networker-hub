@@ -1,0 +1,286 @@
+-- Booking reminder email — booking reminder happening soon
+
+update public.email_templates
+set
+  name = '24-hour event reminder',
+  description = 'Sent to attendees about 24 hours before their event starts (catch-up window closer to start). Timing-agnostic copy: happening soon.',
+  subject = 'Your event is happening soon – {{event_name}}',
+  body_html = '<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Your event is happening soon – The Networker UK</title>
+  <style>
+    @import url(''https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap'');
+    body, table, td, p, a { margin:0; padding:0; border:0; font-size:100%; font:inherit; vertical-align:top; }
+    img { border:0; display:block; max-width:100%; }
+    body { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; background-color:#faf7f2; }
+    table { border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; }
+        @media only screen and (max-width:600px) {
+      .email-outer-pad { padding:8px 0 !important; }
+      .email-wrapper {
+        width:100% !important;
+        max-width:100% !important;
+        border-radius:0 !important;
+        box-shadow:none !important;
+        overflow:visible !important;
+      }
+      .hero-title { font-size:24px !important; line-height:1.2 !important; }
+      .mobile-pad { padding-left:16px !important; padding-right:16px !important; }
+      .mobile-header-pad { padding:24px 16px 0 !important; }
+      .mobile-footer-pad { padding:24px 16px 30px !important; }
+      .info-band-pad { padding:20px 16px !important; }
+      .email-logo-header { max-width:200px !important; width:200px !important; height:auto !important; }
+      .email-logo-footer { max-width:168px !important; width:168px !important; height:auto !important; }
+      .detail-cell { display:block !important; width:100% !important; padding:12px 0 !important; border-top:1px solid rgba(255,255,255,0.12) !important; }
+      .detail-cell:first-child { border-top:none !important; padding-top:0 !important; }
+      .info-cell { display:block !important; width:100% !important; padding-bottom:14px !important; border-left:none !important; border-right:none !important; border-top:1px solid rgba(255,255,255,0.12) !important; }
+      .info-cell:first-child { border-top:none !important; }
+      .feature-cell { display:block !important; width:100% !important; padding:14px 0 !important; border-top:1px solid rgba(194,153,209,0.35) !important; }
+      .feature-cell:first-child { border-top:none !important; padding-top:0 !important; }
+      .email-cta a { display:block !important; width:100% !important; box-sizing:border-box !important; text-align:center !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background-color:#faf7f2;font-family:''DM Sans'',system-ui,sans-serif;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#faf7f2;">
+  <tr>
+    <td class="email-outer-pad" align="center" style="padding:32px 16px;">
+      <table class="email-wrapper" role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 8px 32px rgba(74,68,70,0.10);">
+
+        <tr>
+          <td class="mobile-header-pad" style="background:#f5f0e8;padding:32px 48px 0;text-align:center;">
+            <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
+              <img src="{{logo_url}}" alt="The Networker UK" width="240" class="email-logo-header" style="height:auto;display:inline-block;margin:0 auto;border:0;max-width:240px;">
+            </a>
+          </td>
+        </tr>
+
+        {{sponsor_row}}
+
+<tr>
+          <td style="background:#f5f0e8;padding:0;text-align:center;border-bottom:1px solid rgba(194,153,209,0.35);">
+            <div style="line-height:0;font-size:0;margin-top:8px;">
+              <svg viewBox="0 0 600 40" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:40px;">
+                <path d="M0,24 C150,46 450,4 600,24 L600,40 L0,40 Z" fill="#ffffff"/>
+              </svg>
+            </div>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="mobile-pad" style="padding:32px 48px 20px;text-align:center;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 20px;">
+              <tr>
+                <td style="background:#ebe0f0;border-radius:999px;padding:0;">
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                    <tr>
+                      <td style="padding:10px 20px;text-align:center;">
+                        <span style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;">&#9200; Happening soon</span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+
+            <h1 class="hero-title" style="font-family:''DM Sans'',system-ui,sans-serif;font-size:28px;font-weight:600;color:#452d5c;letter-spacing:-0.03em;line-height:1.15;margin:0 0 12px;">Your event is happening soon</h1>
+            <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:400;color:#635c5e;line-height:1.7;margin:0;">
+              Hi {{user_name}}, just a heads-up &mdash; <strong style="color:#452d5c;">{{event_name}}</strong> is coming up soon. Here&rsquo;s everything you need.
+            </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="mobile-pad" style="padding:0 48px 20px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#452d5c;border-radius:16px;">
+              <tr>
+                <td style="padding:24px;">
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">Your event</p>
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:19px;font-weight:600;color:#ffffff;margin:0 0 18px;line-height:1.3;">{{event_name}}</p>
+
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                    <tr>
+                      <td style="padding:0 0 10px;font-family:''DM Sans'',system-ui,sans-serif;font-size:15px;line-height:1.5;">
+                        <span style="color:rgba(255,255,255,0.55);">Date</span><br>
+                        <span style="color:#ffffff;font-weight:600;">{{event_date}}</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:0 0 10px;font-family:''DM Sans'',system-ui,sans-serif;font-size:15px;line-height:1.5;">
+                        <span style="color:rgba(255,255,255,0.55);">Time</span><br>
+                        <span style="color:#ffffff;font-weight:600;">{{event_time}}</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:0 0 0;font-family:''DM Sans'',system-ui,sans-serif;font-size:15px;line-height:1.5;">
+                        <span style="color:rgba(255,255,255,0.55);">Location</span><br>
+                        <span style="color:#ffffff;font-weight:600;">{{event_location}}</span>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-top:1px solid rgba(255,255,255,0.14);margin:16px 0 20px;">
+                    <tr>
+                      <td class="detail-cell" style="padding:14px 12px 14px 0;width:50%;vertical-align:top;">
+                        <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Ticket</p>
+                        <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0;line-height:1.4;">{{ticket_name}}</p>
+                      </td>
+                      <td class="detail-cell" style="padding:14px 0;width:50%;vertical-align:top;">
+                        <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Organiser</p>
+                        <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0;line-height:1.4;">{{organiser_name}}</p>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                    <tr>
+                      <td style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:999px;">
+                        <a href="{{event_url}}" style="display:inline-block;padding:14px 28px;font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;text-decoration:none;">View event details &rarr;</a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        {{meeting_link_row}}
+
+        <tr>
+          <td class="mobile-pad" style="padding:0 48px 20px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">
+              <tr>
+                <td style="padding:22px 24px 8px;">
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">Before you go</p>
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:600;color:#452d5c;margin:0 0 16px;line-height:1.35;">A quick checklist before you go</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:0 24px 22px;">
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                    <tr>
+                      <td style="padding:10px 0;border-top:1px solid rgba(194,153,209,0.35);">
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                          <tr>
+                            <td style="width:28px;vertical-align:top;padding-top:1px;">
+                              <div style="width:20px;height:20px;background:#ebe0f0;border-radius:50%;text-align:center;line-height:20px;font-size:15px;color:#9a7aa8;">&#10003;</div>
+                            </td>
+                            <td style="font-family:''DM Sans'',system-ui,sans-serif;font-size:15px;color:#452d5c;font-weight:500;line-height:1.5;">Your ticket is saved in My account &mdash; no need to print anything</td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:10px 0;border-top:1px solid rgba(194,153,209,0.35);">
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                          <tr>
+                            <td style="width:28px;vertical-align:top;padding-top:1px;">
+                              <div style="width:20px;height:20px;background:#ebe0f0;border-radius:50%;text-align:center;line-height:20px;font-size:15px;color:#9a7aa8;">&#10003;</div>
+                            </td>
+                            <td style="font-family:''DM Sans'',system-ui,sans-serif;font-size:15px;color:#452d5c;font-weight:500;line-height:1.5;">Bring business cards or have your LinkedIn ready to share</td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:10px 0;border-top:1px solid rgba(194,153,209,0.35);">
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                          <tr>
+                            <td style="width:28px;vertical-align:top;padding-top:1px;">
+                              <div style="width:20px;height:20px;background:#ebe0f0;border-radius:50%;text-align:center;line-height:20px;font-size:15px;color:#9a7aa8;">&#10003;</div>
+                            </td>
+                            <td style="font-family:''DM Sans'',system-ui,sans-serif;font-size:15px;color:#452d5c;font-weight:500;line-height:1.5;">Check the venue or meeting link above for the latest details</td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="mobile-pad" style="padding:0 48px 20px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">
+              <tr>
+                <td style="padding:22px 24px;">
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">Keep building</p>
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:600;color:#452d5c;margin:0 0 10px;line-height:1.35;">More events worth your time</p>
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:15px;font-weight:400;color:#635c5e;line-height:1.65;margin:0 0 16px;">While you&rsquo;re thinking about it, browse what else is coming up across the UK.</p>
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                    <tr>
+                      <td style="background:#452d5c;border-radius:999px;">
+                        <a href="{{site_url}}/events/" style="display:inline-block;padding:14px 32px;font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;">Browse upcoming events &rarr;</a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="info-band-pad" style="background:#452d5c;padding:22px 48px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+              <tr>
+                <td style="text-align:center;width:33.33%;padding:0 10px;vertical-align:top;">
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0;line-height:1.45;">Your ticket is saved in your Account</p>
+                </td>
+                <td style="text-align:center;width:33.33%;padding:0 10px;border-left:1px solid rgba(255,255,255,0.12);border-right:1px solid rgba(255,255,255,0.12);vertical-align:top;">
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0;line-height:1.45;">Refund terms are set by the organiser</p>
+                </td>
+                <td style="text-align:center;width:33.33%;padding:0 10px;vertical-align:top;">
+                  <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0;line-height:1.45;">Questions about this event? Email <a href="mailto:{{support_email}}" style="color:#ebe0f0;text-decoration:none;">{{support_email}}</a> &mdash; we&rsquo;ll pass it to the organiser</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        {{mini_sponsors_row}}
+        <!-- hub-email-layout-v3-purple -->
+        <tr>
+          <td class="mobile-footer-pad" style="background:#452d5c;padding:28px 48px 30px;text-align:center;border-radius:0 0 20px 20px;">
+            <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
+              <img src="{{logo_footer_url}}" alt="The Networker UK" width="200" class="email-logo-footer" style="height:auto;display:inline-block;margin:0 auto 16px;border:0;max-width:200px;">
+            </a>
+            <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:15px;font-weight:400;color:rgba(255,255,255,0.55);line-height:1.7;margin:0 0 10px;">
+              Operated by The Networker Group Ltd &nbsp;&middot;&nbsp; Company No. 15252227<br>
+              <a href="mailto:{{support_email}}" style="color:#d9c4e0;text-decoration:none;">{{support_email}}</a>
+            </p>
+            <p style="font-family:''DM Sans'',system-ui,sans-serif;font-size:15px;font-weight:400;color:rgba(255,255,255,0.55);margin:0;">
+              <a href="{{privacy_url}}" style="color:#d9c4e0;text-decoration:none;">Privacy</a>
+              &nbsp;&middot;&nbsp;
+              <a href="{{terms_url}}" style="color:#d9c4e0;text-decoration:none;">Terms</a>
+              &nbsp;&middot;&nbsp;
+              <a href="{{refunds_url}}" style="color:#d9c4e0;text-decoration:none;">Refunds</a>
+              &nbsp;&middot;&nbsp;
+              <a href="{{contact_url}}" style="color:#d9c4e0;text-decoration:none;">Contact</a>
+            &nbsp;&middot;&nbsp;
+              <a href="{{unsubscribe_url}}" style="color:#ebe0f0;text-decoration:none;">Unsubscribe</a>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>
+',
+  placeholders = array[
+    'user_name', 'user_email', 'event_name', 'event_date', 'event_time',
+    'event_location', 'event_url', 'ticket_name', 'organiser_name',
+    'meeting_link', 'meeting_type', 'meeting_link_row', 'sponsor_row', 'site_url', 'logo_url'
+  ],
+  category = 'events',
+  updated_at = now()
+where slug = 'booking_reminder';

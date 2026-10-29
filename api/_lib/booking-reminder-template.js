@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
+const BOOKING_REMINDER_SUBJECT = 'Your event is happening soon – {{event_name}}';
+
 let cachedCanonicalHtml = null;
 
 function getCanonicalBookingReminderHtml() {
@@ -12,7 +14,8 @@ function getCanonicalBookingReminderHtml() {
 
 function isStaleBookingReminderTemplate(bodyHtml) {
   const body = String(bodyHtml || '');
-  if (!body.includes('24&nbsp;hours') && !body.includes('24 hours')) return true;
+  // Fresh copy uses timing-agnostic "happening soon" (covers 24h + catch-up sends).
+  if (!body.includes('happening soon') && !body.includes('Happening soon')) return true;
   if (!body.includes('{{meeting_link_row}}') && body.includes('meeting_link_section')) return true;
   if (body.startsWith('<p>Hi {{user_name}}')) return true;
   const sponsorMatches = body.match(/\{\{sponsor_row\}\}/g);
@@ -41,6 +44,18 @@ function isStaleBookingReminderTemplate(bodyHtml) {
   // Reply-To / help contact is hi@ (support_email), not the mail.* From address.
   if (!body.includes('Questions about this event? Email')) return true;
   if (!body.includes('mailto:{{support_email}}')) return true;
+  // Legacy "tomorrow" / exact-24h wording is stale even if other markers match.
+  if (/\btomorrow\b/i.test(body) || body.includes('24&nbsp;hours') || body.includes('24 hours')) {
+    return true;
+  }
+  return false;
+}
+
+function isStaleBookingReminderSubject(subject) {
+  const text = String(subject || '').trim();
+  if (!text) return true;
+  if (/\btomorrow\b/i.test(text)) return true;
+  if (!/happening soon/i.test(text)) return true;
   return false;
 }
 
@@ -57,8 +72,24 @@ function resolveBookingReminderBody(dbBodyHtml) {
   };
 }
 
+function resolveBookingReminderSubject(dbSubject) {
+  if (isStaleBookingReminderSubject(dbSubject)) {
+    return {
+      subject: BOOKING_REMINDER_SUBJECT,
+      source: 'file',
+    };
+  }
+  return {
+    subject: String(dbSubject || BOOKING_REMINDER_SUBJECT),
+    source: 'database',
+  };
+}
+
 module.exports = {
+  BOOKING_REMINDER_SUBJECT,
   getCanonicalBookingReminderHtml,
   isStaleBookingReminderTemplate,
+  isStaleBookingReminderSubject,
   resolveBookingReminderBody,
+  resolveBookingReminderSubject,
 };
