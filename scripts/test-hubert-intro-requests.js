@@ -29,7 +29,7 @@ function assert(cond, msg) {
 }
 
 assert(TOPIC_MIN_LEN === 25, 'topic min 25');
-assert(INTROS_PER_WEEK === 5, '5 intros / week');
+assert(INTROS_PER_WEEK === 10, '10 intros / week');
 
 assert(shortDisplayName('Alex Morgan') === 'Alex M.', 'short name');
 assert(firstName('Alex Morgan') === 'Alex', 'first name');
