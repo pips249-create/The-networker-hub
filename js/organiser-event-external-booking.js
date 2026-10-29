@@ -129,7 +129,7 @@
       pageTitle.textContent = on
         ? linkOutOnly
           ? 'Link Out — book on your website'
-          : 'Connected booking'
+          : 'Booking system'
         : 'Set up tickets';
     }
     if (pageLead) {
@@ -137,7 +137,7 @@
     }
     var cardTitle = card.querySelector('h2');
     if (cardTitle && on) {
-      cardTitle.textContent = linkOutOnly ? 'Link Out' : 'Connected booking';
+      cardTitle.textContent = linkOutOnly ? 'Link Out' : 'Booking system';
     }
     var intro = document.getElementById('ee-external-booking-intro');
     if (intro && on && linkOutOnly) {

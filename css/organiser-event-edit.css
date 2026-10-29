@@ -5549,6 +5549,38 @@ a.ee-btn.ee-btn-primary {
   background: rgba(255, 255, 255, 0.72);
 }
 
+.cb-providers-list-item.is-disabled .cb-provider-card,
+.cb-provider-card--disabled {
+  opacity: 0.55;
+  filter: grayscale(0.75);
+  background: #f3f5f7;
+  border-color: rgba(26, 46, 59, 0.12);
+  pointer-events: none;
+  user-select: none;
+}
+
+.cb-provider-badge {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 2px 8px;
+  vertical-align: middle;
+}
+
+.cb-provider-badge--live {
+  color: #2f5d3a;
+  background: #e5f4ea;
+}
+
+.cb-provider-badge--soon {
+  color: #7a94a3;
+  background: #eef3f6;
+}
+
 .cb-provider-webhook-url {
   word-break: break-all;
   font-size: 12px;
@@ -5806,6 +5838,32 @@ body.ee-embed-drawer.organiser-connected-setup-page .ecs-setup-checklist {
   border-color: rgba(13, 110, 122, 0.75);
   background: rgba(13, 110, 122, 0.06);
   box-shadow: inset 0 0 0 1px rgba(13, 110, 122, 0.2);
+}
+
+.ecs-platform-card.is-disabled,
+.ecs-platform-card:disabled {
+  opacity: 0.48;
+  filter: grayscale(0.85);
+  cursor: not-allowed;
+  background: #f3f5f7;
+  border-color: rgba(26, 46, 59, 0.1);
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.ecs-platform-card.is-disabled:hover,
+.ecs-platform-card:disabled:hover {
+  border-color: rgba(26, 46, 59, 0.1);
+}
+
+.ecs-platform-card-soon {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #7a94a3;
 }
 
 .ecs-platform-card-logo {
@@ -7310,7 +7368,13 @@ button.ge-booking-choice {
 }
 
 .ge-booking-choice--muted {
-  opacity: 0.85;
+  opacity: 0.48;
+  filter: grayscale(0.85);
+  background: #f3f5f7;
+  border-color: rgba(26, 46, 59, 0.1);
+  cursor: not-allowed;
+  pointer-events: none;
+  user-select: none;
 }
 
 .ge-booking-choice strong {

@@ -31,7 +31,7 @@ Run migration **`299_connected_booking_provider_links.sql`** (after 292, 297, 29
 
 1. Connected plan active; organiser page(s) assigned (297).
 2. **Connected booking** → **Booking providers** → **Enable** Eventbrite (or other).
-3. **Eventbrite webhook (Payload URL):** Profile menu → **Account settings** → **Webhooks** → Add webhook. Paste the **short** TNH URL from Connected setup (`https://www.thenetworkeruk.com/w/eb/…`, under **70 characters** — must include **www** so Eventbrite is not 308-redirected). Set **Action** to **`order.placed`**. “Events: All” is fine. Then save the **private token** on Connected setup. TNH uses it to load every ticket holder (not only the buyer) and to subscribe to **`attendee.updated`**, which is how a second person added after payment is synced. Other providers: paste the TNH webhook URL from **Enable** into their webhook / integrations screen.
+3. **Eventbrite:** Prefer **Connect with Eventbrite** (OAuth) on the organiser page. Fallback: paste a **private token**. TNH stores the Bearer token, ensures webhooks (`order.placed`, `attendee.updated`, `event.published` when the API allows), auto-imports live org events, and loads every ticket holder after sales. If you still need a manual webhook: Profile menu → **Account settings** → **Webhooks** → paste the **short** TNH URL (`https://www.thenetworkeruk.com/w/eb/…`, under **70 characters** — must include **www**). Other providers: paste the TNH webhook URL from **Enable** into their webhook / integrations screen.
 4. **Link event:** TNH event UUID + provider event id (e.g. Eventbrite numeric id from the event URL).
 5. Publish Connected event on TNH with **booking URL** pointing at provider checkout (for Eventbrite, use ticket checkout — not only the public event listing; TNH rewrites common `/e/…` links to `checkout-external?eid=` on save).
 6. Test order → **Recent sync attempts** shows `eventbrite:accepted` (or provider id). If you only see `eventbrite:webhook_ping` after a real purchase, the webhook reached TNH but was not treated as an order — update TNH (fixed in production) or check Eventbrite **Recent requests** for 400/404/401.
@@ -87,14 +87,18 @@ For third-party providers, without a linked TNH event for the provider’s event
 | Provider | External event id | Webhook setup |
 |----------|-------------------|---------------|
 | **Your own website** | TNH event UUID in webhook JSON (`eventId`) | Your checkout POSTs to token URL after each sale — no provider admin. |
-| **Eventbrite** | Numeric id from `…/e/…` or API (`123456789`) | Webhook URL (`order.placed`) + **private token**. TNH loads every attendee on the order and subscribes to `attendee.updated` so a second ticket holder added after payment is saved. |
+| **Eventbrite** | Numeric id from `…/e/…` or API (`123456789`) | **OAuth** (primary) or private token + webhook (`order.placed`). Auto-import of live org events after connect / hourly cron / `event.published`. TNH loads every attendee on the order and subscribes to `attendee.updated`. |
 | **Ticket Tailor** | **`ev_…` id** from Box office (must match `event_summary.event_id` in webhooks — not always the same as the public `/events/slug` URL) | Webhook: **Order created** → TNH URL (`/w/tt/…`). **Optional API key** (Box office → Settings → API) on Connected setup to import title, date, venue onto TNH — webhooks alone do not need the key. |
 
 Adapters live in `api/_lib/connected-booking-providers/adapters/`. Extend normalizers as real payloads are confirmed with pilot organisers.
 
-## OAuth (later)
+## Eventbrite OAuth
 
-`connected_booking_provider_connections.config` will hold OAuth tokens and refresh logic. Phase 1 uses **webhook token + manual event id linking** so organisers do **not** need Zapier.
+`connected_booking_provider_connections.config` stores `eventbriteAccessToken` (OAuth) or `eventbritePrivateToken` (paste), plus `eventbriteAuthMethod` and `defaultImportGroupId`.
+
+Platform env: `EVENTBRITE_CLIENT_ID`, `EVENTBRITE_CLIENT_SECRET`, optional `EVENTBRITE_OAUTH_REDIRECT_URI` (default `{SITE_URL}/api/integrations/eventbrite/oauth/callback`). Eventbrite access tokens are permanent — no refresh flow.
+
+Auto-import triggers: post-OAuth / post-token connect, cron `/api/cron/eventbrite-event-sync`, and `event.published` webhooks. See [EVENTBRITE-CONNECTED.md](./EVENTBRITE-CONNECTED.md).
 
 ## Tests
 

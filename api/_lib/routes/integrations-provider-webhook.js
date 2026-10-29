@@ -20,8 +20,14 @@ const {
   isEventbriteOrderNotification,
   resolveEventbriteWebhookRegistrations,
 } = require('../eventbrite-webhook-resolve');
-const { eventbritePrivateTokenFromConfig, ensureEventbriteAttendeeWebhook } = require('../connected-booking-providers/adapters/eventbrite-api');
+const {
+  eventbritePrivateTokenFromConfig,
+  ensureEventbriteAttendeeWebhook,
+  eventbriteEventIdFromApiUrl,
+  eventbriteWebhookActionList,
+} = require('../connected-booking-providers/adapters/eventbrite-api');
 const { buildProviderWebhookPublicUrl, webhookPublicSite } = require('../provider-webhook-url');
+const { syncEventbriteOrgEventsForAccount } = require('../eventbrite-org-event-sync');
 
 function readRawBody(req) {
   if (Buffer.isBuffer(req.body)) return req.body;
@@ -205,6 +211,59 @@ module.exports = async function handler(req, res, providerId) {
 
   if (provider === 'eventbrite') {
     try {
+      const webhookActions = eventbriteWebhookActionList(body.config || body);
+      const isEventLifecycle =
+        webhookActions.indexOf('event.published') !== -1 ||
+        webhookActions.indexOf('event.updated') !== -1 ||
+        webhookActions.indexOf('event.created') !== -1;
+      const externalEventIdFromHook = eventbriteEventIdFromApiUrl(body.api_url);
+      if (isEventLifecycle && externalEventIdFromHook) {
+        let orgSync = null;
+        try {
+          const { data: account } = await sb
+            .from('organiser_accounts')
+            .select('id, email')
+            .eq('id', connection.organiser_account_id)
+            .maybeSingle();
+          orgSync = await syncEventbriteOrgEventsForAccount(sb, {
+            accountId: connection.organiser_account_id,
+            account: account,
+            externalEventId: externalEventIdFromHook,
+            source: 'eventbrite_webhook_' + (webhookActions[0] || 'event'),
+            maxCreate: 1,
+          });
+        } catch (syncErr) {
+          orgSync = {
+            ok: false,
+            error: syncErr.code || syncErr.message || 'org_sync_failed',
+            message: syncErr.message,
+          };
+        }
+        await logExternalSync(sb, {
+          organiser_account_id: connection.organiser_account_id,
+          outcome: orgSync && orgSync.ok !== false ? 'accepted' : 'rejected',
+          http_status: 200,
+          message:
+            orgSync && orgSync.created
+              ? 'eventbrite:event_imported'
+              : orgSync && orgSync.alreadyLinked
+                ? 'eventbrite:event_already_linked'
+                : 'eventbrite:event_sync',
+          payload: {
+            api_url: body.api_url,
+            actions: webhookActions,
+            externalEventId: externalEventIdFromHook,
+            orgSync: orgSync,
+          },
+        });
+        return json(res, 200, {
+          ok: true,
+          provider,
+          eventImport: true,
+          orgSync: orgSync,
+        });
+      }
+
       const resolved = await resolveEventbriteWebhookRegistrations(body, connection);
       if (!resolved.registrations.length) {
         const normalized = normalizeProviderWebhook(provider, body);

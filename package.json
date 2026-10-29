@@ -41,6 +41,8 @@
     "test-connected-booking-subscriptions": "node scripts/test-connected-booking-subscriptions.js",
     "test-connected-booking-slots": "node scripts/test-connected-booking-slots.js",
     "test-connected-booking-providers": "node scripts/test-connected-booking-providers.js",
+    "test-eventbrite-oauth": "node scripts/test-eventbrite-oauth.js",
+    "test-eventbrite-org-events-list": "node scripts/test-eventbrite-org-events-list.js",
     "test-connected-booking-grants": "node scripts/test-connected-booking-grants.js",
     "test-international-event-listings": "node scripts/test-international-event-listings.js",
     "test-intl-event-country-options": "node scripts/test-intl-event-country-options.js",

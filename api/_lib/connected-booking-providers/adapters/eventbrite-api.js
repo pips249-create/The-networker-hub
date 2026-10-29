@@ -376,8 +376,9 @@ function sameEventbriteWebhookUrl(a, b) {
 }
 
 /**
- * Eventbrite collects other ticket holders after payment and sends attendee.updated.
- * Subscribe with the private token so that webhook does not have to be added by hand.
+ * Ensure TNH webhook endpoint has the actions we need:
+ * - order.placed + attendee.updated (attendee ingest)
+ * - event.published (auto-import new org events when Eventbrite can deliver them)
  */
 async function ensureEventbriteAttendeeWebhook(privateToken, endpointUrl) {
   const endpoint = String(endpointUrl || '').trim();
@@ -397,10 +398,14 @@ async function ensureEventbriteAttendeeWebhook(privateToken, endpointUrl) {
       if (actions.indexOf(action) === -1) actions.push(action);
     });
   });
-  if (actions.indexOf('attendee.updated') !== -1) {
-    return { ok: true, created: false };
+  const needed = ['order.placed', 'attendee.updated', 'event.published'];
+  const missing = needed.filter(function (action) {
+    return actions.indexOf(action) === -1;
+  });
+  if (!missing.length) {
+    return { ok: true, created: false, actions: actions.slice() };
   }
-  const toCreate = actions.indexOf('order.placed') === -1 ? 'order.placed,attendee.updated' : 'attendee.updated';
+  const toCreate = missing.join(',');
   try {
     const created = await createEventbriteWebhook(privateToken, endpoint, toCreate);
     if (!created.ok) {
@@ -416,6 +421,14 @@ async function ensureEventbriteAttendeeWebhook(privateToken, endpointUrl) {
   } catch (e) {
     return { ok: false, reason: e.message || 'webhook_create_failed' };
   }
+}
+
+/** Eventbrite event webhooks use …/events/{eventId}/ (not /attendees/). */
+function eventbriteEventIdFromApiUrl(apiUrl) {
+  const attendee = eventbriteAttendeeRefFromApiUrl(apiUrl);
+  if (attendee) return '';
+  const m = String(apiUrl || '').match(/\/events\/(\d+)\/?(?:\?|$)/i);
+  return m ? m[1] : '';
 }
 
 async function createEventbriteWebhook(privateToken, endpointUrl, actions) {
@@ -584,15 +597,48 @@ function normalizeEventbriteOrderApiResponse(order) {
   return rows;
 }
 
+/**
+ * Bearer token for Eventbrite API calls.
+ * Respects eventbriteAuthMethod when set; otherwise prefers OAuth, then private token.
+ */
 function eventbritePrivateTokenFromConfig(config) {
   const c = config && typeof config === 'object' ? config : {};
-  return String(
+  const oauth = String(
+    c.eventbriteAccessToken ||
+      c.eventbrite_access_token ||
+      c.accessToken ||
+      c.access_token ||
+      ''
+  ).trim();
+  const priv = String(
     c.eventbritePrivateToken ||
       c.eventbrite_private_token ||
       c.privateToken ||
       c.private_token ||
       ''
   ).trim();
+  const method = String(c.eventbriteAuthMethod || c.authMethod || '')
+    .trim()
+    .toLowerCase();
+  if (method === 'private_token' && priv) return priv;
+  if (method === 'oauth' && oauth) return oauth;
+  return oauth || priv;
+}
+
+function eventbriteAuthMethodFromConfig(config) {
+  const c = config && typeof config === 'object' ? config : {};
+  const method = String(c.eventbriteAuthMethod || c.authMethod || '').trim().toLowerCase();
+  if (method === 'oauth' || method === 'private_token') return method;
+  if (
+    c.eventbriteAccessToken ||
+    c.eventbrite_access_token ||
+    c.accessToken ||
+    c.access_token
+  ) {
+    return 'oauth';
+  }
+  if (eventbritePrivateTokenFromConfig(c)) return 'private_token';
+  return '';
 }
 
 function stripBasicHtml(html) {
@@ -818,6 +864,7 @@ async function fetchEventbriteEvent(externalEventId, privateToken) {
 module.exports = {
   orderIdFromEventbriteApiUrl,
   eventbriteAttendeeRefFromApiUrl,
+  eventbriteEventIdFromApiUrl,
   buildEventbriteOrderRequestUrl,
   eventbriteAttendeesFromOrder,
   eventbriteAttendeeEmail,
@@ -836,6 +883,7 @@ module.exports = {
   registrationsFromEventbriteEventAttendees,
   normalizeEventbriteOrderApiResponse,
   eventbritePrivateTokenFromConfig,
+  eventbriteAuthMethodFromConfig,
   fetchEventbriteEvent,
   listEventbriteOrganizationEvents,
   eventbriteOrganizationId,

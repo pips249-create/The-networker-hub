@@ -65,7 +65,7 @@ async function importEventbriteListingForEvent(sb, session, accountId, eventId, 
   const token = eventbritePrivateTokenFromConfig(conn?.config);
   if (!token) {
     const e = new Error(
-      'Save your Eventbrite private token before importing listing details.'
+      'Connect Eventbrite (OAuth or private token) before importing listing details.'
     );
     e.status = 400;
     e.code = 'eventbrite_token_missing';
@@ -148,7 +148,7 @@ async function listImportableEventbriteEvents(sb, accountId, opts) {
   const conn = (connResult.connections || []).find((c) => c.provider === 'eventbrite');
   const token = eventbritePrivateTokenFromConfig(conn?.config);
   if (!token) {
-    const e = new Error('Save your Eventbrite private token before listing events.');
+    const e = new Error('Connect Eventbrite (OAuth or private token) before listing events.');
     e.status = 400;
     e.code = 'eventbrite_token_missing';
     throw e;
@@ -208,7 +208,7 @@ async function createEventFromEventbrite(sb, session, accountId, opts) {
   const conn = (connResult.connections || []).find((c) => c.provider === 'eventbrite');
   const token = eventbritePrivateTokenFromConfig(conn?.config);
   if (!token) {
-    const e = new Error('Save your Eventbrite private token before importing.');
+    const e = new Error('Connect Eventbrite (OAuth or private token) before importing.');
     e.status = 400;
     e.code = 'eventbrite_token_missing';
     throw e;
