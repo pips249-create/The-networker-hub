@@ -334,29 +334,31 @@ async function updateProfile(session, body) {
   if (Object.keys(attendeePatch).length) {
     let updated = null;
     let updateErr = null;
-    const primary = await sb
-      .from('attendees')
-      .update(attendeePatch)
-      .eq('id', attendee.id)
-      .select('*')
-      .single();
-    if (!primary.error) {
+
+    async function writeAttendeePatch(patch) {
+      const res = await sb.from('attendees').update(patch).eq('id', attendee.id).select('*').maybeSingle();
+      if (res.error) return { data: null, error: res.error };
+      if (res.data) return { data: res.data, error: null };
+      return {
+        data: null,
+        error: { message: 'No attendee row updated for this account', code: 'no_rows' },
+      };
+    }
+
+    const primary = await writeAttendeePatch(attendeePatch);
+    if (primary.data) {
       updated = primary.data;
     } else {
       updateErr = primary.error;
-      const msg = String(primary.error.message || '').toLowerCase();
+      const msg = String((primary.error && primary.error.message) || '').toLowerCase();
+      const code = String((primary.error && primary.error.code) || '');
       if (msg.includes('country_code')) {
         const withoutCountry = { ...attendeePatch };
         delete withoutCountry.country_code;
         if (Object.keys(withoutCountry).length) {
-          const retryCountry = await sb
-            .from('attendees')
-            .update(withoutCountry)
-            .eq('id', attendee.id)
-            .select('*')
-            .single();
-          if (!retryCountry.error) updated = retryCountry.data;
-          else updateErr = retryCountry.error;
+          const retryCountry = await writeAttendeePatch(withoutCountry);
+          if (retryCountry.data && !retryCountry.error) updated = retryCountry.data;
+          else updateErr = retryCountry.error || updateErr;
         } else {
           updated = attendee;
         }
@@ -370,7 +372,7 @@ async function updateProfile(session, body) {
         msg.includes('looking_to_meet') ||
         msg.includes('discoverable_at') ||
         msg.includes('schema cache') ||
-        String(primary.error.code || '') === 'PGRST204'
+        code === 'PGRST204'
       ) {
         const fallback = { ...attendeePatch };
         delete fallback.business_sector;
@@ -379,53 +381,43 @@ async function updateProfile(session, body) {
         if (msg.includes('job_title')) delete fallback.job_title;
         if (msg.includes('professional_role')) delete fallback.professional_role;
         if (msg.includes('public_review_name')) delete fallback.public_review_name;
-        // If any Hubert column is missing, drop all three together — partial retry still fails.
+        // If any Hubert column is missing / schema cache stale, drop all three together.
         const matchmakerMissing =
           msg.includes('matchmaker_blurb') ||
           msg.includes('looking_to_meet') ||
           msg.includes('discoverable_at') ||
           msg.includes('schema cache') ||
-          String(primary.error.code || '') === 'PGRST204';
+          code === 'PGRST204';
         if (matchmakerMissing) {
           delete fallback.matchmaker_blurb;
           delete fallback.looking_to_meet;
           delete fallback.discoverable_at;
         }
-        const matchmakerOnlyPatch =
-          Object.keys(attendeePatch).every((k) =>
-            ['matchmaker_blurb', 'looking_to_meet', 'discoverable_at'].includes(k)
-          ) &&
-          (attendeePatch.matchmaker_blurb !== undefined ||
-            attendeePatch.looking_to_meet !== undefined ||
-            attendeePatch.discoverable_at !== undefined);
+        const matchmakerOnlyPatch = Object.keys(attendeePatch).every((k) =>
+          ['matchmaker_blurb', 'looking_to_meet', 'discoverable_at'].includes(k)
+        );
         if (matchmakerMissing && matchmakerOnlyPatch) {
           const e = new Error(
-            'Hubert profile fields aren’t on the database yet. Run migration 333_attendee_discoverable.sql, then try again.'
+            'Hubert profile columns aren’t visible to the API yet (schema cache). Run migration 337_reload_postgrest_schema_matchmaker.sql, wait ~30s, then try again.'
           );
           e.status = 503;
-          e.code = 'matchmaker_migration_required';
+          e.code = 'matchmaker_schema_cache';
           throw e;
         }
         if (Object.keys(fallback).length) {
-          const retry = await sb
-            .from('attendees')
-            .update(fallback)
-            .eq('id', attendee.id)
-            .select('*')
-            .maybeSingle();
-          if (!retry.error && retry.data) updated = retry.data;
-          else if (!retry.error && !retry.data) updated = attendee;
-          else updateErr = retry.error;
+          const retry = await writeAttendeePatch(fallback);
+          if (retry.data && !retry.error) updated = retry.data;
+          else if (retry.data && retry.error && retry.error.code === 'no_rows') updated = retry.data;
+          else updateErr = retry.error || updateErr;
         } else {
-          // Only unsupported columns were in the patch — treat as no-op success.
           updated = attendee;
         }
       }
     }
     if (!updated) {
-      const e = new Error(updateErr?.message || 'Could not save profile');
+      const e = new Error((updateErr && updateErr.message) || 'Could not save profile');
       e.status = 500;
-      e.code = 'profile_save_failed';
+      e.code = (updateErr && updateErr.code) || 'profile_save_failed';
       throw e;
     }
     attendee = updated;

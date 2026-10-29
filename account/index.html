@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20261029dash2" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20261029dash2" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261029profilegate2" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261029profilesave1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20261023nextup2" />
     <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"></script>
 
@@ -829,7 +829,16 @@
                     <fieldset class="hmm-profile-field">
                       <legend>Who you want to meet</legend>
                       <p class="hmm-profile-hint">Pick at least one.</p>
-                      <div class="hmm-profile-chips" data-hmm-profile-looking role="group"></div>
+                      <div class="hmm-profile-chips" data-hmm-profile-looking role="group">
+                        <label class="hmm-profile-chip"><input type="checkbox" value="Clients" /><span>Clients</span></label>
+                        <label class="hmm-profile-chip"><input type="checkbox" value="Investors" /><span>Investors</span></label>
+                        <label class="hmm-profile-chip"><input type="checkbox" value="Co-founders" /><span>Co-founders</span></label>
+                        <label class="hmm-profile-chip"><input type="checkbox" value="Hires" /><span>Hires</span></label>
+                        <label class="hmm-profile-chip"><input type="checkbox" value="Suppliers" /><span>Suppliers</span></label>
+                        <label class="hmm-profile-chip"><input type="checkbox" value="Mentors" /><span>Mentors</span></label>
+                        <label class="hmm-profile-chip"><input type="checkbox" value="Partners" /><span>Partners</span></label>
+                        <label class="hmm-profile-chip"><input type="checkbox" value="Press" /><span>Press</span></label>
+                      </div>
                     </fieldset>
                     <label class="hmm-profile-discoverable">
                       <input type="checkbox" data-hmm-profile-discoverable />
@@ -1356,7 +1365,7 @@
     <script src="../js/attendee-auth-gate.js?v=20261021confirm2"></script>
     <script src="../js/organiser-image-upload.js?v=20261002offerimage1" defer></script>
     <script src="../js/attendee-member-offers.js?v=20261015offers1" defer></script>
-    <script src="../js/hubert-matchmaker.js?v=20261029profilegate3" defer></script>
+    <script src="../js/hubert-matchmaker.js?v=20261029profilesave1" defer></script>
     <script src="../js/attendee-dashboard.js?v=20261029safarjson1" defer></script>
   </body>
 </html>

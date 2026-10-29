@@ -53,6 +53,11 @@ assert(missing.matchmakerBlurbPrefill === 'Founder at Acme', 'prefill uses sugge
 assert(missing.matchmakerMissing.includes('headline'), 'missing headline until saved');
 assert(missing.matchmakerMissing.includes('lookingToMeet'), 'missing looking');
 assert(missing.matchmakerMissing.includes('discoverable'), 'missing discoverable');
+assert(
+  require('../api/_lib/hubert-matchmaker-profile').normalizeLookingToMeetList('{Clients,Investors}').join(',') ===
+    'Clients,Investors',
+  'normalizes pg array text'
+);
 
 let threw = false;
 try {
