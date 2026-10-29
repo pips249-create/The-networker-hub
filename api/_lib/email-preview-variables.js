@@ -1028,15 +1028,11 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
       vars.requester_name +
         (vars.requester_title_company ? ' (' + vars.requester_title_company + ')' : '');
     vars.requester_about =
-      vars.requester_about ||
-      vars.requester_name +
-        ' is ' +
-        vars.requester_title_company +
-        '. Looking to meet operators and community partners around UK business events.';
+      vars.requester_about || vars.requester_name + ' is ' + vars.requester_title_company + '.';
     vars.topic =
       vars.topic ||
       'Comparing notes on fintech angels ahead of Manchester Founders Breakfast.';
-    vars.event_context = vars.event_context || 'They mentioned you may both be around Manchester Founders Breakfast.';
+    vars.event_context = vars.event_context || 'Shared event context: Manchester Founders Breakfast.';
     vars.accept_url = vars.accept_url || site + '/account/hubert-intro.html?token=preview&decision=accept';
     vars.decline_url = vars.decline_url || site + '/account/hubert-intro.html?token=preview&decision=decline';
     vars.dashboard_url = vars.dashboard_url || site + '/account/#meet';

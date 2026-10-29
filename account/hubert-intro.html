@@ -263,7 +263,7 @@
           setStatus('', 'From your email');
           titleEl.textContent = 'Accept introduction from ' + who + '?';
           bodyEl.textContent =
-            'Hubert is our matchmaker. If you Accept, he opens a Hub intro thread — email, phone, and LinkedIn stay private.';
+            'Hubert is our matchmaker. If you Accept, he opens an intro thread in Meet people — email, phone, and LinkedIn stay private.';
           acceptBtn.hidden = false;
           declineBtn.hidden = true;
           return;
@@ -280,7 +280,7 @@
         setStatus('', 'Choose an answer');
         titleEl.textContent = who + ' would like to be introduced';
         bodyEl.textContent =
-          'Hubert is The Networker UK’s matchmaker. Accept to open a Hub intro thread, or Decline — contact details stay private either way.';
+          'Hubert is The Networker UK’s matchmaker. Accept to open an intro thread in Meet people, or Decline — contact details stay private either way.';
         acceptBtn.hidden = false;
         declineBtn.hidden = false;
       }
@@ -348,7 +348,7 @@
               accepted ? 'You’re introduced' : 'Declined',
               data.message ||
                 (accepted
-                  ? 'Open Meet people to continue the Hub thread.'
+                  ? 'Open Meet people to continue the intro thread.'
                   : 'Hubert will not open an introduction.'),
               accepted ? introId : null
             );
@@ -394,7 +394,7 @@
               true,
               data.intro.status === 'accepted' ? 'Already accepted' : 'Already declined',
               data.intro.status === 'accepted'
-                ? 'Open Meet people to continue the Hub thread.'
+                ? 'Open Meet people to continue the intro thread.'
                 : 'You already declined this introduction.',
               data.intro.status === 'accepted' ? data.intro.id : null
             );

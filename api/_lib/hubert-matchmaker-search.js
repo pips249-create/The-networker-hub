@@ -186,10 +186,10 @@ function rankCandidates(candidates, query, requesterEventIds) {
 function buildWhy(row) {
   if (row.matchedBoost > 0) {
     const title = row.person.matchedEvent && row.person.matchedEvent.title;
-    return title ? 'Booked for ' + title : 'Booked for a matching Hub event';
+    return title ? 'Booked for ' + title : 'Booked for a matching event';
   }
   if (row.boost >= 40) return 'You’ll both be at the same upcoming event';
-  if (row.boost >= 15) return 'Has an upcoming event on the Hub';
+  if (row.boost >= 15) return 'Has an upcoming event on The Networker UK';
   if (row.textScore > 0) return 'Matches what you asked Hubert for';
   return '';
 }
@@ -241,8 +241,8 @@ function mapMemberRow(row, nextEvent, matchedEvent) {
     why: matchedEvent
       ? 'Booked for ' + (matchedEvent.title || 'this event')
       : discoverable
-        ? 'On the Hub'
-        : 'On the Hub',
+        ? 'Member'
+        : 'Member',
   };
 }
 
@@ -539,20 +539,20 @@ function emptyStateCopy(meta) {
         text:
           'I matched “' +
           titles[0] +
-          '” on the Hub, but nobody’s booked that I can show. Try another session, or ask who you need by role.',
+          '” on The Networker UK, but nobody’s booked that I can show. Try another session, or ask who you need by role.',
       };
     }
     if (!titles.length) {
       return {
-        title: 'I couldn’t match that Hub event',
-        text: 'Try the event name as it appears on The Networker — or describe who you need (role, city, problem).',
+        title: 'I couldn’t match that event',
+        text: 'Try the event name as it appears on The Networker UK — or describe who you need (role, city, problem).',
       };
     }
   }
   if (Number(m.candidateCount || 0) === 0) {
     return {
       title: 'No one came back yet',
-      text: 'The Hub pool is still thin for that ask. Try another description, or check back after more members opt in.',
+      text: 'The member pool is still thin for that ask. Try another description, or check back after more people opt in.',
     };
   }
   return {

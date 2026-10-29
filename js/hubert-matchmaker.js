@@ -124,7 +124,7 @@
   function renderCard(person) {
     var hasEvent = Boolean(person.nextEvent && person.nextEvent.title);
     var status = person.onHub
-      ? '<span class="hmm-chip hmm-chip--member">On the Hub</span>'
+      ? '<span class="hmm-chip hmm-chip--member">Member</span>'
       : '<span class="hmm-chip hmm-chip--invite">Hubert can invite them</span>';
     var requested = Boolean(pendingByTarget[person.id]);
     var isStub = String(person.id || '').indexOf('stub-') === 0;
@@ -208,20 +208,20 @@
           text:
             'I matched “' +
             titles[0] +
-            '” on the Hub, but nobody’s booked that I can show. Try another session, or ask who you need by role.',
+            '” on The Networker UK, but nobody’s booked that I can show. Try another session, or ask who you need by role.',
         };
       }
       if (!titles.length) {
         return {
-          title: 'I couldn’t match that Hub event',
-          text: 'Try the event name as it appears on The Networker — or describe who you need (role, city, problem).',
+          title: 'I couldn’t match that event',
+          text: 'Try the event name as it appears on The Networker UK — or describe who you need (role, city, problem).',
         };
       }
     }
     if (Number(m.candidateCount || 0) === 0) {
       return {
         title: 'No one came back yet',
-        text: 'The Hub pool is still thin for that ask. Try another description, or check back after more members opt in.',
+        text: 'The member pool is still thin for that ask. Try another description, or check back after more people opt in.',
       };
     }
     return {
@@ -261,7 +261,7 @@
       var eventNote = '';
       if (meta && meta.eventQuery && Array.isArray(meta.matchedEvents) && meta.matchedEvents.length) {
         eventNote =
-          ' Matched Hub event: ' +
+          ' Matched event: ' +
           esc(meta.matchedEvents[0].title || 'event') +
           (meta.matchedEvents[0].dateLabel ? ' (' + esc(meta.matchedEvents[0].dateLabel) + ')' : '') +
           '.';

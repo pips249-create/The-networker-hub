@@ -105,7 +105,7 @@ module.exports = async function handler(req, res) {
           ? 'You already accepted this introduction.'
           : 'You already declined this introduction.'
         : accepted
-          ? 'You’re introduced — open the Hub thread to continue (no contact details shared).'
+          ? 'You’re introduced — open Meet people to continue (no contact details shared).'
           : 'Declined. Hubert won’t open an introduction.',
     });
   } catch (e) {

@@ -353,20 +353,13 @@ async function sendIntroRequestEmail(intro, requester, target) {
   const shortName = shortDisplayName(requester.name);
   const titleCompany = formatTitleCompany(requester.job_title, requester.company);
   const requesterLabel = requesterEmailLabel(requester);
-  const blurb = String(requester.matchmaker_blurb || '')
-    .trim()
-    .replace(/\s+/g, ' ')
-    .slice(0, 420);
-  const aboutBits = [];
-  if (titleCompany) {
-    aboutBits.push(shortName + ' is ' + titleCompany + '.');
-  }
-  if (blurb) aboutBits.push(blurb);
-  const requester_about = aboutBits.length
-    ? aboutBits.join(' ')
+  // Privacy: do not send matchmaker blurbs / bios in cold emails — enough to Google
+  // someone and intro them off-platform. Keep short name + role/company + topic only.
+  const requester_about = titleCompany
+    ? shortName + ' is ' + titleCompany + '.'
     : shortName + ' is a member on The Networker UK.';
   const eventContext = intro.event_title
-    ? 'They mentioned you may both be around ' + intro.event_title + '.'
+    ? 'Shared event context: ' + intro.event_title + '.'
     : '';
 
   await sendTemplatedEmail({
@@ -421,7 +414,7 @@ async function openThread(sb, intro, requester, target) {
     intro.topic +
     '”.' +
     eventBit +
-    ' Contact details stay private — continue here on the Hub.';
+    ' Contact details stay private — continue here on The Networker UK’s Hubert.';
 
   await sb.from('hubert_intro_messages').insert({
     intro_request_id: intro.id,
@@ -959,7 +952,7 @@ async function postIntroMessage(session, introId, bodyRaw) {
   if (/@|linkedin\.com|whatsapp|\+?\d[\d\s()-]{7,}/i.test(body)) {
     const err = new Error('no_contact_details');
     err.code = 'no_contact_details';
-    err.message = 'Keep contact details off this thread — Hubert keeps intros on the Hub.';
+    err.message = 'Keep contact details off this thread — intros stay on The Networker UK’s Hubert.';
     throw err;
   }
 
