@@ -26,6 +26,8 @@ const {
   importEventbriteListingForEvent,
   listImportableEventbriteEvents,
   createEventFromEventbrite,
+  findEventsByEventbriteExternalId,
+  collapseEventbriteImportDuplicates,
 } = require('../eventbrite-listing-import');
 const { importTicketTailorListingForEvent } = require('../ticket-tailor-listing-import');
 const { resolveOrganiserAccountId } = require('../organiser-account-resolve');
@@ -614,6 +616,51 @@ module.exports = async function handler(req, res) {
             ok: false,
             error: createErr.code || createErr.message || 'eventbrite_import_failed',
             message: createErr.message,
+          });
+        }
+      }
+
+      if (action === 'dedupe_eventbrite_imports') {
+        try {
+          const listed = await listImportableEventbriteEvents(sb, accountId, {});
+          const events = Array.isArray(listed.events) ? listed.events : [];
+          let unpublished = 0;
+          let kept = 0;
+          for (let i = 0; i < events.length; i += 1) {
+            const eid = String(events[i] && events[i].id ? events[i].id : '').trim();
+            if (!eid) continue;
+            const matches = await findEventsByEventbriteExternalId(sb, accountId, eid);
+            if (matches.length < 2) {
+              if (matches.length === 1) kept += 1;
+              continue;
+            }
+            const collapsed = await collapseEventbriteImportDuplicates(sb, accountId, eid, matches[0].id);
+            kept += 1;
+            unpublished += collapsed.unpublished.length;
+            try {
+              await upsertEventLink(sb, accountId, {
+                eventId: collapsed.keepEventId || matches[0].id,
+                provider: 'eventbrite',
+                externalEventId: eid,
+                externalEventUrl: String(matches[0].external_booking_url || '').trim() || null,
+              });
+            } catch (_linkErr) {
+              /* optional */
+            }
+          }
+          return json(res, 200, {
+            ok: true,
+            kept: kept,
+            unpublished: unpublished,
+            message: unpublished
+              ? 'Unpublished ' + unpublished + ' duplicate Eventbrite listing' + (unpublished === 1 ? '' : 's') + '.'
+              : 'No duplicate Eventbrite listings found.',
+          });
+        } catch (dedupeErr) {
+          return json(res, dedupeErr.status || 500, {
+            ok: false,
+            error: dedupeErr.code || dedupeErr.message || 'eventbrite_dedupe_failed',
+            message: dedupeErr.message,
           });
         }
       }
