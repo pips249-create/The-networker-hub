@@ -21,6 +21,10 @@ const {
   countRecentInvites,
   sessionUserId,
 } = require('../hubert-hub-invite');
+const {
+  matchmakerProfileFromAttendee,
+  assertMatchmakerReady,
+} = require('../hubert-matchmaker-profile');
 
 /** Flip via env when Matchmaker is ready for all members. */
 function isMatchmakerPublic() {
@@ -73,6 +77,7 @@ function mapIntroError(e) {
     target_not_found: 404,
     target_email_missing: 400,
     attendee_not_found: 400,
+    profile_incomplete: 403,
     intro_email_failed: 502,
     invalid_or_expired_token: 400,
     intro_not_found: 404,
@@ -88,7 +93,34 @@ function mapIntroError(e) {
     status: statusMap[code] || 500,
     error: code,
     message: e && e.message ? e.message : 'Something went wrong.',
+    profile: e && e.profile ? e.profile : undefined,
   };
+}
+
+async function loadAttendeeForGate(sb, attendeeId) {
+  if (!attendeeId) return null;
+  const { data, error } = await sb
+    .from('attendees')
+    .select(
+      'id, name, company, job_title, professional_role, matchmaker_blurb, looking_to_meet, discoverable_at'
+    )
+    .eq('id', attendeeId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data || null;
+}
+
+async function requireMatchmakerProfile(session) {
+  const sb = getSupabaseAdmin();
+  const attendeeId = await resolveAttendeeId(sb, session);
+  if (!attendeeId) {
+    const err = new Error('attendee_not_found');
+    err.code = 'attendee_not_found';
+    throw err;
+  }
+  const attendee = await loadAttendeeForGate(sb, attendeeId);
+  assertMatchmakerReady(attendee);
+  return { sb, attendeeId, attendee, profile: matchmakerProfileFromAttendee(attendee || {}) };
 }
 
 module.exports = async function handler(req, res) {
@@ -202,11 +234,10 @@ module.exports = async function handler(req, res) {
 
   if (action === 'search') {
     try {
-      const sb = getSupabaseAdmin();
-      const attendeeId = await resolveAttendeeId(sb, session);
+      const gated = await requireMatchmakerProfile(session);
       const result = await searchMatchmaker({
         query: body.query || body.q || '',
-        excludeAttendeeId: attendeeId,
+        excludeAttendeeId: gated.attendeeId,
       });
       if (!result.ok) {
         const status = result.error === 'query_too_short' ? 400 : 503;
@@ -220,11 +251,24 @@ module.exports = async function handler(req, res) {
         adminPreview: !isMatchmakerPublic(),
       });
     } catch (e) {
+      const mapped = mapIntroError(e);
+      if (mapped.error === 'profile_incomplete') {
+        return json(res, mapped.status, {
+          ok: false,
+          error: mapped.error,
+          message: mapped.message,
+          profile: mapped.profile,
+          matches: [],
+        });
+      }
       console.error('[hubert-matchmaker] search failed', e && e.message ? e.message : e);
-      return json(res, 500, {
+      return json(res, mapped.status === 500 ? 500 : mapped.status, {
         ok: false,
-        error: 'search_failed',
-        message: 'Hubert could not run that search just now.',
+        error: mapped.error === 'failed' ? 'search_failed' : mapped.error,
+        message:
+          mapped.error === 'failed'
+            ? 'Hubert could not run that search just now.'
+            : mapped.message,
         matches: [],
       });
     }
@@ -232,12 +276,18 @@ module.exports = async function handler(req, res) {
 
   if (action === 'request' || action === 'request_intro') {
     try {
+      await requireMatchmakerProfile(session);
       const intro = await createIntroRequest(session, body);
       return json(res, 200, { ok: true, intro });
     } catch (e) {
       console.error('[hubert-matchmaker] request failed', e && e.message ? e.message : e);
       const mapped = mapIntroError(e);
-      return json(res, mapped.status, { ok: false, error: mapped.error, message: mapped.message });
+      return json(res, mapped.status, {
+        ok: false,
+        error: mapped.error,
+        message: mapped.message,
+        profile: mapped.profile,
+      });
     }
   }
 

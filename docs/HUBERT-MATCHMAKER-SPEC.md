@@ -24,7 +24,7 @@ Implementation branch: `cursor/hubert-matchmaker-8ac8` (off `main` after this sp
 4. ~~Request intro → Hubert email → Accept/Decline · **no contact share** · Hub intro thread · persist + count~~
 5. ~~**Introduce someone to The Networker UK & Hubert**~~ · name + email (+ optional note) → Hubert join invite · 5/week (50 admin) · migration `336_hubert_hub_invites.sql`
 6. Intro tracking surfaces (admin totals + member **Connections** = accepted only; soft “Waiting”)
-7. ~~Member Matchmaker profile~~ · headline + looking-to-meet + discoverable opt-in (Settings + Meet people; soft nudge)
+7. ~~Member Matchmaker profile~~ · headline + looking-to-meet + discoverable opt-in · **hard gate** before search/intros (Meet people primary; Settings edit; no silent opt-in)
 8. Public site teaser (still gated until launch)
 
 ---
@@ -284,7 +284,7 @@ Ship the `hubert_intro_requests` (name TBD) table in the same slice as Request i
 1. **Intent validation** — ≥ 25 characters; soft-reject generics (“hi”, “networking”, “sales”).  
 2. **Rosie seed follow-ups** — exactly **1** polite reminder at day 5–7, then auto-pause in BOH if still unaccepted.  
 3. **Non-member B onboarding** — 2 quick taps (industry/role + looking to meet) before the Hubert intro thread opens.  
-4. **Soft reciprocity** — A must set networking tags (+ discoverable) before running full searches.
+4. **Profile gate (reciprocity)** — A must set headline + looking-to-meet + discoverable before search or Request intro. Prefill headline from Hub job/company; **never** auto-tick Include me.
 
 ## Locked defaults
 

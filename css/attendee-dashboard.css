@@ -5387,6 +5387,48 @@ body.ad-share-modal-open {
   border: 1px solid rgba(125, 72, 150, 0.16);
 }
 
+.hmm-profile-panel--gate {
+  padding: 22px 18px;
+  background: linear-gradient(180deg, rgba(255, 252, 246, 0.98), rgba(255, 255, 255, 0.92));
+  border: 2px solid rgba(184, 134, 11, 0.45);
+  box-shadow: 0 10px 28px rgba(36, 21, 54, 0.06);
+}
+
+.hmm-profile-panel--gate .hmm-profile-kicker {
+  color: #8a6410;
+}
+
+.hmm-profile-panel.is-complete {
+  border-color: rgba(125, 72, 150, 0.14);
+  background: rgba(255, 255, 255, 0.65);
+  box-shadow: none;
+}
+
+.hmm-ask-block {
+  margin: 0 0 8px;
+}
+
+.hmm-ask-kicker {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ad-teal-dark);
+}
+
+.hmm-profile-hint {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ad-text-soft, #7a7580);
+}
+
+.hmm-profile-hint--block {
+  display: block;
+  margin-top: 4px;
+}
+
 .hmm-profile-kicker {
   margin: 0 0 4px;
   font-size: 11px;
@@ -5474,6 +5516,13 @@ body.ad-share-modal-open {
 .hmm-profile-chip input:checked + span {
   background: rgba(125, 72, 150, 0.12);
   border-color: rgba(125, 72, 150, 0.55);
+}
+
+.hmm-profile-panel--gate .hmm-profile-discoverable {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(125, 72, 150, 0.28);
+  background: #fff;
 }
 
 .hmm-profile-discoverable {

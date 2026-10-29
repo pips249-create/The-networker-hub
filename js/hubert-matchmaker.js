@@ -16,6 +16,8 @@
   var lastQuery = '';
   var lastMatches = [];
   var pendingByTarget = {};
+  var profileReady = false;
+  var lastProfile = null;
 
   function isMatchmakerPublic() {
     return HUBERT_MATCHMAKER_PUBLIC === true;
@@ -324,6 +326,14 @@
       }
       return;
     }
+    if (!profileReady) {
+      focusProfileGate();
+      if (mount && mount.els.error) {
+        mount.els.error.textContent = 'Finish your Hubert profile before requesting an intro.';
+        mount.els.error.hidden = false;
+      }
+      return;
+    }
     var topic = askForTopic(person);
     if (!topic) return;
 
@@ -408,6 +418,17 @@
       err.hidden = true;
       err.textContent = '';
     }
+    if (!profileReady) {
+      if (mount.mode === 'overview' && typeof mount.onExpand === 'function') {
+        mount.onExpand(query || '');
+      }
+      focusProfileGate();
+      if (err) {
+        err.textContent = 'Finish your Hubert profile before searching.';
+        err.hidden = false;
+      }
+      return;
+    }
     if (!query) {
       if (err) {
         err.textContent = 'Tell Hubert who you would like to meet.';
@@ -429,6 +450,14 @@
         if (data.ok && Array.isArray(data.matches)) {
           var liveMeta = Object.assign({ source: 'live' }, data.meta || {});
           paintAll(data.matches, query, liveMeta);
+        } else if (data && data.error === 'profile_incomplete') {
+          if (data.profile) fillProfileForm(data.profile);
+          focusProfileGate(data.message);
+          paintAll([], query, null);
+          if (err) {
+            err.textContent = data.message || 'Finish your Hubert profile before searching.';
+            err.hidden = false;
+          }
         } else if (result.status === 401 || result.status === 403) {
           if (err) {
             err.textContent = (data && data.message) || 'Sign in as an admin to use Hubert Matchmaker.';
@@ -603,8 +632,6 @@
     'Partners',
     'Press',
   ];
-  var NUDGE_KEY = 'hmm_profile_nudge_dismissed_v1';
-
   function renderLookingChips(wrap, options, selected) {
     if (!wrap) return;
     var list = Array.isArray(options) && options.length ? options : DEFAULT_LOOKING;
@@ -653,33 +680,58 @@
     }
   }
 
-  function updateProfileNudge(profile) {
-    var nudge = document.querySelector('[data-hmm-profile-nudge]');
-    if (!nudge) return;
-    var dismissed = false;
-    try {
-      dismissed = window.localStorage.getItem(NUDGE_KEY) === '1';
-    } catch (e) {
-      dismissed = false;
+  function applyProfileGate(profile) {
+    lastProfile = profile || null;
+    profileReady = Boolean(profile && profile.matchmakerReady);
+    var panel = document.querySelector('[data-hmm-profile-panel]');
+    var ask = document.querySelector('[data-hmm-ask-block]');
+    var title = panel && panel.querySelector('.hmm-profile-title');
+    var kicker = panel && panel.querySelector('.hmm-profile-kicker');
+    var saveBtn = document.querySelector('[data-hmm-profile-save]');
+
+    if (panel) {
+      panel.classList.toggle('hmm-profile-panel--gate', !profileReady);
+      panel.classList.toggle('is-complete', profileReady);
     }
-    var incomplete = !(profile && profile.matchmakerReady);
-    nudge.hidden = !incomplete || dismissed;
+    if (ask) ask.hidden = !profileReady;
+    if (title) {
+      title.textContent = profileReady ? 'Your Hubert profile' : 'Set up your Hubert profile';
+    }
+    if (kicker) {
+      kicker.textContent = profileReady ? 'Your profile' : 'Step 1 · Required';
+    }
+    if (saveBtn) {
+      saveBtn.textContent = profileReady ? 'Save profile' : 'Save and unlock Hubert';
+    }
+
+    mounts.forEach(function (m) {
+      if (!m || !m.els) return;
+      if (m.els.input) m.els.input.disabled = !profileReady && m.mode === 'overview';
+      if (m.els.form) {
+        var submit = m.els.form.querySelector('button[type="submit"]');
+        if (submit && m.mode === 'overview') submit.disabled = !profileReady;
+      }
+    });
   }
 
-  function fillProfilePanel(profile) {
+  function fillProfileForm(profile) {
     var blurb = document.querySelector('[data-hmm-profile-blurb]');
     var looking = document.querySelector('[data-hmm-profile-looking]');
     var disc = document.querySelector('[data-hmm-profile-discoverable]');
-    if (blurb) blurb.value = (profile && profile.matchmakerBlurb) || '';
+    var prefill =
+      (profile && (profile.matchmakerBlurb || profile.matchmakerBlurbPrefill || profile.suggestedBlurb)) ||
+      '';
+    if (blurb) blurb.value = prefill;
     renderLookingChips(
       looking,
       (profile && profile.lookingToMeetOptions) || DEFAULT_LOOKING,
       (profile && profile.lookingToMeet) || []
     );
+    // Never auto-tick Include me — member must opt in.
     if (disc) disc.checked = Boolean(profile && profile.discoverable);
-    updateProfileNudge(profile || {});
+    applyProfileGate(profile || {});
     if (profile && profile.matchmakerReady) {
-      setProfileStatus(true, 'You’re ready for Hubert to put you forward.');
+      setProfileStatus(true, 'You’re ready — ask Hubert who you need.');
     } else {
       setProfileStatus(true, '');
     }
@@ -732,13 +784,15 @@
           return;
         }
         fillProfileForm(data.profile || {});
-        setProfileStatus(true, 'Profile saved.');
-        try {
-          if (data.profile && data.profile.matchmakerReady) {
-            window.localStorage.setItem(NUDGE_KEY, '1');
-          }
-        } catch (err) {
-          /* ignore */
+        if (data.profile && data.profile.matchmakerReady) {
+          setProfileStatus(true, 'Profile saved — Hubert is unlocked.');
+          var ask = document.querySelector('[data-hmm-ask-block]');
+          if (ask && ask.scrollIntoView) ask.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          setProfileStatus(
+            false,
+            'Almost there — add a headline, pick who you want to meet, and tick Include me.'
+          );
         }
       })
       .catch(function () {
@@ -749,34 +803,23 @@
       });
   }
 
+  function focusProfileGate(message) {
+    applyProfileGate(lastProfile || {});
+    var panel = document.querySelector('[data-hmm-profile-panel]');
+    if (panel && panel.scrollIntoView) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setProfileStatus(
+      false,
+      message || 'Finish your Hubert profile first — headline, who you want to meet, and Include me.'
+    );
+    var blurb = document.querySelector('[data-hmm-profile-blurb]');
+    if (blurb) blurb.focus();
+  }
+
   function bindProfilePanel() {
     var form = document.querySelector('[data-hmm-profile-form]');
     if (form && form.dataset.hmmBound !== '1') {
       form.dataset.hmmBound = '1';
       form.addEventListener('submit', saveMatchmakerProfile);
-    }
-    var openBtn = document.querySelector('[data-hmm-profile-nudge-open]');
-    if (openBtn && openBtn.dataset.hmmBound !== '1') {
-      openBtn.dataset.hmmBound = '1';
-      openBtn.addEventListener('click', function () {
-        var panel = document.querySelector('[data-hmm-profile-panel]');
-        if (panel && panel.scrollIntoView) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        var blurb = document.querySelector('[data-hmm-profile-blurb]');
-        if (blurb) blurb.focus();
-      });
-    }
-    var dismissBtn = document.querySelector('[data-hmm-profile-nudge-dismiss]');
-    if (dismissBtn && dismissBtn.dataset.hmmBound !== '1') {
-      dismissBtn.dataset.hmmBound = '1';
-      dismissBtn.addEventListener('click', function () {
-        try {
-          window.localStorage.setItem(NUDGE_KEY, '1');
-        } catch (e) {
-          /* ignore */
-        }
-        var nudge = document.querySelector('[data-hmm-profile-nudge]');
-        if (nudge) nudge.hidden = true;
-      });
     }
   }
 

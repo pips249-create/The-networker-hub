@@ -815,25 +815,13 @@
                     </p>
                   </div>
                 </div>
-                <div class="hmm-profile-nudge" data-hmm-profile-nudge hidden>
-                  <div class="hmm-profile-nudge-copy">
-                    <p class="hmm-profile-nudge-kicker">Build your Hubert profile</p>
-                    <p class="hmm-profile-nudge-text">
-                      Add a short headline, who you want to meet, and opt in — so Hubert can put you forward.
-                    </p>
-                  </div>
-                  <div class="hmm-profile-nudge-actions">
-                    <button type="button" class="ad-btn ad-btn-primary" data-hmm-profile-nudge-open>Complete profile</button>
-                    <button type="button" class="ad-btn ad-btn-ghost" data-hmm-profile-nudge-dismiss>Not now</button>
-                  </div>
-                </div>
-                <div class="hmm-profile-panel" data-hmm-profile-panel>
-                  <p class="hmm-profile-kicker">Your Hubert profile</p>
-                  <h3 class="hmm-profile-title">Help Hubert introduce you</h3>
+                <div class="hmm-profile-panel hmm-profile-panel--gate" data-hmm-profile-panel data-hmm-profile-gate>
+                  <p class="hmm-profile-kicker">Step 1 · Required</p>
+                  <h3 class="hmm-profile-title">Set up your Hubert profile</h3>
                   <p class="hmm-profile-copy">
-                    Shortlist cards show first name and initial only. Once you both say yes, Connections shows first names — still no email, phone, or LinkedIn.
-                    You can also edit this anytime in
-                    <a href="/account/settings.html#as-hubert-matchmaker">Account settings</a>.
+                    You need this before you can search or request intros. Shortlist cards show first name and initial only —
+                    never email, phone, or LinkedIn. We may suggest a headline from your Hub job title; you confirm, and
+                    <strong>Include me</strong> stays off until you tick it.
                   </p>
                   <form class="hmm-profile-form" data-hmm-profile-form>
                     <label class="hmm-profile-field">
@@ -846,18 +834,24 @@
                       ></textarea>
                     </label>
                     <fieldset class="hmm-profile-field">
-                      <legend>Looking to meet</legend>
+                      <legend>Who you want to meet</legend>
+                      <p class="hmm-profile-hint">Pick at least one.</p>
                       <div class="hmm-profile-chips" data-hmm-profile-looking role="group"></div>
                     </fieldset>
                     <label class="hmm-profile-discoverable">
                       <input type="checkbox" data-hmm-profile-discoverable />
-                      <span>Include me so Hubert can put me forward</span>
+                      <span>
+                        <strong>Include me so Hubert can put me forward</strong>
+                        <span class="hmm-profile-hint hmm-profile-hint--block">Required to search. You can turn this off anytime.</span>
+                      </span>
                     </label>
                     <p class="hmm-profile-error" data-hmm-profile-error hidden role="alert"></p>
                     <p class="hmm-profile-status" data-hmm-profile-status hidden role="status"></p>
-                    <button type="submit" class="ad-btn ad-btn-primary" data-hmm-profile-save>Save profile</button>
+                    <button type="submit" class="ad-btn ad-btn-primary" data-hmm-profile-save>Save and unlock Hubert</button>
                   </form>
                 </div>
+                <div class="hmm-ask-block" data-hmm-ask-block hidden>
+                <p class="hmm-ask-kicker">Step 2 · Ask Hubert</p>
                 <form class="hmm-composer" data-hmm-form>
                   <label class="visually-hidden" for="hmm-query">What are you working on?</label>
                   <div class="hmm-composer-row">
@@ -885,6 +879,7 @@
                 </div>
                 <div class="hmm-intros" data-hmm-intros hidden></div>
                 <div class="hmm-thread-panel" data-hmm-thread hidden></div>
+                </div>
                 <div class="hmm-invite-panel" data-hmm-invite-panel>
                   <p class="hmm-invite-kicker">Know someone great?</p>
                   <h3 class="hmm-invite-title">Introduce them to The Networker UK &amp; Hubert</h3>

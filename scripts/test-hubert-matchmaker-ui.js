@@ -46,4 +46,8 @@ const eventEmpty = mm.emptyStateCopy({
 });
 assert(/Hub event/i.test(eventEmpty.title), 'ui empty: unmatched event');
 
+assert(src.indexOf('profile_incomplete') !== -1, 'client handles profile_incomplete');
+assert(src.indexOf('Never auto-tick Include me') !== -1, 'no auto opt-in comment');
+assert(src.indexOf('applyProfileGate') !== -1, 'profile gate helper');
+
 console.log('ok — hubert-matchmaker ui helpers');
