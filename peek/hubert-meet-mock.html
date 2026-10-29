@@ -12,9 +12,9 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
-    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260812footer11" />
-    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260929services2" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261028meet4" />
+    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20261029dash2" />
+    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20261029dash2" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261029dash2" />
     <style>
       body.attendee-dashboard-page {
         margin: 0;
@@ -82,39 +82,35 @@
               <p class="ad-welcome-sub">Ready when you are — find a room this week.</p>
             </header>
 
-            <div class="hmm hmm--overview" id="ad-overview-hubert-meet" data-hmm-shell>
-              <p class="hmm-admin-badge" data-hmm-admin-badge>Admin preview — not visible to other members yet.</p>
-              <div class="hmm-hero">
-                <img class="hmm-hero-avatar" src="../assets/hubert-icon.png" width="72" height="72" alt="" />
-                <div class="hmm-hero-copy">
-                  <p class="hmm-hero-kicker">Hubert</p>
-                  <h2 class="hmm-hero-title">I can introduce you to anyone</h2>
-                  <p class="hmm-hero-sub">
-                    Customers, investors, hires, your next opportunity — or someone who&rsquo;s already solved what you&rsquo;re stuck on.
-                    Tell me what you&rsquo;re working on. I find who fits, and introduce you once you both opt in.
-                  </p>
-                </div>
-              </div>
-              <form class="hmm-composer" data-hmm-form>
-                <label class="visually-hidden" for="hmm-overview-query">What are you working on?</label>
-                <div class="hmm-composer-row">
-                  <img class="hmm-composer-avatar" src="../assets/hubert-icon.png" width="40" height="40" alt="" />
-                  <input
-                    id="hmm-overview-query"
-                    class="hmm-composer-input"
-                    type="search"
-                    data-hmm-query
-                    value="raising seed and need fintech angels in Manchester"
-                    required
-                  />
-                  <button type="submit" class="ad-btn ad-btn-primary hmm-composer-submit">Try Hubert</button>
+            <div class="ad-overview-portals" style="margin-bottom: 24px">
+              <div class="hmm hmm--overview" id="ad-overview-hubert-meet" data-hmm-shell>
+                <p class="hmm-admin-badge" data-hmm-admin-badge>Admin preview</p>
+                <div class="hmm-overview-bar">
+                  <span class="ad-portal-icon hmm-overview-icon" aria-hidden="true">
+                    <img src="../assets/hubert-icon.png" width="28" height="28" alt="" />
+                  </span>
+                  <div class="ad-portal-body hmm-overview-copy">
+                    <strong>Meet people</strong>
+                    <span>I can introduce you to anyone</span>
+                  </div>
+                  <form class="hmm-composer hmm-overview-ask" data-hmm-form>
+                    <label class="visually-hidden" for="hmm-overview-query">What are you working on?</label>
+                    <input
+                      id="hmm-overview-query"
+                      class="hmm-composer-input"
+                      type="search"
+                      data-hmm-query
+                      value="raising seed and need fintech angels in Manchester"
+                      required
+                    />
+                    <button type="submit" class="ad-btn hmm-overview-submit">Try Hubert</button>
+                  </form>
                 </div>
                 <p class="hmm-error" data-hmm-error hidden role="alert"></p>
-              </form>
-              <p class="hmm-preview-note" data-hmm-preview hidden role="status"></p>
-              <div class="hmm-results" data-hmm-results hidden role="list"></div>
-              <div class="hmm-empty" data-hmm-empty hidden></div>
-              <p class="hmm-overview-more"><a href="#meet-preview">Open full Meet people page</a></p>
+                <p class="hmm-preview-note" data-hmm-preview hidden role="status"></p>
+                <div class="hmm-results" data-hmm-results hidden role="list"></div>
+                <div class="hmm-empty" data-hmm-empty hidden></div>
+              </div>
             </div>
 
             <header class="ad-subpage-head" id="meet-preview" style="margin-top: 40px">

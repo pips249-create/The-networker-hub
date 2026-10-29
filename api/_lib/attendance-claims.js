@@ -686,7 +686,7 @@ async function searchClaimableOrganisers(session, input) {
   });
 
   // 2) Match past live event titles → surface that event's organiser.
-  //    People type the event name (e.g. "The Networker Hub Example"), not the group name.
+  //    People type the event name (e.g. "The Networker UK Example"), not the group name.
   //    Include `archived` — past published nights are flipped to archived on organiser load.
   const nowIso = new Date().toISOString();
   const eventRes = await sb

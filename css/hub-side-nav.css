@@ -218,33 +218,41 @@
   color: var(--od-purple-dark);
 }
 
-/* Attendee (purple) */
+/* Attendee (purple) — text list; only the active item gets a solid chip */
 .attendee-dashboard-page .hub-side-nav--minimal .hub-side-nav-link {
   color: var(--ad-slate, #2d1b5e);
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 650;
+  background: transparent;
+  border: 1px solid transparent;
+  border-left: 3px solid transparent;
+  box-shadow: none;
 }
 
 .attendee-dashboard-page .hub-side-nav--minimal .hub-side-nav-link:hover {
-  background: rgba(255, 255, 255, 0.55);
-  color: var(--ad-teal);
+  background: rgba(255, 255, 255, 0.45);
+  color: var(--ad-teal-dark, #7a3d8a);
+  border-color: transparent;
+  border-left-color: rgba(157, 96, 167, 0.45);
+  box-shadow: none;
 }
 
 .attendee-dashboard-page .hub-side-nav--minimal .hub-side-nav-link.is-active {
-  border-left-color: var(--ad-teal);
-  background: var(--ad-white);
-  color: var(--ad-slate);
-  font-weight: 700;
-  box-shadow: 0 1px 4px rgba(73, 63, 149, 0.08);
+  border-color: rgba(122, 61, 138, 0.28);
+  border-left-color: var(--ad-teal-dark, #7a3d8a);
+  background: #ffffff;
+  color: var(--ad-slate, #2d1b5e);
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(73, 63, 149, 0.12);
 }
 
 .attendee-dashboard-page .hub-side-nav-divider {
-  color: var(--ad-text-soft, #9d87aa);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
+  color: #5a3568;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
   opacity: 1;
-  border-top-color: rgba(91, 47, 153, 0.14);
+  border-top-color: rgba(91, 47, 153, 0.32);
 }
 
 .attendee-dashboard-page .hub-side-nav-bottom {
@@ -261,6 +269,13 @@
 
 .attendee-dashboard-page .hub-side-nav-util a {
   color: var(--ad-teal-dark);
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(122, 61, 138, 0.16);
+}
+
+.attendee-dashboard-page .hub-side-nav-util a:hover {
+  background: #ffffff;
+  color: var(--ad-slate, #2d1b5e);
 }
 
 .hub-side-nav-link--partner {
@@ -270,17 +285,20 @@
 }
 
 .attendee-dashboard-page .hub-side-nav-link--partner {
-  color: #7a5a12;
-  background: rgba(189, 147, 46, 0.12);
-  border: 1px solid rgba(189, 147, 46, 0.28);
+  color: #5c4510;
+  background: #f6ecd0;
+  border: 1px solid rgba(189, 147, 46, 0.45);
+  border-left: 3px solid #bd932e;
   border-radius: 8px;
-  margin: 0 4px 6px;
+  margin: 0 0 6px;
   padding-left: 12px;
+  box-shadow: 0 1px 3px rgba(122, 90, 20, 0.1);
 }
 
 .attendee-dashboard-page .hub-side-nav-link--partner:hover {
-  background: rgba(189, 147, 46, 0.2);
-  color: #5c4510;
+  background: #f1e3bc;
+  color: #4a380c;
+  border-color: rgba(189, 147, 46, 0.6);
 }
 
 .organiser-dashboard-page .hub-side-nav-link--partner {

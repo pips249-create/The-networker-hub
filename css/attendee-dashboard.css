@@ -205,6 +205,18 @@
   }
 }
 
+/* Desktop has the side nav — portal shortcuts are pure redundancy there.
+   Keep them on mobile (sidebar hidden, bottom nav only). Meet people stays. */
+@media (min-width: 901px) {
+  .ad-overview-portals > .ad-portal {
+    display: none;
+  }
+
+  .ad-overview-portals {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .ad-portal {
   display: flex;
   align-items: center;
@@ -366,13 +378,19 @@
   margin-left: 6px;
   font-size: 10px;
   font-weight: 700;
-  color: var(--ad-text-soft);
-  background: var(--ad-teal-pale);
+  color: var(--ad-teal-dark);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(122, 61, 138, 0.14);
   border-radius: 999px;
   padding: 1px 7px;
   vertical-align: middle;
   min-width: 1.1em;
   text-align: center;
+}
+
+.hub-side-nav-link.is-active .ad-side-count {
+  background: var(--ad-teal-pale);
+  border-color: transparent;
 }
 
 .ad-side-count[hidden] {
@@ -4554,22 +4572,38 @@ body.ad-share-modal-open {
   max-width: 760px;
   margin: 0 0 28px;
   padding: 22px 22px 20px;
-  border-radius: 18px;
-  border: 1px solid rgba(125, 72, 150, 0.18);
-  background:
-    radial-gradient(120% 90% at 100% 0%, rgba(126, 200, 240, 0.28), transparent 55%),
-    radial-gradient(90% 80% at 0% 100%, rgba(200, 180, 240, 0.35), transparent 50%),
-    linear-gradient(160deg, #f7f2fb 0%, #efe8f7 48%, #e7f3fa 100%);
-  box-shadow: 0 10px 28px rgba(45, 27, 94, 0.06);
+  border-radius: var(--ad-radius, 12px);
+  border: 1px solid var(--ad-border-soft, #e8dbea);
+  background: var(--ad-white, #fff);
+  box-shadow: 0 2px 8px rgba(45, 27, 94, 0.05);
   overflow: hidden;
 }
 
-.hmm--overview {
-  margin-top: 4px;
-}
-
+/* Dedicated Meet people page can keep a soft wash; Overview must match portals */
 .hmm--page {
   margin-top: 0;
+  max-width: none;
+  background:
+    linear-gradient(160deg, #fbf8fd 0%, #ffffff 42%, #f5f8fb 100%);
+  border-color: rgba(125, 72, 150, 0.16);
+}
+
+/* Overview: same chrome as .ad-portal, full-width in the portal grid */
+.ad-overview-portals > .hmm--overview {
+  grid-column: 1 / -1;
+  margin: 0;
+  max-width: none;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid var(--ad-border-soft);
+  background: var(--ad-white);
+  box-shadow: 0 2px 10px rgba(45, 27, 94, 0.06);
+}
+
+.hmm--overview {
+  margin: 0 0 16px;
+  max-width: none;
+  padding: 16px;
 }
 
 .hmm[hidden] {
@@ -4578,19 +4612,99 @@ body.ad-share-modal-open {
 
 .hmm-admin-badge {
   display: inline-block;
-  margin: 0 0 14px;
-  padding: 5px 10px;
+  margin: 0 0 10px;
+  padding: 2px 7px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--ad-teal-dark);
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(125, 72, 150, 0.16);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #6b4578;
+  background: transparent;
+  border: 1px solid rgba(125, 72, 150, 0.18);
+}
+
+.hmm--overview .hmm-admin-badge {
+  margin: 0 0 8px;
 }
 
 .hmm-admin-badge[hidden] {
   display: none !important;
+}
+
+.hmm-overview-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.hmm-overview-icon {
+  background: #efe6f4;
+  overflow: hidden;
+}
+
+.hmm-overview-icon img {
+  display: block;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #0d0d12;
+}
+
+.hmm-overview-copy {
+  flex: 0 1 180px;
+}
+
+.hmm-overview-ask {
+  display: flex;
+  flex: 1 1 240px;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 4px 4px 4px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(122, 61, 138, 0.22);
+  background: #ffffff;
+}
+
+.hmm-overview-ask:focus-within {
+  border-color: rgba(157, 96, 167, 0.55);
+  box-shadow: 0 0 0 3px rgba(157, 96, 167, 0.14);
+}
+
+.hmm-overview-ask .hmm-composer-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 8px 0;
+  font-size: 14px;
+  color: var(--ad-slate, #2d1b5e);
+}
+
+.hmm-overview-ask .hmm-composer-input::placeholder {
+  color: #6e5a7a;
+  opacity: 1;
+}
+
+.hmm-overview-submit {
+  flex: 0 0 auto;
+  background: var(--ad-teal, #9d60a7) !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+  padding: 8px 14px !important;
+  font-size: 12px !important;
+}
+
+.hmm-overview-submit:hover {
+  background: var(--ad-teal-dark, #7a3d8a) !important;
+}
+
+@media (max-width: 720px) {
+  .hmm-overview-ask {
+    flex: 1 1 100%;
+  }
 }
 
 .hmm-hero {
@@ -4608,8 +4722,8 @@ body.ad-share-modal-open {
   object-fit: cover;
   background: #0d0d12;
   box-shadow:
-    0 0 0 3px rgba(255, 255, 255, 0.85),
-    0 8px 20px rgba(45, 27, 94, 0.18);
+    0 0 0 2px rgba(255, 255, 255, 0.95),
+    0 4px 12px rgba(45, 27, 94, 0.12);
 }
 
 .hmm-hero-avatar--lg {
@@ -4651,9 +4765,9 @@ body.ad-share-modal-open {
   align-items: center;
   padding: 10px 10px 10px 12px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(125, 72, 150, 0.16);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  box-shadow: none;
 }
 
 .hmm-composer-avatar {
@@ -4686,9 +4800,7 @@ body.ad-share-modal-open {
 
 .hmm-composer-row:focus-within {
   border-color: rgba(157, 96, 167, 0.55);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    0 0 0 3px rgba(157, 96, 167, 0.16);
+  box-shadow: 0 0 0 3px rgba(157, 96, 167, 0.14);
 }
 
 .hmm-composer-submit {

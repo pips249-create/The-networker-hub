@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Preview: Attendee overview density – The Networker UK</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
+    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20261029dash2" />
+    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20261029dash2" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261029dash2" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"
+    />
+    <style>
+      body {
+        margin: 0;
+      }
+      .peek-banner {
+        margin: 0;
+        padding: 10px 16px;
+        background: #2d1b5e;
+        color: #fff;
+        font: 600 13px/1.4 'DM Sans', system-ui, sans-serif;
+      }
+      .ad-dashboard-layout {
+        min-height: calc(100vh - 40px);
+      }
+      .ad-sidebar {
+        min-height: calc(100vh - 40px);
+      }
+      .ad-main {
+        padding: 24px 28px 40px;
+      }
+    </style>
+  </head>
+  <body class="attendee-dashboard-page hub-page-account">
+    <p class="peek-banner">
+      Design preview — text sidebar (active chip only), no duplicate welcome line, portals hidden on desktop, Meet people ask only
+    </p>
+    <div id="ad-shell">
+      <div class="ad-dashboard-layout">
+        <aside class="ad-sidebar">
+          <nav class="hub-side-nav hub-side-nav--minimal ad-dash-bar" aria-label="Attendee dashboard">
+            <a href="#overview" class="hub-side-nav-link is-active">Overview</a>
+            <a href="#tickets" class="hub-side-nav-link">
+              Event tickets
+              <span class="ad-side-count">2</span>
+            </a>
+            <a href="#past" class="hub-side-nav-link">
+              Events I&rsquo;ve attended
+              <span class="ad-side-count">2</span>
+            </a>
+            <span class="hub-side-nav-divider">Reviews</span>
+            <a href="#reviews" class="hub-side-nav-link">
+              Reviews to write
+              <span class="ad-side-count">1</span>
+            </a>
+            <span class="hub-side-nav-divider">Saved</span>
+            <a href="#saved" class="hub-side-nav-link">
+              Saved &amp; memberships
+              <span class="ad-side-count">13</span>
+            </a>
+            <a href="#opps" class="hub-side-nav-link">
+              Opportunities
+              <span class="ad-side-count">7</span>
+            </a>
+            <a href="#offers" class="hub-side-nav-link">
+              Member offers
+              <span class="ad-side-count">2</span>
+            </a>
+            <a href="#meet" class="hub-side-nav-link">
+              Meet people
+              <span class="ad-side-admin-pill" aria-hidden="true">Admin</span>
+            </a>
+            <span class="hub-side-nav-divider hub-side-nav-divider--partner">Partner with us</span>
+            <a href="#visibility" class="hub-side-nav-link">Grow your visibility</a>
+            <a href="/advertising" class="hub-side-nav-link hub-side-nav-link--partner">Advertising &amp; sponsorship</a>
+            <div class="hub-side-nav-util">
+              <a href="../events/">Browse events</a>
+              <a href="/account/settings">Profile &amp; preferences</a>
+            </div>
+          </nav>
+        </aside>
+
+        <div class="ad-main">
+          <div class="ad-wrap">
+            <header class="ad-page-head">
+              <p class="ad-hero-kicker">Attendee dashboard</p>
+              <h1 class="ad-welcome-name">Welcome back, Catherine Hancher 👋</h1>
+              <!-- welcome-sub hidden when Next booking is present -->
+              <p class="ad-welcome-sub" hidden></p>
+            </header>
+
+            <div class="ad-overview-next">
+              <div class="ad-overview-next-list" role="list">
+                <div class="ad-overview-next-card ad-overview-next-card--ticket ad-overview-next-card--featured" role="listitem">
+                  <span class="ad-overview-next-media">
+                    <span
+                      class="ad-thumb-placeholder"
+                      aria-hidden="true"
+                      style="display:grid;place-items:center;width:88px;height:88px;border-radius:14px;background:#e8dbea;font-size:28px;"
+                      >👋</span
+                    >
+                  </span>
+                  <div class="ad-overview-next-copy">
+                    <span class="ad-overview-next-eyebrow">Next booking</span>
+                    <span class="ad-overview-next-title">Evolution Virtual Networking 29 October</span>
+                    <span class="ad-overview-next-meta">29 Oct 2026 · 08:00–09:30</span>
+                  </div>
+                </div>
+                <div class="ad-overview-next-card ad-overview-next-card--review" role="listitem">
+                  <span class="ad-overview-next-icon ad-overview-next-icon--review" aria-hidden="true">★</span>
+                  <div class="ad-overview-next-copy">
+                    <span class="ad-overview-next-eyebrow">Review to write</span>
+                    <span class="ad-overview-next-title">The Networker UK Example</span>
+                    <span class="ad-overview-next-meta">The Networker UK · About a minute</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="ad-overview-portals">
+              <div class="hmm hmm--overview" id="ad-overview-hubert-meet">
+                <p class="hmm-admin-badge">Admin preview</p>
+                <div class="hmm-overview-bar">
+                  <span class="ad-portal-icon hmm-overview-icon" aria-hidden="true">
+                    <img src="../assets/hubert-icon.png" width="28" height="28" alt="" />
+                  </span>
+                  <div class="ad-portal-body hmm-overview-copy">
+                    <strong>Meet people</strong>
+                    <span>I can introduce you to anyone</span>
+                  </div>
+                  <form class="hmm-composer hmm-overview-ask" onsubmit="return false;">
+                    <input
+                      class="hmm-composer-input"
+                      type="search"
+                      placeholder="e.g. raising seed and need fintech angels in Manchester"
+                    />
+                    <button type="submit" class="ad-btn hmm-overview-submit">Try Hubert</button>
+                  </form>
+                </div>
+              </div>
+
+              <!-- Portal shortcuts: hidden on desktop via CSS; shown here for mobile QA -->
+              <button type="button" class="ad-portal ad-portal--events">
+                <span class="ad-portal-icon" aria-hidden="true">📅</span>
+                <span class="ad-portal-body">
+                  <strong>Your tickets</strong>
+                  <span>2 upcoming events</span>
+                </span>
+                <span class="ad-portal-arrow" aria-hidden="true">→</span>
+              </button>
+              <button type="button" class="ad-portal ad-portal--attended">
+                <span class="ad-portal-icon" aria-hidden="true">✓</span>
+                <span class="ad-portal-body">
+                  <strong>Events I&rsquo;ve attended</strong>
+                  <span>Claim events &amp; get nominated</span>
+                </span>
+                <span class="ad-portal-arrow" aria-hidden="true">→</span>
+              </button>
+              <button type="button" class="ad-portal ad-portal--reviews is-hot">
+                <span class="ad-portal-icon" aria-hidden="true">★</span>
+                <span class="ad-portal-body">
+                  <strong>Reviews</strong>
+                  <span>1 waiting</span>
+                </span>
+                <span class="ad-portal-arrow" aria-hidden="true">→</span>
+              </button>
+              <button type="button" class="ad-portal ad-portal--saved">
+                <span class="ad-portal-icon" aria-hidden="true">♥</span>
+                <span class="ad-portal-body">
+                  <strong>Saved</strong>
+                  <span>13 saved listings</span>
+                </span>
+                <span class="ad-portal-arrow" aria-hidden="true">→</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
