@@ -7582,11 +7582,24 @@ button.ge-booking-choice {
   flex-shrink: 0;
   box-shadow: 0 1px 2px rgba(15, 47, 54, 0.08);
 }
+.cb-provider-tile-logo-wrap--hub {
+  background: #fff;
+  border: 1px solid #d7e6ea;
+}
 .cb-provider-tile-logo {
   display: block;
   width: 44px;
   height: 44px;
   object-fit: cover;
+}
+.cb-provider-tile-logo--hub {
+  object-fit: contain;
+  padding: 5px;
+  box-sizing: border-box;
+  background: #fff;
+}
+.cb-provider-tile--hub .cb-provider-tile-status {
+  color: #0d6e7a;
 }
 .cb-provider-tile-label {
   font-size: 12px;
@@ -7628,6 +7641,20 @@ button.ge-booking-choice {
   border-radius: 10px;
   display: block;
   flex-shrink: 0;
+}
+.cb-provider-detail-logo--hub {
+  object-fit: contain;
+  background: #fff;
+  border: 1px solid #d7e6ea;
+  padding: 3px;
+  box-sizing: border-box;
+}
+.cb-provider-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 10px 0 12px;
 }
 .cb-provider-detail-title {
   margin: 0;
