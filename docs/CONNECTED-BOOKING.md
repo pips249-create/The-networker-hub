@@ -88,7 +88,8 @@ npm run test-external-booking-webhook
 
 ```text
 CONNECTED_BOOKING_PILOT_GRANT_EMAILS=pips249@gmail.com
-CONNECTED_BOOKING_PILOT_GRANT_PLAN=starter
+CONNECTED_BOOKING_PILOT_GRANT_PLAN=enterprise
+
 ```
 
 First visit to `/organiser/connected-booking` activates the plan without Stripe. Still use preview emails so only pilot accounts see the feature.
