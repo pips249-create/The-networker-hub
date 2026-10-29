@@ -747,16 +747,36 @@
   function loadMatchmakerProfile() {
     var panel = document.querySelector('[data-hmm-profile-panel]');
     if (!panel) return;
-    fetch('/api/auth/profile', { credentials: 'include' })
+    var looking = document.querySelector('[data-hmm-profile-looking]');
+    if (looking && !looking.childElementCount) {
+      renderLookingChips(looking, DEFAULT_LOOKING, []);
+    }
+    fetch('/api/auth/profile', {
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+    })
       .then(function (res) {
-        return res.json();
+        return res.text().then(function (text) {
+          var data = {};
+          if (text) {
+            try {
+              data = JSON.parse(text);
+            } catch (err) {
+              return { ok: false, status: res.status };
+            }
+          }
+          return data;
+        });
       })
       .then(function (data) {
-        if (!data || !data.ok) return;
+        if (!data || !data.ok) {
+          applyProfileGate(null);
+          return;
+        }
         fillProfileForm(data.profile || {});
       })
       .catch(function () {
-        /* optional */
+        applyProfileGate(null);
       });
   }
 
@@ -766,6 +786,9 @@
     var looking = document.querySelector('[data-hmm-profile-looking]');
     var disc = document.querySelector('[data-hmm-profile-discoverable]');
     var saveBtn = document.querySelector('[data-hmm-profile-save]');
+    if (looking && !looking.childElementCount) {
+      renderLookingChips(looking, DEFAULT_LOOKING, []);
+    }
     var payload = {
       matchmakerBlurb: blurbEl ? String(blurbEl.value || '').trim() : '',
       lookingToMeet: selectedLookingFrom(looking),
@@ -776,18 +799,38 @@
     fetch('/api/auth/profile', {
       method: 'PATCH',
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify(payload),
     })
       .then(function (res) {
-        return res.json().then(function (data) {
+        return res.text().then(function (text) {
+          var data = {};
+          if (text) {
+            try {
+              data = JSON.parse(text);
+            } catch (err) {
+              var parseErr = new Error(
+                res.status >= 500
+                  ? 'Server error saving profile (' + res.status + '). Try again in a moment.'
+                  : 'Could not save profile (unexpected response).'
+              );
+              parseErr.status = res.status;
+              throw parseErr;
+            }
+          }
           return { status: res.status, data: data };
         });
       })
       .then(function (result) {
         var data = result.data || {};
         if (!data.ok) {
-          setProfileStatus(false, (data && data.message) || 'Could not save your profile.');
+          setProfileStatus(
+            false,
+            (data && data.message) ||
+              (result.status === 401
+                ? 'Sign in again, then save your Hubert profile.'
+                : 'Could not save your profile.')
+          );
           return;
         }
         fillProfileForm(data.profile || {});
@@ -802,8 +845,11 @@
           );
         }
       })
-      .catch(function () {
-        setProfileStatus(false, 'Connection issue — try again.');
+      .catch(function (err) {
+        setProfileStatus(
+          false,
+          (err && err.message) || 'Connection issue — check your network and try again.'
+        );
       })
       .finally(function () {
         if (saveBtn) saveBtn.disabled = false;
