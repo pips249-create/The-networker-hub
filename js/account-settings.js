@@ -299,6 +299,71 @@
     });
   }
 
+  function syncDiscoverableUi() {
+    const wrap = document.getElementById('as-discoverable-wrap');
+    const disc = document.getElementById('as-discoverable');
+    const offBtn = document.getElementById('as-discoverable-off');
+    const hint = document.getElementById('as-discoverable-hint');
+    const included = Boolean(disc && disc.checked);
+    if (wrap) wrap.classList.toggle('is-included', included);
+    if (offBtn) offBtn.hidden = !included;
+    if (hint) {
+      hint.textContent = included
+        ? 'You’re included. Use “Stop including me” if you want to opt out — it won’t untick from a casual click.'
+        : 'Opt in to appear in Matchmaker shortlists. Turning it off needs confirmation.';
+    }
+  }
+
+  function bindDiscoverableGuard() {
+    const disc = document.getElementById('as-discoverable');
+    const offBtn = document.getElementById('as-discoverable-off');
+    if (!disc || disc.dataset.asGuard === '1') return;
+    disc.dataset.asGuard = '1';
+
+    disc.addEventListener('click', function (e) {
+      if (!disc.checked) return;
+      e.preventDefault();
+      if (offBtn) offBtn.focus();
+    });
+    disc.addEventListener('keydown', function (e) {
+      if (!disc.checked) return;
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        if (offBtn) offBtn.focus();
+      }
+    });
+    disc.addEventListener('change', syncDiscoverableUi);
+
+    const label = document.querySelector('label[for="as-discoverable"]');
+    if (label && label.dataset.asBound !== '1') {
+      label.dataset.asBound = '1';
+      label.addEventListener('click', function (e) {
+        if (!disc.checked) return;
+        e.preventDefault();
+        if (offBtn) offBtn.focus();
+      });
+    }
+
+    if (offBtn && offBtn.dataset.asBound !== '1') {
+      offBtn.dataset.asBound = '1';
+      offBtn.addEventListener('click', function () {
+        if (!disc.checked) return;
+        const ok = window.confirm(
+          'Stop putting you forward for Hubert intros?\n\nYou can turn this back on later. Meet people search stays locked while you’re opted out.'
+        );
+        if (!ok) return;
+        disc.checked = false;
+        syncDiscoverableUi();
+        const status = document.getElementById('as-matchmaker-status');
+        if (status) {
+          status.hidden = false;
+          status.textContent =
+            'Inclusion turned off — tick Include me again and save if you want Hubert to put you forward.';
+        }
+      });
+    }
+  }
+
   function fillMatchmaker(profile) {
     renderLookingToMeetOptions(profile.lookingToMeetOptions || []);
     setFieldValue(
@@ -309,6 +374,8 @@
     const disc = document.getElementById('as-discoverable');
     // Never auto-tick — member must opt in.
     if (disc) disc.checked = profile.discoverable === true;
+    bindDiscoverableGuard();
+    syncDiscoverableUi();
     const status = document.getElementById('as-matchmaker-status');
     if (status) {
       if (profile.matchmakerReady) {

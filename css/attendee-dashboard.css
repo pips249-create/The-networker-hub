@@ -5560,6 +5560,51 @@ body.ad-share-modal-open {
 
 .hmm-profile-discoverable input {
   margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+.hmm-profile-discoverable-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.hmm-profile-discoverable-copy > label {
+  cursor: pointer;
+  font-weight: 600;
+  color: inherit;
+}
+
+.hmm-profile-discoverable.is-included input {
+  pointer-events: none;
+  accent-color: #2f6b45;
+}
+
+.hmm-profile-discoverable.is-included > .hmm-profile-discoverable-copy > label {
+  cursor: default;
+}
+
+.hmm-discoverable-off {
+  align-self: flex-start;
+  margin: 2px 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #7a4a8c;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.hmm-discoverable-off:hover,
+.hmm-discoverable-off:focus-visible {
+  color: #5a2f6c;
 }
 
 .hmm-profile-error {
