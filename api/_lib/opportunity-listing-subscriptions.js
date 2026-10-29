@@ -178,7 +178,7 @@ async function handleOpportunityListingInvoicePaid(invoice) {
   const subscription = await stripe.subscriptions.retrieve(subId);
   const synced = await syncListingFromSubscription(subscription, { forceBySubscriptionId: true });
 
-  // First payment receipt is sent from checkout.session.completed — renewals only here.
+  // First payment VAT receipt is sent from checkout.session.completed — renewals only here.
   const reason = String(invoice?.billing_reason || '').trim();
   let receiptEmail = { skipped: true, reason: 'not_renewal' };
   if (reason === 'subscription_cycle') {
@@ -197,6 +197,10 @@ async function handleOpportunityListingInvoicePaid(invoice) {
             subscription?.metadata?.owner_email ||
             '',
           amountPaid: formatGbpFromAmountTotal(invoice.amount_paid),
+          amountPaidPence: invoice.amount_paid,
+          invoice,
+          subscription,
+          subscriptionId: subId,
           isRenewal: true,
         });
       }
