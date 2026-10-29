@@ -15,8 +15,12 @@ const {
   deleteEventLink,
   mergeProviderConnectionConfig,
 } = require('../connected-booking-provider-store');
-const { eventbritePrivateTokenFromConfig } = require('../connected-booking-providers/adapters/eventbrite-api');
+const {
+  eventbritePrivateTokenFromConfig,
+  eventbriteAuthMethodFromConfig,
+} = require('../connected-booking-providers/adapters/eventbrite-api');
 const { syncEventbriteAttendeesForConnection } = require('../eventbrite-attendee-sync');
+const { syncEventbriteOrgEventsForAccount } = require('../eventbrite-org-event-sync');
 const { ticketTailorApiKeyFromConfig } = require('../connected-booking-providers/adapters/ticket-tailor-api');
 const {
   importEventbriteListingForEvent,
@@ -31,6 +35,13 @@ const {
   webhookPublicSite,
 } = require('../provider-webhook-url');
 const { validateProviderExternalEventId } = require('../connected-booking-util');
+const {
+  eventbriteOAuthConfigured,
+  eventbriteOAuthRedirectUri,
+  signEventbriteOAuthState,
+  buildEventbriteAuthorizeUrl,
+  safeReturnPath,
+} = require('../eventbrite-oauth');
 
 function parseBody(req) {
   let body = req.body;
@@ -109,6 +120,11 @@ module.exports = async function handler(req, res) {
             p.id === 'eventbrite' && conn
               ? Boolean(eventbritePrivateTokenFromConfig(conn.config))
               : undefined,
+          eventbriteAuthMethod:
+            p.id === 'eventbrite' && conn
+              ? eventbriteAuthMethodFromConfig(conn.config) || null
+              : undefined,
+          eventbriteOAuthAvailable: p.id === 'eventbrite' ? eventbriteOAuthConfigured() : undefined,
           ticketTailorApiKeyConfigured:
             p.id === 'ticket_tailor' && conn
               ? Boolean(ticketTailorApiKeyFromConfig(conn.config))
@@ -121,6 +137,12 @@ module.exports = async function handler(req, res) {
       })
       );
 
+      // Surface OAuth readiness once at the top level for the organiser UI.
+      const eventbriteOAuth = {
+        available: eventbriteOAuthConfigured(),
+        redirectUri: eventbriteOAuthConfigured() ? eventbriteOAuthRedirectUri() : null,
+      };
+
       let eventLink = null;
       if (eventId) {
         eventLink = (linksResult.links || []).find((l) => l.event_id === eventId) || null;
@@ -131,6 +153,7 @@ module.exports = async function handler(req, res) {
         providers,
         eventLinks: linksResult.links,
         eventLink,
+        eventbriteOAuth,
         schemaMissing: connResult.schemaMissing || linksResult.schemaMissing,
       });
     }
@@ -243,6 +266,50 @@ module.exports = async function handler(req, res) {
         return json(res, 200, { ok: true, eventLink: link });
       }
 
+      if (action === 'start_eventbrite_oauth') {
+        if (!eventbriteOAuthConfigured()) {
+          return json(res, 503, {
+            ok: false,
+            error: 'eventbrite_oauth_not_configured',
+            message:
+              'Eventbrite OAuth is not configured yet. Ask an admin to set EVENTBRITE_CLIENT_ID and EVENTBRITE_CLIENT_SECRET, or paste a private token below.',
+            redirectUri: eventbriteOAuthRedirectUri(),
+          });
+        }
+        const groupId = String(body.groupId || body.organiserId || body.organiser_id || '').trim();
+        const returnPath = safeReturnPath(
+          body.returnPath || body.return_path || body.returnUrl,
+          groupId
+            ? '/organiser/group-edit?id=' + encodeURIComponent(groupId)
+            : '/organiser/#connected-booking'
+        );
+        if (groupId) {
+          const { resolveOrganiserAccess } = require('../supabase-organiser-access');
+          const access = await resolveOrganiserAccess(auth.session);
+          const allowed = new Set(access.groupIds || []);
+          if (!allowed.has(groupId)) {
+            return json(res, 403, {
+              ok: false,
+              error: 'not_allowed',
+              message: 'You do not have access to that organiser page.',
+            });
+          }
+        }
+        const state = signEventbriteOAuthState({
+          accountId: accountId,
+          groupId: groupId || undefined,
+          returnPath: returnPath,
+          email: String(auth.session.email || '').trim().toLowerCase(),
+          sub: String(auth.session.sub || '').trim(),
+        });
+        const authorizeUrl = buildEventbriteAuthorizeUrl(state);
+        return json(res, 200, {
+          ok: true,
+          authorizeUrl: authorizeUrl,
+          redirectUri: eventbriteOAuthRedirectUri(),
+        });
+      }
+
       if (action === 'save_eventbrite_private_token') {
         const token = String(body.token || body.eventbritePrivateToken || '').trim();
         if (!token) {
@@ -262,7 +329,7 @@ module.exports = async function handler(req, res) {
         let { data: account } = await sb
           .from('organiser_accounts')
           .select(
-            'id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret'
+            'id, email, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret'
           )
           .eq('id', accountId)
           .maybeSingle();
@@ -279,7 +346,7 @@ module.exports = async function handler(req, res) {
             .update(patch)
             .eq('id', accountId)
             .select(
-              'id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret'
+              'id, email, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret'
             )
             .maybeSingle();
           account = activated || Object.assign({}, account, patch);
@@ -290,9 +357,13 @@ module.exports = async function handler(req, res) {
           }
         }
         await ensureProviderConnection(sb, accountId, 'eventbrite');
-        const conn = await mergeProviderConnectionConfig(sb, accountId, 'eventbrite', {
+        const groupId = String(body.groupId || body.organiserId || body.organiser_id || '').trim();
+        const configPatch = {
           eventbritePrivateToken: token,
-        });
+          eventbriteAuthMethod: 'private_token',
+        };
+        if (groupId) configPatch.defaultImportGroupId = groupId;
+        const conn = await mergeProviderConnectionConfig(sb, accountId, 'eventbrite', configPatch);
         const endpointUrl = buildProviderWebhookPublicUrl(webhookSite, 'eventbrite', conn.webhook_token);
         let attendeeSync = null;
         try {
@@ -305,12 +376,64 @@ module.exports = async function handler(req, res) {
         } catch (e) {
           attendeeSync = { ok: false, reason: e.message || 'attendee_sync_failed' };
         }
+        let orgSync = null;
+        try {
+          orgSync = await syncEventbriteOrgEventsForAccount(sb, {
+            accountId: accountId,
+            groupId: groupId,
+            account: account,
+            session: auth.session,
+            source: 'private_token_connect',
+            maxCreate: 25,
+          });
+        } catch (e) {
+          orgSync = {
+            ok: false,
+            error: e.code || e.message || 'org_sync_failed',
+            message: e.message,
+          };
+        }
         return json(res, 200, {
           ok: true,
           eventbriteApiTokenConfigured: Boolean(eventbritePrivateTokenFromConfig(conn.config)),
+          eventbriteAuthMethod: eventbriteAuthMethodFromConfig(conn.config) || 'private_token',
           attendeeSync,
+          orgSync,
           connectedActivated: Boolean(account && isConnectedPlanActive(account)),
         });
+      }
+
+      if (action === 'sync_eventbrite_org_events') {
+        const groupId = String(body.groupId || body.organiserId || body.organiser_id || '').trim();
+        if (groupId) {
+          const { resolveOrganiserAccess } = require('../supabase-organiser-access');
+          const access = await resolveOrganiserAccess(auth.session);
+          const allowed = new Set(access.groupIds || []);
+          if (!allowed.has(groupId)) {
+            return json(res, 403, {
+              ok: false,
+              error: 'not_allowed',
+              message: 'You do not have access to that organiser page.',
+            });
+          }
+        }
+        try {
+          const orgSync = await syncEventbriteOrgEventsForAccount(sb, {
+            accountId: accountId,
+            groupId: groupId,
+            session: auth.session,
+            source: 'organiser_manual_sync',
+            maxCreate: body.maxCreate || 25,
+            externalEventId: body.externalEventId || body.external_event_id,
+          });
+          return json(res, 200, { ok: true, orgSync });
+        } catch (syncErr) {
+          return json(res, syncErr.status || 500, {
+            ok: false,
+            error: syncErr.code || syncErr.message || 'eventbrite_org_sync_failed',
+            message: syncErr.message,
+          });
+        }
       }
 
       if (action === 'sync_eventbrite_attendees') {

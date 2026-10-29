@@ -21,6 +21,9 @@ function parseIntegrationRoute(req) {
   if (parts[0] === 'providers' && parts[1] && parts[2] === 'webhook') {
     return { type: 'provider_webhook', provider: parts[1] };
   }
+  if (parts[0] === 'eventbrite' && parts[1] === 'oauth' && parts[2] === 'callback') {
+    return { type: 'eventbrite_oauth_callback' };
+  }
   return { type: 'unknown', parts };
 }
 

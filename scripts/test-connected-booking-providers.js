@@ -552,8 +552,31 @@ async function runEventbriteWebhookSubscriptionChecks() {
     assert.strictEqual(subscribed.ok, true);
     assert.strictEqual(subscribed.created, true);
     assert.strictEqual(posts.length, 1);
-    assert.strictEqual(posts[0].actions, 'attendee.updated');
+    assert.strictEqual(posts[0].actions, 'attendee.updated,event.published');
     assert.strictEqual(posts[0].endpoint_url, endpoint);
+  } finally {
+    global.fetch = original;
+  }
+
+  const postsPublished = [];
+  global.fetch = async function (url, opts) {
+    const method = (opts && opts.method) || 'GET';
+    if (method === 'GET' && String(url).endsWith('/v3/webhooks/')) {
+      return jsonResponse({
+        webhooks: [{ endpoint_url: endpoint + '/', actions: ['order.placed', 'attendee.updated'] }],
+      });
+    }
+    if (method === 'POST' && String(url).endsWith('/v3/webhooks/')) {
+      postsPublished.push(JSON.parse(opts.body));
+      return jsonResponse({ id: 'wh_2' });
+    }
+    throw new Error('unexpected fetch');
+  };
+  try {
+    const needsPublished = await ensureEventbriteAttendeeWebhook('tok', endpoint);
+    assert.strictEqual(needsPublished.created, true);
+    assert.strictEqual(postsPublished.length, 1);
+    assert.strictEqual(postsPublished[0].actions, 'event.published');
   } finally {
     global.fetch = original;
   }
@@ -563,7 +586,12 @@ async function runEventbriteWebhookSubscriptionChecks() {
     const method = (opts && opts.method) || 'GET';
     if (method === 'GET' && String(url).endsWith('/v3/webhooks/')) {
       return jsonResponse({
-        webhooks: [{ endpoint_url: endpoint + '/', actions: ['order.placed', 'attendee.updated'] }],
+        webhooks: [
+          {
+            endpoint_url: endpoint + '/',
+            actions: ['order.placed', 'attendee.updated', 'event.published'],
+          },
+        ],
       });
     }
     if (method === 'POST') postsAgain.push(1);

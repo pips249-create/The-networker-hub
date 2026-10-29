@@ -24,6 +24,7 @@ const routes = {
   'affiliate-commissions': require('./_lib/routes/cron-affiliate-commissions'),
   'directory-invite-nudge': require('./_lib/routes/cron-directory-invite-nudge'),
   'email-verify-reminders': require('./_lib/routes/cron-email-verify-reminders'),
+  'eventbrite-event-sync': require('./_lib/routes/cron-eventbrite-event-sync'),
 };
 
 module.exports = wrapHandler(async function handler(req, res) {

@@ -11,7 +11,7 @@ const CONNECTED_BOOKING_PROVIDERS = [
     status: 'live',
     webhookPath: '/api/integrations/providers/eventbrite/webhook',
     docsHint:
-      'Paste the webhook URL into Eventbrite Account settings → Webhooks (action order.placed) and save your private token. The token loads every ticket holder, including someone added after payment. Link the Eventbrite event id on TNH.',
+      'Connect with Eventbrite (OAuth) — or paste a private token. We import live organisation events automatically and sync ticket holders from order.placed / attendee.updated webhooks.',
   },
   {
     id: 'ticket_tailor',
