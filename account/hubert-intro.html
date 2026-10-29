@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hubert introduction – The Networker UK</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any" />
+  <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml" />
+  <link rel="icon" href="/assets/favicon-32.png?v=20260823uk" type="image/png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=20260823uk" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
+  <link rel="stylesheet" href="../css/auth.css?v=20260727ux" />
+  <link rel="stylesheet" href="../css/hub-mobile.css?v=20261016signin1" />
+  <style>
+    .hi-kicker {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--gold, #b8860b);
+      margin: 0 0 8px;
+    }
+    .hi-status {
+      font-size: 13px;
+      font-weight: 600;
+      margin: 0 0 12px;
+      color: var(--text-muted, #635c5e);
+    }
+    .hi-status--ok { color: #2d6a3e; }
+    .hi-status--err { color: #8b3030; }
+    .hi-status--pending {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .hi-spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid var(--lavender-soft, #d9c4e0);
+      border-top-color: var(--lavender-deep, #9a7aa8);
+      border-radius: 50%;
+      animation: hi-spin 0.7s linear infinite;
+    }
+    @keyframes hi-spin {
+      to { transform: rotate(360deg); }
+    }
+    .hi-topic {
+      margin: 16px 0 0;
+      padding: 14px 16px;
+      background: #f7f4fb;
+      border-radius: 12px;
+      font-size: 15px;
+      line-height: 1.5;
+      color: #452d5c;
+    }
+    .hi-topic strong {
+      display: block;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #7a7580;
+      margin-bottom: 6px;
+    }
+    .hi-actions,
+    .hi-choose {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .hi-actions[hidden],
+    .hi-choose[hidden] {
+      display: none !important;
+    }
+    .hi-actions a,
+    .hi-choose button {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      text-align: center;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 13px 20px;
+      border-radius: var(--radius-sm, 10px);
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+    }
+    .hi-choose button:disabled {
+      opacity: 0.65;
+      cursor: wait;
+    }
+    .hi-btn--accept {
+      background: #2f6b45;
+      color: #fff;
+    }
+    .hi-btn--decline {
+      background: var(--lavender-light, #ebe0f0);
+      color: var(--charcoal, #4a4446);
+    }
+    .hi-btn--primary {
+      background: var(--lavender-deep, #9a7aa8);
+      color: #fff;
+    }
+    .hi-btn--ghost {
+      background: transparent;
+      color: var(--lavender-deep, #9a7aa8);
+      border: 2px solid var(--lavender-deep, #9a7aa8) !important;
+    }
+    .hi-brand-foot {
+      margin: 18px 0 0;
+      font-size: 12px;
+      color: var(--text-muted, #635c5e);
+      text-align: center;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body class="auth-page">
+  <div id="hub-site-nav"></div>
+  <script src="../js/site-nav.js?v=20261022listacc1" data-root="../" data-page="account"></script>
+
+  <main class="auth-main">
+    <div class="auth-card" id="hi-card">
+      <p class="hi-kicker">Hubert</p>
+      <p class="hi-status" id="hi-status" role="status">Introduction</p>
+      <h1 id="hi-title">Loading…</h1>
+      <p class="auth-lede" id="hi-body">Checking your introduction link.</p>
+      <div class="hi-topic" id="hi-topic" hidden>
+        <strong>What they’d like to discuss</strong>
+        <span id="hi-topic-text"></span>
+      </div>
+
+      <div class="hi-choose" id="hi-choose" hidden>
+        <button type="button" class="hi-btn--accept" id="hi-accept">Accept introduction</button>
+        <button type="button" class="hi-btn--decline" id="hi-decline">Decline</button>
+      </div>
+
+      <div class="hi-actions" id="hi-actions" hidden>
+        <a class="hi-btn--primary" id="hi-open-thread" href="/account/#meet">Open Meet people</a>
+        <a class="hi-btn--ghost" href="/account/">Back to your dashboard</a>
+      </div>
+
+      <p class="hi-brand-foot">Contact details are never shared via Hubert — intros stay on the Hub.</p>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      var REQUEST_MS = 15000;
+      var params = new URLSearchParams(window.location.search);
+      var token = params.get('token') || '';
+      var decision = (params.get('decision') || params.get('action') || '').toLowerCase();
+      var statusEl = document.getElementById('hi-status');
+      var titleEl = document.getElementById('hi-title');
+      var bodyEl = document.getElementById('hi-body');
+      var topicEl = document.getElementById('hi-topic');
+      var topicText = document.getElementById('hi-topic-text');
+      var actionsEl = document.getElementById('hi-actions');
+      var chooseEl = document.getElementById('hi-choose');
+      var acceptBtn = document.getElementById('hi-accept');
+      var declineBtn = document.getElementById('hi-decline');
+      var openThread = document.getElementById('hi-open-thread');
+      var busy = false;
+
+      function setStatus(kind, text) {
+        statusEl.className =
+          'hi-status' +
+          (kind === 'ok' ? ' hi-status--ok' : kind === 'err' ? ' hi-status--err' : kind === 'pending' ? ' hi-status--pending' : '');
+        statusEl.innerHTML = '';
+        if (kind === 'pending') {
+          var spin = document.createElement('span');
+          spin.className = 'hi-spinner';
+          spin.setAttribute('aria-hidden', 'true');
+          statusEl.appendChild(spin);
+        }
+        var label = document.createElement('span');
+        label.textContent = text;
+        statusEl.appendChild(label);
+      }
+
+      function setButtonsEnabled(enabled) {
+        if (acceptBtn) acceptBtn.disabled = !enabled;
+        if (declineBtn) declineBtn.disabled = !enabled;
+      }
+
+      function showDone(ok, title, body, introId) {
+        busy = false;
+        setStatus(ok ? 'ok' : 'err', ok ? 'Done' : 'Could not update');
+        titleEl.textContent = title;
+        bodyEl.textContent = body;
+        chooseEl.hidden = true;
+        actionsEl.hidden = false;
+        if (introId && openThread) {
+          openThread.href = '/account/#meet?intro=' + encodeURIComponent(introId);
+        }
+        setButtonsEnabled(true);
+      }
+
+      function showPrompt(preview, intended) {
+        busy = false;
+        setButtonsEnabled(true);
+        actionsEl.hidden = true;
+        chooseEl.hidden = false;
+        topicEl.hidden = !(preview && preview.topic);
+        if (preview && preview.topic) topicText.textContent = preview.topic;
+
+        var who = (preview && preview.requesterDisplayName) || 'Someone';
+        if (intended === 'accept' || intended === 'yes') {
+          setStatus('', 'From your email');
+          titleEl.textContent = 'Accept introduction from ' + who + '?';
+          bodyEl.textContent =
+            'If you Accept, Hubert opens a Hub intro thread. Email, phone, and LinkedIn stay private.';
+          acceptBtn.hidden = false;
+          declineBtn.hidden = true;
+          return;
+        }
+        if (intended === 'decline' || intended === 'no') {
+          setStatus('', 'From your email');
+          titleEl.textContent = 'Decline this introduction?';
+          bodyEl.textContent = 'Hubert will not open a thread. You can ignore future requests from this person.';
+          acceptBtn.hidden = true;
+          declineBtn.hidden = false;
+          return;
+        }
+        setStatus('', 'Choose an answer');
+        titleEl.textContent = who + ' would like to connect';
+        bodyEl.textContent = 'Accept to open a Hubert intro on the Hub, or Decline.';
+        acceptBtn.hidden = false;
+        declineBtn.hidden = false;
+      }
+
+      function parseJsonSafe(r) {
+        return r.text().then(function (text) {
+          if (!text) return {};
+          try {
+            return JSON.parse(text);
+          } catch (e) {
+            return { ok: false, message: 'Unexpected response from the server. Please try again.' };
+          }
+        });
+      }
+
+      function submitDecision(nextDecision) {
+        if (busy) return;
+        if (!token) {
+          showDone(false, 'Invalid link', 'This introduction link is missing details. Open the email again.');
+          return;
+        }
+        busy = true;
+        setButtonsEnabled(false);
+        actionsEl.hidden = true;
+        setStatus('pending', 'Saving your answer…');
+        titleEl.textContent = nextDecision === 'accept' ? 'Accepting introduction' : 'Declining introduction';
+        bodyEl.textContent = 'This usually takes a moment.';
+
+        var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        var timer = null;
+        if (controller) {
+          timer = setTimeout(function () {
+            try {
+              controller.abort();
+            } catch (e) {}
+          }, REQUEST_MS);
+        }
+
+        var fetchOpts = {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ token: token, decision: nextDecision }),
+        };
+        if (controller) fetchOpts.signal = controller.signal;
+
+        fetch('/api/hubert-intro', fetchOpts)
+          .then(function (r) {
+            return parseJsonSafe(r).then(function (data) {
+              return { status: r.status, data: data };
+            });
+          })
+          .then(function (result) {
+            if (timer) clearTimeout(timer);
+            var data = result.data || {};
+            if (!data.ok) {
+              showDone(false, 'Could not update', data.message || 'Please try again from the email link.');
+              chooseEl.hidden = false;
+              return;
+            }
+            var accepted = data.decision === 'accept';
+            var introId = data.intro && data.intro.id;
+            showDone(
+              true,
+              accepted ? 'You’re introduced' : 'Declined',
+              data.message ||
+                (accepted
+                  ? 'Open Meet people to continue the Hub thread.'
+                  : 'Hubert will not open an introduction.'),
+              accepted ? introId : null
+            );
+          })
+          .catch(function () {
+            if (timer) clearTimeout(timer);
+            showDone(false, 'Connection issue', 'Check your connection and try again.');
+            chooseEl.hidden = false;
+            setButtonsEnabled(true);
+          });
+      }
+
+      if (acceptBtn) acceptBtn.addEventListener('click', function () { submitDecision('accept'); });
+      if (declineBtn) declineBtn.addEventListener('click', function () { submitDecision('decline'); });
+
+      if (!token) {
+        showDone(false, 'Invalid link', 'This introduction link is missing details.');
+        return;
+      }
+
+      setStatus('pending', 'Loading…');
+      fetch('/api/hubert-intro?token=' + encodeURIComponent(token), {
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json' },
+      })
+        .then(function (r) {
+          return parseJsonSafe(r).then(function (data) {
+            return { status: r.status, data: data };
+          });
+        })
+        .then(function (result) {
+          var data = result.data || {};
+          if (!data.ok || !data.intro) {
+            showDone(false, 'Link unavailable', data.message || 'This introduction link is invalid or expired.');
+            return;
+          }
+          if (data.intro.status === 'accepted' || data.intro.status === 'declined') {
+            showDone(
+              true,
+              data.intro.status === 'accepted' ? 'Already accepted' : 'Already declined',
+              data.intro.status === 'accepted'
+                ? 'Open Meet people to continue the Hub thread.'
+                : 'You already declined this introduction.',
+              data.intro.status === 'accepted' ? data.intro.id : null
+            );
+            return;
+          }
+          showPrompt(data.intro, decision);
+        })
+        .catch(function () {
+          showPrompt(null, decision);
+        });
+    })();
+  </script>
+</body>
+</html>

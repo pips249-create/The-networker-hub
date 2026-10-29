@@ -21,8 +21,8 @@ Implementation branch: `cursor/hubert-matchmaker-8ac8` (off `main` after this sp
 1. ~~Feature flag + admin gate~~ · dashboard **Meet people** + Overview Hubert ask strip (admin-only), stub shortlist (max 5, first name + initial, event-first matches)
 2. ~~Private seed + nominate (ops)~~ · Admin → Hubert Matchmaker seed list (migration `332_hubert_match_seed.sql`)
 3. ~~Real BOH match API~~ · `/api/auth/hubert-matchmaker` (admin-gated; seed + discoverable members; max 5; no contacts)
-4. Request intro → Hubert email → Accept/Decline · **no contact share** · Hub intro thread · persist + count — next
-5. **Introduce someone to The Networker UK & Hubert** (member Hub-invite CTA — UI shell in place)
+4. ~~Request intro → Hubert email → Accept/Decline · **no contact share** · Hub intro thread · persist + count~~
+5. **Introduce someone to The Networker UK & Hubert** (member Hub-invite CTA — UI shell in place) — next
 6. Intro tracking surfaces (admin totals + member “My intros”)
 7. Public site teaser (still gated until launch)
 

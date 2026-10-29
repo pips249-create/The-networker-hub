@@ -974,6 +974,28 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
         encodeURIComponent('/account/#memberships');
   }
 
+  if (slug === 'hubert_intro_request') {
+    vars.user_name = vars.user_name || 'Alex';
+    vars.requester_name = vars.requester_name || 'Priya S.';
+    vars.topic =
+      vars.topic ||
+      'Comparing notes on fintech angels ahead of Manchester Founders Breakfast.';
+    vars.event_context = vars.event_context || 'They mentioned you may both be around Manchester Founders Breakfast.';
+    vars.accept_url = vars.accept_url || site + '/account/hubert-intro.html?token=preview&decision=accept';
+    vars.decline_url = vars.decline_url || site + '/account/hubert-intro.html?token=preview&decision=decline';
+    vars.dashboard_url = vars.dashboard_url || site + '/account/#meet';
+  }
+
+  if (slug === 'hubert_intro_accepted') {
+    vars.user_name = vars.user_name || 'Priya';
+    vars.counterpart_name = vars.counterpart_name || 'Alex M.';
+    vars.topic =
+      vars.topic ||
+      'Comparing notes on fintech angels ahead of Manchester Founders Breakfast.';
+    vars.thread_url = vars.thread_url || site + '/account/#meet?intro=preview';
+    vars.dashboard_url = vars.dashboard_url || site + '/account/#meet';
+  }
+
   const needsMainSponsor =
     EVENT_MAIN_SPONSOR_SLUGS.has(slug) ||
     ORGANISER_EMAIL_SLUGS.has(slug) ||
