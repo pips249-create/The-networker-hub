@@ -16,7 +16,7 @@
     />
     <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20261028eb1" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20261029book1" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260708" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20261016signin1" />
@@ -185,27 +185,53 @@
             complete listings publish automatically (checkout stays on Eventbrite; attendees sync here).
           </p>
 
-          <div class="ge-booking-choices" role="list">
-            <div class="ge-booking-choice is-default">
+          <div class="ge-booking-choices" role="listbox" aria-label="Booking system for this organiser page">
+            <div class="ge-booking-choice is-default" role="option" aria-selected="false">
               <div>
                 <strong>The Networker UK</strong>
                 <span>Sell tickets here. No connection needed.</span>
               </div>
               <span class="ge-booking-tag">Easiest</span>
             </div>
-            <button type="button" class="ge-booking-choice is-selected" id="ge-booking-eventbrite" data-ge-booking="eventbrite">
+            <button
+              type="button"
+              class="ge-booking-choice is-selected"
+              id="ge-booking-eventbrite"
+              data-ge-booking="eventbrite"
+              role="option"
+              aria-selected="true"
+            >
               <span>
                 <strong>Eventbrite</strong>
                 <span>Keep Eventbrite checkout. Import events and sync buyers.</span>
               </span>
               <span class="ge-booking-status" id="ge-eb-status-pill">Not connected</span>
             </button>
-            <div class="ge-booking-choice ge-booking-choice--muted">
+            <div
+              class="ge-booking-choice ge-booking-choice--muted"
+              role="option"
+              aria-disabled="true"
+              aria-selected="false"
+              title="Coming soon"
+            >
               <div>
                 <strong>Ticket Tailor</strong>
-                <span>Connect from Connected booking for now — organiser-page connect coming next.</span>
+                <span>Not available to choose yet.</span>
               </div>
-              <span class="ge-booking-status ge-booking-status--soon">Soon</span>
+              <span class="ge-booking-status ge-booking-status--soon">Coming soon</span>
+            </div>
+            <div
+              class="ge-booking-choice ge-booking-choice--muted"
+              role="option"
+              aria-disabled="true"
+              aria-selected="false"
+              title="Coming soon"
+            >
+              <div>
+                <strong>TryBooking</strong>
+                <span>Not available to choose yet.</span>
+              </div>
+              <span class="ge-booking-status ge-booking-status--soon">Coming soon</span>
             </div>
           </div>
 
@@ -271,6 +297,6 @@
     <script src="../js/organiser-flow-tour.js?v=20260723onboard" data-root="../" defer></script>
     <script src="../js/organiser-image-upload.js?v=20260605" defer></script>
     <script src="../js/organiser-group-edit.js?v=20261028eb2" defer></script>
-    <script src="../js/organiser-group-booking-connect.js?v=20261028eb2" defer></script>
+    <script src="../js/organiser-group-booking-connect.js?v=20261029book1" defer></script>
   </body>
 </html>

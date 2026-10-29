@@ -7,7 +7,8 @@ const CONNECTED_BOOKING_PROVIDERS = [
   {
     id: 'eventbrite',
     label: 'Eventbrite',
-    status: 'beta',
+    /** Live = choosable in organiser UI. Non-live appear greyed and cannot be enabled. */
+    status: 'live',
     webhookPath: '/api/integrations/providers/eventbrite/webhook',
     docsHint:
       'Paste the webhook URL into Eventbrite Account settings → Webhooks (action order.placed) and save your private token. The token loads every ticket holder, including someone added after payment. Link the Eventbrite event id on TNH.',
@@ -18,7 +19,7 @@ const CONNECTED_BOOKING_PROVIDERS = [
     status: 'beta',
     webhookPath: '/api/integrations/providers/ticket_tailor/webhook',
     docsHint:
-      'Paste webhook URL in Ticket Tailor → Order created. Link ev_… per TNH event. Optional API key on Connected setup imports listing fields.',
+      'Coming soon — Ticket Tailor connect is not selectable yet. Webhooks for already-configured accounts still work.',
   },
   {
     id: 'luma',
@@ -66,8 +67,17 @@ function isOrganiserPickerProvider(id) {
   return ORGANISER_PICKER_PROVIDER_IDS.includes(String(id || '').trim().toLowerCase());
 }
 
+function isLiveConnectedBookingProvider(id) {
+  const p = getConnectedBookingProvider(id);
+  return Boolean(p && String(p.status || '').toLowerCase() === 'live');
+}
+
 function listOrganiserPickerProviders() {
   return CONNECTED_BOOKING_PROVIDERS.filter((p) => isOrganiserPickerProvider(p.id));
+}
+
+function listOrganiserSelectableProviders() {
+  return listOrganiserPickerProviders().filter((p) => isLiveConnectedBookingProvider(p.id));
 }
 
 module.exports = {
@@ -76,5 +86,7 @@ module.exports = {
   isConnectedBookingProviderId,
   getConnectedBookingProvider,
   isOrganiserPickerProvider,
+  isLiveConnectedBookingProvider,
   listOrganiserPickerProviders,
+  listOrganiserSelectableProviders,
 };

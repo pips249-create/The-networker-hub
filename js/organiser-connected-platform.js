@@ -1,54 +1,54 @@
-/** Shared Connected booking platform labels, hints, logos, and per-event storage. */
+/** Shared booking-system platform labels, hints, logos, and per-event storage. */
 (function (global) {
   var LOGO_BASE = '/assets/connected-providers/';
 
   var PLATFORMS = {
     eventbrite: {
       label: 'Eventbrite',
+      status: 'live',
       logo: LOGO_BASE + 'eventbrite.svg',
       placeholder: 'https://www.eventbrite.co.uk/e/your-event-… or checkout link',
       hint:
         'Paste a <strong>checkout</strong> link in the field above — your public <strong>/e/…</strong> URL is fine; we send buyers to checkout when we can. ' +
-        'First time only: enable <strong>Eventbrite</strong> on ' +
-        '<a href="/organiser/#cb-providers-title">Connected booking → Booking providers</a> and add our webhook in Eventbrite. ' +
+        'First time only: enable <strong>Eventbrite</strong> under ' +
+        '<a href="/organiser/#cb-providers-title">Booking system → Booking providers</a> and add our webhook in Eventbrite. ' +
         'Then link your Eventbrite event id below (we fill it from the URL when possible). ' +
         '<a href="/guides/connect-eventbrite" target="_blank" rel="noopener">Step-by-step guide</a>.',
     },
     ticket_tailor: {
       label: 'Ticket Tailor',
+      status: 'beta',
       logo: LOGO_BASE + 'ticket-tailor.svg',
       placeholder: 'https://www.tickettailor.com/events/…',
-      hint:
-        'Paste your Ticket Tailor checkout URL above. Enable <strong>Ticket Tailor</strong> below and add our webhook in Ticket Tailor (order created). ' +
-        'Link the <strong>ev_…</strong> event id from Box office (webhooks use that id, not the public URL slug).',
+      hint: 'Ticket Tailor is coming soon and is not selectable yet.',
     },
     luma: {
       label: 'Luma',
+      status: 'beta',
       logo: LOGO_BASE + 'luma.svg',
       placeholder: 'https://lu.ma/…',
-      hint:
-        'Paste your Luma link in the field above. Enable <strong>Luma</strong> on ' +
-        '<a href="/organiser/#cb-providers-title">Booking providers</a> and link the Luma event id below.',
+      hint: 'Luma is coming soon and is not selectable yet.',
     },
     trybooking: {
       label: 'TryBooking',
+      status: 'beta',
       logo: LOGO_BASE + 'trybooking.svg',
       placeholder: 'https://…',
-      hint:
-        'Paste your TryBooking event URL in the field above. Enable <strong>TryBooking</strong> on ' +
-        '<a href="/organiser/#cb-providers-title">Booking providers</a> and link the TryBooking event id below.',
+      hint: 'TryBooking is coming soon and is not selectable yet.',
     },
     own_site: {
       label: 'Your own website',
+      status: 'live',
       logo: LOGO_BASE + 'own-site.svg',
       placeholder: 'https://yourdomain.com/book/…',
       hint:
-        'Paste your checkout URL in the field above. Enable <strong>Your own website</strong> on ' +
-        '<a href="/organiser/#cb-providers-title">Booking providers</a> so each sale POSTs to us — no Zapier required. ' +
+        'Paste your checkout URL in the field above. Enable <strong>Your own website</strong> under ' +
+        '<a href="/organiser/#cb-providers-title">Booking system → Booking providers</a> so each sale POSTs to us — no Zapier required. ' +
         '<a href="/guides/connect-own-website" target="_blank" rel="noopener">Step-by-step guide</a>.',
     },
     custom: {
       label: 'Other / Zapier',
+      status: 'live',
       logo: LOGO_BASE + 'other-zapier.svg',
       placeholder: 'https://your-checkout-or-event-page…',
       hint:
@@ -64,8 +64,22 @@
 
   var LEGACY_PLATFORM_ALIASES = { luma: 'own_site', trybooking: 'own_site', custom: 'own_site' };
 
+  var DEFAULT_LIVE_PLATFORM = 'eventbrite';
+
   var PICK_STEP_HINT =
-    'Tap <strong>Continue to Connected setup</strong> next — you will add listing price and your checkout link there.';
+    'Tap <strong>Continue to setup</strong> next — you will add listing price and your checkout link there.';
+
+  function isLivePlatform(key) {
+    var p = PLATFORMS[key];
+    return Boolean(p && String(p.status || '').toLowerCase() === 'live');
+  }
+
+  function firstLivePlatform() {
+    for (var i = 0; i < PLATFORM_ORDER.length; i++) {
+      if (isLivePlatform(PLATFORM_ORDER[i])) return PLATFORM_ORDER[i];
+    }
+    return DEFAULT_LIVE_PLATFORM;
+  }
 
   function hintForContext(platformKey, context) {
     var p = PLATFORMS[platformKey];
@@ -98,7 +112,7 @@
 
   function setStored(eventId, platform) {
     var key = normalizePlatformKey(platform);
-    if (!key || !PLATFORMS[key]) return;
+    if (!key || !PLATFORMS[key] || !isLivePlatform(key)) return;
     try {
       var sk = storageKey(eventId);
       if (sk) localStorage.setItem(sk, key);
@@ -111,7 +125,9 @@
     var u = String(url || '').toLowerCase();
     if (!u) return '';
     if (/eventbrite/.test(u)) return 'eventbrite';
-    if (/tickettailor|ticket-tailor/.test(u)) return 'ticket_tailor';
+    if (/tickettailor|ticket-tailor/.test(u)) {
+      return isLivePlatform('ticket_tailor') ? 'ticket_tailor' : '';
+    }
     if (/^https?:\/\//.test(u)) return 'own_site';
     return '';
   }
@@ -129,16 +145,21 @@
     container.classList.add('ecs-platform-grid');
     container.setAttribute('role', 'radiogroup');
     if (!container.getAttribute('aria-label')) {
-      container.setAttribute('aria-label', 'Connected booking integration');
+      container.setAttribute('aria-label', 'Booking system');
     }
     var parts = [];
     PLATFORM_ORDER.forEach(function (id) {
       var p = PLATFORMS[id];
       if (!p) return;
+      var live = isLivePlatform(id);
       parts.push(
-        '<button type="button" class="ecs-platform-card" data-connected-platform="' +
+        '<button type="button" class="ecs-platform-card' +
+          (live ? '' : ' is-disabled') +
+          '" data-connected-platform="' +
           escAttr(id) +
-          '" aria-pressed="false">' +
+          '" aria-pressed="false"' +
+          (live ? '' : ' disabled aria-disabled="true" title="Coming soon"') +
+          '>' +
           '<span class="ecs-platform-card-logo">' +
           '<img src="' +
           escAttr(p.logo) +
@@ -147,6 +168,9 @@
           '<span class="ecs-platform-card-label">' +
           escAttr(p.label) +
           '</span>' +
+          (live
+            ? ''
+            : '<span class="ecs-platform-card-soon">Coming soon</span>') +
           '</button>'
       );
     });
@@ -172,7 +196,8 @@
       document.querySelector('[data-connected-platform-hint]');
     var boundEventId = String(eventId || '').trim();
     var changeHandler = onChange;
-    var selected = getStored(boundEventId) || 'own_site';
+    var stored = getStored(boundEventId);
+    var selected = isLivePlatform(stored) ? stored : firstLivePlatform();
 
     function paint(key) {
       root.querySelectorAll('[data-connected-platform]').forEach(function (btn) {
@@ -184,7 +209,7 @@
 
     function apply(platform) {
       var key = String(platform || '').trim();
-      if (!PLATFORMS[key]) return;
+      if (!PLATFORMS[key] || !isLivePlatform(key)) return;
       selected = key;
       if (boundEventId) setStored(boundEventId, key);
       paint(key);
@@ -198,6 +223,7 @@
 
     root.querySelectorAll('[data-connected-platform]').forEach(function (btn) {
       btn.addEventListener('click', function () {
+        if (btn.disabled || btn.getAttribute('aria-disabled') === 'true') return;
         apply(btn.getAttribute('data-connected-platform'));
       });
     });
@@ -217,7 +243,8 @@
         var id = String(nextId || '').trim();
         if (!id || id === boundEventId) return;
         boundEventId = id;
-        apply(getStored(id) || 'own_site');
+        var next = getStored(id);
+        apply(isLivePlatform(next) ? next : firstLivePlatform());
       },
     };
     apply(selected);
@@ -227,6 +254,7 @@
   global.HubConnectedPlatform = {
     PLATFORMS: PLATFORMS,
     PLATFORM_ORDER: PLATFORM_ORDER,
+    isLivePlatform: isLivePlatform,
     storageKey: storageKey,
     getStored: getStored,
     setStored: setStored,

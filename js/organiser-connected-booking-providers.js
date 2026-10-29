@@ -184,46 +184,57 @@
     list.innerHTML = '';
     (data.providers || []).forEach(function (p) {
       if (p.id === 'custom') return;
+      var live = String(p.status || '').toLowerCase() === 'live';
       var li = document.createElement('li');
-      li.className = 'cb-providers-list-item';
+      li.className = 'cb-providers-list-item' + (live ? '' : ' is-disabled');
+      var statusLabel = live ? 'Live' : 'Coming soon';
       var enableBtn =
-        p.connectionStatus === 'not_configured'
+        live && p.connectionStatus === 'not_configured'
           ? '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-enable-provider="' +
             esc(p.id) +
             '">Enable</button>'
           : '';
       var guideBtn =
-        p.id === 'eventbrite'
+        live && p.id === 'eventbrite'
           ? '<a class="ee-btn ee-btn-outline ee-btn-sm" href="/guides/connect-eventbrite" target="_blank" rel="noopener noreferrer">Setup guide</a>'
-          : p.id === 'own_site'
+          : live && p.id === 'own_site'
             ? '<a class="ee-btn ee-btn-outline ee-btn-sm" href="/guides/connect-own-website" target="_blank" rel="noopener noreferrer">Setup guide</a>'
             : '';
-      var copyBtn = p.webhookUrl
-        ? '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-copy-provider-webhook="' +
-          esc(p.webhookUrl) +
-          '">Copy webhook URL</button>'
-        : '';
+      var copyBtn =
+        live && p.webhookUrl
+          ? '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-copy-provider-webhook="' +
+            esc(p.webhookUrl) +
+            '">Copy webhook URL</button>'
+          : '';
       var testBtn =
-        p.id === 'own_site' && p.webhookUrl
+        live && p.id === 'own_site' && p.webhookUrl
           ? '<button type="button" class="ee-btn ee-btn-gold ee-btn-sm" data-send-test-booking="own_site">Send test booking</button>'
           : '';
-      var webhookBlock = p.webhookUrl
-        ? '<p class="ee-hint cb-provider-webhook"><strong>Webhook URL</strong> (paste in ' +
-          esc(p.label) +
-          '):<br /><code class="cb-provider-webhook-url">' +
-          esc(p.webhookUrl) +
-          '</code></p>'
-        : '<p class="ee-hint">Click Enable to generate your webhook URL.</p>';
+      var webhookBlock = !live
+        ? '<p class="ee-hint">Not available to choose yet — we will unlock this booking system when it is ready.</p>'
+        : p.webhookUrl
+          ? '<p class="ee-hint cb-provider-webhook"><strong>Webhook URL</strong> (paste in ' +
+            esc(p.label) +
+            '):<br /><code class="cb-provider-webhook-url">' +
+            esc(p.webhookUrl) +
+            '</code></p>'
+          : '<p class="ee-hint">Click Enable to generate your webhook URL.</p>';
       var actionBits = [copyBtn, testBtn, enableBtn, guideBtn].filter(Boolean).join(' ');
       var actionsRow = actionBits
         ? '<p class="ee-attendance-next">' + actionBits + '</p>'
         : '';
       li.innerHTML =
-        '<div class="cb-provider-card">' +
+        '<div class="cb-provider-card' +
+        (live ? '' : ' cb-provider-card--disabled') +
+        '" aria-disabled="' +
+        (live ? 'false' : 'true') +
+        '">' +
         '<p class="cb-provider-name"><strong>' +
         esc(p.label) +
-        '</strong> <span class="cb-provider-badge">' +
-        esc(p.status) +
+        '</strong> <span class="cb-provider-badge' +
+        (live ? ' cb-provider-badge--live' : ' cb-provider-badge--soon') +
+        '">' +
+        esc(statusLabel) +
         '</span></p>' +
         '<p class="ee-hint">' +
         esc(p.docsHint) +

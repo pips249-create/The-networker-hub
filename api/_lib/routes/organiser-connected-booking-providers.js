@@ -4,6 +4,7 @@ const { connectedBookingAllowedForSession } = require('../connected-booking');
 const {
   CONNECTED_BOOKING_PROVIDERS,
   isOrganiserPickerProvider,
+  isLiveConnectedBookingProvider,
   listOrganiserPickerProviders,
 } = require('../connected-booking-providers');
 const {
@@ -144,7 +145,14 @@ module.exports = async function handler(req, res) {
           return json(res, 400, {
             ok: false,
             error: 'provider_not_available',
-            message: 'That booking provider is not available. Use Eventbrite, Ticket Tailor, or your own website.',
+            message: 'That booking system is not available. Choose Eventbrite or your own website.',
+          });
+        }
+        if (!isLiveConnectedBookingProvider(provider)) {
+          return json(res, 400, {
+            ok: false,
+            error: 'provider_not_live',
+            message: 'That booking system is not available yet. Choose Eventbrite or your own website.',
           });
         }
         let conn = await ensureProviderConnection(sb, accountId, provider);
@@ -175,7 +183,14 @@ module.exports = async function handler(req, res) {
           return json(res, 400, {
             ok: false,
             error: 'provider_not_available',
-            message: 'That booking provider is not available. Use Eventbrite, Ticket Tailor, or your own website.',
+            message: 'That booking system is not available. Choose Eventbrite or your own website.',
+          });
+        }
+        if (!isLiveConnectedBookingProvider(provider)) {
+          return json(res, 400, {
+            ok: false,
+            error: 'provider_not_live',
+            message: 'That booking system is not available yet. Choose Eventbrite or your own website.',
           });
         }
         const externalEventId = String(body.externalEventId || body.external_event_id || '').trim();

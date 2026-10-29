@@ -214,7 +214,7 @@
         }
         setAuthStatus(
           (res.data && res.data.message) ||
-            'Connected booking enabled. Set up a booking provider next.',
+            'Connected enabled. Choose a booking system next.',
           'ok'
         );
         return loadConnectedBookingAccount({ silent: true });
@@ -277,18 +277,18 @@
       if (whatYouDo) whatYouDo.hidden = false;
       if (plansTitle) {
         plansTitle.textContent = data.active
-          ? 'Connected booking is enabled'
-          : 'What is Connected booking?';
+          ? 'Booking system is enabled'
+          : 'List here, take payment on your booking system';
       }
       if (pricingBadge) {
         pricingBadge.textContent = data.active ? 'Enabled · free' : 'Free to use';
       }
       if (pricingLede && !data.active) {
         pricingLede.innerHTML =
-          'Connected lets you <strong>list events on The Networker UK</strong> while people keep booking on <strong>Eventbrite</strong>, <strong>Ticket Tailor</strong>, or <strong>your own website</strong>. When someone buys a ticket, we sync them onto your Networker UK attendee list so verified reviews and round-ups still work. Checkout stays on your existing system — we do not take a cut of ticket sales.';
+          'Choose a <strong>booking system</strong> so you can <strong>list events on The Networker UK</strong> while people keep paying on <strong>Eventbrite</strong> or <strong>your own website</strong>. When someone buys a ticket, we sync them onto your Networker UK attendee list so verified reviews and round-ups still work. Checkout stays on your existing system — we do not take a cut of ticket sales.';
       } else if (pricingLede && data.active) {
         pricingLede.innerHTML =
-          'Connected is on for your account. Enable a booking provider below, then link each event on <strong>Connected setup</strong>.';
+          'Connected is on for your account. Choose a <strong>live</strong> booking system below (greyed options are not ready yet), then link each event on <strong>Connected setup</strong>.';
       }
       if (activateWrap) activateWrap.hidden = !(signedIn && data.canActivateFree);
       if (gotoProviders) gotoProviders.hidden = !data.active;
@@ -301,8 +301,8 @@
       if (manageBillingPanel) manageBillingPanel.hidden = !showPortal;
       if (billingTip && signedIn) {
         billingTip.textContent = data.active
-          ? 'Connected is enabled. Next: set up a booking provider, then link each event.'
-          : 'No charge — enable Connected when you understand the flow, then connect your booking system.';
+          ? 'Connected is enabled. Next: choose a live booking system, then link each event.'
+          : 'No charge — enable Connected when you understand the flow, then choose your booking system.';
       }
       return;
     }
@@ -407,10 +407,10 @@
     if (linkOutPanel) linkOutPanel.hidden = true;
     if (connectedOnly) connectedOnly.hidden = true;
     if (gotoPricing) gotoPricing.hidden = true;
-    if (titleEl) titleEl.textContent = 'Connected booking';
+    if (titleEl) titleEl.textContent = 'Booking system';
     if (leadEl) {
       leadEl.textContent =
-        'Keep checkout on Eventbrite, Ticket Tailor, or your own website — and sync buyers to your Networker UK attendee list for reviews and round-ups.';
+        'Choose which booking system your buyers use — Eventbrite or your own website today; more platforms coming soon — and sync buyers to your Networker UK attendee list for reviews and round-ups.';
     }
     if (adminPanel) adminPanel.hidden = true;
     var providersPanel = document.getElementById('cb-providers-panel');
@@ -448,17 +448,17 @@
     if (mode === 'connected' && data && data.ok) {
       setConnectedNavVisible(true);
       showComingSoonPanel(false);
-      if (titleEl) titleEl.textContent = 'Connected booking';
+      if (titleEl) titleEl.textContent = 'Booking system';
       if (leadEl) {
         if (data && data.free && data.active) {
           leadEl.innerHTML =
-            'Connected is <strong>enabled</strong>. Connect <strong>Eventbrite</strong>, <strong>Ticket Tailor</strong>, or <strong>your own website</strong> once, then link each event on <strong>Connected setup</strong>.';
+            'Connected is <strong>enabled</strong>. Choose a <strong>live</strong> booking system — <strong>Eventbrite</strong> or <strong>your own website</strong> — then link each event on <strong>Connected setup</strong>. Greyed platforms are not ready yet.';
         } else if (data && data.free) {
           leadEl.innerHTML =
             'List on The Networker UK while checkout stays on your booking system. Read how it works below, then enable Connected when you are ready — <strong>free</strong>.';
         } else {
           leadEl.innerHTML =
-            'Subscribe here, enable <strong>Eventbrite</strong>, <strong>Ticket Tailor</strong>, or <strong>your own website</strong> once per account, then link each event on <strong>Connected setup</strong>. Use <strong>Recent sync attempts</strong> when buyers do not appear on your attendee list.';
+            'Subscribe here, choose a <strong>live</strong> booking system (<strong>Eventbrite</strong> or <strong>your own website</strong>) once per account, then link each event on <strong>Connected setup</strong>. Use <strong>Recent sync attempts</strong> when buyers do not appear on your attendee list.';
         }
       }
       if (linkOutPanel) linkOutPanel.hidden = true;

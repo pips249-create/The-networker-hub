@@ -5,7 +5,12 @@ const { normalizeTicketTailorWebhook } = require('../api/_lib/connected-booking-
 const { normalizeLumaWebhook } = require('../api/_lib/connected-booking-providers/adapters/luma');
 const { normalizeTryBookingWebhook } = require('../api/_lib/connected-booking-providers/adapters/trybooking');
 const { normalizeOwnSiteWebhook } = require('../api/_lib/connected-booking-providers/adapters/own-site');
-const { isConnectedBookingProviderId, CONNECTED_BOOKING_PROVIDERS } = require('../api/_lib/connected-booking-providers');
+const {
+  isConnectedBookingProviderId,
+  isLiveConnectedBookingProvider,
+  CONNECTED_BOOKING_PROVIDERS,
+  listOrganiserSelectableProviders,
+} = require('../api/_lib/connected-booking-providers');
 const {
   normalizeExternalBookingUrl,
   preferEventbriteCheckoutUrl,
@@ -62,6 +67,17 @@ assert.strictEqual(
 assert.strictEqual(isConnectedBookingProviderId('eventbrite'), true);
 assert.strictEqual(isConnectedBookingProviderId('nope'), false);
 assert.ok(CONNECTED_BOOKING_PROVIDERS.length >= 5);
+assert.strictEqual(isLiveConnectedBookingProvider('eventbrite'), true);
+assert.strictEqual(isLiveConnectedBookingProvider('own_site'), true);
+assert.strictEqual(isLiveConnectedBookingProvider('ticket_tailor'), false);
+assert.ok(
+  listOrganiserSelectableProviders().every(function (p) {
+    return p.status === 'live';
+  })
+);
+assert.ok(listOrganiserSelectableProviders().some(function (p) {
+  return p.id === 'eventbrite';
+}));
 
 const eb = normalizeEventbriteWebhook({
   api_url: 'https://www.eventbrite.com/api/v3/events/123456789/',
