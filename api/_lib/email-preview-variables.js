@@ -315,7 +315,7 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.inviter_name = 'Priya Shah';
     vars.inviter_first_name = 'Priya';
     vars.invite_note =
-      'Thought you’d like The Networker UK — great events, and Hubert can introduce you to people worth meeting.';
+      'Thought you’d get a lot from Hubert — ask who you want to meet and he’ll open warm intros when both sides say yes.';
     vars.invite_note_section =
       '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;line-height:1.65;color:#452d5c;margin:0 0 14px;padding:14px 16px;background:#f3eef5;border-radius:12px;text-align:left;">' +
       '<strong style="display:block;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;margin:0 0 6px;color:#7a3d8a;">A note from them</strong>' +
