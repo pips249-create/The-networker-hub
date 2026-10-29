@@ -3,15 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Preview: Attendee sidebar + Overview Hubert – The Networker UK</title>
+    <title>Preview: Attendee overview density – The Networker UK</title>
     <meta name="robots" content="noindex, nofollow" />
     <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
-    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20261028side3" />
-    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20261028side3" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261028side3" />
+    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20261029dash1" />
+    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20261029dash1" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261029dash1" />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"
     />
     <style>
       body {
@@ -36,7 +36,9 @@
     </style>
   </head>
   <body class="attendee-dashboard-page hub-page-account">
-    <p class="peek-banner">Design preview — side tabs + Hubert as a portal-grid row</p>
+    <p class="peek-banner">
+      Design preview — text sidebar (active chip only), no duplicate welcome line, portals hidden on desktop, Meet people ask only
+    </p>
     <div id="ad-shell">
       <div class="ad-dashboard-layout">
         <aside class="ad-sidebar">
@@ -87,14 +89,20 @@
             <header class="ad-page-head">
               <p class="ad-hero-kicker">Attendee dashboard</p>
               <h1 class="ad-welcome-name">Welcome back, Catherine Hancher 👋</h1>
-              <p class="ad-welcome-sub">You are going to Evolution Virtual Networking 29 October · 29 Oct 2026</p>
+              <!-- welcome-sub hidden when Next booking is present -->
+              <p class="ad-welcome-sub" hidden></p>
             </header>
 
             <div class="ad-overview-next">
               <div class="ad-overview-next-list" role="list">
                 <div class="ad-overview-next-card ad-overview-next-card--ticket ad-overview-next-card--featured" role="listitem">
                   <span class="ad-overview-next-media">
-                    <span class="ad-thumb-placeholder" aria-hidden="true" style="display:grid;place-items:center;width:88px;height:88px;border-radius:14px;background:#e8dbea;font-size:28px;">👋</span>
+                    <span
+                      class="ad-thumb-placeholder"
+                      aria-hidden="true"
+                      style="display:grid;place-items:center;width:88px;height:88px;border-radius:14px;background:#e8dbea;font-size:28px;"
+                      >👋</span
+                    >
                   </span>
                   <div class="ad-overview-next-copy">
                     <span class="ad-overview-next-eyebrow">Next booking</span>
@@ -132,10 +140,10 @@
                     />
                     <button type="submit" class="ad-btn hmm-overview-submit">Ask Hubert</button>
                   </form>
-                  <a class="hmm-overview-open" href="#meet">Open →</a>
                 </div>
               </div>
 
+              <!-- Portal shortcuts: hidden on desktop via CSS; shown here for mobile QA -->
               <button type="button" class="ad-portal ad-portal--events">
                 <span class="ad-portal-icon" aria-hidden="true">📅</span>
                 <span class="ad-portal-body">

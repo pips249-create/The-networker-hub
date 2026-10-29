@@ -3553,21 +3553,26 @@
         const db = b.date ? new Date(b.date).getTime() : 0;
         return da - db;
       })[0];
+    // Next Booking card already carries the next event — don't repeat it under the name.
+    if (nextTicket) {
+      if (pending) {
+        sub.hidden = false;
+        sub.textContent =
+          pending === 1
+            ? 'One review waiting — about a minute, and it helps the group.'
+            : pending + ' reviews waiting — a minute each, and it helps the groups.';
+        return;
+      }
+      sub.hidden = true;
+      sub.textContent = '';
+      return;
+    }
     sub.hidden = false;
-    if (pending && !upcoming.length) {
+    if (pending) {
       sub.textContent =
         pending === 1
           ? 'One review waiting — about a minute, and it helps the group.'
           : pending + ' reviews waiting — a minute each, and it helps the groups.';
-      return;
-    }
-    if (nextTicket) {
-      const when = formatDateShort(nextTicket.date);
-      sub.textContent =
-        'You are going to ' +
-        (nextTicket.title || 'an event') +
-        (when && when !== '—' ? ' · ' + when : '') +
-        '.';
       return;
     }
     if (savedEvents.length) {

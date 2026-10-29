@@ -205,6 +205,18 @@
   }
 }
 
+/* Desktop has the side nav — portal shortcuts are pure redundancy there.
+   Keep them on mobile (sidebar hidden, bottom nav only). Meet people stays. */
+@media (min-width: 901px) {
+  .ad-overview-portals > .ad-portal {
+    display: none;
+  }
+
+  .ad-overview-portals {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .ad-portal {
   display: flex;
   align-items: center;
@@ -367,13 +379,18 @@
   font-size: 10px;
   font-weight: 700;
   color: var(--ad-teal-dark);
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(122, 61, 138, 0.16);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(122, 61, 138, 0.14);
   border-radius: 999px;
   padding: 1px 7px;
   vertical-align: middle;
   min-width: 1.1em;
   text-align: center;
+}
+
+.hub-side-nav-link.is-active .ad-side-count {
+  background: var(--ad-teal-pale);
+  border-color: transparent;
 }
 
 .ad-side-count[hidden] {
@@ -4596,19 +4613,19 @@ body.ad-share-modal-open {
 .hmm-admin-badge {
   display: inline-block;
   margin: 0 0 10px;
-  padding: 3px 8px;
+  padding: 2px 7px;
   border-radius: 999px;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--ad-teal-dark);
-  background: var(--ad-teal-pale);
-  border: 1px solid rgba(125, 72, 150, 0.12);
+  color: #6b4578;
+  background: transparent;
+  border: 1px solid rgba(125, 72, 150, 0.18);
 }
 
 .hmm--overview .hmm-admin-badge {
-  margin: 0 0 10px;
+  margin: 0 0 8px;
 }
 
 .hmm-admin-badge[hidden] {
@@ -4649,8 +4666,8 @@ body.ad-share-modal-open {
   margin: 0;
   padding: 4px 4px 4px 12px;
   border-radius: 10px;
-  border: 1px solid var(--ad-border-soft);
-  background: var(--ad-teal-pale, #f3eef5);
+  border: 1px solid rgba(122, 61, 138, 0.22);
+  background: #ffffff;
 }
 
 .hmm-overview-ask:focus-within {
@@ -4663,6 +4680,12 @@ body.ad-share-modal-open {
   min-width: 0;
   padding: 8px 0;
   font-size: 14px;
+  color: var(--ad-slate, #2d1b5e);
+}
+
+.hmm-overview-ask .hmm-composer-input::placeholder {
+  color: #6e5a7a;
+  opacity: 1;
 }
 
 .hmm-overview-submit {
@@ -4678,25 +4701,7 @@ body.ad-share-modal-open {
   background: var(--ad-teal-dark, #7a3d8a) !important;
 }
 
-.hmm-overview-open {
-  flex: 0 0 auto;
-  margin-left: auto;
-  font-size: 13px;
-  font-weight: 650;
-  color: var(--ad-teal-dark);
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.hmm-overview-open:hover {
-  text-decoration: underline;
-}
-
 @media (max-width: 720px) {
-  .hmm-overview-open {
-    margin-left: 54px;
-  }
-
   .hmm-overview-ask {
     flex: 1 1 100%;
   }
