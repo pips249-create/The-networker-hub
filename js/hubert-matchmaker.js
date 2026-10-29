@@ -16,6 +16,8 @@
   var lastQuery = '';
   var lastMatches = [];
   var pendingByTarget = {};
+  var profileReady = false;
+  var lastProfile = null;
 
   function isMatchmakerPublic() {
     return HUBERT_MATCHMAKER_PUBLIC === true;
@@ -324,6 +326,14 @@
       }
       return;
     }
+    if (!profileReady) {
+      focusProfileGate();
+      if (mount && mount.els.error) {
+        mount.els.error.textContent = 'Finish your Hubert profile before requesting an intro.';
+        mount.els.error.hidden = false;
+      }
+      return;
+    }
     var topic = askForTopic(person);
     if (!topic) return;
 
@@ -408,6 +418,17 @@
       err.hidden = true;
       err.textContent = '';
     }
+    if (!profileReady) {
+      if (mount.mode === 'overview' && typeof mount.onExpand === 'function') {
+        mount.onExpand(query || '');
+      }
+      focusProfileGate();
+      if (err) {
+        err.textContent = 'Finish your Hubert profile before searching.';
+        err.hidden = false;
+      }
+      return;
+    }
     if (!query) {
       if (err) {
         err.textContent = 'Tell Hubert who you would like to meet.';
@@ -429,6 +450,14 @@
         if (data.ok && Array.isArray(data.matches)) {
           var liveMeta = Object.assign({ source: 'live' }, data.meta || {});
           paintAll(data.matches, query, liveMeta);
+        } else if (data && data.error === 'profile_incomplete') {
+          if (data.profile) fillProfileForm(data.profile);
+          focusProfileGate(data.message);
+          paintAll([], query, null);
+          if (err) {
+            err.textContent = data.message || 'Finish your Hubert profile before searching.';
+            err.hidden = false;
+          }
         } else if (result.status === 401 || result.status === 403) {
           if (err) {
             err.textContent = (data && data.message) || 'Sign in as an admin to use Hubert Matchmaker.';
@@ -603,8 +632,6 @@
     'Partners',
     'Press',
   ];
-  var NUDGE_KEY = 'hmm_profile_nudge_dismissed_v1';
-
   function renderLookingChips(wrap, options, selected) {
     if (!wrap) return;
     var list = Array.isArray(options) && options.length ? options : DEFAULT_LOOKING;
@@ -653,33 +680,65 @@
     }
   }
 
-  function updateProfileNudge(profile) {
-    var nudge = document.querySelector('[data-hmm-profile-nudge]');
-    if (!nudge) return;
-    var dismissed = false;
-    try {
-      dismissed = window.localStorage.getItem(NUDGE_KEY) === '1';
-    } catch (e) {
-      dismissed = false;
+  function applyProfileGate(profile) {
+    lastProfile = profile || null;
+    profileReady = Boolean(profile && profile.matchmakerReady);
+    var panel = document.querySelector('[data-hmm-profile-panel]');
+    var ask = document.querySelector('[data-hmm-ask-block]');
+    var invite = document.querySelector('[data-hmm-invite-panel]');
+    var heroTitle = document.querySelector('[data-hmm-hero-title]');
+    var heroSub = document.querySelector('[data-hmm-hero-sub]');
+    var saveBtn = document.querySelector('[data-hmm-profile-save]');
+
+    if (panel) {
+      panel.classList.toggle('hmm-setup--gate', !profileReady);
+      panel.classList.toggle('hmm-setup--ready', profileReady);
+      panel.hidden = false;
     }
-    var incomplete = !(profile && profile.matchmakerReady);
-    nudge.hidden = !incomplete || dismissed;
+    if (ask) ask.hidden = !profileReady;
+    if (invite) invite.hidden = !profileReady;
+    if (heroTitle) {
+      heroTitle.textContent = profileReady
+        ? 'I can introduce you to the people you need'
+        : 'Before I introduce you';
+    }
+    if (heroSub) {
+      heroSub.textContent = profileReady
+        ? 'Customers, investors, hires, your next role — or someone who’s already solved your problem. Tell me what you’re working on.'
+        : 'Tell me who you are and who you want to meet. Shortlists stay private — first name and initial only, never email, phone, or LinkedIn.';
+    }
+    if (saveBtn) {
+      saveBtn.textContent = profileReady ? 'Save profile' : 'Save and continue';
+    }
+
+    mounts.forEach(function (m) {
+      if (!m || !m.els) return;
+      if (m.els.input) m.els.input.disabled = !profileReady && m.mode === 'overview';
+      if (m.els.form) {
+        var submit = m.els.form.querySelector('button[type="submit"]');
+        if (submit && m.mode === 'overview') submit.disabled = !profileReady;
+      }
+    });
   }
 
-  function fillProfilePanel(profile) {
+  function fillProfileForm(profile) {
     var blurb = document.querySelector('[data-hmm-profile-blurb]');
     var looking = document.querySelector('[data-hmm-profile-looking]');
     var disc = document.querySelector('[data-hmm-profile-discoverable]');
-    if (blurb) blurb.value = (profile && profile.matchmakerBlurb) || '';
+    var prefill =
+      (profile && (profile.matchmakerBlurb || profile.matchmakerBlurbPrefill || profile.suggestedBlurb)) ||
+      '';
+    if (blurb) blurb.value = prefill;
     renderLookingChips(
       looking,
       (profile && profile.lookingToMeetOptions) || DEFAULT_LOOKING,
       (profile && profile.lookingToMeet) || []
     );
+    // Never auto-tick Include me — member must opt in.
     if (disc) disc.checked = Boolean(profile && profile.discoverable);
-    updateProfileNudge(profile || {});
+    applyProfileGate(profile || {});
     if (profile && profile.matchmakerReady) {
-      setProfileStatus(true, 'You’re ready for Hubert to put you forward.');
+      setProfileStatus(true, 'You’re ready — ask Hubert who you need.');
     } else {
       setProfileStatus(true, '');
     }
@@ -688,16 +747,36 @@
   function loadMatchmakerProfile() {
     var panel = document.querySelector('[data-hmm-profile-panel]');
     if (!panel) return;
-    fetch('/api/auth/profile', { credentials: 'include' })
+    var looking = document.querySelector('[data-hmm-profile-looking]');
+    if (looking && !looking.childElementCount) {
+      renderLookingChips(looking, DEFAULT_LOOKING, []);
+    }
+    fetch('/api/auth/profile', {
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+    })
       .then(function (res) {
-        return res.json();
+        return res.text().then(function (text) {
+          var data = {};
+          if (text) {
+            try {
+              data = JSON.parse(text);
+            } catch (err) {
+              return { ok: false, status: res.status };
+            }
+          }
+          return data;
+        });
       })
       .then(function (data) {
-        if (!data || !data.ok) return;
+        if (!data || !data.ok) {
+          applyProfileGate(null);
+          return;
+        }
         fillProfileForm(data.profile || {});
       })
       .catch(function () {
-        /* optional */
+        applyProfileGate(null);
       });
   }
 
@@ -707,6 +786,9 @@
     var looking = document.querySelector('[data-hmm-profile-looking]');
     var disc = document.querySelector('[data-hmm-profile-discoverable]');
     var saveBtn = document.querySelector('[data-hmm-profile-save]');
+    if (looking && !looking.childElementCount) {
+      renderLookingChips(looking, DEFAULT_LOOKING, []);
+    }
     var payload = {
       matchmakerBlurb: blurbEl ? String(blurbEl.value || '').trim() : '',
       lookingToMeet: selectedLookingFrom(looking),
@@ -717,67 +799,87 @@
     fetch('/api/auth/profile', {
       method: 'PATCH',
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify(payload),
     })
       .then(function (res) {
-        return res.json().then(function (data) {
+        return res.text().then(function (text) {
+          var data = {};
+          if (text) {
+            try {
+              data = JSON.parse(text);
+            } catch (err) {
+              var parseErr = new Error(
+                res.status >= 500
+                  ? 'Server error saving profile (' + res.status + '). Try again in a moment.'
+                  : 'Could not save profile (unexpected response).'
+              );
+              parseErr.status = res.status;
+              throw parseErr;
+            }
+          }
           return { status: res.status, data: data };
         });
       })
       .then(function (result) {
         var data = result.data || {};
         if (!data.ok) {
-          setProfileStatus(false, (data && data.message) || 'Could not save your profile.');
+          setProfileStatus(
+            false,
+            (data && data.message) ||
+              (result.status === 401
+                ? 'Sign in again, then save your Hubert profile.'
+                : 'Could not save your profile.')
+          );
           return;
         }
         fillProfileForm(data.profile || {});
-        setProfileStatus(true, 'Profile saved.');
-        try {
-          if (data.profile && data.profile.matchmakerReady) {
-            window.localStorage.setItem(NUDGE_KEY, '1');
-          }
-        } catch (err) {
-          /* ignore */
+        if (data.profile && data.profile.matchmakerReady) {
+          setProfileStatus(true, 'Profile saved — Hubert is unlocked.');
+          var ask = document.querySelector('[data-hmm-ask-block]');
+          if (ask && ask.scrollIntoView) ask.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          setProfileStatus(
+            false,
+            'Almost there — add a headline, pick who you want to meet, and tick Include me.'
+          );
         }
       })
-      .catch(function () {
-        setProfileStatus(false, 'Connection issue — try again.');
+      .catch(function (err) {
+        setProfileStatus(
+          false,
+          (err && err.message) || 'Connection issue — check your network and try again.'
+        );
       })
       .finally(function () {
         if (saveBtn) saveBtn.disabled = false;
       });
   }
 
+  function focusProfileGate(message) {
+    applyProfileGate(lastProfile || {});
+    var panel = document.querySelector('[data-hmm-profile-panel]');
+    if (panel && panel.scrollIntoView) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setProfileStatus(
+      false,
+      message || 'Finish your Hubert profile first — headline, who you want to meet, and Include me.'
+    );
+    var blurb = document.querySelector('[data-hmm-profile-blurb]');
+    if (blurb) blurb.focus();
+  }
+
   function bindProfilePanel() {
+    var looking = document.querySelector('[data-hmm-profile-looking]');
+    // Paint chips immediately so the gate never looks empty before profile loads.
+    if (looking && !looking.childElementCount) {
+      renderLookingChips(looking, DEFAULT_LOOKING, []);
+    }
     var form = document.querySelector('[data-hmm-profile-form]');
     if (form && form.dataset.hmmBound !== '1') {
       form.dataset.hmmBound = '1';
       form.addEventListener('submit', saveMatchmakerProfile);
     }
-    var openBtn = document.querySelector('[data-hmm-profile-nudge-open]');
-    if (openBtn && openBtn.dataset.hmmBound !== '1') {
-      openBtn.dataset.hmmBound = '1';
-      openBtn.addEventListener('click', function () {
-        var panel = document.querySelector('[data-hmm-profile-panel]');
-        if (panel && panel.scrollIntoView) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        var blurb = document.querySelector('[data-hmm-profile-blurb]');
-        if (blurb) blurb.focus();
-      });
-    }
-    var dismissBtn = document.querySelector('[data-hmm-profile-nudge-dismiss]');
-    if (dismissBtn && dismissBtn.dataset.hmmBound !== '1') {
-      dismissBtn.dataset.hmmBound = '1';
-      dismissBtn.addEventListener('click', function () {
-        try {
-          window.localStorage.setItem(NUDGE_KEY, '1');
-        } catch (e) {
-          /* ignore */
-        }
-        var nudge = document.querySelector('[data-hmm-profile-nudge]');
-        if (nudge) nudge.hidden = true;
-      });
-    }
+    applyProfileGate(lastProfile);
   }
 
   function loadMyIntros() {

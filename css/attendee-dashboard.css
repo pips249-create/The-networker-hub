@@ -5379,12 +5379,51 @@ body.ad-share-modal-open {
   gap: 8px;
 }
 
+.hmm-setup {
+  margin: 0 0 28px;
+  max-width: 36rem;
+}
+
+.hmm-setup--gate {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.hmm-setup--ready {
+  margin-bottom: 18px;
+  padding-top: 4px;
+  border-top: 1px dashed rgba(125, 72, 150, 0.22);
+}
+
 .hmm-profile-panel {
+  /* legacy alias kept for older markup */
   margin: 0 0 22px;
-  padding: 18px 16px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(125, 72, 150, 0.16);
+}
+
+.hmm-ask-block {
+  margin: 0 0 8px;
+}
+
+.hmm-ask-kicker {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ad-teal-dark);
+}
+
+.hmm-profile-hint {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ad-text-soft, #7a7580);
+}
+
+.hmm-profile-hint--block {
+  display: block;
+  margin-top: 4px;
 }
 
 .hmm-profile-kicker {
@@ -5451,6 +5490,7 @@ body.ad-share-modal-open {
 }
 
 .hmm-profile-chip {
+  position: relative;
   display: inline-flex;
   cursor: pointer;
 }
@@ -5458,6 +5498,8 @@ body.ad-share-modal-open {
 .hmm-profile-chip input {
   position: absolute;
   opacity: 0;
+  width: 1px;
+  height: 1px;
   pointer-events: none;
 }
 
@@ -5474,6 +5516,12 @@ body.ad-share-modal-open {
 .hmm-profile-chip input:checked + span {
   background: rgba(125, 72, 150, 0.12);
   border-color: rgba(125, 72, 150, 0.55);
+}
+
+.hmm-setup--gate .hmm-profile-discoverable {
+  margin-top: 4px;
+  padding: 14px 0 2px;
+  border-top: 1px solid rgba(125, 72, 150, 0.14);
 }
 
 .hmm-profile-discoverable {

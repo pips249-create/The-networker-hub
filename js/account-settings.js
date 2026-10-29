@@ -300,22 +300,24 @@
   }
 
   function fillMatchmaker(profile) {
-    renderLookingToMeetOptions(profile.lookingToMeetOptions);
-    setFieldValue('as-matchmaker-blurb', profile.matchmakerBlurb || '');
+    renderLookingToMeetOptions(profile.lookingToMeetOptions || []);
+    setFieldValue(
+      'as-matchmaker-blurb',
+      profile.matchmakerBlurb || profile.matchmakerBlurbPrefill || profile.suggestedBlurb || ''
+    );
     fillLookingToMeet(profile.lookingToMeet || []);
     const disc = document.getElementById('as-discoverable');
+    // Never auto-tick — member must opt in.
     if (disc) disc.checked = profile.discoverable === true;
     const status = document.getElementById('as-matchmaker-status');
     if (status) {
       if (profile.matchmakerReady) {
         status.hidden = false;
         status.textContent = 'You’re ready for Hubert to put you forward.';
-      } else if (profile.discoverable) {
-        status.hidden = false;
-        status.textContent = 'Add a headline and who you’re looking to meet so matches are stronger.';
       } else {
-        status.hidden = true;
-        status.textContent = '';
+        status.hidden = false;
+        status.textContent =
+          'Required before search on Meet people: headline, who you want to meet, and Include me.';
       }
     }
   }

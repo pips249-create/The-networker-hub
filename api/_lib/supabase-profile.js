@@ -368,7 +368,9 @@ async function updateProfile(session, body) {
         msg.includes('public_review_name') ||
         msg.includes('matchmaker_blurb') ||
         msg.includes('looking_to_meet') ||
-        msg.includes('discoverable_at')
+        msg.includes('discoverable_at') ||
+        msg.includes('schema cache') ||
+        String(primary.error.code || '') === 'PGRST204'
       ) {
         const fallback = { ...attendeePatch };
         delete fallback.business_sector;
@@ -377,17 +379,42 @@ async function updateProfile(session, body) {
         if (msg.includes('job_title')) delete fallback.job_title;
         if (msg.includes('professional_role')) delete fallback.professional_role;
         if (msg.includes('public_review_name')) delete fallback.public_review_name;
-        if (msg.includes('matchmaker_blurb')) delete fallback.matchmaker_blurb;
-        if (msg.includes('looking_to_meet')) delete fallback.looking_to_meet;
-        if (msg.includes('discoverable_at')) delete fallback.discoverable_at;
+        // If any Hubert column is missing, drop all three together — partial retry still fails.
+        const matchmakerMissing =
+          msg.includes('matchmaker_blurb') ||
+          msg.includes('looking_to_meet') ||
+          msg.includes('discoverable_at') ||
+          msg.includes('schema cache') ||
+          String(primary.error.code || '') === 'PGRST204';
+        if (matchmakerMissing) {
+          delete fallback.matchmaker_blurb;
+          delete fallback.looking_to_meet;
+          delete fallback.discoverable_at;
+        }
+        const matchmakerOnlyPatch =
+          Object.keys(attendeePatch).every((k) =>
+            ['matchmaker_blurb', 'looking_to_meet', 'discoverable_at'].includes(k)
+          ) &&
+          (attendeePatch.matchmaker_blurb !== undefined ||
+            attendeePatch.looking_to_meet !== undefined ||
+            attendeePatch.discoverable_at !== undefined);
+        if (matchmakerMissing && matchmakerOnlyPatch) {
+          const e = new Error(
+            'Hubert profile fields aren’t on the database yet. Run migration 333_attendee_discoverable.sql, then try again.'
+          );
+          e.status = 503;
+          e.code = 'matchmaker_migration_required';
+          throw e;
+        }
         if (Object.keys(fallback).length) {
           const retry = await sb
             .from('attendees')
             .update(fallback)
             .eq('id', attendee.id)
             .select('*')
-            .single();
-          if (!retry.error) updated = retry.data;
+            .maybeSingle();
+          if (!retry.error && retry.data) updated = retry.data;
+          else if (!retry.error && !retry.data) updated = attendee;
           else updateErr = retry.error;
         } else {
           // Only unsupported columns were in the patch — treat as no-op success.
@@ -395,7 +422,12 @@ async function updateProfile(session, body) {
         }
       }
     }
-    if (!updated) throw new Error(updateErr?.message || 'Could not save profile');
+    if (!updated) {
+      const e = new Error(updateErr?.message || 'Could not save profile');
+      e.status = 500;
+      e.code = 'profile_save_failed';
+      throw e;
+    }
     attendee = updated;
   }
 

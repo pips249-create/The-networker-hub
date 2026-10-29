@@ -28,6 +28,8 @@
     if (/\/faq\.html$/.test(path) || /\/faq\/?$/.test(path)) return true;
     if (/\/admin\//.test(path)) return true;
     if (/\/organiser\//.test(path)) return true;
+    // Attendee dashboard: Meet people is Hubert’s home — no floating chat corner.
+    if (/\/account(?:\/|$)/.test(path)) return true;
     return false;
   }
 

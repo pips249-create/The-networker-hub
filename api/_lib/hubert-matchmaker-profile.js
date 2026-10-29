@@ -68,24 +68,60 @@ function parseDiscoverable(value, currentAt) {
   return undefined;
 }
 
+/**
+ * Prefill helper from Hub booking fields — never auto-opts into discoverable.
+ */
+function suggestMatchmakerBlurb(attendee) {
+  const role = String(attendee?.professional_role || attendee?.job_title || '')
+    .trim()
+    .replace(/\s+/g, ' ');
+  const company = String(attendee?.company || '')
+    .trim()
+    .replace(/\s+/g, ' ');
+  if (role && company) return cleanMatchmakerBlurb(role + ' at ' + company);
+  if (role) return cleanMatchmakerBlurb(role);
+  if (company) return cleanMatchmakerBlurb('Works at ' + company);
+  return '';
+}
+
 function matchmakerProfileFromAttendee(attendee) {
   const lookingToMeet = Array.isArray(attendee?.looking_to_meet) ? attendee.looking_to_meet.filter(Boolean) : [];
-  const blurb = String(attendee?.matchmaker_blurb || '').trim();
+  const savedBlurb = String(attendee?.matchmaker_blurb || '').trim();
+  const suggestedBlurb = suggestMatchmakerBlurb(attendee);
+  const blurb = savedBlurb || suggestedBlurb;
   const discoverableAt = attendee?.discoverable_at || null;
   const discoverable = Boolean(discoverableAt);
+  const matchmakerReady = Boolean(discoverable && savedBlurb && lookingToMeet.length);
   return {
-    matchmakerBlurb: blurb,
+    matchmakerBlurb: savedBlurb,
+    suggestedBlurb,
+    /** Prefill value for the form (saved wins; else Hub job/company suggestion). */
+    matchmakerBlurbPrefill: blurb,
     lookingToMeet,
     discoverable,
     discoverableAt,
     lookingToMeetOptions: LOOKING_TO_MEET_OPTIONS.slice(),
-    matchmakerReady: Boolean(discoverable && blurb && lookingToMeet.length),
+    matchmakerReady,
     matchmakerMissing: [
-      !blurb ? 'headline' : null,
+      !savedBlurb ? 'headline' : null,
       !lookingToMeet.length ? 'lookingToMeet' : null,
       !discoverable ? 'discoverable' : null,
     ].filter(Boolean),
   };
+}
+
+function assertMatchmakerReady(attendeeOrProfile) {
+  const profile =
+    attendeeOrProfile && attendeeOrProfile.matchmakerMissing
+      ? attendeeOrProfile
+      : matchmakerProfileFromAttendee(attendeeOrProfile || {});
+  if (profile.matchmakerReady) return profile;
+  const err = new Error('profile_incomplete');
+  err.code = 'profile_incomplete';
+  err.message =
+    'Finish your Hubert profile first — headline, who you want to meet, and Include me.';
+  err.profile = profile;
+  throw err;
 }
 
 module.exports = {
@@ -94,5 +130,7 @@ module.exports = {
   cleanLookingToMeet,
   cleanMatchmakerBlurb,
   parseDiscoverable,
+  suggestMatchmakerBlurb,
   matchmakerProfileFromAttendee,
+  assertMatchmakerReady,
 };

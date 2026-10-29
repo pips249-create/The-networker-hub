@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20261029dash2" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20261029dash2" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261029matchprof1" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261029profilegate2" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20261023nextup2" />
     <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"></script>
 
@@ -804,37 +804,18 @@
                 <p class="hmm-admin-badge" data-hmm-admin-badge hidden>
                   Admin preview — not visible to other members yet.
                 </p>
-                <div class="hmm-hero hmm-hero--page">
+                <div class="hmm-hero hmm-hero--page" data-hmm-hero>
                   <img class="hmm-hero-avatar hmm-hero-avatar--lg" src="../assets/hubert-icon.png" width="96" height="96" alt="" />
                   <div class="hmm-hero-copy">
                     <p class="hmm-hero-kicker">Hubert</p>
-                    <h2 class="hmm-hero-title">I can introduce you to the people you need</h2>
-                    <p class="hmm-hero-sub">
-                      Customers, investors, hires, your next role — or someone who&rsquo;s already solved your problem.
-                      Tell me what you&rsquo;re working on. I find the people who fit, and introduce you once you both opt in.
+                    <h2 class="hmm-hero-title" data-hmm-hero-title>Before I introduce you</h2>
+                    <p class="hmm-hero-sub" data-hmm-hero-sub>
+                      Tell me who you are and who you want to meet. Shortlists stay private — first name and initial only,
+                      never email, phone, or LinkedIn.
                     </p>
                   </div>
                 </div>
-                <div class="hmm-profile-nudge" data-hmm-profile-nudge hidden>
-                  <div class="hmm-profile-nudge-copy">
-                    <p class="hmm-profile-nudge-kicker">Build your Hubert profile</p>
-                    <p class="hmm-profile-nudge-text">
-                      Add a short headline, who you want to meet, and opt in — so Hubert can put you forward.
-                    </p>
-                  </div>
-                  <div class="hmm-profile-nudge-actions">
-                    <button type="button" class="ad-btn ad-btn-primary" data-hmm-profile-nudge-open>Complete profile</button>
-                    <button type="button" class="ad-btn ad-btn-ghost" data-hmm-profile-nudge-dismiss>Not now</button>
-                  </div>
-                </div>
-                <div class="hmm-profile-panel" data-hmm-profile-panel>
-                  <p class="hmm-profile-kicker">Your Hubert profile</p>
-                  <h3 class="hmm-profile-title">Help Hubert introduce you</h3>
-                  <p class="hmm-profile-copy">
-                    Shortlist cards show first name and initial only. Once you both say yes, Connections shows first names — still no email, phone, or LinkedIn.
-                    You can also edit this anytime in
-                    <a href="/account/settings.html#as-hubert-matchmaker">Account settings</a>.
-                  </p>
+                <div class="hmm-setup" data-hmm-profile-panel data-hmm-profile-gate>
                   <form class="hmm-profile-form" data-hmm-profile-form>
                     <label class="hmm-profile-field">
                       <span>Your headline</span>
@@ -846,18 +827,24 @@
                       ></textarea>
                     </label>
                     <fieldset class="hmm-profile-field">
-                      <legend>Looking to meet</legend>
+                      <legend>Who you want to meet</legend>
+                      <p class="hmm-profile-hint">Pick at least one.</p>
                       <div class="hmm-profile-chips" data-hmm-profile-looking role="group"></div>
                     </fieldset>
                     <label class="hmm-profile-discoverable">
                       <input type="checkbox" data-hmm-profile-discoverable />
-                      <span>Include me so Hubert can put me forward</span>
+                      <span>
+                        <strong>Include me so Hubert can put me forward</strong>
+                        <span class="hmm-profile-hint hmm-profile-hint--block">Required. Stays off until you tick it — you can turn it off anytime.</span>
+                      </span>
                     </label>
                     <p class="hmm-profile-error" data-hmm-profile-error hidden role="alert"></p>
                     <p class="hmm-profile-status" data-hmm-profile-status hidden role="status"></p>
-                    <button type="submit" class="ad-btn ad-btn-primary" data-hmm-profile-save>Save profile</button>
+                    <button type="submit" class="ad-btn ad-btn-primary" data-hmm-profile-save>Save and continue</button>
                   </form>
                 </div>
+                <div class="hmm-ask-block" data-hmm-ask-block hidden>
+                <p class="hmm-ask-kicker">Ask Hubert</p>
                 <form class="hmm-composer" data-hmm-form>
                   <label class="visually-hidden" for="hmm-query">What are you working on?</label>
                   <div class="hmm-composer-row">
@@ -885,7 +872,8 @@
                 </div>
                 <div class="hmm-intros" data-hmm-intros hidden></div>
                 <div class="hmm-thread-panel" data-hmm-thread hidden></div>
-                <div class="hmm-invite-panel" data-hmm-invite-panel>
+                </div>
+                <div class="hmm-invite-panel" data-hmm-invite-panel hidden>
                   <p class="hmm-invite-kicker">Know someone great?</p>
                   <h3 class="hmm-invite-title">Introduce them to The Networker UK &amp; Hubert</h3>
                   <p class="hmm-invite-copy">
@@ -1368,7 +1356,7 @@
     <script src="../js/attendee-auth-gate.js?v=20261021confirm2"></script>
     <script src="../js/organiser-image-upload.js?v=20261002offerimage1" defer></script>
     <script src="../js/attendee-member-offers.js?v=20261015offers1" defer></script>
-    <script src="../js/hubert-matchmaker.js?v=20261029matchprof1" defer></script>
+    <script src="../js/hubert-matchmaker.js?v=20261029profilegate3" defer></script>
     <script src="../js/attendee-dashboard.js?v=20261029safarjson1" defer></script>
   </body>
 </html>

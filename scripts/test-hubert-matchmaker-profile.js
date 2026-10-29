@@ -4,7 +4,9 @@ const {
   cleanLookingToMeet,
   cleanMatchmakerBlurb,
   parseDiscoverable,
+  suggestMatchmakerBlurb,
   matchmakerProfileFromAttendee,
+  assertMatchmakerReady,
   BLURB_MAX,
 } = require('../api/_lib/hubert-matchmaker-profile');
 
@@ -25,6 +27,12 @@ assert(typeof on === 'string' && on.length > 10, 'discoverable on sets timestamp
 assert(parseDiscoverable(false, on) === null, 'discoverable off clears');
 assert(parseDiscoverable(undefined, on) === undefined, 'discoverable omit');
 
+assert(
+  suggestMatchmakerBlurb({ job_title: 'Founder', company: 'Northbridge' }) === 'Founder at Northbridge',
+  'suggest from job+company'
+);
+assert(suggestMatchmakerBlurb({ professional_role: 'Investor' }) === 'Investor', 'suggest role only');
+
 const ready = matchmakerProfileFromAttendee({
   matchmaker_blurb: 'Fintech founder',
   looking_to_meet: ['Investors'],
@@ -33,10 +41,26 @@ const ready = matchmakerProfileFromAttendee({
 assert(ready.matchmakerReady === true, 'ready when complete');
 assert(ready.discoverable === true, 'discoverable flag');
 
-const missing = matchmakerProfileFromAttendee({});
-assert(missing.matchmakerReady === false, 'not ready empty');
-assert(missing.matchmakerMissing.includes('headline'), 'missing headline');
+const missing = matchmakerProfileFromAttendee({
+  job_title: 'Founder',
+  company: 'Acme',
+});
+assert(missing.matchmakerReady === false, 'not ready without opt-in');
+assert(missing.discoverable === false, 'never auto discoverable');
+assert(missing.suggestedBlurb === 'Founder at Acme', 'suggested blurb');
+assert(missing.matchmakerBlurb === '', 'saved blurb empty');
+assert(missing.matchmakerBlurbPrefill === 'Founder at Acme', 'prefill uses suggestion');
+assert(missing.matchmakerMissing.includes('headline'), 'missing headline until saved');
 assert(missing.matchmakerMissing.includes('lookingToMeet'), 'missing looking');
 assert(missing.matchmakerMissing.includes('discoverable'), 'missing discoverable');
+
+let threw = false;
+try {
+  assertMatchmakerReady(missing);
+} catch (e) {
+  threw = e.code === 'profile_incomplete';
+}
+assert(threw, 'assertMatchmakerReady throws when incomplete');
+assertMatchmakerReady(ready);
 
 console.log('ok — hubert matchmaker profile helpers');
