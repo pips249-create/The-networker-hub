@@ -685,23 +685,30 @@
     profileReady = Boolean(profile && profile.matchmakerReady);
     var panel = document.querySelector('[data-hmm-profile-panel]');
     var ask = document.querySelector('[data-hmm-ask-block]');
-    var title = panel && panel.querySelector('.hmm-profile-title');
-    var kicker = panel && panel.querySelector('.hmm-profile-kicker');
+    var invite = document.querySelector('[data-hmm-invite-panel]');
+    var heroTitle = document.querySelector('[data-hmm-hero-title]');
+    var heroSub = document.querySelector('[data-hmm-hero-sub]');
     var saveBtn = document.querySelector('[data-hmm-profile-save]');
 
     if (panel) {
-      panel.classList.toggle('hmm-profile-panel--gate', !profileReady);
-      panel.classList.toggle('is-complete', profileReady);
+      panel.classList.toggle('hmm-setup--gate', !profileReady);
+      panel.classList.toggle('hmm-setup--ready', profileReady);
+      panel.hidden = false;
     }
     if (ask) ask.hidden = !profileReady;
-    if (title) {
-      title.textContent = profileReady ? 'Your Hubert profile' : 'Set up your Hubert profile';
+    if (invite) invite.hidden = !profileReady;
+    if (heroTitle) {
+      heroTitle.textContent = profileReady
+        ? 'I can introduce you to the people you need'
+        : 'Before I introduce you';
     }
-    if (kicker) {
-      kicker.textContent = profileReady ? 'Your profile' : 'Step 1 · Required';
+    if (heroSub) {
+      heroSub.textContent = profileReady
+        ? 'Customers, investors, hires, your next role — or someone who’s already solved your problem. Tell me what you’re working on.'
+        : 'Tell me who you are and who you want to meet. Shortlists stay private — first name and initial only, never email, phone, or LinkedIn.';
     }
     if (saveBtn) {
-      saveBtn.textContent = profileReady ? 'Save profile' : 'Save and unlock Hubert';
+      saveBtn.textContent = profileReady ? 'Save profile' : 'Save and continue';
     }
 
     mounts.forEach(function (m) {
@@ -816,11 +823,17 @@
   }
 
   function bindProfilePanel() {
+    var looking = document.querySelector('[data-hmm-profile-looking]');
+    // Paint chips immediately so the gate never looks empty before profile loads.
+    if (looking && !looking.childElementCount) {
+      renderLookingChips(looking, DEFAULT_LOOKING, []);
+    }
     var form = document.querySelector('[data-hmm-profile-form]');
     if (form && form.dataset.hmmBound !== '1') {
       form.dataset.hmmBound = '1';
       form.addEventListener('submit', saveMatchmakerProfile);
     }
+    applyProfileGate(lastProfile);
   }
 
   function loadMyIntros() {

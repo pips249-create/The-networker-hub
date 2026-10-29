@@ -352,6 +352,8 @@
   if (script && script.getAttribute('data-hubert') === 'off') return;
   var pagePath = (window.location.pathname || '').toLowerCase();
   if (/\/contact(?:\.html)?\/?$/.test(pagePath)) return;
+  // Member dashboard uses Meet people for Hubert — skip the floating launcher.
+  if (/\/account(?:\/|$)/.test(pagePath)) return;
 
   function loadHubertWidget() {
     if (

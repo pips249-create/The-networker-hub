@@ -5379,29 +5379,26 @@ body.ad-share-modal-open {
   gap: 8px;
 }
 
+.hmm-setup {
+  margin: 0 0 28px;
+  max-width: 36rem;
+}
+
+.hmm-setup--gate {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.hmm-setup--ready {
+  margin-bottom: 18px;
+  padding-top: 4px;
+  border-top: 1px dashed rgba(125, 72, 150, 0.22);
+}
+
 .hmm-profile-panel {
+  /* legacy alias kept for older markup */
   margin: 0 0 22px;
-  padding: 18px 16px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(125, 72, 150, 0.16);
-}
-
-.hmm-profile-panel--gate {
-  padding: 22px 18px;
-  background: linear-gradient(180deg, rgba(255, 252, 246, 0.98), rgba(255, 255, 255, 0.92));
-  border: 2px solid rgba(184, 134, 11, 0.45);
-  box-shadow: 0 10px 28px rgba(36, 21, 54, 0.06);
-}
-
-.hmm-profile-panel--gate .hmm-profile-kicker {
-  color: #8a6410;
-}
-
-.hmm-profile-panel.is-complete {
-  border-color: rgba(125, 72, 150, 0.14);
-  background: rgba(255, 255, 255, 0.65);
-  box-shadow: none;
 }
 
 .hmm-ask-block {
@@ -5493,6 +5490,7 @@ body.ad-share-modal-open {
 }
 
 .hmm-profile-chip {
+  position: relative;
   display: inline-flex;
   cursor: pointer;
 }
@@ -5500,6 +5498,8 @@ body.ad-share-modal-open {
 .hmm-profile-chip input {
   position: absolute;
   opacity: 0;
+  width: 1px;
+  height: 1px;
   pointer-events: none;
 }
 
@@ -5518,11 +5518,10 @@ body.ad-share-modal-open {
   border-color: rgba(125, 72, 150, 0.55);
 }
 
-.hmm-profile-panel--gate .hmm-profile-discoverable {
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(125, 72, 150, 0.28);
-  background: #fff;
+.hmm-setup--gate .hmm-profile-discoverable {
+  margin-top: 4px;
+  padding: 14px 0 2px;
+  border-top: 1px solid rgba(125, 72, 150, 0.14);
 }
 
 .hmm-profile-discoverable {
