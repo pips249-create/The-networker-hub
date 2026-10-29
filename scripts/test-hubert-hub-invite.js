@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Smoke for Hubert Hub invite registration + pure helpers.
+ * Smoke for The Networker UK (Hubert) invite registration + pure helpers.
  * Avoids loading send-template-email (needs @supabase/supabase-js).
  */
 const assert = require('assert');
@@ -179,7 +179,7 @@ async function runValidation() {
 
 runValidation()
   .then(function () {
-    console.log('ok — hubert hub invite');
+    console.log('ok — networker uk invite');
   })
   .catch(function (err) {
     console.error('FAIL:', err && err.message ? err.message : err);
