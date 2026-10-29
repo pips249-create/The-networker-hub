@@ -1677,11 +1677,11 @@
     el.innerHTML =
       '<div class="ad-overview-profile-nudge-card">' +
       '<div>' +
-      '<p class="ad-overview-profile-nudge-kicker">Your profile</p>' +
-      '<h2 class="ad-section-title">Add a few details</h2>' +
+      '<p class="ad-overview-profile-nudge-kicker">Hubert</p>' +
+      '<h2 class="ad-section-title">Help Hubert introduce you</h2>' +
       '<p class="ad-overview-profile-nudge-copy">Still missing ' +
       esc(list) +
-      ' — organisers use these on name badges and attendee lists.</p>' +
+      ' — Hubert uses these to put you forward for the right introductions. Organisers also use them on name badges.</p>' +
       '</div>' +
       '<div class="ad-overview-profile-nudge-actions">' +
       '<a class="ad-btn ad-btn-primary" href="/account/settings">Complete your profile</a>' +
