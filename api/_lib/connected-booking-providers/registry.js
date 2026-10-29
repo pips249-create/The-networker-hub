@@ -18,7 +18,7 @@ const CONNECTED_BOOKING_PROVIDERS = [
     status: 'live',
     webhookPath: '/api/integrations/providers/eventbrite/webhook',
     docsHint:
-      'Connect on My events (OAuth or private token). We import live Eventbrite events and sync ticket holders.',
+      'Connect Eventbrite here (OAuth or private token). Then import live events from My events — ticket holders sync for reviews and round-ups.',
     guidePath: '/guides/connect-eventbrite',
   },
   {
@@ -26,7 +26,7 @@ const CONNECTED_BOOKING_PROVIDERS = [
     label: 'Ticket Tailor',
     status: 'beta',
     webhookPath: '/api/integrations/providers/ticket_tailor/webhook',
-    docsHint: 'Coming soon — Ticket Tailor will connect the same way as Eventbrite.',
+    docsHint: 'Coming soon — Ticket Tailor will connect from this page the same way as Eventbrite.',
     guidePath: '',
   },
   {
@@ -34,7 +34,7 @@ const CONNECTED_BOOKING_PROVIDERS = [
     label: 'TryBooking',
     status: 'beta',
     webhookPath: '/api/integrations/providers/trybooking/webhook',
-    docsHint: 'Coming soon — connect TryBooking when this tile unlocks.',
+    docsHint: 'Coming soon — connect TryBooking from this page when the tile unlocks.',
     guidePath: '',
   },
   {
@@ -43,7 +43,7 @@ const CONNECTED_BOOKING_PROVIDERS = [
     status: 'live',
     webhookPath: '/api/integrations/providers/own_site/webhook',
     docsHint:
-      'WordPress, Wix, or custom checkout — list on The Networker UK and POST bookings to your webhook URL.',
+      'WordPress, Wix, or custom checkout — enable here, copy your webhook URL, and POST each booking so buyers land on your attendee list.',
     guidePath: '/guides/connect-own-website',
   },
   {
@@ -51,7 +51,7 @@ const CONNECTED_BOOKING_PROVIDERS = [
     label: 'Luma',
     status: 'beta',
     webhookPath: '/api/integrations/providers/luma/webhook',
-    docsHint: 'Coming soon — Luma connect is not selectable yet.',
+    docsHint: 'Coming soon — Luma will connect from this page when ready.',
     guidePath: '',
   },
   {
@@ -59,7 +59,7 @@ const CONNECTED_BOOKING_PROVIDERS = [
     label: 'Meetup',
     status: 'beta',
     webhookPath: '/api/integrations/providers/meetup/webhook',
-    docsHint: 'Coming soon — Meetup connect is not selectable yet.',
+    docsHint: 'Coming soon — Meetup will connect from this page when ready.',
     guidePath: '',
   },
   {
