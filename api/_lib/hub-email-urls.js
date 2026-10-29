@@ -201,11 +201,11 @@ function logoEmailHeaderUrl(siteUrl) {
 }
 
 /**
- * Dark wordmark for cream / pale headers — lavender nav logo disappears on #f5f0e8.
- * Prefer this when the header background is light and brand contrast matters.
+ * Near-white Networker UK wordmark for dark purple / navy email bands.
+ * Use on #452d5c / #1c2040 — not on cream headers.
  */
-function logoEmailHeaderDarkUrl(siteUrl) {
-  return toPublicAssetUrl('/assets/logo-networker-uk-partner-dark.png?v=' + LOGO_ASSET_VERSION, siteUrl);
+function logoEmailOnDarkUrl(siteUrl) {
+  return toPublicAssetUrl('/assets/logo-networker-uk-on-dark.png?v=' + LOGO_ASSET_VERSION, siteUrl);
 }
 
 function logoFooterUrl(siteUrl) {
@@ -339,7 +339,7 @@ module.exports = {
   opportunityPublicUrl,
   logoNavUrl,
   logoEmailHeaderUrl,
-  logoEmailHeaderDarkUrl,
+  logoEmailOnDarkUrl,
   logoFooterUrl,
   logoFooterLightUrl,
   hubertIconUrl,

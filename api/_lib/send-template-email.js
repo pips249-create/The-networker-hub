@@ -28,7 +28,7 @@ const {
   contactUrl,
   logoNavUrl,
   logoEmailHeaderUrl,
-  logoEmailHeaderDarkUrl,
+  logoEmailOnDarkUrl,
   logoFooterUrl,
   logoFooterLightUrl,
   hubertIconUrl,
@@ -410,10 +410,11 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
   merged.logo_url = logoEmailHeaderUrl(siteUrl);
   merged.logo_footer_url = logoFooterUrl(siteUrl);
   if (slug === 'hubert_hub_invite') {
-    // Cream header + purple footer need higher-contrast wordmarks than the default lavender pair.
-    merged.logo_url = logoEmailHeaderDarkUrl(siteUrl);
-    merged.logo_footer_url = logoFooterLightUrl(siteUrl);
-    merged.logo_footer_light_url = logoFooterLightUrl(siteUrl);
+    // Purple header/footer bands — use the near-white wordmark for contrast.
+    const onDark = logoEmailOnDarkUrl(siteUrl);
+    merged.logo_url = onDark;
+    merged.logo_footer_url = onDark;
+    merged.logo_footer_light_url = onDark;
   }
   if (
     slug === 'franchise_claim_invite' ||

@@ -29,9 +29,9 @@ assert.ok(inviteHtml.includes('UK networking events'), 'value prop: events');
 assert.ok(inviteHtml.includes('logo_footer_light_url'), 'high-contrast footer logo');
 assert.ok(
   fs.readFileSync(path.join(__dirname, '../api/_lib/send-template-email.js'), 'utf8').includes(
-    'logoEmailHeaderDarkUrl'
+    'logoEmailOnDarkUrl'
   ),
-  'send path sets dark header logo for hub invite'
+  'send path sets on-dark logo for hub invite'
 );
 assert.ok(
   fs.existsSync(path.join(__dirname, '../supabase/migrations/336_hubert_hub_invites.sql')),
