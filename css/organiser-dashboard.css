@@ -8570,7 +8570,12 @@ a.hub-payment-setup-btn {
   border-radius: var(--od-radius);
   box-shadow: 0 8px 24px rgba(45, 27, 94, 0.15);
   z-index: 200;
-  overflow: hidden;
+  /* Never use overflow:hidden here — long Action lists must remain scrollable
+     when max-height caps the panel near the viewport edge / Hubert. */
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .org-action-menu.is-open {
@@ -8581,12 +8586,23 @@ a.hub-payment-setup-btn {
   position: fixed;
   z-index: 10060;
   display: block;
-  max-height: min(70vh, 420px);
+  max-height: min(75vh, 520px);
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+  /* Keep a gutter so clipped menus look scrollable (not just cut off). */
   scrollbar-gutter: stable;
+  scrollbar-width: thin;
+}
+
+.org-action-menu.is-floating::-webkit-scrollbar {
+  width: 8px;
+}
+
+.org-action-menu.is-floating::-webkit-scrollbar-thumb {
+  background: rgba(45, 27, 94, 0.28);
+  border-radius: 8px;
 }
 
 .org-table-wrap tbody td.org-td-actions {

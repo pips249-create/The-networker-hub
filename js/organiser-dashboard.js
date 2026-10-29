@@ -10020,8 +10020,15 @@
       m.style.visibility = '';
       m.style.display = '';
       m.style.maxHeight = '';
+      m.style.height = '';
+      m.style.overflow = '';
+      m.style.overflowX = '';
       m.style.overflowY = '';
       m.style.webkitOverflowScrolling = '';
+      if (m._actionMenuWheel) {
+        m.removeEventListener('wheel', m._actionMenuWheel);
+        m._actionMenuWheel = null;
+      }
       if (m._actionWrap) {
         m._actionWrap.appendChild(m);
         m._actionWrap = null;
@@ -10036,6 +10043,35 @@
     return document.getElementById('org-action-menu-portal') || document.body;
   }
 
+  function bindActionMenuWheel(menu) {
+    if (menu._actionMenuWheel) return;
+    menu._actionMenuWheel = function (e) {
+      // Keep wheel intent on the menu so the page does not scroll (and close it)
+      // when the list is clipped or already at a scroll edge.
+      e.stopPropagation();
+      const canScroll = menu.scrollHeight > menu.clientHeight + 1;
+      if (!canScroll) {
+        e.preventDefault();
+        return;
+      }
+      let delta = e.deltaY;
+      if (!delta) return;
+      if (e.deltaMode === 1) delta *= 16;
+      else if (e.deltaMode === 2) delta *= menu.clientHeight || 160;
+      const atTop = menu.scrollTop <= 0;
+      const atBottom = menu.scrollTop + menu.clientHeight >= menu.scrollHeight - 1;
+      if ((delta < 0 && atTop) || (delta > 0 && atBottom)) {
+        e.preventDefault();
+        return;
+      }
+      // Explicitly scroll — some browsers chain to the document before the
+      // overflow box moves when the menu was just opened with a tight max-height.
+      menu.scrollTop += delta;
+      e.preventDefault();
+    };
+    menu.addEventListener('wheel', menu._actionMenuWheel, { passive: false });
+  }
+
   function openActionMenu(menu, toggle) {
     const wrap = toggle.closest('.org-action-wrap');
     const portal = getActionMenuPortal();
@@ -10047,33 +10083,41 @@
     toggle.setAttribute('aria-expanded', 'true');
     menu.style.visibility = 'hidden';
     menu.style.display = 'block';
+    // Force a real scroll container — the base rule used overflow:hidden which
+    // clipped long Action lists without a usable scrollbar.
+    menu.style.overflowX = 'hidden';
     menu.style.overflowY = 'auto';
     menu.style.webkitOverflowScrolling = 'touch';
+    menu.style.maxHeight = 'none';
+    menu.style.height = 'auto';
 
     const pad = 12;
     const gap = 6;
-    const hardCap = 420;
-    // Keep the menu clear of the platformert launcher in the bottom-right.
+    const hardCap = 520;
+    // Keep the menu clear of the Hubert launcher in the bottom-right.
     const bottomClearance = 88;
-    // Roughly header + note + 4–5 actions — below this, prefer the roomier side.
-    const minComfortable = 280;
     const rect = toggle.getBoundingClientRect();
     const spaceBelow = Math.max(
       0,
       window.innerHeight - rect.bottom - pad - gap - bottomClearance
     );
     const spaceAbove = Math.max(0, rect.top - pad - gap);
-    // Prefer below only when it can show a useful chunk; otherwise use the
-    // roomier side so first open isn't stuck on 1–2 items.
-    const openBelow =
-      spaceBelow >= minComfortable ||
-      (spaceBelow >= spaceAbove && spaceBelow >= 180);
+    const naturalH = Math.max(menu.scrollHeight || 0, menu.offsetHeight || 0, 160);
+
+    // Prefer the side that can show every item without scrolling. Only fall
+    // back to a capped, scrollable panel when neither side fits the full menu.
+    let openBelow;
+    if (naturalH <= spaceBelow) openBelow = true;
+    else if (naturalH <= spaceAbove) openBelow = false;
+    else openBelow = spaceBelow >= spaceAbove;
+
     const avail = openBelow ? spaceBelow : spaceAbove;
-    const maxH = Math.min(hardCap, Math.max(avail, 140));
+    const needsScroll = naturalH > avail + 1;
+    const maxH = needsScroll ? Math.min(hardCap, Math.max(avail, 160)) : Math.min(hardCap, naturalH);
     menu.style.maxHeight = maxH + 'px';
 
     const menuW = Math.min(menu.offsetWidth || 260, window.innerWidth - pad * 2);
-    const menuH = Math.min(menu.scrollHeight || 200, maxH);
+    const menuH = Math.min(menu.scrollHeight || naturalH, maxH);
 
     let top = openBelow ? rect.bottom + gap : rect.top - menuH - gap;
     if (top < pad) top = pad;
@@ -10093,6 +10137,12 @@
     menu.style.right = 'auto';
     menu.style.bottom = 'auto';
     menu.style.visibility = '';
+    bindActionMenuWheel(menu);
+    if (needsScroll) {
+      menu.scrollTop = 0;
+      // Nudge layout so overflow metrics settle before the first wheel gesture.
+      void menu.offsetHeight;
+    }
   }
 
   function handleActionMenuChoice(e) {
@@ -20111,6 +20161,13 @@
         // Scrolling inside the floating Actions menu must not close it.
         if (t && t.nodeType === 1 && t.closest && t.closest('.org-action-menu')) return;
         if (t && t.classList && t.classList.contains('org-action-menu')) return;
+        if (typeof e.composedPath === 'function') {
+          const path = e.composedPath();
+          for (let i = 0; i < path.length; i++) {
+            const node = path[i];
+            if (node && node.classList && node.classList.contains('org-action-menu')) return;
+          }
+        }
         closeAllActionMenus();
       },
       true
