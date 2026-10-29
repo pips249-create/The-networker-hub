@@ -5487,12 +5487,16 @@ body.ad-share-modal-open {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  margin-top: 4px;
+  min-height: 40px;
 }
 
 .hmm-profile-chip {
   position: relative;
   display: inline-flex;
+  align-items: center;
   cursor: pointer;
+  margin: 0;
 }
 
 .hmm-profile-chip input {
@@ -5500,22 +5504,31 @@ body.ad-share-modal-open {
   opacity: 0;
   width: 1px;
   height: 1px;
-  pointer-events: none;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
 }
 
 .hmm-profile-chip span {
   display: inline-block;
-  padding: 7px 12px;
+  padding: 8px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(125, 72, 150, 0.28);
+  border: 1px solid rgba(125, 72, 150, 0.32);
   background: #fff;
   font-size: 13px;
   font-weight: 600;
+  color: var(--hmm-ink, #241536);
+  line-height: 1.2;
 }
 
 .hmm-profile-chip input:checked + span {
-  background: rgba(125, 72, 150, 0.12);
-  border-color: rgba(125, 72, 150, 0.55);
+  background: rgba(125, 72, 150, 0.14);
+  border-color: rgba(125, 72, 150, 0.6);
+  color: #452d5c;
+}
+
+.hmm-profile-chip input:focus-visible + span {
+  outline: 2px solid rgba(125, 72, 150, 0.45);
+  outline-offset: 2px;
 }
 
 .hmm-setup--gate .hmm-profile-discoverable {

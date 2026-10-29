@@ -84,8 +84,27 @@ function suggestMatchmakerBlurb(attendee) {
   return '';
 }
 
+function normalizeLookingToMeetList(value) {
+  if (Array.isArray(value)) return cleanLookingToMeet(value);
+  if (value == null || value === '') return [];
+  // Rare: driver returns Postgres array text like {Clients,Investors}
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+      return cleanLookingToMeet(
+        trimmed
+          .slice(1, -1)
+          .split(',')
+          .map((part) => part.replace(/^"|"$/g, '').trim())
+      );
+    }
+    return cleanLookingToMeet(trimmed);
+  }
+  return cleanLookingToMeet(value);
+}
+
 function matchmakerProfileFromAttendee(attendee) {
-  const lookingToMeet = Array.isArray(attendee?.looking_to_meet) ? attendee.looking_to_meet.filter(Boolean) : [];
+  const lookingToMeet = normalizeLookingToMeetList(attendee?.looking_to_meet);
   const savedBlurb = String(attendee?.matchmaker_blurb || '').trim();
   const suggestedBlurb = suggestMatchmakerBlurb(attendee);
   const blurb = savedBlurb || suggestedBlurb;
@@ -131,6 +150,7 @@ module.exports = {
   cleanMatchmakerBlurb,
   parseDiscoverable,
   suggestMatchmakerBlurb,
+  normalizeLookingToMeetList,
   matchmakerProfileFromAttendee,
   assertMatchmakerReady,
 };

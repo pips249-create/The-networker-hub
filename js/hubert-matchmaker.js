@@ -748,7 +748,7 @@
     var panel = document.querySelector('[data-hmm-profile-panel]');
     if (!panel) return;
     var looking = document.querySelector('[data-hmm-profile-looking]');
-    if (looking && !looking.childElementCount) {
+    if (looking && !looking.querySelector('input[type="checkbox"]')) {
       renderLookingChips(looking, DEFAULT_LOOKING, []);
     }
     fetch('/api/auth/profile', {
@@ -786,7 +786,7 @@
     var looking = document.querySelector('[data-hmm-profile-looking]');
     var disc = document.querySelector('[data-hmm-profile-discoverable]');
     var saveBtn = document.querySelector('[data-hmm-profile-save]');
-    if (looking && !looking.childElementCount) {
+    if (looking && !looking.querySelector('input[type="checkbox"]')) {
       renderLookingChips(looking, DEFAULT_LOOKING, []);
     }
     var payload = {
@@ -794,6 +794,19 @@
       lookingToMeet: selectedLookingFrom(looking),
       discoverable: Boolean(disc && disc.checked),
     };
+    if (!payload.matchmakerBlurb) {
+      setProfileStatus(false, 'Add a short headline first.');
+      if (blurbEl) blurbEl.focus();
+      return;
+    }
+    if (!payload.lookingToMeet.length) {
+      setProfileStatus(false, 'Pick at least one option under “Who you want to meet”.');
+      return;
+    }
+    if (!payload.discoverable) {
+      setProfileStatus(false, 'Tick “Include me so Hubert can put me forward” to continue.');
+      return;
+    }
     if (saveBtn) saveBtn.disabled = true;
     setProfileStatus(true, 'Saving…');
     fetch('/api/auth/profile', {
@@ -870,8 +883,8 @@
 
   function bindProfilePanel() {
     var looking = document.querySelector('[data-hmm-profile-looking]');
-    // Paint chips immediately so the gate never looks empty before profile loads.
-    if (looking && !looking.childElementCount) {
+    // Ensure chips exist (HTML ships a static set; refill if the node was emptied).
+    if (looking && !looking.querySelector('input[type="checkbox"]')) {
       renderLookingChips(looking, DEFAULT_LOOKING, []);
     }
     var form = document.querySelector('[data-hmm-profile-form]');
