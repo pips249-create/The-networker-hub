@@ -447,19 +447,24 @@
       });
   }
 
-  function onTriggerClick() {
-    fillGroupSelect(selectedGroupId());
-    if (!connected) {
-      setExpanded(true);
-      startOAuth();
-      return;
+  function onTriggerClick(e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
     }
+    fillGroupSelect(selectedGroupId());
+    // Header only expands/collapses (like a series row). Never auto-start OAuth —
+    // that was sending people to Eventbrite login when they meant to refresh.
     if (expanded) {
       setExpanded(false);
       return;
     }
     setExpanded(true);
-    refreshEvents();
+    if (connected) {
+      refreshEvents();
+    } else {
+      setMsg('Press Connect Eventbrite to link your account, or paste a private token below.', 'ok');
+    }
   }
 
   function init() {
