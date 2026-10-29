@@ -7336,6 +7336,14 @@ button.cb-plan-card-btn:disabled {
 }
 
 /* Organiser page — booking connect / Eventbrite import */
+.org-group-drawer-booking {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid rgba(26, 46, 59, 0.12);
+  border-radius: 12px;
+  background: #fff;
+}
+
 .ge-booking-choices {
   display: grid;
   gap: 10px;

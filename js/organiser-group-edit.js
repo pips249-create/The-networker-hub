@@ -930,9 +930,16 @@
       const saved = enrichGroupFromApi(res.data.group);
       if (saved) stashSavedGroup(saved);
       formDirty = false;
+      if (saved && saved.id && config) {
+        config.editId = saved.id;
+        currentGroup = saved;
+      }
       if (saved && mode === 'save') {
         prefillGroup(saved);
         formDirty = false;
+      }
+      if (saved && saved.id && window.HubGroupBookingConnect && typeof window.HubGroupBookingConnect.init === 'function') {
+        window.HubGroupBookingConnect.init({ groupId: saved.id });
       }
 
       const logoWarning = res.data.logoWarning || res.data.group?.logoWarning;
@@ -1159,7 +1166,7 @@
         window.HubFlowTour.startGroupTour({ onboardReview: true, force: true, delay: 350 });
       }
       if (window.HubGroupBookingConnect && typeof window.HubGroupBookingConnect.init === 'function') {
-        window.HubGroupBookingConnect.init();
+        window.HubGroupBookingConnect.init({ groupId: getEditId() || (currentGroup && currentGroup.id) || '' });
       }
     } else {
       if (titleEl) titleEl.textContent = 'New organiser page';
@@ -1169,6 +1176,9 @@
           : 'Create your organiser group — linked to your account email.';
       }
       configureCreateActions();
+      if (window.HubGroupBookingConnect && typeof window.HubGroupBookingConnect.init === 'function') {
+        window.HubGroupBookingConnect.init({ groupId: '' });
+      }
       const boot = await api('/api/organiser/bootstrap');
       if (thisLoad !== loadGeneration) return;
       if (boot.ok) showMultiProfileTip(boot.data.groups || []);
