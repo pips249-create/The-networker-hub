@@ -61,6 +61,14 @@ assert.strictEqual(resolveHubInvitePersona('rosie').email, 'rosie@thenetworkeruk
 assert.strictEqual(resolveHubInvitePersona('nope'), null);
 assert.ok(HUB_INVITE_PERSONAS.catherine.defaultNote.includes('Catherine'));
 assert.ok(HUB_INVITE_PERSONAS.rosie.defaultNote.includes('Rosie'));
+assert.ok(
+  HUB_INVITE_PERSONAS.rosie.defaultNote.includes('UK business network'),
+  'blank-note fallback stays casual (no warm-intros duplicate)'
+);
+assert.ok(
+  !/warm intros|both sides say yes/i.test(HUB_INVITE_PERSONAS.rosie.defaultNote),
+  'fallback does not repeat body copy'
+);
 
 const sendTplPath = require.resolve('../api/_lib/send-template-email');
 const originalLoad = Module._load;
