@@ -302,7 +302,8 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
   }
 
   if (slug === 'hubert_hub_invite') {
-    const { logoEmailOnDarkUrl } = require('./hub-email-urls');
+    const hubertInviteHeaderLogoDataUri = require('./hubert-hub-invite-header-logo-datauri');
+    const hubertInviteOnDarkLogoDataUri = require('./hubert-hub-invite-logo-datauri');
     vars.invitee_name = 'Alex Morgan';
     vars.invitee_first_name = 'Alex';
     vars.inviter_name = 'Priya Shah';
@@ -321,10 +322,9 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
       '&intent=attendee&utm_source=hubert&utm_medium=email&utm_campaign=hub_invite';
     vars.account_url = site + '/account/';
     vars.hubert_icon_url = hubertIconUrl(site);
-    const onDark = logoEmailOnDarkUrl(site);
-    vars.logo_url = onDark;
-    vars.logo_footer_url = onDark;
-    vars.logo_footer_light_url = onDark;
+    vars.logo_url = hubertInviteHeaderLogoDataUri;
+    vars.logo_footer_url = hubertInviteOnDarkLogoDataUri;
+    vars.logo_footer_light_url = hubertInviteOnDarkLogoDataUri;
   }
 
   if (slug === 'saved_organiser_new_listing') {

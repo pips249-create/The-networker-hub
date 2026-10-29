@@ -34395,7 +34395,7 @@
     });
   }
 
-  var hubertSeedState = { status: 'active', q: '', cache: null };
+  var hubertSeedState = { status: 'active', q: '', cache: null, inviteAs: 'rosie' };
 
   function hubertSeedStatusLabel(status) {
     if (status === 'active') return 'Active';
@@ -34477,6 +34477,12 @@
         e.preventDefault();
         var fd = new FormData(form);
         var inviteNow = Boolean(form.querySelector('[name="inviteNow"]') && form.querySelector('[name="inviteNow"]').checked);
+        var inviteAsEl = form.querySelector('[name="inviteAs"]') || root.querySelector('#hmm-seed-invite-as');
+        var inviteAs = String((inviteAsEl && inviteAsEl.value) || hubertSeedState.inviteAs || 'rosie')
+          .trim()
+          .toLowerCase();
+        if (inviteAs !== 'catherine' && inviteAs !== 'rosie') inviteAs = 'rosie';
+        hubertSeedState.inviteAs = inviteAs;
         var payload = {
           fullName: String(fd.get('fullName') || '').trim(),
           email: String(fd.get('email') || '').trim(),
@@ -34491,6 +34497,7 @@
           source: 'linkedin',
           status: 'active',
           inviteNow: inviteNow,
+          inviteAs: inviteAs,
         };
         var errEl = root.querySelector('#hmm-seed-form-error');
         var okEl = root.querySelector('#hmm-seed-form-ok');
@@ -34511,8 +34518,14 @@
             if (okEl) {
               var msg = 'Saved to seed list.';
               if (inviteNow) {
-                if (data.invite && data.invite.ok) msg = 'Saved and Hub invite sent.';
-                else if (data.invite && data.invite.message) msg = 'Saved. Invite: ' + data.invite.message;
+                if (data.invite && data.invite.ok) {
+                  msg =
+                    'Saved and Hub invite sent as ' +
+                    (data.invite.inviterName || (inviteAs === 'catherine' ? 'Catherine' : 'Rosie')) +
+                    '.';
+                } else if (data.invite && data.invite.message) {
+                  msg = 'Saved. Invite: ' + data.invite.message;
+                }
               }
               okEl.hidden = false;
               okEl.textContent = msg;
@@ -34532,14 +34545,25 @@
       btn.addEventListener('click', function () {
         var id = btn.getAttribute('data-hmm-seed-invite');
         if (!id) return;
-        if (!window.confirm('Send a Hubert Hub invite email to this person?')) return;
+        var inviteAsEl = root.querySelector('#hmm-seed-invite-as');
+        var inviteAs = String((inviteAsEl && inviteAsEl.value) || hubertSeedState.inviteAs || 'rosie')
+          .trim()
+          .toLowerCase();
+        if (inviteAs !== 'catherine' && inviteAs !== 'rosie') inviteAs = 'rosie';
+        hubertSeedState.inviteAs = inviteAs;
+        var who = inviteAs === 'catherine' ? 'Catherine' : 'Rosie';
+        if (!window.confirm('Send a Hubert Hub invite as ' + who + ' to this person?')) return;
         btn.disabled = true;
-        adminPost('/api/admin/hubert-matchmaker', { action: 'invite', id: id })
+        adminPost('/api/admin/hubert-matchmaker', { action: 'invite', id: id, inviteAs: inviteAs })
           .then(function (data) {
             if (!data || data.ok === false) {
               throw new Error((data && data.message) || (data && data.error) || 'invite_failed');
             }
-            window.alert('Invite sent.');
+            window.alert(
+              'Invite sent as ' +
+                ((data.invite && data.invite.inviterName) || who) +
+                '.'
+            );
             loadHubertMatchmakerSeed();
           })
           .catch(function (err) {
@@ -34548,6 +34572,16 @@
           });
       });
     });
+
+    var inviteAsSel = root.querySelector('#hmm-seed-invite-as');
+    if (inviteAsSel && !inviteAsSel.dataset.bound) {
+      inviteAsSel.dataset.bound = '1';
+      inviteAsSel.value = hubertSeedState.inviteAs || 'rosie';
+      inviteAsSel.addEventListener('change', function () {
+        var v = String(inviteAsSel.value || 'rosie').trim().toLowerCase();
+        hubertSeedState.inviteAs = v === 'catherine' ? 'catherine' : 'rosie';
+      });
+    }
 
     root.querySelectorAll('[data-hmm-seed-pause]').forEach(function (btn) {
       btn.addEventListener('click', function () {
@@ -34625,12 +34659,22 @@
       '<div class="rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-sky-50 p-5">' +
       '<p class="text-xs font-bold uppercase tracking-wider text-violet-800">Hubert Matchmaker</p>' +
       '<h3 class="text-lg font-bold text-brand-900 mt-1">Add people from LinkedIn</h3>' +
-      '<p class="text-sm text-slate-600 mt-1 max-w-3xl">Paste a LinkedIn profile into the seed list for back-of-house matching (first name + initial only). Optionally send a Hubert Hub invite so they can join and become discoverable. Never scrape — copy fields by hand.</p>' +
+      '<p class="text-sm text-slate-600 mt-1 max-w-3xl">Paste a LinkedIn profile into the seed list for back-of-house matching (first name + initial only). Optionally send a Hubert Hub invite so they can join and become discoverable. Seed invites go out as Catherine or Rosie — member invites from the dashboard still use that individual&apos;s name. Never scrape — copy fields by hand.</p>' +
       '<ol class="mt-3 text-sm text-slate-700 list-decimal list-inside space-y-1 max-w-3xl">' +
       '<li>Open their LinkedIn → copy name, role, company, About blurb, and profile URL</li>' +
       '<li>Add their email if you have it (needed to invite)</li>' +
-      '<li>Save to seed — tick <strong>Also send Hub invite</strong> when you want Hubert to email them</li>' +
+      '<li>Choose <strong>Invite as Catherine or Rosie</strong>, then save — tick <strong>Also send Hub invite</strong> when you want Hubert to email them</li>' +
       '</ol>' +
+      '<label class="mt-4 inline-flex flex-col gap-1 text-sm font-semibold text-violet-950">' +
+      'Send Hub invites as' +
+      '<select id="hmm-seed-invite-as" name="inviteAs" class="rounded-lg border border-violet-300 bg-white px-3 py-2 text-sm font-semibold text-brand-900 min-w-[200px]">' +
+      '<option value="rosie"' +
+      (hubertSeedState.inviteAs !== 'catherine' ? ' selected' : '') +
+      '>Rosie McGilvray</option>' +
+      '<option value="catherine"' +
+      (hubertSeedState.inviteAs === 'catherine' ? ' selected' : '') +
+      '>Catherine Hancher</option>' +
+      '</select></label>' +
       '<div class="mt-4 flex flex-wrap gap-3 text-sm">' +
       '<span class="rounded-full bg-white/80 border border-violet-200 px-3 py-1 font-semibold text-violet-900">Active ' +
       esc(String(totals.active || 0)) +
@@ -34659,7 +34703,7 @@
       '<label class="text-sm font-semibold text-slate-700 sm:col-span-2">Internal notes<textarea name="notes" rows="2" maxlength="1000" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Why you’re adding them, event context, etc."></textarea></label>' +
       '<label class="sm:col-span-2 flex items-start gap-2 text-sm text-slate-700">' +
       '<input type="checkbox" name="inviteNow" class="mt-1 rounded border-slate-300" />' +
-      '<span><strong>Also send Hub invite now</strong> — Hubert emails them a join link (needs email). They won’t see your details.</span>' +
+      '<span><strong>Also send Hub invite now</strong> — Hubert emails them a join link as Catherine or Rosie (from the picker above). They won’t see ops details.</span>' +
       '</label>' +
       '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-800">Save to seed list</button>' +
