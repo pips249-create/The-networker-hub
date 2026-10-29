@@ -24,7 +24,8 @@ Implementation branch: `cursor/hubert-matchmaker-8ac8` (off `main` after this sp
 4. ~~Request intro → Hubert email → Accept/Decline · **no contact share** · Hub intro thread · persist + count~~
 5. ~~**Introduce someone to The Networker UK & Hubert**~~ · name + email (+ optional note) → Hubert join invite · 5/week (50 admin) · migration `334_hubert_hub_invites.sql`
 6. Intro tracking surfaces (admin totals + member “My intros”)
-7. Public site teaser (still gated until launch)
+7. ~~Member Matchmaker profile~~ · headline + looking-to-meet + discoverable opt-in (Settings + Meet people; soft nudge)
+8. Public site teaser (still gated until launch)
 
 ---
 
