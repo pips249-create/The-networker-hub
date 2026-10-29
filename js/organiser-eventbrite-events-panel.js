@@ -8,6 +8,7 @@
   var expanded = false;
   var connected = false;
   var loading = false;
+  var importingIds = {};
 
   function qs(id) {
     return document.getElementById(id);
@@ -123,6 +124,7 @@
     var pill = qs('org-eb-status');
     var connectBtn = qs('org-eb-connect');
     var refreshBtn = qs('org-eb-refresh');
+    var dedupeBtn = qs('org-eb-dedupe');
     var tokenWrap = qs('org-eb-token-wrap');
     var label = qs('org-eb-trigger-label');
     if (pill) {
@@ -130,12 +132,14 @@
       pill.classList.toggle('org-eb-status--ready', connected);
     }
     if (connectBtn) {
-      connectBtn.hidden = false;
-      connectBtn.textContent = connected ? 'Reconnect' : 'Connect Eventbrite';
-      connectBtn.classList.toggle('org-btn-primary', !connected);
-      connectBtn.classList.toggle('org-btn-outline', connected);
+      // Keep OAuth reconnect out of the main toolbar once connected — Refresh stays primary.
+      connectBtn.hidden = connected;
+      connectBtn.textContent = 'Connect Eventbrite';
+      connectBtn.classList.add('org-btn-primary');
+      connectBtn.classList.remove('org-btn-outline');
     }
     if (refreshBtn) refreshBtn.hidden = !connected;
+    if (dedupeBtn) dedupeBtn.hidden = !connected;
     if (tokenWrap) tokenWrap.hidden = connected;
     if (label) {
       label.textContent = connected ? 'Eventbrite events' : 'Connect Eventbrite';
@@ -166,11 +170,13 @@
       li.querySelector('.org-eb-event-meta').textContent =
         meta || (already ? 'Already on The Networker UK' : '');
       var btn = li.querySelector('button');
-      btn.textContent = already ? 'Already linked' : 'Import';
-      btn.disabled = already;
+      var extId = String(evt.id || '');
+      var inFlight = Boolean(importingIds[extId]);
+      btn.textContent = already ? 'Already linked' : inFlight ? 'Importing…' : 'Import';
+      btn.disabled = already || inFlight;
       if (!already) {
         btn.addEventListener('click', function () {
-          importEvent(String(evt.id || ''), btn);
+          importEvent(extId, btn);
         });
       }
       list.appendChild(li);
@@ -211,7 +217,12 @@
       return;
     }
     if (!externalEventId) return;
-    if (btn) btn.disabled = true;
+    if (importingIds[externalEventId]) return;
+    importingIds[externalEventId] = true;
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Importing…';
+    }
     setMsg('Importing…');
     patchProviders({
       action: 'create_from_eventbrite',
@@ -219,8 +230,12 @@
       externalEventId: externalEventId,
     })
       .then(function (res) {
-        if (btn) btn.disabled = false;
         if (!res.ok) {
+          delete importingIds[externalEventId];
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Import';
+          }
           setMsg(res.data.message || res.data.error || 'Could not import that event.', 'error');
           return;
         }
@@ -259,8 +274,39 @@
           '&provider=eventbrite';
       })
       .catch(function () {
-        if (btn) btn.disabled = false;
+        delete importingIds[externalEventId];
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Import';
+        }
         setMsg('Could not import that event.', 'error');
+      });
+  }
+
+  function dedupeImports() {
+    setMsg('Checking for duplicate Eventbrite imports…');
+    return patchProviders({ action: 'dedupe_eventbrite_imports' })
+      .then(function (res) {
+        if (!res.ok) {
+          setMsg(res.data.message || res.data.error || 'Could not clean duplicates.', 'error');
+          return;
+        }
+        var n = Number(res.data.unpublished) || 0;
+        setMsg(
+          res.data.message ||
+            (n ? 'Unpublished ' + n + ' duplicate listing' + (n === 1 ? '' : 's') + '.' : 'No duplicates found.'),
+          'ok'
+        );
+        if (typeof window.refreshOrganiserEvents === 'function') {
+          try {
+            window.refreshOrganiserEvents();
+          } catch (_e) {
+            /* ignore */
+          }
+        }
+      })
+      .catch(function () {
+        setMsg('Could not clean duplicates.', 'error');
       });
   }
 
@@ -402,19 +448,24 @@
       });
   }
 
-  function onTriggerClick() {
-    fillGroupSelect(selectedGroupId());
-    if (!connected) {
-      setExpanded(true);
-      startOAuth();
-      return;
+  function onTriggerClick(e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
     }
+    fillGroupSelect(selectedGroupId());
+    // Header only expands/collapses (like a series row). Never auto-start OAuth —
+    // that was sending people to Eventbrite login when they meant to refresh.
     if (expanded) {
       setExpanded(false);
       return;
     }
     setExpanded(true);
-    refreshEvents();
+    if (connected) {
+      refreshEvents();
+    } else {
+      setMsg('Press Connect Eventbrite to link your account, or paste a private token below.', 'ok');
+    }
   }
 
   function init() {
@@ -430,6 +481,7 @@
     var connectBtn = qs('org-eb-connect');
     if (connectBtn) {
       connectBtn.addEventListener('click', function (e) {
+        e.preventDefault();
         e.stopPropagation();
         fillGroupSelect(selectedGroupId());
         startOAuth();
@@ -438,8 +490,20 @@
 
     var refreshBtn = qs('org-eb-refresh');
     if (refreshBtn) {
-      refreshBtn.addEventListener('click', function () {
+      refreshBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
         refreshEvents();
+      });
+    }
+
+    var dedupeBtn = qs('org-eb-dedupe');
+    if (dedupeBtn && !dedupeBtn.dataset.bound) {
+      dedupeBtn.dataset.bound = '1';
+      dedupeBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        dedupeImports();
       });
     }
 

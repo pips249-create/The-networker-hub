@@ -17,7 +17,106 @@ const {
   upsertEventLink,
 } = require('./connected-booking-provider-store');
 const { loadLockedOrActiveSaleEvents, lockEventOnFirstSale } = require('./event-sale-lock');
-const { createEvent, updateEvent } = require('./supabase-organiser-events');
+const { createEvent, updateEvent, unpublishEvent } = require('./supabase-organiser-events');
+
+function isUniqueViolation(err) {
+  const msg = [err && err.message, err && err.code, err && err.details].filter(Boolean).join(' ');
+  return /23505|duplicate key|unique constraint/i.test(msg);
+}
+
+/**
+ * Find TNH events already imported from this Eventbrite id (via link table or booking URL).
+ * Oldest first — used to keep one and unpublish extras.
+ */
+async function findEventsByEventbriteExternalId(sb, accountId, externalEventId) {
+  const eid = String(externalEventId || '').trim();
+  const account = String(accountId || '').trim();
+  if (!eid || !account) return [];
+
+  const byId = new Map();
+
+  try {
+    const existingLink = await findEventLinkByExternal(sb, 'eventbrite', eid, account);
+    if (existingLink && existingLink.event_id) {
+      const { data: linkedEv } = await sb
+        .from('events')
+        .select('id, title, external_booking_url, organiser_id, created_at, status, listing_status')
+        .eq('id', existingLink.event_id)
+        .maybeSingle();
+      if (linkedEv && linkedEv.id) {
+        byId.set(String(linkedEv.id), linkedEv);
+      }
+    }
+  } catch (_linkErr) {
+    /* links table may be missing — fall through to URL scan */
+  }
+
+  const { data: orgs, error: orgErr } = await sb
+    .from('organisers')
+    .select('id')
+    .eq('organiser_account_id', account);
+  if (orgErr) throw new Error(orgErr.message);
+  const orgIds = (orgs || []).map((o) => String(o.id || '').trim()).filter(Boolean);
+  if (orgIds.length) {
+    const { data: rows, error } = await sb
+      .from('events')
+      .select('id, title, external_booking_url, organiser_id, created_at, status, listing_status')
+      .in('organiser_id', orgIds)
+      .not('external_booking_url', 'is', null)
+      .ilike('external_booking_url', '%' + eid + '%')
+      .order('created_at', { ascending: true })
+      .limit(50);
+    if (error) throw new Error(error.message);
+    (rows || []).forEach(function (row) {
+      if (!row || !row.id) return;
+      const parsed = parseEventbriteEventIdFromUrl(row.external_booking_url);
+      const url = String(row.external_booking_url || '');
+      if (parsed === eid || url.indexOf(eid) !== -1) {
+        byId.set(String(row.id), row);
+      }
+    });
+  }
+
+  return Array.from(byId.values()).sort(function (a, b) {
+    return String(a.created_at || '').localeCompare(String(b.created_at || ''));
+  });
+}
+
+/**
+ * Keep the oldest matching listing; unpublish newer duplicates.
+ */
+async function collapseEventbriteImportDuplicates(sb, accountId, externalEventId, preferredEventId) {
+  const matches = await findEventsByEventbriteExternalId(sb, accountId, externalEventId);
+  if (!matches.length) {
+    return { keepEventId: '', unpublished: [], matches: [] };
+  }
+  const preferred = String(preferredEventId || '').trim();
+  let keep = matches[0];
+  if (preferred) {
+    const preferredRow = matches.find(function (row) {
+      return String(row.id) === preferred;
+    });
+    if (preferredRow) keep = preferredRow;
+  }
+  const unpublished = [];
+  for (let i = 0; i < matches.length; i += 1) {
+    const row = matches[i];
+    if (String(row.id) === String(keep.id)) continue;
+    const status = String(row.status || '').toLowerCase();
+    if (status === 'unpublished' || status === 'cancelled' || status === 'archived') continue;
+    try {
+      await unpublishEvent(row.id);
+      unpublished.push(String(row.id));
+    } catch (_unpubErr) {
+      /* best-effort */
+    }
+  }
+  return {
+    keepEventId: String(keep.id),
+    unpublished: unpublished,
+    matches: matches,
+  };
+}
 
 /**
  * Trusted Connected imports go live when date + booking URL + price are present.
@@ -161,10 +260,23 @@ async function listImportableEventbriteEvents(sb, accountId, opts) {
       .map((l) => String(l.external_event_id || '').trim())
       .filter(Boolean)
   );
-  const events = (listed.events || []).map(function (evt) {
+  // Also treat booking-URL matches as linked (covers imports that ran before links table existed).
+  const events = [];
+  for (let i = 0; i < (listed.events || []).length; i += 1) {
+    const evt = listed.events[i];
     const id = String(evt.id || '').trim();
-    return Object.assign({}, evt, { alreadyLinked: linkedIds.has(id) });
-  });
+    let alreadyLinked = linkedIds.has(id);
+    if (!alreadyLinked && id) {
+      try {
+        const matches = await findEventsByEventbriteExternalId(sb, accountId, id);
+        alreadyLinked = matches.length > 0;
+        if (alreadyLinked) linkedIds.add(id);
+      } catch (_matchErr) {
+        /* ignore */
+      }
+    }
+    events.push(Object.assign({}, evt, { alreadyLinked: alreadyLinked }));
+  }
   return {
     organizationId: listed.organizationId,
     events: events,
@@ -195,12 +307,62 @@ async function createEventFromEventbrite(sb, session, accountId, opts) {
 
   const existingLink = await findEventLinkByExternal(sb, 'eventbrite', externalEventId, accountId);
   if (existingLink && existingLink.event_id) {
+    const collapsed = await collapseEventbriteImportDuplicates(
+      sb,
+      accountId,
+      externalEventId,
+      existingLink.event_id
+    );
     return {
       created: false,
       alreadyLinked: true,
       eventId: existingLink.event_id,
       externalEventId: externalEventId,
-      message: 'That Eventbrite event is already linked on The Networker UK.',
+      duplicatesUnpublished: collapsed.unpublished.length,
+      message:
+        collapsed.unpublished.length > 0
+          ? 'Already linked. Unpublished ' +
+            collapsed.unpublished.length +
+            ' duplicate listing' +
+            (collapsed.unpublished.length === 1 ? '' : 's') +
+            '.'
+          : 'That Eventbrite event is already linked on The Networker UK.',
+    };
+  }
+
+  const existingByUrl = await findEventsByEventbriteExternalId(sb, accountId, externalEventId);
+  if (existingByUrl.length) {
+    const keepId = String(existingByUrl[0].id);
+    try {
+      await upsertEventLink(sb, accountId, {
+        eventId: keepId,
+        provider: 'eventbrite',
+        externalEventId: externalEventId,
+        externalEventUrl: String(existingByUrl[0].external_booking_url || '').trim() || null,
+      });
+    } catch (_ensureLinkErr) {
+      /* link table may still be unavailable */
+    }
+    const collapsed = await collapseEventbriteImportDuplicates(
+      sb,
+      accountId,
+      externalEventId,
+      keepId
+    );
+    return {
+      created: false,
+      alreadyLinked: true,
+      eventId: keepId,
+      externalEventId: externalEventId,
+      duplicatesUnpublished: collapsed.unpublished.length,
+      message:
+        collapsed.unpublished.length > 0
+          ? 'Already imported. Unpublished ' +
+            collapsed.unpublished.length +
+            ' duplicate listing' +
+            (collapsed.unpublished.length === 1 ? '' : 's') +
+            '.'
+          : 'That Eventbrite event is already on The Networker UK.',
     };
   }
 
@@ -283,12 +445,61 @@ async function createEventFromEventbrite(sb, session, accountId, opts) {
     throw e;
   }
 
-  const link = await upsertEventLink(sb, accountId, {
-    eventId: eventId,
-    provider: 'eventbrite',
-    externalEventId: String(ebEvent.id || externalEventId).trim(),
-    externalEventUrl: bookingUrl,
-  });
+  const resolvedExternalId = String(ebEvent.id || externalEventId).trim();
+  let link = null;
+  try {
+    link = await upsertEventLink(sb, accountId, {
+      eventId: eventId,
+      provider: 'eventbrite',
+      externalEventId: resolvedExternalId,
+      externalEventUrl: bookingUrl,
+    });
+  } catch (linkErr) {
+    // Race / retry after schema came online: another row already owns this Eventbrite id.
+    if (isUniqueViolation(linkErr)) {
+      const winner = await findEventLinkByExternal(sb, 'eventbrite', resolvedExternalId, accountId);
+      const keepId = String((winner && winner.event_id) || '').trim();
+      if (keepId && keepId !== eventId) {
+        try {
+          await unpublishEvent(eventId);
+        } catch (_unpubErr) {
+          /* best-effort */
+        }
+        return {
+          created: false,
+          alreadyLinked: true,
+          eventId: keepId,
+          externalEventId: resolvedExternalId,
+          duplicatesUnpublished: 1,
+          message: 'That Eventbrite event was already imported — kept the existing listing.',
+        };
+      }
+    }
+    // If the links table is missing, still return the created event but warn.
+    // Dedupe by URL will catch later retries once migration/cache is ready.
+    if (!/299_connected_booking_provider_links|schema cache|does not exist|PGRST204/i.test(
+      String(linkErr && linkErr.message ? linkErr.message : linkErr)
+    )) {
+      throw linkErr;
+    }
+  }
+
+  const collapsed = await collapseEventbriteImportDuplicates(
+    sb,
+    accountId,
+    resolvedExternalId,
+    eventId
+  );
+  if (collapsed.keepEventId && collapsed.keepEventId !== eventId) {
+    return {
+      created: false,
+      alreadyLinked: true,
+      eventId: collapsed.keepEventId,
+      externalEventId: resolvedExternalId,
+      duplicatesUnpublished: collapsed.unpublished.length,
+      message: 'That Eventbrite event was already imported — kept the existing listing.',
+    };
+  }
 
   const live =
     published &&
@@ -301,12 +512,13 @@ async function createEventFromEventbrite(sb, session, accountId, opts) {
     event: created,
     eventId: eventId,
     eventLink: link,
-    externalEventId: String(ebEvent.id || externalEventId).trim(),
+    externalEventId: resolvedExternalId,
     importedFields: Object.keys(patch),
     published: live,
     listingStatus: live ? 'published' : 'draft',
     autoPublishAttempted: wantPublish,
     publishBlockedReason: live ? '' : publishBlockedReason,
+    duplicatesUnpublished: collapsed.unpublished.length,
     message: live
       ? 'Imported and published on The Networker UK.'
       : publishBlockedReason
@@ -320,5 +532,7 @@ module.exports = {
   resolveEventbriteExternalId,
   listImportableEventbriteEvents,
   createEventFromEventbrite,
+  findEventsByEventbriteExternalId,
+  collapseEventbriteImportDuplicates,
   shouldAutoPublishEventbriteImport,
 };
