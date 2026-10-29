@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Ticket Tailor">
+  <rect width="64" height="64" rx="14" fill="#2F6FED"/>
+  <path fill="#fff" d="M12 23c0-2.8 2.2-5 5-5h30c2.8 0 5 2.2 5 5v4.2c-2.1.4-3.7 2.2-3.7 4.4S49.9 35.6 52 36v5c0 2.8-2.2 5-5 5H17c-2.8 0-5-2.2-5-5v-5.2c2.1-.4 3.7-2.2 3.7-4.4S14.1 27.6 12 27.2V23z"/>
+  <path fill="#2F6FED" d="M22 27h14v3H22v-3zm0 8h10v3H22v-3z"/>
+  <circle cx="42.5" cy="31.5" r="2.2" fill="#2F6FED"/>
+</svg>

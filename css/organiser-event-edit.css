@@ -7531,6 +7531,12 @@ button.ge-booking-choice {
 }
 
 
+/* Booking system — hide leftover pricing CTA permanently */
+#cb-goto-pricing[hidden],
+.org-page--connected-booking #cb-goto-pricing {
+  display: none !important;
+}
+
 /* Booking system provider logo tiles */
 .cb-provider-tiles {
   list-style: none;
@@ -7568,24 +7574,33 @@ button.ge-booking-choice {
   opacity: 0.62;
   filter: grayscale(0.35);
 }
-.cb-provider-tile-mark {
+.cb-provider-tile-logo-wrap {
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  display: grid;
-  place-items: center;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  color: #fff;
-  background: #0d6e7a;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(15, 47, 54, 0.08);
 }
-.cb-provider-tile-mark--eventbrite { background: #f05537; }
-.cb-provider-tile-mark--ticket_tailor { background: #2f6fed; }
-.cb-provider-tile-mark--trybooking { background: #e07a2f; }
-.cb-provider-tile-mark--own_site { background: #1f6f5b; }
-.cb-provider-tile-mark--luma { background: #6b4eff; }
-.cb-provider-tile-mark--meetup { background: #ed1c40; }
+.cb-provider-tile-logo-wrap--hub {
+  background: #fff;
+  border: 1px solid #d7e6ea;
+}
+.cb-provider-tile-logo {
+  display: block;
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+}
+.cb-provider-tile-logo--hub {
+  object-fit: contain;
+  padding: 5px;
+  box-sizing: border-box;
+  background: #fff;
+}
+.cb-provider-tile--hub .cb-provider-tile-status {
+  color: #0d6e7a;
+}
 .cb-provider-tile-label {
   font-size: 12px;
   font-weight: 700;
@@ -7612,15 +7627,57 @@ button.ge-booking-choice {
   overflow: hidden;
 }
 .cb-provider-detail-inner { padding: 16px 16px 14px; }
+.cb-provider-detail-inner > .ee-booking-help-kicker { margin: 0 0 4px; }
 .cb-provider-detail-head {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 6px;
+}
+.cb-provider-detail-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: block;
+  flex-shrink: 0;
+}
+.cb-provider-detail-logo--hub {
+  object-fit: contain;
+  background: #fff;
+  border: 1px solid #d7e6ea;
+  padding: 3px;
+  box-sizing: border-box;
+}
+.cb-provider-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 10px 0 12px;
 }
 .cb-provider-detail-title {
   margin: 0;
   font-size: 1.05rem;
+  flex: 1 1 auto;
+}
+.cb-provider-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #e8f0f2;
+  color: #5b7a82;
+}
+.cb-provider-badge--live {
+  background: #e5f6ef;
+  color: #0f6b5c;
+}
+.cb-provider-badge--soon {
+  background: #eef1f3;
+  color: #8a9aa3;
 }
 .cb-provider-steps-title {
   margin: 12px 0 6px;
@@ -7637,6 +7694,50 @@ button.ge-booking-choice {
   color: #23444c;
 }
 .cb-provider-steps li + li { margin-top: 4px; }
+.cb-provider-howto {
+  margin: 12px 0;
+  border: 1px solid #d7e6ea;
+  border-radius: 10px;
+  background: #fff;
+  padding: 0 12px;
+}
+.cb-provider-howto > summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: #0f2f36;
+  padding: 10px 0;
+}
+.cb-provider-howto-body { padding: 0 0 12px; }
+.cb-provider-token-row {
+  display: grid;
+  gap: 8px;
+  margin: 8px 0;
+}
+.cb-provider-webhook-block {
+  margin: 10px 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid #d7e6ea;
+}
+.cb-provider-webhook-url {
+  display: block;
+  margin-top: 6px;
+  word-break: break-all;
+  font-size: 12px;
+}
+.cb-provider-sample {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #0f2f36;
+  color: #e8f4f6;
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-x: auto;
+}
+.cb-provider-detail-status { margin-top: 8px; }
+.cb-provider-after { margin-top: 4px; }
 .cb-guides-card { margin: 0 0 18px; }
 .cb-guides-list {
   margin: 10px 0 0;

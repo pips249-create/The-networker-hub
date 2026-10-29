@@ -38,11 +38,11 @@ insert into public.email_templates (
 values (
   'account_welcome',
   'Account welcome',
-  'Sent after email confirm when someone creates a new Account. Hubert profile + claim-attended / Most networked CTAs.',
+  'Sent after email confirm. Leads with core profile fill plus Hubert and Most networked CTAs.',
   'Welcome to The Networker UK',
   '${escaped}',
   array[
-    'user_name', 'user_email', 'hub_account_url', 'hubert_profile_url', 'claim_attended_url', 'browse_events_url', 'opportunities_url', 'welcome_url',
+    'user_name', 'user_email', 'hub_account_url', 'account_settings_url', 'hubert_profile_url', 'claim_attended_url', 'browse_events_url', 'opportunities_url', 'welcome_url',
     'contact_url', 'privacy_url', 'terms_url', 'refunds_url',
     'site_url', 'logo_url', 'logo_footer_url', 'support_email',
     'sponsor_row', 'sponsor_section', 'mini_sponsors_row', 'unsubscribe_url'

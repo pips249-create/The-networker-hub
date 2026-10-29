@@ -13,76 +13,72 @@
     @media only screen and (max-width:600px) {
       .email-outer-pad { padding:8px 0 !important; }
       .email-wrapper { width:100% !important; max-width:100% !important; border-radius:0 !important; box-shadow:none !important; }
-      .hero-title { font-size:24px !important; line-height:1.2 !important; }
+      .hero-title { font-size:26px !important; line-height:1.2 !important; }
       .mobile-pad { padding-left:16px !important; padding-right:16px !important; }
-      .mobile-header-pad { padding:24px 16px 0 !important; }
-      .mobile-footer-pad { padding:24px 16px 30px !important; }
+      .mobile-header-pad { padding:32px 16px 20px !important; }
+      .mobile-footer-pad { padding:28px 16px 32px !important; }
       .email-cta a { display:block !important; width:100% !important; box-sizing:border-box !important; text-align:center !important; }
-      .email-logo-header { max-width:200px !important; width:200px !important; }
-      .email-logo-footer { max-width:168px !important; width:168px !important; }
+      .email-logo-header { max-width:260px !important; width:260px !important; }
+      .email-logo-footer { max-width:200px !important; width:200px !important; }
+      .hubert-avatar { width:72px !important; height:72px !important; }
     }
   </style>
 </head>
 <body style="margin:0;padding:0;background:#e8ecf5;font-family:'DM Sans',system-ui,sans-serif;">
-<!-- hub-email-layout-v3-cream-header-purple-footer -->
+<!-- hub-email-layout-v3-navy-logo-hubert-led -->
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#e8ecf5;">
   <tr>
     <td class="email-outer-pad" align="center" style="padding:32px 16px 56px;">
       <table class="email-wrapper" role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 8px 40px rgba(28,32,64,0.12);">
-        <tr>
-          <td class="mobile-header-pad" style="background:#f5f0e8;padding:28px 40px 0;text-align:center;">
-            <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
-              <img src="{{logo_url}}" alt="The Networker UK" width="240" class="email-logo-header" style="height:auto;display:inline-block;margin:0 auto;border:0;max-width:240px;width:100%;">
-            </a>
-          </td>
-        </tr>
 
+        <!-- Deep navy logo band — cream wordmark at full size -->
         <tr>
-          <td style="background:#f5f0e8;padding:0;text-align:center;border-bottom:1px solid rgba(194,153,209,0.35);">
-            <div style="line-height:0;font-size:0;margin-top:8px;">
-              <svg viewBox="0 0 600 40" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:40px;">
-                <path d="M0,24 C150,46 450,4 600,24 L600,40 L0,40 Z" fill="#ffffff"/>
-              </svg>
-            </div>
+          <td class="mobile-header-pad" style="background:#1c2040;padding:36px 40px 28px;text-align:center;">
+            <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
+              <img src="{{logo_url}}" alt="The Networker UK" width="300" class="email-logo-header" style="height:auto;display:inline-block;margin:0 auto;border:0;max-width:300px;width:100%;">
+            </a>
           </td>
         </tr>
 
         {{sponsor_row}}
 
         <tr>
-          <td class="mobile-pad" style="padding:28px 40px 16px;text-align:center;">
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 16px;">
+          <td class="mobile-pad" style="padding:32px 40px 12px;text-align:center;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 14px;">
               <tr>
-                <td style="width:56px;height:56px;border-radius:50%;overflow:hidden;background:#0d0d12;text-align:center;vertical-align:middle;">
-                  <img src="{{hubert_icon_url}}" alt="Hubert" width="56" height="56" style="display:block;width:56px;height:56px;border:0;border-radius:50%;">
+                <td class="hubert-avatar" style="width:80px;height:80px;border-radius:50%;overflow:hidden;background:#0d0d12;text-align:center;vertical-align:middle;border:3px solid #ebe0f0;">
+                  <img src="{{hubert_icon_url}}" alt="Hubert" width="80" height="80" style="display:block;width:80px;height:80px;border:0;border-radius:50%;">
                 </td>
               </tr>
             </table>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:700;color:#9d60a7;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 8px;">Hubert · matchmaker</p>
-            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#1c2040;margin:0 0 12px;line-height:1.2;">
-              {{inviter_first_name}} thought you&apos;d like The Networker UK
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:700;color:#9d60a7;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 10px;">Hubert · your matchmaker</p>
+            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:30px;font-weight:700;color:#1c2040;margin:0 0 14px;line-height:1.2;">
+              I introduce you to people worth meeting
             </h1>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0 0 12px;">
-              Hi {{invitee_first_name}} — I&apos;m Hubert. <strong style="color:#1c2040;">{{inviter_name}}</strong> asked me to invite you.
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:17px;line-height:1.65;color:#635c5e;margin:0 0 12px;">
+              Hi {{invitee_first_name}} — I&apos;m Hubert. <strong style="color:#1c2040;">{{inviter_name}}</strong> asked me to bring you onto The Networker UK.
             </p>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0 0 16px;">
-              The Networker UK is where you find events worth going to — and get introduced, for free, to people and business owners you actually want to meet.
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:17px;line-height:1.65;color:#635c5e;margin:0 0 18px;">
+              Tell me who you need — clients, founders, partners, hires — and I put the right people forward. When you both say yes, I open the intro. Contact details stay private until then. <strong style="color:#1c2040;">It&apos;s free.</strong>
             </p>
             {{invite_note_section}}
           </td>
         </tr>
 
         <tr>
-          <td class="mobile-pad" style="padding:0 40px 20px;">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f7f4fb;border-radius:16px;">
+          <td class="mobile-pad" style="padding:0 40px 18px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f7f4fb;border-radius:16px;border:1px solid rgba(157,96,167,0.22);">
               <tr>
-                <td style="padding:18px 20px;text-align:left;">
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:12px;font-weight:700;color:#7a3d8a;text-transform:uppercase;letter-spacing:0.06em;margin:0 0 12px;">What you get free</p>
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.6;color:#1c2040;margin:0 0 10px;">
-                    <strong>Introductions via Hubert</strong> — ask who you want to meet; we put people forward and open an intro when both sides say yes. Contact details stay private.
+                <td style="padding:20px 22px;text-align:left;">
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:12px;font-weight:700;color:#7a3d8a;text-transform:uppercase;letter-spacing:0.06em;margin:0 0 14px;">What Hubert does for you</p>
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.6;color:#1c2040;margin:0 0 12px;">
+                    <strong>Ask who you want to meet</strong> — I search members and curated connections, then shortlist people who fit.
+                  </p>
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.6;color:#1c2040;margin:0 0 12px;">
+                    <strong>Warm intros, both sides opt in</strong> — no cold spam. If they accept, you get a thread on The Networker UK.
                   </p>
                   <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.6;color:#1c2040;margin:0;">
-                    <strong>UK networking events</strong> — discover sessions, exhibitions, and groups worth showing up to.
+                    <strong>Plus UK networking events</strong> — find sessions and groups worth showing up to.
                   </p>
                 </td>
               </tr>
@@ -93,17 +89,17 @@
         <tr>
           <td class="mobile-pad" style="padding:0 40px 8px;text-align:center;">
             <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.7;color:#635c5e;margin:0;">
-              Create a free account with this email. They won&apos;t see your details from this invite — you choose what to share when you&apos;re ready.
+              Create a free account with this email to start. {{inviter_first_name}} won&apos;t see your details from this invite — you choose what to share when you&apos;re ready.
             </p>
           </td>
         </tr>
 
         <tr>
-          <td class="mobile-pad email-cta" style="padding:8px 40px 28px;text-align:center;">
+          <td class="mobile-pad email-cta" style="padding:12px 40px 32px;text-align:center;">
             <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;">
               <tr>
                 <td align="center" style="border-radius:999px;background:#9d60a7;">
-                  <a href="{{register_url}}" style="display:inline-block;text-align:center;padding:14px 32px;color:#ffffff;font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;text-decoration:none;">Create your free account &rarr;</a>
+                  <a href="{{register_url}}" style="display:inline-block;text-align:center;padding:16px 36px;color:#ffffff;font-family:'DM Sans',system-ui,sans-serif;font-size:17px;font-weight:700;text-decoration:none;">Meet people with Hubert &rarr;</a>
                 </td>
               </tr>
             </table>
@@ -114,15 +110,15 @@
         </tr>
 
         <tr>
-          <td class="mobile-footer-pad" style="background:#452d5c;padding:28px 40px 40px;text-align:center;border-radius:0 0 20px 20px;">
+          <td class="mobile-footer-pad" style="background:#1c2040;padding:32px 40px 40px;text-align:center;border-radius:0 0 20px 20px;">
             <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
-              <img src="{{logo_footer_light_url}}" alt="The Networker UK" width="200" class="email-logo-footer" style="height:auto;display:inline-block;margin:0 auto 16px;border:0;max-width:200px;">
+              <img src="{{logo_footer_light_url}}" alt="The Networker UK" width="220" class="email-logo-footer" style="height:auto;display:inline-block;margin:0 auto 18px;border:0;max-width:220px;">
             </a>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:rgba(255,255,255,0.55);line-height:1.7;margin:0 0 10px;">
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:14px;font-weight:400;color:rgba(255,255,255,0.55);line-height:1.7;margin:0 0 10px;">
               Operated by The Networker Group Ltd &nbsp;&middot;&nbsp; Company No. 15252227<br>
               <a href="mailto:{{support_email}}" style="color:#d9c4e0;text-decoration:none;">{{support_email}}</a>
             </p>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:rgba(255,255,255,0.55);margin:0;">
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:14px;font-weight:400;color:rgba(255,255,255,0.55);margin:0;">
               <a href="{{privacy_url}}" style="color:#d9c4e0;text-decoration:none;">Privacy</a>
               &nbsp;&middot;&nbsp;
               <a href="{{terms_url}}" style="color:#d9c4e0;text-decoration:none;">Terms</a>

@@ -200,6 +200,7 @@
       var industryValue = resolvedWelcomeIndustry();
       var jobTitle = document.getElementById('welcome-profile-job-title');
       var company = document.getElementById('welcome-profile-company');
+      var locationEl = document.getElementById('welcome-profile-location');
       var submitBtn = document.getElementById('welcome-profile-submit');
       var err = window.HubProfileCompletion
         ? window.HubProfileCompletion.validateProfileForm(
@@ -221,6 +222,7 @@
           businessSector: industryValue,
           jobTitle: jobTitle ? jobTitle.value.trim() : '',
           company: company ? company.value.trim() : '',
+          location: locationEl ? locationEl.value.trim() : '',
         })
         .then(function (result) {
           if (!result.ok) {

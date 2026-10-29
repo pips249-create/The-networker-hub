@@ -1,5 +1,5 @@
 /**
- * Auth — Hubert Matchmaker search, intro requests, and Hub invites
+ * Auth — Hubert Matchmaker search, intro requests, and The Networker UK invites
  * (admin-only until public launch flag).
  */
 const { setCors, json, sessionFromRequest, requireAdminLive, isAdminRole } = require('../auth');

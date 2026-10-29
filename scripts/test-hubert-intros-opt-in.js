@@ -64,7 +64,7 @@ assert.ok(hmm.includes('hubertIntrosInterest'), 'Enable persists interest');
 assert.ok(hmm.includes('hubertIntrosPromptDismiss'), 'Maybe later dismisses');
 
 const migration = fs.readFileSync(
-  path.join(__dirname, '../supabase/migrations/341_hubert_intros_opt_in.sql'),
+  path.join(__dirname, '../supabase/migrations/343_hubert_intros_opt_in.sql'),
   'utf8'
 );
 assert.ok(migration.includes('hubert_intros_interest_at'), 'migration interest column');

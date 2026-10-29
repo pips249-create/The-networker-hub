@@ -119,7 +119,7 @@ module.exports = async function handler(req, res) {
         // Light ops trail on the seed row (not shown publicly).
         const stamp = new Date().toISOString().slice(0, 10);
         const noteLine =
-          'Hub invite sent ' + stamp + ' (as ' + persona.name.split(' ')[0] + ')';
+          'The Networker UK invite sent ' + stamp + ' (as ' + persona.name.split(' ')[0] + ')';
         const nextNotes = [contact.notes, noteLine].filter(Boolean).join('\n').slice(0, 1000);
         await updateSeedContact(id, { notes: nextNotes }).catch(function () {
           /* non-fatal */
@@ -152,7 +152,7 @@ module.exports = async function handler(req, res) {
             invite: {
               ok: false,
               error: 'email_required',
-              message: 'Saved to seed list. Add an email to send a Hub invite.',
+              message: 'Saved to seed list. Add an email to send The Networker UK invite.',
             },
           });
         }
@@ -173,7 +173,7 @@ module.exports = async function handler(req, res) {
         if (invite.ok) {
           const stamp = new Date().toISOString().slice(0, 10);
           const noteLine =
-            'Hub invite sent ' + stamp + ' (as ' + persona.name.split(' ')[0] + ')';
+            'The Networker UK invite sent ' + stamp + ' (as ' + persona.name.split(' ')[0] + ')';
           const nextNotes = [contact.notes, noteLine].filter(Boolean).join('\n').slice(0, 1000);
           await updateSeedContact(contact.id, { notes: nextNotes }).catch(function () {});
         }

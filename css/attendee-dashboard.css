@@ -2798,6 +2798,50 @@ tr.ad-row-highlight td {
   margin-bottom: 20px;
 }
 
+.ad-overview-profile-nudge {
+  margin-bottom: 20px;
+}
+
+.ad-overview-profile-nudge-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px 18px;
+  padding: 16px 18px;
+  background: var(--ad-white);
+  border: 1px solid var(--ad-border-soft);
+  border-radius: var(--ad-radius);
+}
+
+.ad-overview-profile-nudge-kicker {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ad-text-soft);
+}
+
+.ad-overview-profile-nudge-card .ad-section-title {
+  margin: 0 0 6px;
+}
+
+.ad-overview-profile-nudge-copy {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ad-text-soft);
+}
+
+.ad-overview-profile-nudge-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .ad-overview-review-nudge {
   margin-bottom: 20px;
 }
