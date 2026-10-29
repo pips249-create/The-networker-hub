@@ -34524,7 +34524,7 @@
               if (inviteNow) {
                 if (data.invite && data.invite.ok) {
                   msg =
-                    'Saved and Hub invite sent as ' +
+                    'Saved. The Networker UK invite sent as ' +
                     (data.invite.inviterName || (inviteAs === 'catherine' ? 'Catherine' : 'Rosie')) +
                     '.';
                 } else if (data.invite && data.invite.message) {
@@ -34556,7 +34556,7 @@
         if (inviteAs !== 'catherine' && inviteAs !== 'rosie') inviteAs = 'rosie';
         hubertSeedState.inviteAs = inviteAs;
         var who = inviteAs === 'catherine' ? 'Catherine' : 'Rosie';
-        if (!window.confirm('Send a Hubert Hub invite as ' + who + ' to this person?')) return;
+        if (!window.confirm('Send The Networker UK invite as ' + who + ' to this person?')) return;
         btn.disabled = true;
         adminPost('/api/admin/hubert-matchmaker', { action: 'invite', id: id, inviteAs: inviteAs })
           .then(function (data) {
@@ -34564,7 +34564,7 @@
               throw new Error((data && data.message) || (data && data.error) || 'invite_failed');
             }
             window.alert(
-              'Invite sent as ' +
+              'The Networker UK invite sent as ' +
                 ((data.invite && data.invite.inviterName) || who) +
                 '.'
             );
@@ -34672,14 +34672,14 @@
       '<div class="rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-sky-50 p-5">' +
       '<p class="text-xs font-bold uppercase tracking-wider text-violet-800">Hubert Matchmaker</p>' +
       '<h3 class="text-lg font-bold text-brand-900 mt-1">Add people from LinkedIn</h3>' +
-      '<p class="text-sm text-slate-600 mt-1 max-w-3xl">Paste a LinkedIn profile into the seed list for back-of-house matching (first name + initial only). Optionally send a Hubert Hub invite so they can join and become discoverable. Seed invites go out as Catherine or Rosie — member invites from the dashboard still use that individual&apos;s name. Never scrape — copy fields by hand.</p>' +
+      '<p class="text-sm text-slate-600 mt-1 max-w-3xl">Paste a LinkedIn profile into the seed list for back-of-house matching (first name + initial only). Optionally send The Networker UK invite so they can join and become discoverable. Seed invites go out as Catherine or Rosie — member invites from the dashboard still use that individual&apos;s name. Never scrape — copy fields by hand.</p>' +
       '<ol class="mt-3 text-sm text-slate-700 list-decimal list-inside space-y-1 max-w-3xl">' +
       '<li>Open their LinkedIn → copy name, role, company, About blurb, and profile URL</li>' +
       '<li>Add their email if you have it (needed to invite)</li>' +
-      '<li>Choose <strong>Invite as Catherine or Rosie</strong>, then save — tick <strong>Also send Hub invite</strong> when you want Hubert to email them</li>' +
+      '<li>Choose <strong>Invite as Catherine or Rosie</strong>, then save — tick <strong>Also send The Networker UK invite</strong> when you want Hubert to email them</li>' +
       '</ol>' +
       '<label class="mt-4 inline-flex flex-col gap-1 text-sm font-semibold text-violet-950">' +
-      'Send Hub invites as' +
+      'Send The Networker UK invite as' +
       '<select id="hmm-seed-invite-as" name="inviteAs" class="rounded-lg border border-violet-300 bg-white px-3 py-2 text-sm font-semibold text-brand-900 min-w-[200px]">' +
       '<option value="rosie"' +
       (hubertSeedState.inviteAs !== 'catherine' ? ' selected' : '') +
@@ -34716,7 +34716,7 @@
       '<label class="text-sm font-semibold text-slate-700 sm:col-span-2">Internal notes<textarea name="notes" rows="2" maxlength="1000" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Why you’re adding them, event context, etc."></textarea></label>' +
       '<label class="sm:col-span-2 flex items-start gap-2 text-sm text-slate-700">' +
       '<input type="checkbox" name="inviteNow" class="mt-1 rounded border-slate-300" />' +
-      '<span><strong>Also send Hub invite now</strong> — attributed to <strong id="hmm-seed-invite-as-live">' +
+      '<span><strong>Also send The Networker UK invite now</strong> — attributed to <strong id="hmm-seed-invite-as-live">' +
       (hubertSeedState.inviteAs === 'catherine' ? 'Catherine Hancher' : 'Rosie McGilvray') +
       '</strong> (picker above). Member invites from the dashboard still use that individual&apos;s name. They won&apos;t see ops details.</span>' +
       '</label>' +
