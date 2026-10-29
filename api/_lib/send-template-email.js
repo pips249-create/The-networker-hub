@@ -27,6 +27,7 @@ const {
   legalPolicyUrl,
   contactUrl,
   logoEmailHeaderUrl,
+  logoEmailOnDarkUrl,
   logoFooterUrl,
   hubertIconUrl,
   supportEmail,
@@ -80,8 +81,6 @@ const {
 } = require('./event-removed-by-hub-sections');
 const { patchEmailMobileStyles } = require('./email-mobile-styles');
 const franchiseEmailFooterLogoDataUri = require('./franchise-email-footer-logo-datauri');
-const hubertInviteHeaderLogoDataUri = require('./hubert-hub-invite-header-logo-datauri');
-const hubertInviteOnDarkLogoDataUri = require('./hubert-hub-invite-logo-datauri');
 const {
   isOpportunityClaimInviteSlug,
   assertOpportunityClaimInviteAllowed,
@@ -409,10 +408,11 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
   merged.logo_url = logoEmailHeaderUrl(siteUrl);
   merged.logo_footer_url = logoFooterUrl(siteUrl);
   if (slug === 'hubert_hub_invite') {
-    // Cream header + purple footer: inline logos so clients always show them.
-    merged.logo_url = hubertInviteHeaderLogoDataUri;
-    merged.logo_footer_url = hubertInviteOnDarkLogoDataUri;
-    merged.logo_footer_light_url = hubertInviteOnDarkLogoDataUri;
+    // Purple header + footer: hosted cream/white wordmark (inbox-safe HTTPS).
+    const onDark = logoEmailOnDarkUrl(siteUrl);
+    merged.logo_url = onDark;
+    merged.logo_footer_url = onDark;
+    merged.logo_footer_light_url = onDark;
   }
   if (
     slug === 'franchise_claim_invite' ||

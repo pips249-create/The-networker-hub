@@ -31,18 +31,22 @@ const inviteHtml = fs.readFileSync(
 assert.ok(inviteHtml.includes('Introductions via Hubert'), 'value prop: free intros');
 assert.ok(inviteHtml.includes('UK networking events'), 'value prop: events');
 assert.ok(inviteHtml.includes('logo_footer_light_url'), 'high-contrast footer logo');
-assert.ok(inviteHtml.includes('background:#f5f0e8'), 'cream header for logo contrast');
+assert.ok(inviteHtml.includes('background:#452d5c'), 'purple header/footer for on-dark logo');
 assert.ok(
-  fs
-    .readFileSync(path.join(__dirname, '../api/_lib/send-template-email.js'), 'utf8')
-    .includes('hubert-hub-invite-header-logo-datauri'),
-  'send path inlines cream-header logo'
+  !inviteHtml.includes('background:#f5f0e8'),
+  'cream header retired — lavender logo washed out'
 );
 assert.ok(
   fs
     .readFileSync(path.join(__dirname, '../api/_lib/send-template-email.js'), 'utf8')
+    .includes('logoEmailOnDarkUrl'),
+  'send path uses hosted on-dark logo'
+);
+assert.ok(
+  !fs
+    .readFileSync(path.join(__dirname, '../api/_lib/send-template-email.js'), 'utf8')
     .includes('hubert-hub-invite-logo-datauri'),
-  'send path inlines on-dark footer logo'
+  'send path no longer depends on data URIs (inbox clients strip them)'
 );
 assert.ok(
   fs.existsSync(path.join(__dirname, '../supabase/migrations/336_hubert_hub_invites.sql')),
