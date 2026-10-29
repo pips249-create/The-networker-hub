@@ -13,6 +13,7 @@ const {
   isUuid,
 } = require('../hubert-match-seed');
 const { sendHubInvite } = require('../hubert-hub-invite');
+const { resolveHubInvitePersona } = require('../hubert-hub-invite-personas');
 
 function parseBody(req) {
   let body = req.body;
@@ -92,15 +93,18 @@ module.exports = async function handler(req, res) {
             message: 'Add an email on this seed contact before inviting them.',
           });
         }
+        const persona =
+          resolveHubInvitePersona(body.inviteAs || body.invite_as || body.inviterPersona) ||
+          resolveHubInvitePersona('rosie');
         const sb = getSupabaseAdmin();
         const invite = await sendHubInvite({
           sb,
           session,
           inviteeName: contact.fullName,
           inviteeEmail: contact.email,
-          note:
-            String(body.note || '').trim() ||
-            'Rosie thought you’d be a good fit for The Networker UK and Hubert introductions.',
+          note: String(body.note || '').trim() || persona.defaultNote,
+          inviteAs: persona.key,
+          allowPersona: true,
           inviterAttendeeId: null,
         });
         if (!invite.ok) {
@@ -114,7 +118,8 @@ module.exports = async function handler(req, res) {
         }
         // Light ops trail on the seed row (not shown publicly).
         const stamp = new Date().toISOString().slice(0, 10);
-        const noteLine = 'Hub invite sent ' + stamp;
+        const noteLine =
+          'Hub invite sent ' + stamp + ' (as ' + persona.name.split(' ')[0] + ')';
         const nextNotes = [contact.notes, noteLine].filter(Boolean).join('\n').slice(0, 1000);
         await updateSeedContact(id, { notes: nextNotes }).catch(function () {
           /* non-fatal */
@@ -151,20 +156,24 @@ module.exports = async function handler(req, res) {
             },
           });
         }
+        const persona =
+          resolveHubInvitePersona(body.inviteAs || body.invite_as || body.inviterPersona) ||
+          resolveHubInvitePersona('rosie');
         const sb = getSupabaseAdmin();
         invite = await sendHubInvite({
           sb,
           session,
           inviteeName: contact.fullName,
           inviteeEmail: contact.email,
-          note:
-            String(body.note || '').trim() ||
-            'Rosie thought you’d be a good fit for The Networker UK and Hubert introductions.',
+          note: String(body.note || '').trim() || persona.defaultNote,
+          inviteAs: persona.key,
+          allowPersona: true,
           inviterAttendeeId: null,
         });
         if (invite.ok) {
           const stamp = new Date().toISOString().slice(0, 10);
-          const noteLine = 'Hub invite sent ' + stamp;
+          const noteLine =
+            'Hub invite sent ' + stamp + ' (as ' + persona.name.split(' ')[0] + ')';
           const nextNotes = [contact.notes, noteLine].filter(Boolean).join('\n').slice(0, 1000);
           await updateSeedContact(contact.id, { notes: nextNotes }).catch(function () {});
         }

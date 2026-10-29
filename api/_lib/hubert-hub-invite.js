@@ -1,16 +1,19 @@
 /**
  * Hubert Matchmaker — "Introduce someone to The Networker UK & Hubert".
  * Platform join invite (not a request to meet the inviter). Spec: 5 / week.
+ * Members invite as themselves. Admin seed invites can send as Catherine or Rosie.
  */
 const { sendTemplatedEmail } = require('./send-template-email');
 const { emailGreetingName } = require('./email-display-name');
 const {
   emailSiteBase,
   hubertIconUrl,
-  logoEmailOnDarkUrl,
   supportEmail,
 } = require('./hub-email-urls');
 const { isAdminRole } = require('./auth');
+const { resolveHubInvitePersona } = require('./hubert-hub-invite-personas');
+const hubertInviteHeaderLogoDataUri = require('./hubert-hub-invite-header-logo-datauri');
+const hubertInviteOnDarkLogoDataUri = require('./hubert-hub-invite-logo-datauri');
 
 const MEMBER_WEEKLY_CAP = 5;
 const ADMIN_WEEKLY_CAP = 50;
@@ -72,6 +75,36 @@ function inviteNoteSection(note) {
   );
 }
 
+/**
+ * Resolve who the email attributes the invite to.
+ * - Members / default: signed-in session name
+ * - Admin seed with inviteAs: Catherine or Rosie persona
+ */
+function resolveInviterDisplay({ session, inviteAs, allowPersona }) {
+  const persona =
+    allowPersona === true ? resolveHubInvitePersona(inviteAs) : null;
+  if (persona) {
+    return {
+      name: persona.name,
+      email: persona.email,
+      personaKey: persona.key,
+      defaultNote: persona.defaultNote,
+    };
+  }
+  const inviterEmail = normalizeEmail(session && session.email);
+  const inviterName =
+    String((session && (session.name || session.fullName || session.displayName)) || '')
+      .trim() ||
+    (inviterEmail ? inviterEmail.split('@')[0] : '') ||
+    'A Networker UK member';
+  return {
+    name: inviterName,
+    email: inviterEmail || null,
+    personaKey: null,
+    defaultNote: '',
+  };
+}
+
 async function sendHubInvite({
   sb,
   session,
@@ -79,15 +112,24 @@ async function sendHubInvite({
   inviteeEmail,
   note,
   inviterAttendeeId,
+  inviteAs,
+  allowPersona,
 }) {
   const name = String(inviteeName || '').trim();
   const email = normalizeEmail(inviteeEmail);
-  const noteText = String(note || '').trim().slice(0, 500);
-  const inviterEmail = normalizeEmail(session && session.email);
+  const sessionEmail = normalizeEmail(session && session.email);
   const inviterId = sessionUserId(session);
-  const inviterName =
-    String((session && (session.name || session.fullName || session.displayName)) || '')
-      .trim() || inviterEmail.split('@')[0] || 'A Networker UK member';
+  const canUsePersona = allowPersona === true && isAdminRole(session && session.role);
+  const display = resolveInviterDisplay({
+    session,
+    inviteAs,
+    allowPersona: canUsePersona,
+  });
+  const noteText = (
+    String(note || '').trim() ||
+    (canUsePersona ? display.defaultNote : '') ||
+    ''
+  ).slice(0, 500);
 
   if (!name || name.length < 2) {
     return { ok: false, error: 'name_required', message: 'Add their name.' };
@@ -95,7 +137,10 @@ async function sendHubInvite({
   if (!email || !EMAIL_RE.test(email)) {
     return { ok: false, error: 'email_invalid', message: 'Add a valid email address.' };
   }
-  if (inviterEmail && email === inviterEmail) {
+  if (sessionEmail && email === sessionEmail) {
+    return { ok: false, error: 'self_invite', message: 'You can’t invite yourself.' };
+  }
+  if (display.email && email === normalizeEmail(display.email)) {
     return { ok: false, error: 'self_invite', message: 'You can’t invite yourself.' };
   }
 
@@ -127,16 +172,17 @@ async function sendHubInvite({
   const variables = {
     invitee_name: name,
     invitee_first_name: emailGreetingName(name, 'there'),
-    inviter_name: inviterName,
-    inviter_first_name: emailGreetingName(inviterName, 'Someone'),
+    inviter_name: display.name,
+    inviter_first_name: emailGreetingName(display.name, 'Someone'),
     invite_note: noteText,
     invite_note_section: inviteNoteSection(noteText),
     register_url: registerUrl,
     account_url: site + '/account/',
     hubert_icon_url: hubertIconUrl(),
-    logo_url: logoEmailOnDarkUrl(),
-    logo_footer_url: logoEmailOnDarkUrl(),
-    logo_footer_light_url: logoEmailOnDarkUrl(),
+    // Inline logos so cream header + purple footer always render (no remote block).
+    logo_url: hubertInviteHeaderLogoDataUri,
+    logo_footer_url: hubertInviteOnDarkLogoDataUri,
+    logo_footer_light_url: hubertInviteOnDarkLogoDataUri,
     support_email: supportEmail(),
     site_url: site,
   };
@@ -148,9 +194,13 @@ async function sendHubInvite({
       to: email,
       variables,
       skipEmailCheck: true,
+      replyTo: display.email || undefined,
       resendTags: [
         { name: 'category', value: 'hubert_hub_invite' },
         { name: 'matchmaker', value: '1' },
+        ...(display.personaKey
+          ? [{ name: 'invite_as', value: display.personaKey }]
+          : []),
       ],
     });
     resendId = result && result.id ? String(result.id) : null;
@@ -159,7 +209,7 @@ async function sendHubInvite({
     await sb.from('hubert_hub_invites').insert({
       inviter_user_id: inviterId,
       inviter_attendee_id: inviterAttendeeId || null,
-      inviter_email: inviterEmail || null,
+      inviter_email: display.email || sessionEmail || null,
       invitee_name: name,
       invitee_email: email,
       note: noteText || null,
@@ -179,7 +229,7 @@ async function sendHubInvite({
   await sb.from('hubert_hub_invites').insert({
     inviter_user_id: inviterId,
     inviter_attendee_id: inviterAttendeeId || null,
-    inviter_email: inviterEmail || null,
+    inviter_email: display.email || sessionEmail || null,
     invitee_name: name,
     invitee_email: email,
     note: noteText || null,
@@ -191,6 +241,8 @@ async function sendHubInvite({
     ok: true,
     inviteeEmail: email,
     inviteeName: name,
+    inviterName: display.name,
+    inviteAs: display.personaKey || null,
     remaining: Math.max(0, cap - used - 1),
     cap,
   };
@@ -202,5 +254,6 @@ module.exports = {
   sessionUserId,
   weeklyCapForSession,
   countRecentInvites,
+  resolveInviterDisplay,
   sendHubInvite,
 };
