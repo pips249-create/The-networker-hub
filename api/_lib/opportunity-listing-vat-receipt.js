@@ -271,6 +271,65 @@ async function listOpportunityListingInvoices(stripe, subscriptionId, options) {
   return rows;
 }
 
+function formatEnGbDate(value) {
+  if (!value) return '';
+  try {
+    const d = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Account statement for complimentary / admin-marked paid listings (no Stripe charge).
+ * Shown automatically in the organiser workspace — no support email required.
+ */
+function buildComplimentaryListingAccountInvoice(opportunity) {
+  if (!opportunity) return null;
+  const id = String(opportunity.id || '').trim();
+  if (!id) return null;
+  const paidAt =
+    opportunity.listingPaidAt ||
+    opportunity.listing_paid_at ||
+    opportunity.publishedAt ||
+    opportunity.published_at ||
+    null;
+  const until =
+    opportunity.listingExpiresAt || opportunity.listing_expires_at || null;
+  const untilLabel = formatEnGbDate(until);
+  const paidLabel = formatEnGbDate(paidAt);
+  let periodLabel = 'Complimentary directory listing';
+  if (untilLabel) periodLabel += ' · covered until ' + untilLabel;
+  else if (paidLabel) periodLabel += ' · granted ' + paidLabel;
+
+  const short = id.replace(/-/g, '').slice(0, 8).toUpperCase();
+  return {
+    id: 'comp_' + id,
+    number: 'COMP-' + short,
+    status: 'complimentary',
+    kind: 'complimentary',
+    paidAt: paidAt ? String(paidAt) : null,
+    periodLabel,
+    amountExVat: '£0',
+    amountVat: '£0',
+    amountPaid: '£0',
+    amountPaidPence: 0,
+    vatNumber: NETWORKER_VAT_NUMBER,
+    supplierName: NETWORKER_COMPANY_NAME,
+    detail:
+      'No payment was taken for this listing term, so no VAT is due. This statement is kept on your organiser account for your records.',
+    invoicePdfUrl: null,
+    hostedInvoiceUrl: null,
+    invoiceUrl: null,
+  };
+}
+
 module.exports = {
   NETWORKER_VAT_NUMBER,
   NETWORKER_COMPANY_NAME,
@@ -283,4 +342,5 @@ module.exports = {
   invoicePeriodLabel,
   serializeOpportunityListingInvoice,
   listOpportunityListingInvoices,
+  buildComplimentaryListingAccountInvoice,
 };

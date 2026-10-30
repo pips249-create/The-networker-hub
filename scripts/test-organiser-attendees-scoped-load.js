@@ -51,7 +51,7 @@ assert(
 );
 assert(
   'organiser dashboard cache key bumped for Top Clubs attendees fix',
-  /organiser-dashboard\.js\?v=20261030topclubsvat1/.test(html)
+  /organiser-dashboard\.js\?v=20261030compvat1/.test(html)
 );
 
 if (failed) {

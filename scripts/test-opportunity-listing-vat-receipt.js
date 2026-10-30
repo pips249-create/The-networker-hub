@@ -12,6 +12,7 @@ const {
   resolveOpportunityListingInvoice,
   serializeOpportunityListingInvoice,
   listOpportunityListingInvoices,
+  buildComplimentaryListingAccountInvoice,
   formatGbpFromPence,
 } = require('../api/_lib/opportunity-listing-vat-receipt');
 
@@ -116,6 +117,20 @@ async function testResolve() {
   assert.strictEqual(listed.length, 1);
   assert.strictEqual(listed[0].number, 'ABC-123');
   assert.strictEqual(listed[0].invoiceUrl, 'https://pay.stripe.com/invoice/test/pdf');
+
+  const complimentary = buildComplimentaryListingAccountInvoice({
+    id: '11111111-2222-4333-8444-555555555555',
+    listingPaidAt: '2026-09-10T12:00:00.000Z',
+    listingExpiresAt: '2027-09-10T12:00:00.000Z',
+  });
+  assert.ok(complimentary);
+  assert.strictEqual(complimentary.kind, 'complimentary');
+  assert.strictEqual(complimentary.amountPaid, '£0');
+  assert.strictEqual(complimentary.amountVat, '£0');
+  assert.ok(String(complimentary.periodLabel).includes('Complimentary'));
+  assert.ok(String(complimentary.periodLabel).includes('2027'));
+  assert.ok(complimentary.detail);
+  assert.strictEqual(buildComplimentaryListingAccountInvoice(null), null);
 }
 
 testResolve()
