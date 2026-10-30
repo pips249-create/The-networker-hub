@@ -247,6 +247,11 @@ function hubertIconUrl(siteUrl) {
   return toPublicAssetUrl('/assets/hubert-icon.png?v=' + LOGO_ASSET_VERSION, siteUrl);
 }
 
+/** Circular Hubert mark (transparent corners) for email heroes without a square frame. */
+function hubertIconCircleUrl(siteUrl) {
+  return toPublicAssetUrl('/assets/hubert-icon-circle.png?v=' + LOGO_ASSET_VERSION, siteUrl);
+}
+
 /** Co-founder photo for Meet Rosie / event promo blocks in member digests. */
 function rosiePhotoUrl(siteUrl) {
   return toPublicAssetUrl('/assets/about-rosie.png?v=' + LOGO_ASSET_VERSION, siteUrl);
@@ -373,6 +378,7 @@ module.exports = {
   logoFooterLightUrl,
   logoEmailHubertLaunchUrl,
   hubertIconUrl,
+  hubertIconCircleUrl,
   rosiePhotoUrl,
   catherinePhotoUrl,
   supportEmail,
