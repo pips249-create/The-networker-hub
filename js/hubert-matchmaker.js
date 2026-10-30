@@ -792,13 +792,19 @@
     if (!disc || disc.dataset.hmmGuard === '1') return;
     disc.dataset.hmmGuard = '1';
 
+    // Checkbox click fires after the browser toggles `checked`. Opt-in must be
+    // allowed; only block a post-toggle untick (route opt-out through Stop).
     disc.addEventListener('click', function (e) {
-      if (!disc.checked) return; // allowing opt-in
-      // Already included — don’t let a casual click untick.
+      if (disc.checked) {
+        syncDiscoverableUi(lastProfile);
+        return;
+      }
       e.preventDefault();
+      disc.checked = true;
       if (offBtn) offBtn.focus();
     });
 
+    // keydown runs before the toggle — block Space/Enter only while already included.
     disc.addEventListener('keydown', function (e) {
       if (!disc.checked) return;
       if (e.key === ' ' || e.key === 'Enter') {

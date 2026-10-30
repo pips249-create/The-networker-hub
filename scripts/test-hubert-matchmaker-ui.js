@@ -55,5 +55,29 @@ assert(src.indexOf('confirmStopIncludingMe') !== -1, 'opt-out needs confirmation
 assert(src.indexOf('Stop including me') !== -1, 'explicit opt-out control');
 assert(src.indexOf('maybeSeedQueryFromUrl') !== -1, 'seeds Meet query from teaser q=');
 assert(typeof mm._parseMeetQueryFromUrl === 'function', 'parseMeetQueryFromUrl exported');
+// Guard must allow post-toggle opt-in (checked===true after click), not block it.
+assert(src.indexOf('if (disc.checked)') !== -1, 'include-me click allows opt-in after toggle');
+assert(
+  /Checkbox click fires after the browser toggles/.test(src),
+  'include-me click documents post-toggle timing'
+);
+
+const settingsSrc = fs.readFileSync(path.join(__dirname, '../js/account-settings.js'), 'utf8');
+assert(
+  /Checkbox click fires after the browser toggles/.test(settingsSrc),
+  'settings include-me click documents post-toggle timing'
+);
+assert(settingsSrc.indexOf('if (disc.checked)') !== -1, 'settings allow include-me opt-in');
+
+const settingsCss = fs.readFileSync(path.join(__dirname, '../css/account-settings.css'), 'utf8');
+assert(
+  settingsCss.indexOf('.as-discoverable-off[hidden]') !== -1,
+  'settings hide Stop when not included'
+);
+const dashCss = fs.readFileSync(path.join(__dirname, '../css/attendee-dashboard.css'), 'utf8');
+assert(
+  dashCss.indexOf('.hmm-discoverable-off[hidden]') !== -1,
+  'meet hide Stop when not included'
+);
 
 console.log('ok — hubert-matchmaker ui helpers');

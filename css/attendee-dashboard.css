@@ -5720,6 +5720,7 @@ body.ad-hubert-optin-modal-open {
 }
 
 .hmm-discoverable-off {
+  display: inline-block;
   align-self: flex-start;
   margin: 2px 0 0;
   padding: 0;
@@ -5732,6 +5733,10 @@ body.ad-hubert-optin-modal-open {
   text-decoration: underline;
   text-underline-offset: 2px;
   cursor: pointer;
+}
+
+.hmm-discoverable-off[hidden] {
+  display: none !important;
 }
 
 .hmm-discoverable-off:hover,
