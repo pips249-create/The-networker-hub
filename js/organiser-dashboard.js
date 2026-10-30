@@ -18829,25 +18829,26 @@
     const incomingEvents = Array.isArray(data.events) ? data.events : [];
     const incomingUpcoming = Array.isArray(data.upcomingEvents) ? data.upcomingEvents : [];
     const incomingTickets = Array.isArray(data.tickets) ? data.tickets : [];
-    // Lean bootstrap returns empty events/tickets. Keep a usable cache so the
-    // list does not wipe and wait for a second heavy fetch on every refresh.
-    if (incomingEvents.length || !state.eventsLoaded) {
+    // Lean / groupsOnly bootstrap returns empty events/tickets/summaries.
+    // Keep a usable cache so Attendees / My Events soft-refresh cannot wipe the
+    // catalogue and leave filters/lists empty (Sentry: open Attendees → refresh).
+    if (incomingEvents.length || (!lite && !state.eventsLoaded)) {
       state.events = incomingEvents;
       state.eventsLoaded = incomingEvents.length > 0;
       state.eventsEnrichment = incomingEvents.length ? 'full' : 'none';
       if (incomingEvents.length) invalidateEventsLoad();
     }
-    if (incomingUpcoming.length || !state.upcomingEvents.length) {
+    if (incomingUpcoming.length || (!lite && !state.upcomingEvents.length)) {
       state.upcomingEvents = incomingUpcoming;
     }
-    if (incomingTickets.length || !state.tickets.length) {
+    if (incomingTickets.length || (!lite && !state.tickets.length)) {
       state.tickets = incomingTickets;
     }
     if (data.eventsPagination) {
       state.eventsTotal = data.eventsPagination.total ?? state.events.length;
       state.eventsChunkOffset = data.eventsPagination.offset ?? 0;
       state.eventsHasMore = Boolean(data.eventsPagination.hasMore);
-    } else if (!state.eventsLoaded) {
+    } else if (!lite && !state.eventsLoaded) {
       state.eventsTotal = state.events.length;
       state.eventsChunkOffset = 0;
       state.eventsHasMore = false;
@@ -18869,7 +18870,10 @@
       state.workspaceSummary = data.workspaceSummary;
     }
     if (Array.isArray(data.eventSummaries)) {
-      state.eventSummaries = data.eventSummaries;
+      // groupsOnly returns eventSummaries: [] — never clobber the lean catalogue.
+      if (!lite || data.eventSummaries.length) {
+        state.eventSummaries = data.eventSummaries;
+      }
     }
     if (
       !state.events.length &&
@@ -18878,7 +18882,7 @@
     ) {
       state.eventsHasMore = state.eventSummaries.length > EVENTS_FETCH_SIZE;
     }
-    if (!state.eventsLoaded) {
+    if (!lite && !state.eventsLoaded) {
       state.eventsFullyLoaded = !state.eventsHasMore;
     }
     if (!lite) {
