@@ -216,6 +216,7 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'event_cancelled',
   'account_welcome',
   'hubert_hub_invite',
+  'hubert_organiser_pre_event',
 ]);
 
 const { escapeHtml } = require('./event-refund-policy');

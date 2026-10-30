@@ -333,6 +333,14 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.logo_footer_light_url = onDark;
   }
 
+  if (slug === 'hubert_organiser_pre_event') {
+    vars.organiser_name = vars.organiser_name || 'Northbridge Networkers';
+    vars.attendee_first_name = vars.attendee_first_name || 'Alex';
+    vars.event_name = vars.event_name || 'Manchester Founders Breakfast';
+    vars.event_when_phrase = vars.event_when_phrase || ' this Thursday';
+    vars.meet_people_url = vars.meet_people_url || site + '/account/#meet';
+  }
+
   if (slug === 'saved_organiser_new_listing') {
     vars.event_time = ' · ' + (vars.event_time || '8:00 AM');
     Object.assign(
