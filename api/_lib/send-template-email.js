@@ -29,6 +29,8 @@ const {
   logoEmailHeaderUrl,
   logoEmailOnDarkUrl,
   logoFooterUrl,
+  logoFooterLightUrl,
+  logoEmailHubertLaunchUrl,
   hubertIconUrl,
   hubAccountSettingsUrl,
   supportEmail,
@@ -410,7 +412,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
 
   merged.logo_url = logoEmailHeaderUrl(siteUrl);
   merged.logo_footer_url = logoFooterUrl(siteUrl);
-  if (slug === 'hubert_hub_invite' || slug === 'hubert_matchmaker_launching') {
+  if (slug === 'hubert_hub_invite') {
     // Navy header + footer: hosted cream/white wordmark (inbox-safe HTTPS).
     const onDark = logoEmailOnDarkUrl(siteUrl);
     merged.logo_url = onDark;
@@ -418,6 +420,10 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
     merged.logo_footer_light_url = onDark;
   }
   if (slug === 'hubert_matchmaker_launching') {
+    const navyLockup = logoEmailHubertLaunchUrl(siteUrl);
+    merged.logo_url = navyLockup;
+    merged.logo_footer_url = navyLockup;
+    merged.logo_footer_light_url = navyLockup;
     const launchUtm =
       'utm_source=hubert&utm_medium=email&utm_campaign=matchmaker_launching';
     if (!String(merged.hubert_profile_url || '').trim()) {
