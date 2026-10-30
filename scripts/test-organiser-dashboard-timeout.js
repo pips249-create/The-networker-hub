@@ -72,6 +72,13 @@ assert(
   /refresh\(\{\s*full:\s*true\s*\}\)/.test(dash)
 );
 assert(
+  'groups-only soft-refresh keeps lean eventSummaries instead of wiping Attendees filters',
+  /groupsOnly returns eventSummaries: \[\] — never clobber the lean catalogue/.test(dash) &&
+    /if \(!lite \|\| data\.eventSummaries\.length\)/.test(dash) &&
+    /incomingEvents\.length \|\| \(!lite && !state\.eventsLoaded\)/.test(dash) &&
+    /!lite && !state\.eventsLoaded/.test(dash)
+);
+assert(
   'attendees list uses a bounded timeout instead of hanging the tab',
   /ATTENDEES_TIMEOUT_MS/.test(dash) &&
     /apiWithTimeout\(\s*['"]\/api\/organiser\/attendees\?eventId=all['"]/.test(dash)
@@ -82,7 +89,7 @@ assert(
 );
 assert(
   'HTML cache key bumped so browsers pick up the timeout fix',
-  /organiser-dashboard\.js\?v=20261030seriesfreeze1/.test(html)
+  /organiser-dashboard\.js\?v=20261030attendeeslite1/.test(html)
 );
 assert(
   'Sentry ignores handled bootstrap timeout noise',

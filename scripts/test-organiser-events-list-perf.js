@@ -62,8 +62,9 @@ const eventsOnlyFn = eventsLib.slice(
 
 assert(
   'lean bootstrap keeps cached events instead of wiping to []',
-  /incomingEvents\.length \|\| !state\.eventsLoaded/.test(dash) &&
-    /Keep a usable cache/.test(dash)
+  /incomingEvents\.length \|\| \(!lite && !state\.eventsLoaded\)/.test(dash) &&
+    /Keep a usable cache/.test(dash) &&
+    /never clobber the lean catalogue/.test(dash)
 );
 assert(
   'mutation refresh reloads events only — not a full lean bootstrap',
