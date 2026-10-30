@@ -135,13 +135,17 @@
     if (connectBtn) {
       // Keep OAuth reconnect out of the main toolbar once connected — Refresh stays primary.
       connectBtn.hidden = connected;
+      connectBtn.style.display = connected ? 'none' : '';
       connectBtn.textContent = 'Connect Eventbrite';
       connectBtn.classList.add('org-btn-primary');
       connectBtn.classList.remove('org-btn-outline');
     }
     if (refreshBtn) refreshBtn.hidden = !connected;
     if (dedupeBtn) dedupeBtn.hidden = !connected;
-    if (disconnectBtn) disconnectBtn.hidden = !connected;
+    if (disconnectBtn) {
+      disconnectBtn.hidden = !connected;
+      disconnectBtn.style.display = connected ? '' : 'none';
+    }
     if (tokenWrap) tokenWrap.hidden = connected;
     if (label) {
       label.textContent = connected ? 'Eventbrite events' : 'Connect Eventbrite';
@@ -216,23 +220,89 @@
     });
   }
 
-  function refreshEvents() {
+  function refreshEvents(opts) {
+    var options = opts && typeof opts === 'object' ? opts : {};
+    var allowAutoImport = options.autoImport !== false;
     if (loading) return Promise.resolve();
     loading = true;
     setMsg('Loading Eventbrite events…');
     return patchProviders({ action: 'list_eventbrite_events' })
       .then(function (res) {
-        loading = false;
         if (!res.ok) {
+          loading = false;
           setMsg(res.data.message || res.data.error || 'Could not load Eventbrite events.', 'error');
           return;
         }
         setConnectedUi(true);
         setExpanded(true);
-        renderEvents(res.data.events || []);
+        var events = res.data.events || [];
+        var groupId = selectedGroupId();
+        var pending = events.filter(function (evt) {
+          return evt && evt.id && !evt.alreadyLinked;
+        });
+        // Auto-import onto the chosen organiser page so organisers are not stuck clicking Import.
+        if (allowAutoImport && groupId && pending.length) {
+          setMsg(
+            'Importing ' +
+              pending.length +
+              ' Eventbrite event' +
+              (pending.length === 1 ? '' : 's') +
+              '…',
+            'ok'
+          );
+          return patchProviders({
+            action: 'sync_eventbrite_org_events',
+            groupId: groupId,
+          })
+            .then(function (syncRes) {
+              loading = false;
+              if (!syncRes.ok) {
+                renderEvents(events);
+                setMsg(
+                  syncRes.data.message ||
+                    syncRes.data.error ||
+                    'Could not auto-import. Use Import on each event.',
+                  'error'
+                );
+                return;
+              }
+              var sync = syncRes.data.orgSync || syncRes.data || {};
+              var created = Number(sync.created) || 0;
+              return refreshEvents({ autoImport: false }).then(function () {
+                if (created) {
+                  setMsg(
+                    'Imported ' +
+                      created +
+                      ' event' +
+                      (created === 1 ? '' : 's') +
+                      ' onto your organiser page.',
+                    'ok'
+                  );
+                  if (typeof window.refreshOrganiserEvents === 'function') {
+                    try {
+                      window.refreshOrganiserEvents();
+                    } catch (_e) {
+                      /* ignore */
+                    }
+                  }
+                }
+              });
+            })
+            .catch(function () {
+              loading = false;
+              renderEvents(events);
+              setMsg('Could not auto-import. Use Import on each event.', 'error');
+            });
+        }
+        loading = false;
+        renderEvents(events);
         setMsg(
-          (res.data.events || []).length
-            ? 'Pick an event and click Import.'
+          events.length
+            ? pending.length && !groupId
+              ? 'Choose an organiser page above — we will import automatically.'
+              : pending.length
+                ? 'Still importing… if this sticks, tap Import on an event.'
+                : 'All listed Eventbrite events are on The Networker UK.'
             : 'No live Eventbrite events found for this account.',
           'ok'
         );
@@ -241,6 +311,18 @@
         loading = false;
         setMsg('Could not load Eventbrite events.', 'error');
       });
+  }
+
+  function autoImportIfReady() {
+    fillGroupSelect(selectedGroupId());
+    if (!connected) return Promise.resolve();
+    if (!selectedGroupId()) {
+      setExpanded(true);
+      setMsg('Choose an organiser page above — we will import automatically.', 'ok');
+      return Promise.resolve();
+    }
+    setExpanded(true);
+    return refreshEvents({ autoImport: true });
   }
 
   function importEvent(externalEventId, btn) {
@@ -493,10 +575,10 @@
       setExpanded(false);
       return;
     }
-    setExpanded(true);
     if (connected) {
-      refreshEvents();
+      autoImportIfReady();
     } else {
+      setExpanded(true);
       setMsg('Press Connect Eventbrite to link your account, or paste a private token below.', 'ok');
     }
   }
@@ -559,15 +641,23 @@
 
     document.addEventListener('org:groups-loaded', function () {
       fillGroupSelect(selectedGroupId());
+      if (connected) autoImportIfReady();
     });
+
+    var groupSel = qs('org-eb-group');
+    if (groupSel && !groupSel.dataset.autoImportBound) {
+      groupSel.dataset.autoImportBound = '1';
+      groupSel.addEventListener('change', function () {
+        if (connected) autoImportIfReady();
+      });
+    }
 
     var gotoEvents = qs('ge-eb-goto-events');
     if (gotoEvents && !gotoEvents.dataset.bound) {
       gotoEvents.dataset.bound = '1';
       gotoEvents.addEventListener('click', function () {
         setTimeout(function () {
-          setExpanded(true);
-          if (connected) refreshEvents();
+          autoImportIfReady();
         }, 200);
       });
     }
@@ -578,7 +668,6 @@
       if (oauthReturn) {
         if (oauthReturn.status === 'connected') {
           setConnectedUi(true);
-          setExpanded(true);
           setMsg(
             oauthReturn.imported
               ? 'Eventbrite connected. Imported ' +
@@ -588,10 +677,10 @@
                   (oauthReturn.published
                     ? ' (' + oauthReturn.published + ' published).'
                     : '.')
-              : 'Eventbrite connected. Loading your events…',
+              : 'Eventbrite connected. Importing your events…',
             'ok'
           );
-          refreshEvents();
+          autoImportIfReady();
           return;
         }
         setExpanded(true);
@@ -609,8 +698,15 @@
         }
         return;
       }
-      if (state.connected && /events-list/i.test(window.location.hash || '')) {
-        /* stay collapsed until they open it — like a series row */
+      // Already connected: pull + import as soon as they are on My events.
+      if (state.connected) {
+        autoImportIfReady();
+      }
+    });
+
+    window.addEventListener('hashchange', function () {
+      if (connected && /events-list/i.test(window.location.hash || '')) {
+        autoImportIfReady();
       }
     });
   }
@@ -625,8 +721,7 @@
     init: init,
     refresh: refreshEvents,
     expand: function () {
-      setExpanded(true);
-      if (connected) refreshEvents();
+      autoImportIfReady();
     },
   };
 })();

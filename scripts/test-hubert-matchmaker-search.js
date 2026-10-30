@@ -223,6 +223,13 @@ assert(/couldn’t match that event/i.test(noEvent.title), 'empty: no event matc
 
 const thinPool = emptyStateCopy({ eventQuery: false, candidateCount: 0 });
 assert(/still thin/i.test(thinPool.text), 'empty: thin pool');
+const selfOnly = emptyStateCopy({
+  eventQuery: false,
+  candidateCount: 0,
+  requesterDiscoverable: true,
+});
+assert(/Nobody else is in the pool/i.test(selfOnly.title), 'empty: self excluded from own search');
+assert(/never shows you your own profile/i.test(selfOnly.text), 'empty explains self-exclusion');
 
 const adsQ =
   'I am looking for employees around the UK who might be interested in advertising on my site';
