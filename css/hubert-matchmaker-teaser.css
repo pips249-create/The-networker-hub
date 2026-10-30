@@ -158,6 +158,40 @@
   background: var(--hmm-teaser-teal);
 }
 
+.hmm-teaser-invite {
+  flex: 0 0 auto;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 650;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(125, 72, 150, 0.28);
+  background: transparent;
+  color: var(--hmm-teaser-teal);
+  cursor: pointer;
+}
+
+.hmm-teaser-invite:hover {
+  background: rgba(157, 96, 167, 0.08);
+  border-color: rgba(157, 96, 167, 0.45);
+}
+
+.hmm-teaser-invite[hidden] {
+  display: none !important;
+}
+
+.hmm-teaser-invite-status {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--hmm-teaser-teal);
+  text-align: center;
+}
+
+.hmm-teaser-invite-status[hidden] {
+  display: none !important;
+}
+
 .hmm-teaser-gate {
   margin: 0;
   font-size: 13px;
@@ -165,22 +199,27 @@
   color: var(--hmm-teaser-muted);
 }
 
-/* Profile-build mode: CTA only, still in the composer pill chrome */
+/* Profile-build mode: centered primary + invite */
 .hmm-teaser--profile .hmm-teaser-input[hidden] {
   display: none !important;
 }
 
 .hmm-teaser--profile .hmm-teaser-form {
-  justify-content: space-between;
-  padding-left: 14px;
+  justify-content: center;
+  gap: 12px;
+  padding: 10px 14px;
 }
 
 .hmm-teaser--profile .hmm-teaser-submit {
   min-width: 11rem;
 }
 
-.hmm-teaser--search .hmm-teaser-badge {
-  /* Keep badge when search is public? hide via JS */
+.hmm-teaser--profile .hmm-teaser-invite {
+  display: inline-flex;
+}
+
+.hmm-teaser--search .hmm-teaser-invite {
+  display: none !important;
 }
 
 @media (max-width: 640px) {
@@ -202,11 +241,14 @@
     padding: 10px;
   }
 
-  .hmm-teaser-submit {
-    width: 100%;
+  .hmm-teaser--profile .hmm-teaser-form {
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  .hmm-teaser--profile .hmm-teaser-form {
-    justify-content: stretch;
+  .hmm-teaser--profile .hmm-teaser-submit,
+  .hmm-teaser--profile .hmm-teaser-invite,
+  .hmm-teaser-submit {
+    width: 100%;
   }
 }

@@ -5683,6 +5683,35 @@ body.ad-hubert-optin-modal-open {
   max-width: 40rem;
 }
 
+.hmm-profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.hmm-profile-actions .ad-btn-primary {
+  min-width: 11rem;
+}
+
+.hmm-profile-invite {
+  border-radius: 999px !important;
+}
+
+.hmm-profile-share-status {
+  margin: 0;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ad-teal-dark, #7a3d8a);
+}
+
+.hmm-profile-share-status[hidden] {
+  display: none !important;
+}
+
 .hmm-profile-field {
   display: grid;
   gap: 6px;

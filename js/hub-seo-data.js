@@ -62,8 +62,8 @@ window.HUB_SEO_DATA = {
       "icon": "🏛️"
     },
     {
-      "question": "Who is Hubert on The Networker UK?",
-      "answer": "Hubert is the British English gentleman and concierge on The Networker UK. He is at your service for events, business opportunities, tickets, enquiries, and organiser tools. Chat with Hubert on the contact page or via the floating assistant on public pages.",
+      "question": "Who is Hubert Matchmaker on The Networker UK?",
+      "answer": "Hubert Matchmaker is the British English gentleman and concierge on The Networker UK. He is at your service for events, business opportunities, tickets, enquiries, organiser tools, and introducing you to people to meet. Chat with Hubert Matchmaker on the contact page or ask him on the FAQ page. Signed-in members can also use Meet people in My account.",
       "category": "general",
       "icon": "✨"
     },
@@ -520,10 +520,10 @@ window.HUB_SEO_DATA = {
             },
             {
               "@type": "Question",
-              "name": "Who is Hubert on The Networker UK?",
+              "name": "Who is Hubert Matchmaker on The Networker UK?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Hubert is the British English gentleman and concierge on The Networker UK. He is at your service for events, business opportunities, tickets, enquiries, and organiser tools. Chat with Hubert on the contact page or via the floating assistant on public pages."
+                "text": "Hubert Matchmaker is the British English gentleman and concierge on The Networker UK. He is at your service for events, business opportunities, tickets, enquiries, organiser tools, and introducing you to people to meet. Chat with Hubert Matchmaker on the contact page or ask him on the FAQ page. Signed-in members can also use Meet people in My account."
               }
             },
             {
@@ -805,15 +805,15 @@ window.HUB_SEO_DATA = {
           "@id": "https://www.thenetworkeruk.com/contact",
           "url": "https://www.thenetworkeruk.com/contact",
           "name": "Contact The Networker UK",
-          "description": "Contact The Networker UK or chat with Hubert, your business butler and concierge, for help with events, tickets, and business opportunities.",
+          "description": "Contact The Networker UK or chat with Hubert Matchmaker, your business butler and concierge, for help with events, tickets, business opportunities, and meeting people.",
           "mainEntity": {
             "@context": "https://schema.org",
             "@type": "SoftwareApplication",
-            "name": "Hubert",
+            "name": "Hubert Matchmaker",
             "applicationCategory": "BusinessApplication",
             "operatingSystem": "Web",
             "url": "https://www.thenetworkeruk.com/contact",
-            "description": "Hubert is the business butler and concierge for The Networker UK — an AI assistant that helps users find events and business opportunities, understand ticketing and enquiries, and navigate organiser tools.",
+            "description": "Hubert Matchmaker is the business butler and concierge for The Networker UK — an AI assistant that helps users find events and business opportunities, understand ticketing and enquiries, navigate organiser tools, and meet the right people.",
             "offers": {
               "@type": "Offer",
               "price": "0",
@@ -829,11 +829,11 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "SoftwareApplication",
-          "name": "Hubert",
+          "name": "Hubert Matchmaker",
           "applicationCategory": "BusinessApplication",
           "operatingSystem": "Web",
           "url": "https://www.thenetworkeruk.com/contact",
-          "description": "Hubert is the business butler and concierge for The Networker UK — an AI assistant that helps users find events and business opportunities, understand ticketing and enquiries, and navigate organiser tools.",
+          "description": "Hubert Matchmaker is the business butler and concierge for The Networker UK — an AI assistant that helps users find events and business opportunities, understand ticketing and enquiries, navigate organiser tools, and meet the right people.",
           "offers": {
             "@type": "Offer",
             "price": "0",
@@ -2657,7 +2657,7 @@ window.HUB_SEO_DATA = {
               "@type": "HowToStep",
               "position": 5,
               "name": "Check it worked",
-              "text": "Recent sync attempts should show own_site:accepted and the buyer should appear on Attendees. Verified reviews follow after the event ends.",
+              "text": "Use Send test booking on Connected setup (or Booking providers), then confirm Recent sync attempts shows own_site:accepted and the buyer appears on Attendees. Verified reviews follow after the event ends.",
               "url": "https://www.thenetworkeruk.com/guides/connect-own-website#check-it-worked"
             }
           ]

@@ -62,8 +62,9 @@ const eventsOnlyFn = eventsLib.slice(
 
 assert(
   'lean bootstrap keeps cached events instead of wiping to []',
-  /incomingEvents\.length \|\| !state\.eventsLoaded/.test(dash) &&
-    /Keep a usable cache/.test(dash)
+  /incomingEvents\.length \|\| \(!lite && !state\.eventsLoaded\)/.test(dash) &&
+    /Keep a usable cache/.test(dash) &&
+    /never clobber the lean catalogue/.test(dash)
 );
 assert(
   'mutation refresh reloads events only — not a full lean bootstrap',
@@ -106,6 +107,19 @@ assert(
 assert(
   'registration sales are applied from one fetch',
   /applyRegistrationSalesToEventList\(overviewEvents, regs, cancellations\)/.test(eventsLib)
+);
+assert(
+  'series keys reuse a title-peer map instead of per-row filters',
+  /function buildTitlePeerCounts/.test(dash) &&
+    /function titlePeerCountsFor/.test(dash) &&
+    /titlePeerCounts: titlePeerCountsFor\(state\.events\)/.test(dash) &&
+    !/const sameTitlePeers = allEvents\.filter/.test(dash)
+);
+assert(
+  'resolveSeriesPeersForEvent builds the peer map once',
+  /function resolveSeriesPeersForEvent[\s\S]{0,900}titlePeerCounts = buildTitlePeerCounts\(allEvents\)/.test(
+    dash
+  )
 );
 
 if (failed) {

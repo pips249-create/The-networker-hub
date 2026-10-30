@@ -423,6 +423,7 @@ function isMissingOpportunityReviewQueueColumnError(error) {
  * so Command Centre / organiser creates still succeed.
  */
 async function writeOpportunityRow(sb, mode, row, id) {
+  clearPublishedOpportunityBrowseCache();
   const run = (payload) => {
     if (mode === 'insert') {
       return sb.from('business_opportunities').insert(payload).select('*').single();
@@ -460,6 +461,49 @@ function normalizeStatus(input) {
   if (s === 'publish' || s === 'published' || s === 'submit' || s === 'submitted') return 'published';
   if (s === 'unpublish' || s === 'unpublished') return 'unpublished';
   return 'draft';
+}
+
+/** Card / filter fields for /opportunities/ — never select * or ship owner emails. */
+const BROWSE_OPPORTUNITY_SELECT = [
+  'id',
+  'slug',
+  'type',
+  'tags',
+  'featured',
+  'featured_until',
+  'host',
+  'host_initials',
+  'host_color',
+  'title',
+  'description',
+  'meta',
+  'category',
+  // categories[] is derived in categoriesFromRow from category/tags — the DB
+  // column does not exist on business_opportunities and breaks /api/opportunities.
+  'image_url',
+  'logo_url',
+  'status',
+  'approval_status',
+  'owner_email',
+  'ownership_claim_status',
+  'listing_paid_at',
+  'listing_expires_at',
+  'listing_stripe_subscription_id',
+  'listing_months',
+  'outcode',
+  'region_slug',
+  'created_at',
+  'published_at',
+  'view_count',
+].join(', ');
+
+const BROWSE_DESCRIPTION_MAX = 320;
+const BROWSE_LIST_CACHE_MS = 120_000;
+
+let browseListCache = { expires: 0, payload: null, inflight: null };
+
+function clearPublishedOpportunityBrowseCache() {
+  browseListCache = { expires: 0, payload: null, inflight: null };
 }
 
 function rowToListing(row) {
@@ -518,6 +562,46 @@ function rowToListing(row) {
     hasPendingChanges: Boolean(row.pending_review_payload && row.pending_review_payload.row),
     pendingReviewSubmittedAt:
       (row.pending_review_payload && row.pending_review_payload.submittedAt) || null,
+  });
+}
+
+/** Public catalogue card — filters, map, and grid. Detail pages use rowToListing. */
+function rowToBrowseCard(row) {
+  if (!row) return null;
+  const meta = normalizeListingMeta(row.meta);
+  const categories = categoriesFromRow(row);
+  let desc = String(row.description || '').trim();
+  if (desc.length > BROWSE_DESCRIPTION_MAX) {
+    desc = desc.slice(0, BROWSE_DESCRIPTION_MAX - 1).trim() + '…';
+  }
+  const cover = resolveOpportunityDisplayCover(row.image_url, row.logo_url);
+  return coerceLegacyAffiliateListing({
+    id: row.id,
+    slug: publicOpportunitySlug(row),
+    type: row.type,
+    tags: Array.isArray(row.tags) && row.tags.length ? row.tags.slice() : [row.type],
+    featured: Boolean(row.featured),
+    featuredUntil: row.featured_until || null,
+    host: String(row.host || '').trim(),
+    hostInitials: row.host_initials || hostInitials(row.host),
+    hostColor: row.host_color || hostColorFromName(row.host),
+    title: String(row.title || '').trim(),
+    desc,
+    about: [],
+    meta,
+    category: categories[0] || row.category || 'general',
+    categories,
+    imageUrl: String(row.image_url || '').trim(),
+    logoUrl: String(row.logo_url || '').trim(),
+    displayCoverUrl: cover.cover_url,
+    coverIsLogoFallback: cover.cover_is_logo_fallback,
+    claimable:
+      isHubSeedOwnerEmail(row.owner_email) && row.ownership_claim_status !== 'pending',
+    outcode: String(row.outcode || '').trim(),
+    regionSlug: String(row.region_slug || '').trim(),
+    createdAt: row.created_at || null,
+    publishedAt: row.published_at || null,
+    viewCount: Number(row.view_count) || 0,
   });
 }
 
@@ -744,6 +828,7 @@ async function buildOpportunityRow(payload, opportunityId, mode) {
 }
 
 async function activateOpportunityListingPayment(opportunityId, monthsOrOpts, sessionIdMaybe) {
+  clearPublishedOpportunityBrowseCache();
   const id = String(opportunityId || '').trim();
   if (!isUuid(id)) throw new Error('invalid_opportunity_id');
 
@@ -880,6 +965,49 @@ async function listPublishedOpportunities() {
     .order('created_at', { ascending: false });
   if (error) throw new Error(error.message);
   return (data || []).filter(listingPaymentCurrent).map(rowToListing);
+}
+
+async function buildPublishedOpportunityBrowseCards() {
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb
+    .from('business_opportunities')
+    .select(BROWSE_OPPORTUNITY_SELECT)
+    .eq('status', 'published')
+    .eq('approval_status', 'Approved')
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data || []).filter(listingPaymentCurrent).map(rowToBrowseCard);
+}
+
+async function listPublishedOpportunityCards() {
+  if (browseListCache.payload && browseListCache.expires > Date.now()) {
+    return browseListCache.payload;
+  }
+  if (browseListCache.inflight) return browseListCache.inflight;
+
+  const inflight = buildPublishedOpportunityBrowseCards()
+    .then((payload) => {
+      browseListCache.payload = payload;
+      browseListCache.expires = Date.now() + BROWSE_LIST_CACHE_MS;
+      return payload;
+    })
+    .finally(() => {
+      browseListCache.inflight = null;
+    });
+  browseListCache.inflight = inflight;
+  return inflight;
+}
+
+async function countPublishedOpportunities() {
+  const sb = getSupabaseAdmin();
+  const { count, error } = await sb
+    .from('business_opportunities')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'published')
+    .eq('approval_status', 'Approved');
+  if (error) throw new Error(error.message);
+  return Number(count) || 0;
 }
 
 async function getPublishedOpportunityById(id) {
@@ -1896,7 +2024,11 @@ async function handleOpportunityListingCheckout(session) {
 
 module.exports = {
   rowToListing,
+  rowToBrowseCard,
   listPublishedOpportunities,
+  listPublishedOpportunityCards,
+  countPublishedOpportunities,
+  clearPublishedOpportunityBrowseCache,
   getPublishedOpportunityById,
   getPublishedOpportunityBySlug,
   getOpportunityById,

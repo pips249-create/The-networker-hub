@@ -232,8 +232,24 @@ function logoFooterLightUrl(siteUrl) {
   return toPublicAssetUrl('/assets/logo-email-footer-navy.png?v=' + LOGO_ASSET_VERSION, siteUrl);
 }
 
+/**
+ * Attached brand lockup for Hubert launching email navy bands (#1c2040).
+ * Lavender Networker + cream The/UK (source charcoal The/UK was unreadable on navy).
+ */
+function logoEmailHubertLaunchUrl(siteUrl) {
+  return toPublicAssetUrl(
+    '/assets/logo-networker-uk-email-navy.png?v=' + LOGO_ASSET_VERSION,
+    siteUrl
+  );
+}
+
 function hubertIconUrl(siteUrl) {
   return toPublicAssetUrl('/assets/hubert-icon.png?v=' + LOGO_ASSET_VERSION, siteUrl);
+}
+
+/** Circular Hubert mark (transparent corners) for email heroes without a square frame. */
+function hubertIconCircleUrl(siteUrl) {
+  return toPublicAssetUrl('/assets/hubert-icon-circle.png?v=' + LOGO_ASSET_VERSION, siteUrl);
 }
 
 /** Co-founder photo for Meet Rosie / event promo blocks in member digests. */
@@ -360,7 +376,9 @@ module.exports = {
   logoEmailOnDarkUrl,
   logoFooterUrl,
   logoFooterLightUrl,
+  logoEmailHubertLaunchUrl,
   hubertIconUrl,
+  hubertIconCircleUrl,
   rosiePhotoUrl,
   catherinePhotoUrl,
   supportEmail,

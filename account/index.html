@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20261029dash2" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20261029dash2" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261030profile1" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261030invite1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20261023nextup2" />
     <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"></script>
 
@@ -864,7 +864,13 @@
                     </div>
                     <p class="hmm-profile-error" data-hmm-profile-error hidden role="alert"></p>
                     <p class="hmm-profile-status" data-hmm-profile-status hidden role="status"></p>
-                    <button type="submit" class="ad-btn ad-btn-primary" data-hmm-profile-save>Save profile</button>
+                    <div class="hmm-profile-actions">
+                      <button type="submit" class="ad-btn ad-btn-primary" data-hmm-profile-save>Save profile</button>
+                      <button type="button" class="ad-btn ad-btn-ghost hmm-profile-invite" data-hmm-profile-share>
+                        Invite someone else for free
+                      </button>
+                    </div>
+                    <p class="hmm-profile-share-status" data-hmm-profile-share-status hidden role="status"></p>
                   </form>
                 </div>
                 <p class="hmm-search-soon" data-hmm-search-soon hidden role="status">
@@ -1401,7 +1407,7 @@
       </div>
     </div>
 
-    <script src="../js/site-footer.js?v=20260910pp1" data-root="../" defer></script>
+    <script src="../js/site-footer.js?v=20261030hubertOff1" data-root="../" defer></script>
     <script src="../js/flexible-event-image.js?v=20260709" defer></script>
     <script src="../js/hub-favourites.js?v=20260629" defer></script>
     <script src="../js/hub-organiser-favourites.js?v=20260630" defer></script>
@@ -1416,7 +1422,7 @@
     <script src="../js/attendee-auth-gate.js?v=20261021confirm2"></script>
     <script src="../js/organiser-image-upload.js?v=20261002offerimage1" defer></script>
     <script src="../js/attendee-member-offers.js?v=20261015offers1" defer></script>
-    <script src="../js/hubert-matchmaker.js?v=20261030launch1" defer></script>
-    <script src="../js/attendee-dashboard.js?v=20261030profile1" defer></script>
+    <script src="../js/hubert-matchmaker.js?v=20261030invite1" defer></script>
+    <script src="../js/attendee-dashboard.js?v=20261030ticketsnav1" defer></script>
   </body>
 </html>

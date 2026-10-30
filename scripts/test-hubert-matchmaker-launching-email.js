@@ -12,19 +12,31 @@ const { mergeEmailPreviewVariables } = require('../api/_lib/email-preview-variab
 const entry = BRANDED_EMAIL_TEMPLATES.hubert_matchmaker_launching;
 assert.ok(entry, 'template registered');
 assert.strictEqual(entry.file, 'hubert-matchmaker-launching.html');
-assert.ok(/launching Hubert/i.test(entry.subject), 'subject is launching not launched');
+assert.ok(/launching Hubert Matchmaker/i.test(entry.subject), 'subject is launching Matchmaker');
 assert.ok(!/have launched/i.test(entry.subject), 'subject not past-tense launched');
 
 const html = fs.readFileSync(
   path.join(__dirname, '../email-templates/hubert-matchmaker-launching.html'),
   'utf8'
 );
-assert.ok(html.includes("We're launching Hubert") || html.includes('We&apos;re launching Hubert'), 'headline');
+assert.ok(
+  html.includes("We're launching Hubert Matchmaker") ||
+    html.includes('We&apos;re launching Hubert Matchmaker'),
+  'headline'
+);
+assert.ok(/Hubert Matchmaker/i.test(html), 'product name in body');
 assert.ok(html.includes('{{hubert_profile_url}}'), 'CTA to Hubert profile');
 assert.ok(html.includes('{{meet_people_url}}'), 'Meet people link');
 assert.ok(html.includes('Include me'), 'asks for Include me');
 assert.ok(html.includes('Before I open'), 'forthcoming / launching framing');
 assert.ok(!/we have launched/i.test(html), 'not past-tense launched');
+assert.ok(!/[—–]|&mdash;|&ndash;/.test(html), 'no em/en dashes in body');
+assert.ok(!/[—–]/.test(entry.subject), 'no em dash in subject');
+assert.ok(!html.includes('hubert-avatar'), 'no square avatar frame');
+assert.ok(html.includes('hubert-icon'), 'circular hubert icon class');
+assert.ok(html.includes('width="200"') && html.includes('max-width:200px'), 'compact header logo');
+assert.ok(html.includes('width="168"') && html.includes('max-width:168px'), 'compact footer logo');
+assert.ok(!html.includes('width="300"'), 'oversized 300px header retired');
 
 const vars = mergeEmailPreviewVariables(
   'hubert_matchmaker_launching',
@@ -42,10 +54,27 @@ assert.ok(
   'meet UTM before hash'
 );
 assert.ok(vars.hubert_icon_url, 'hubert icon');
+assert.ok(/hubert-icon-circle\.png/.test(vars.hubert_icon_url || ''), 'uses circular hubert icon');
+assert.ok(
+  fs.existsSync(path.join(__dirname, '../assets/hubert-icon-circle.png')),
+  'circular hubert asset present'
+);
+assert.ok(
+  /logo-networker-uk-email-navy\.png/.test(vars.logo_url || ''),
+  'header uses attached navy lockup'
+);
+assert.ok(
+  /logo-networker-uk-email-navy\.png/.test(vars.logo_footer_light_url || ''),
+  'footer uses attached navy lockup'
+);
+assert.ok(
+  fs.existsSync(path.join(__dirname, '../assets/logo-networker-uk-email-navy.png')),
+  'attached logo asset present'
+);
 
 const admin = fs.readFileSync(path.join(__dirname, '../js/admin-app.js'), 'utf8');
 assert.ok(admin.includes('hubert_matchmaker_launching'), 'campaign picker includes template');
-assert.ok(/We\\?'re launching Hubert/.test(admin), 'campaign label uses launching');
+assert.ok(/We\\?'re launching Hubert Matchmaker/.test(admin), 'campaign label uses Matchmaker');
 assert.ok(admin.includes("slug === 'hubert_matchmaker_launching'"), 'hides claim URL for member blast');
 
 const sendSrc = fs.readFileSync(path.join(__dirname, '../api/_lib/send-template-email.js'), 'utf8');

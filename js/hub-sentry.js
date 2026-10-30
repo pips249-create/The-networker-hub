@@ -215,6 +215,9 @@
         /Java object is gone/i,
         /undefined is not an object \(evaluating 'window\.webkit\.messageHandlers'\)/i,
         /Can't find variable: webkit/i,
+        // Soft-refresh bootstrap aborts are handled in the organiser dashboard;
+        // keep older cached clients from flooding Sentry while immutable JS ages out.
+        /Request timed out/i,
       ],
       denyUrls: [/iabjs:/i, /navigation_performance_logger/i],
       beforeSend: beforeSend,

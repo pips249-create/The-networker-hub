@@ -139,7 +139,7 @@
       suggestionsEl: suggestionsEl,
       bubblePrefix: 'faq-hubert-bubble',
       greeting:
-        "Hello — I'm Hubert. Ask me about accounts, tickets, refunds, or organiser tools and I'll point you in the right direction.",
+        "Hello — I'm Hubert Matchmaker. Ask me about accounts, tickets, refunds, organiser tools, or meeting people and I'll point you in the right direction.",
     });
 
     function markChatActive() {

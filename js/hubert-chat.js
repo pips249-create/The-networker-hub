@@ -1,9 +1,9 @@
 /**
- * Hubert — shared chat logic for inline (contact) and floating widget.
+ * Hubert — shared chat logic for inline contact / FAQ ask (floating widget retired).
  */
 (function (global) {
   var HUBERT_GREETING =
-    "Good afternoon. I'm Hubert — at your service on The Networker UK. Do browse events and opportunities freely, or allow me to guide you through tickets, enquiries, and organiser tools.";
+    "Good afternoon. I'm Hubert Matchmaker — at your service on The Networker UK. Do browse events and opportunities freely, or allow me to guide you through tickets, enquiries, organiser tools, and meeting the right people.";
 
   var DEFAULT_SUGGESTIONS = [
     { label: 'Upcoming events', prompt: 'What networking events are coming up?' },

@@ -62,12 +62,26 @@ module.exports = async function handler(req, res) {
 
     const url = new URL(req.url, 'http://localhost');
     const filterEventId = url.searchParams.get('eventId') || 'all';
+    const eventIdsParam = String(url.searchParams.get('eventIds') || '')
+      .split(',')
+      .map((id) => String(id || '').trim())
+      .filter(Boolean);
     const view = String(url.searchParams.get('view') || 'active').toLowerCase();
     const ATTENDEES_ALL_EVENT_LIMIT = 80;
+    const allowedIds = new Set(scope.eventIds || []);
     let eventIds = scope.eventIds || [];
     let attendeesTruncated = false;
-    if (
-      (!filterEventId || filterEventId === 'all') &&
+    let scopedEventFilter = 'all';
+
+    // Explicit event / series scope skips the franchise "all events" cap so
+    // Top Clubs-scale catalogues can open a specific meeting's full list.
+    if (eventIdsParam.length) {
+      eventIds = eventIdsParam.filter((id) => allowedIds.has(id));
+      scopedEventFilter = 'all';
+    } else if (filterEventId && filterEventId !== 'all') {
+      eventIds = allowedIds.has(filterEventId) ? [filterEventId] : [];
+      scopedEventFilter = filterEventId;
+    } else if (
       view !== 'pending-summary' &&
       eventIds.length > ATTENDEES_ALL_EVENT_LIMIT
     ) {
@@ -76,6 +90,7 @@ module.exports = async function handler(req, res) {
         limit: ATTENDEES_ALL_EVENT_LIMIT,
       });
       attendeesTruncated = true;
+      scopedEventFilter = 'all';
     }
     if (view === 'pending-summary' && summarizePendingApplicationsForEventIds) {
       const pendingApplications = await summarizePendingApplicationsForEventIds(eventIds);
@@ -93,14 +108,14 @@ module.exports = async function handler(req, res) {
       if (view === 'cancellations' && listBookingCancellationsForOrganiserEvents) {
         cancellations = await listBookingCancellationsForOrganiserEvents(
           scope.groupIds,
-          filterEventId,
+          scopedEventFilter,
           scope.adminView,
           eventIds
         );
       } else if (view === 'blocks') {
         blocks = await listBlocksForOrganiserIds(scope.groupIds || [], { status: 'active' });
       } else {
-        attendees = await listAttendeesForOrganiserEvents(eventIds, filterEventId);
+        attendees = await listAttendeesForOrganiserEvents(eventIds, scopedEventFilter);
         blocks = await listBlocksForOrganiserIds(scope.groupIds || [], { status: 'active' });
         const blockKeys = new Set(
           (blocks || []).map((b) => String(b.organiserId || '') + '\0' + normalizeBlockEmail(b.email))

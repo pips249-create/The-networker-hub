@@ -100,7 +100,7 @@ module.exports = wrapHandler(async function handler(req, res) {
     return json(res, 405, { ok: false, error: 'method_not_allowed' });
   }
 
-  res.setHeader('Cache-Control', 'public, max-age=60');
+  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=120, stale-while-revalidate=300');
 
   try {
     const slug = req.query?.slug;

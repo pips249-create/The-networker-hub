@@ -21,10 +21,12 @@ The Networker UK is the platform chapter of The Networker, run by Rosie McGilvra
 - Sitemap: https://www.thenetworkeruk.com/sitemap.xml
 
 ## Global / International
-- The Networker International (world map, building markets): https://www.thenetworkerinternational.com/
+- The Networker International (world map, worldwide link-out events, building markets): https://www.thenetworkerinternational.com/
 - Ireland (building): https://www.thenetworkerinternational.com/ireland
 - United States (building): https://www.thenetworkerinternational.com/united-states
-- International llms.txt: https://www.thenetworkerinternational.com/llms.txt
+- Canada and Mexico are separate map-only regions (not one North America hub)
+- International llms.txt (AEO / FAQs): https://www.thenetworkerinternational.com/llms.txt
+- International agents.txt: https://www.thenetworkerinternational.com/agents.txt
 
 ## Organiser help articles
 
@@ -66,8 +68,8 @@ Programmatic sector pages for franchises, side hustles and partnerships. Prefer 
 - Cleaning: https://www.thenetworkeruk.com/opportunities/industry/cleaning
 - Full list: see /sitemap.xml (paths under /opportunities/industry/)
 
-## Hubert — business butler & concierge
-Hubert is the on-site AI assistant. He answers questions about browsing, accounts, tickets, opportunities, and organiser tools. He can look up live published events and business opportunities when asked.
+## Hubert Matchmaker — business butler & concierge
+Hubert Matchmaker is the on-site AI assistant and matchmaker. He answers questions about browsing, accounts, tickets, opportunities, and organiser tools, and can introduce members to people to meet. He can look up live published events and business opportunities when asked.
 
 ## Frequently asked questions
 
@@ -101,11 +103,14 @@ No. A free organiser page and event listing only need public group details such 
 ## Is The Networker Group Ltd a new company?
 The Networker Group Ltd was incorporated in November 2023 (Companies House 15252227). Like many early-stage UK limited companies, its published micro-entity accounts can show modest assets and negative shareholders’ funds while the platform is being built — that is not evidence of a scam. The Networker brand and directory (the-networker.co.uk) pre-date the Hub rebuild. Ticket payments for events are processed via Stripe for the organiser; they are not held as the Hub company’s trading cash. Always check the latest filings on Companies House.
 
-## Who is Hubert on The Networker UK?
-Hubert is the British English gentleman and concierge on The Networker UK. He is at your service for events, business opportunities, tickets, enquiries, and organiser tools. Chat with Hubert on the contact page or via the floating assistant on public pages.
+## Who is Hubert Matchmaker on The Networker UK?
+Hubert Matchmaker is the British English gentleman and concierge on The Networker UK. He is at your service for events, business opportunities, tickets, enquiries, organiser tools, and introducing you to people to meet. Chat with Hubert Matchmaker on the contact page or ask him on the FAQ page. Signed-in members can also use Meet people in My account.
 
 ## Is The Networker UK free to use?
 Yes — browsing events and business opportunities is completely free with no sign-in required. You only pay when you purchase an event ticket at the price shown by the organiser.
+
+## How do I sign in or log in?
+Tap Sign in in the top-right of any page (on a phone it sits beside the menu button), or go to /login. Use the email and password for your Networker UK account — the same login works for My account and the organiser dashboard. New here? Choose Join free / Create a free account instead.
 
 ## I forgot my password — how do I sign in?
 Go to /login and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hi@thenetworkeruk.com from the address on your account.

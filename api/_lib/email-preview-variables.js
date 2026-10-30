@@ -16,7 +16,10 @@ const {
   logoNavUrl,
   logoFooterUrl,
   logoEmailOnDarkUrl,
+  logoFooterLightUrl,
+  logoEmailHubertLaunchUrl,
   hubertIconUrl,
+  hubertIconCircleUrl,
   supportEmail,
   eventPublicUrl,
   organiserPublicUrl,
@@ -334,19 +337,20 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
   }
 
   if (slug === 'hubert_matchmaker_launching') {
-    const onDark = logoEmailOnDarkUrl(site);
+    const navyLockup = logoEmailHubertLaunchUrl(site);
     const launchUtm =
       'utm_source=hubert&utm_medium=email&utm_campaign=matchmaker_launching';
     vars.user_name = vars.user_name || 'Alex';
-    vars.hubert_icon_url = hubertIconUrl(site);
+    vars.hubert_icon_url = hubertIconCircleUrl(site);
     // Query before hash so #as-hubert-matchmaker still matches settings deep-link.
     // Always set (basePreviewVars already has a non-UTM hubert_profile_url).
     vars.hubert_profile_url =
       hubAccountSettingsUrl(site) + '?' + launchUtm + '#as-hubert-matchmaker';
     vars.meet_people_url = site + '/account/?' + launchUtm + '#meet';
-    vars.logo_url = onDark;
-    vars.logo_footer_url = onDark;
-    vars.logo_footer_light_url = onDark;
+    // Attached brand lockup top + bottom.
+    vars.logo_url = navyLockup;
+    vars.logo_footer_url = navyLockup;
+    vars.logo_footer_light_url = navyLockup;
   }
 
   if (slug === 'hubert_organiser_pre_event') {

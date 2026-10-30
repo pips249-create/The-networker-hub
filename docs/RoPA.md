@@ -113,11 +113,11 @@
 | **Recipients** | Internal staff (Catherine Hancher, Rosie McGilvray); Supabase admin tools |
 | **Retention** | Complaints register: 2 years after closure; support email 1 year after resolution; admin audit per internal policy |
 
-### I. Hubert help assistant (contact chat)
+### I. Hubert Matchmaker help assistant (contact chat)
 
 | Item | Detail |
 |------|--------|
-| **Purpose** | Answer visitor questions about events, opportunities, and platform use via `/contact` and the floating assistant |
+| **Purpose** | Answer visitor questions about events, opportunities, and platform use via `/contact`, the FAQ ask panel, and Meet people in My account |
 | **Data subjects** | Website visitors using Hubert chat |
 | **Categories of data** | Chat message content (processed in real time; session history in the visitor’s browser) |
 | **Lawful basis** | Legitimate interests — user-initiated help (Art. 6(1)(f)) |

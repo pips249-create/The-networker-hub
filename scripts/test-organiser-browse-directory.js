@@ -81,6 +81,12 @@ assert(
   DIRECTORY_EVENT_QUERY.select !== '*' && DIRECTORY_EVENT_QUERY.select.indexOf('organiser_id') !== -1
 );
 assert('directory organiser columns skip select *', DIRECTORY_ORG_SELECT !== '*' && DIRECTORY_ORG_SELECT.indexOf('email') === -1);
+assert(
+  'directory organiser columns skip social URLs',
+  DIRECTORY_ORG_SELECT.indexOf('website') === -1 &&
+    DIRECTORY_ORG_SELECT.indexOf('instagram_url') === -1 &&
+    DIRECTORY_ORG_SELECT.indexOf('facebook_url') === -1
+);
 
 const browseSrc = fs.readFileSync(
   path.join(__dirname, '../api/_lib/supabase-organisers-browse.js'),
@@ -90,9 +96,87 @@ assert(
   'directory builder uses the upcoming event query',
   /fetchPublishedEventRows\(sb,\s*DIRECTORY_EVENT_QUERY\)/.test(browseSrc)
 );
+assert(
+  'list cards omit the duplicated search blob',
+  /listCard[\s\S]*?claimable:[\s\S]*?if \(!listCard\)/.test(browseSrc) ||
+    /prebuilt `search` blob/.test(browseSrc)
+);
+
+const { rowToPublicOrganiser } = require('../api/_lib/supabase-organisers-browse');
+const listCard = rowToPublicOrganiser(
+  {
+    id: 'org-card',
+    name: 'Card Group',
+    slug: 'card-group',
+    description: 'A'.repeat(400),
+    photo_url: '',
+    industries: ['Tech'],
+    meeting_formats: ['In person'],
+    average_rating: 4.5,
+    review_count: 3,
+    complimentary_visits_allowed: 1,
+    featured: false,
+    listing_status: 'published',
+    verification_status: 'Verified',
+    ownership_claim_status: 'claimed',
+    website: 'https://example.com',
+    instagram_url: 'https://instagram.com/x',
+  },
+  2,
+  { listCard: true, locations: [{ city: 'Manchester', postcode: '', outcode: 'M1' }] }
+);
+assert('list card truncates description', listCard.description.length <= 280);
+assert('list card omits search', listCard.search == null);
+assert('list card omits website', !listCard.website);
+assert('list card omits instagram', !listCard.instagramUrl);
+
+const detailCard = rowToPublicOrganiser(
+  {
+    id: 'org-detail',
+    name: 'Detail Group',
+    slug: 'detail-group',
+    description: 'Full bio',
+    photo_url: '',
+    industries: ['Tech'],
+    meeting_formats: [],
+    average_rating: 5,
+    review_count: 10,
+    complimentary_visits_allowed: 0,
+    featured: false,
+    listing_status: 'published',
+    verification_status: 'Verified',
+    ownership_claim_status: 'claimed',
+    website: 'https://example.com',
+  },
+  1,
+  { locations: [] }
+);
+assert('detail keeps website', detailCard.website === 'https://example.com');
+assert('detail keeps search', typeof detailCard.search === 'string' && detailCard.search.indexOf('detail group') !== -1);
+
+const rankingSrc = fs.readFileSync(
+  path.join(__dirname, '../api/_lib/organiser-ranking-snapshot.js'),
+  'utf8'
+);
+assert(
+  'directory-sized ranking lookups skip live recompute without a snapshot',
+  /ids\.length > RANKING_ID_CHUNK\) return \{\}/.test(rankingSrc)
+);
 
 const clientSrc = fs.readFileSync(path.join(__dirname, '../js/organisers.js'), 'utf8');
 assert('browser retries gateway timeouts', /HTTP \(408\|425\|429\|502\|503\|504\)/.test(clientSrc));
+
+const filtersSrc = fs.readFileSync(path.join(__dirname, '../js/organisers-filters.js'), 'utf8');
+assert(
+  'organiser filters rebuild search when the API omits it',
+  /function organiserSearchHaystack/.test(filtersSrc)
+);
+
+const organisersApiSrc = fs.readFileSync(path.join(__dirname, '../api/organisers.js'), 'utf8');
+assert(
+  'organisers list sets CDN cache headers',
+  /s-maxage=120/.test(organisersApiSrc) && /stale-while-revalidate=300/.test(organisersApiSrc)
+);
 
 const middlewareSrc = fs.readFileSync(path.join(__dirname, '../middleware.js'), 'utf8');
 const fnMatch = middlewareSrc.match(
