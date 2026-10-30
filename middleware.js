@@ -277,6 +277,39 @@ function escapeHtml(text) {
 }
 
 /** Compact Event ItemList JSON-LD for International home (Edge-safe, no Node requires). */
+function intlSchemaCurrencyForCountry(code) {
+  const c = String(code || '')
+    .trim()
+    .toUpperCase();
+  if (c === 'GB' || c === 'UK') return 'GBP';
+  if (c === 'CA') return 'CAD';
+  if (c === 'AU') return 'AUD';
+  if (c === 'NZ') return 'NZD';
+  if (
+    c === 'IE' ||
+    c === 'DE' ||
+    c === 'FR' ||
+    c === 'ES' ||
+    c === 'IT' ||
+    c === 'NL' ||
+    c === 'BE' ||
+    c === 'AT' ||
+    c === 'PT' ||
+    c === 'FI' ||
+    c === 'EE' ||
+    c === 'LV' ||
+    c === 'LT' ||
+    c === 'SK' ||
+    c === 'SI' ||
+    c === 'LU' ||
+    c === 'MT' ||
+    c === 'CY'
+  ) {
+    return 'EUR';
+  }
+  return 'USD';
+}
+
 function buildIntlEventsItemListJsonLd(events) {
   const list = Array.isArray(events) ? events : [];
   const items = [];
@@ -302,10 +335,44 @@ function buildIntlEventsItemListJsonLd(events) {
       String(row.countryName || '')
         .trim()
         .toLowerCase() === 'online';
+    const endsOn = String(row.endsOn || '').trim();
+    let endDate = startDate;
+    if (endsOn) {
+      if (endsOn === startsOn && startDate.indexOf('T') !== -1) endDate = startDate;
+      else endDate = endsOn;
+    }
+    let description = String(row.description || '')
+      .trim()
+      .slice(0, 500);
+    if (!description) {
+      const place = [row.city, row.countryName]
+        .map(function (part) {
+          return String(part || '').trim();
+        })
+        .filter(Boolean)
+        .join(', ');
+      const who = String(row.organiserName || '').trim();
+      description = 'Business networking event';
+      if (place) description += ' in ' + place;
+      if (who) description += ' hosted by ' + who;
+      description += '. Book on the organiser’s site.';
+      description = description.slice(0, 500);
+    }
+    let validFrom = startDate;
+    const created = String(row.createdAt || '').trim();
+    if (created) {
+      const ms = Date.parse(created);
+      if (!Number.isNaN(ms)) validFrom = new Date(ms).toISOString();
+    }
+    let price = 0;
+    if (row.priceNum != null && Number.isFinite(Number(row.priceNum))) price = Number(row.priceNum);
+    else if (row.price != null && Number.isFinite(Number(row.price))) price = Number(row.price);
     const eventNode = {
       '@type': 'Event',
       name: title,
+      description: description,
       startDate: startDate,
+      endDate: endDate,
       eventAttendanceMode: online
         ? 'https://schema.org/OnlineEventAttendanceMode'
         : 'https://schema.org/OfflineEventAttendanceMode',
@@ -333,14 +400,20 @@ function buildIntlEventsItemListJsonLd(events) {
         '@type': 'Offer',
         url: externalUrl,
         availability: 'https://schema.org/InStock',
+        price: price,
+        priceCurrency: intlSchemaCurrencyForCountry(row.countryCode),
+        validFrom: validFrom,
       },
     };
-    if (row.endsOn && String(row.endsOn) !== startsOn) eventNode.endDate = String(row.endsOn);
-    if (row.description) eventNode.description = String(row.description).slice(0, 500);
     if (row.imageUrl) eventNode.image = [String(row.imageUrl)];
     if (row.organiserName) {
-      eventNode.organizer = { '@type': 'Organization', name: String(row.organiserName) };
-      if (row.organiserWebsite) eventNode.organizer.url = String(row.organiserWebsite);
+      const orgName = String(row.organiserName);
+      eventNode.organizer = { '@type': 'Organization', name: orgName };
+      eventNode.performer = { '@type': 'PerformingGroup', name: orgName };
+      if (row.organiserWebsite) {
+        eventNode.organizer.url = String(row.organiserWebsite);
+        eventNode.performer.url = String(row.organiserWebsite);
+      }
     }
     items.push({ '@type': 'ListItem', position: items.length + 1, item: eventNode });
   }
