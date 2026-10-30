@@ -223,7 +223,7 @@ const FALLBACK_REPLIES = [
   {
     match: /what is hubert|who is hubert|tell me about hubert/i,
     reply:
-      "Good afternoon — I'm Hubert, your host and concierge at The Networker UK. I'm at your service for events, business opportunities, tickets, enquiries, and organiser tools. You'll find me on the contact page and via the chat button on public pages.",
+      "Good afternoon — I'm Hubert, your host and concierge at The Networker UK. I'm at your service for events, business opportunities, tickets, enquiries, and organiser tools. You'll find me on the contact page, the FAQ page, and Meet people in My account.",
   },
   {
     match: /confirmation email|booking email|didn.?t receive|didn't receive|no confirmation|email.*ticket/i,
