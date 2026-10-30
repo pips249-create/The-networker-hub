@@ -2,7 +2,7 @@
  * Public email-link endpoint: Accept / Decline a Hubert intro via signed token.
  * Also supports GET preview of the request context (no contact details).
  */
-const { setCors, json } = require('../auth');
+const { setCors, json, sessionFromRequest } = require('../auth');
 const { isSupabaseConfigured } = require('../supabase');
 const { previewIntroFromToken, respondToIntro } = require('../hubert-intro-requests');
 const { enforceRateLimit, enforceRateLimitAsync } = require('../rate-limit');
@@ -93,7 +93,15 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const result = await respondToIntro({ token, decision, reason: body.reason });
+    const session = sessionFromRequest(req);
+    const result = await respondToIntro({
+      token,
+      decision,
+      reason: body.reason,
+      session,
+      industry: body.industry || body.businessSector || body.business_sector,
+      lookingToMeet: body.lookingToMeet || body.looking_to_meet,
+    });
     const accepted = result.intro?.status === 'accepted';
     return json(res, 200, {
       ok: true,
@@ -114,13 +122,17 @@ module.exports = async function handler(req, res) {
       code === 'invalid_or_expired_token' ||
       code === 'intro_not_found' ||
       code === 'intro_not_pending' ||
-      code === 'invalid_decision'
+      code === 'invalid_decision' ||
+      code === 'accept_industry_required' ||
+      code === 'accept_looking_required'
         ? 400
         : 500;
     return json(res, status, {
       ok: false,
       error: code,
       message: e && e.message ? e.message : 'Could not save your answer.',
+      needsAcceptOnboarding:
+        code === 'accept_industry_required' || code === 'accept_looking_required',
     });
   }
 };

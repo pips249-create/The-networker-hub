@@ -577,6 +577,7 @@ async function previewIntroFromToken(token) {
     throw err;
   }
   const titleCompany = formatTitleCompany(requester.job_title, requester.company);
+  const { acceptOnboardingOptions } = require('./hubert-accept-onboarding');
   return {
     id: intro.id,
     status: intro.status,
@@ -586,6 +587,8 @@ async function previewIntroFromToken(token) {
     requesterTitleCompany: titleCompany || null,
     requesterLabel: requesterEmailLabel(requester),
     expiresAt: intro.expires_at,
+    needsAcceptOnboarding: intro.status === 'pending',
+    acceptOnboarding: acceptOnboardingOptions(),
   };
 }
 
@@ -722,6 +725,22 @@ async function respondToIntro(options) {
     };
   }
 
+  // Validate 2-tap tags before flipping to accepted (industry + looking to meet).
+  // Members who already completed Hubert setup can Accept without re-picking.
+  const { resolveAcceptOnboarding, applyAcceptOnboardingTags } = require('./hubert-accept-onboarding');
+
+  let sessionAttendeeId = null;
+  if (options?.session) {
+    sessionAttendeeId = await resolveAttendeeId(sb, options.session).catch(() => null);
+  }
+  const onboardingAttendeeId = intro.target_attendee_id || sessionAttendeeId || null;
+
+  await resolveAcceptOnboarding(sb, {
+    industry: options?.industry || options?.businessSector,
+    lookingToMeet: options?.lookingToMeet || options?.looking_to_meet,
+    attendeeId: onboardingAttendeeId,
+  });
+
   const { data: updated, error } = await sb
     .from('hubert_intro_requests')
     .update({
@@ -738,7 +757,25 @@ async function respondToIntro(options) {
 
   const accepted = updated || { ...intro, status: 'accepted', responded_at: now, accepted_at: now };
 
-  if (intro.target_seed_id) {
+  let onboarding = null;
+  try {
+    onboarding = await applyAcceptOnboardingTags(sb, {
+      industry: options?.industry || options?.businessSector,
+      lookingToMeet: options?.lookingToMeet || options?.looking_to_meet,
+      attendeeId: onboardingAttendeeId,
+      seedId: intro.target_seed_id || null,
+    });
+    if (onboardingAttendeeId && !targetForThread.attendeeId) {
+      targetForThread.attendeeId = onboardingAttendeeId;
+    }
+  } catch (onboardErr) {
+    console.error(
+      '[hubert-intro] accept onboarding failed',
+      onboardErr && onboardErr.message ? onboardErr.message : onboardErr
+    );
+  }
+
+  if (intro.target_seed_id && !(onboarding && onboarding.seedUpdated)) {
     await sb
       .from('hubert_match_seed')
       .update({
