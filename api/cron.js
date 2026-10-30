@@ -25,6 +25,7 @@ const routes = {
   'directory-invite-nudge': require('./_lib/routes/cron-directory-invite-nudge'),
   'email-verify-reminders': require('./_lib/routes/cron-email-verify-reminders'),
   'eventbrite-event-sync': require('./_lib/routes/cron-eventbrite-event-sync'),
+  'hubert-seed-intro-followups': require('./_lib/routes/cron-hubert-seed-intro-followups'),
 };
 
 module.exports = wrapHandler(async function handler(req, res) {
