@@ -289,7 +289,7 @@
         '<code class="cb-provider-webhook-url">' +
         esc(p.webhookUrl) +
         '</code>' +
-        '<p class="ee-hint" style="margin-top:8px">Saving your private token usually registers this in Eventbrite for you. To check or paste by hand: Eventbrite → Account settings → <strong>Webhooks</strong> → Payload URL, action <code>order.placed</code>.</p>' +
+        '<p class="ee-hint" style="margin-top:8px">Saving your private token usually registers this in Eventbrite for you. To check or paste by hand: Eventbrite → Account settings → <strong>Webhooks</strong> → Payload URL, then actions <code>order.placed</code>, <code>attendee.updated</code>, and <code>event.published</code>.</p>' +
         '<p class="ee-attendance-next">' +
         copyWebhookBtn +
         '</p>' +
