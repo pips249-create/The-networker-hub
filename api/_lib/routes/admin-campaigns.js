@@ -4,12 +4,17 @@ const { sendTemplatedEmail } = require('../send-template-email');
 const { parseCsv } = require('../admin-csv-import');
 const { resolveOrganiserClaimUrl } = require('../organiser-claim-url');
 const { isClaimInviteSlug, logClaimInviteSent } = require('../organiser-claim-invite-log');
+const { hubAccountSettingsUrl } = require('../hub-email-urls');
 const {
   campaignSiteVars,
   legacyCampaignFrom,
   isRebrandCampaignSlug,
   LEGACY_REPLY_EMAIL,
 } = require('../organiser-campaign-defaults');
+
+const HUBERT_MATCHMAKER_LAUNCHING_SLUG = 'hubert_matchmaker_launching';
+const HUBERT_LAUNCHING_UTM =
+  'utm_source=hubert&utm_medium=email&utm_campaign=matchmaker_launching';
 
 const MAX_BULK = 50;
 
@@ -42,15 +47,46 @@ function normalizeEmails(raw) {
   return [...new Set(list)];
 }
 
+function displayNameFromEmail(email) {
+  return String(email || '')
+    .split('@')[0]
+    .replace(/[._]/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 function organiserDisplayName(email, baseVars, nameByEmail) {
   if (baseVars.organiser_name) return baseVars.organiser_name;
   if (baseVars.group_name) return baseVars.group_name;
   const fromDb = nameByEmail && nameByEmail.get(String(email || '').trim().toLowerCase());
   if (fromDb) return fromDb;
-  return String(email)
-    .split('@')[0]
-    .replace(/[._]/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  return displayNameFromEmail(email);
+}
+
+/** First names for member campaigns (attendees.name → first token). */
+async function fetchMemberNamesByEmail(emails) {
+  const map = new Map();
+  const list = [
+    ...new Set((emails || []).map((e) => String(e || '').trim().toLowerCase()).filter(Boolean)),
+  ];
+  if (!list.length || !isSupabaseConfigured()) return map;
+
+  const sb = getSupabaseAdmin();
+  const chunkSize = 80;
+  for (let i = 0; i < list.length; i += chunkSize) {
+    const chunk = list.slice(i, i + chunkSize);
+    const { data, error } = await sb.from('attendees').select('email, name').in('email', chunk);
+    if (error || !data) continue;
+    data.forEach((row) => {
+      const em = String(row.email || '')
+        .trim()
+        .toLowerCase();
+      const full = String(row.name || '').trim();
+      if (!em || !full || !list.includes(em) || map.has(em)) return;
+      const first = full.split(/\s+/)[0];
+      if (first) map.set(em, first);
+    });
+  }
+  return map;
 }
 
 /**
@@ -141,7 +177,10 @@ module.exports = async function handler(req, res) {
     body.variables && typeof body.variables === 'object' ? { ...body.variables } : {};
   const siteVars = campaignSiteVars(host);
   const rebrand = isRebrandCampaignSlug(slug);
-  const nameByEmail = await fetchOrganiserNamesByEmail(emails);
+  const hubertLaunching = slug === HUBERT_MATCHMAKER_LAUNCHING_SLUG;
+  const nameByEmail = hubertLaunching
+    ? await fetchMemberNamesByEmail(emails)
+    : await fetchOrganiserNamesByEmail(emails);
   const sent = [];
   const failed = [];
 
@@ -149,32 +188,45 @@ module.exports = async function handler(req, res) {
     const organiserName = organiserDisplayName(email, baseVars, nameByEmail);
     const variables = {
       ...siteVars,
-      organiser_name: organiserName,
-      group_name: organiserName,
       ...baseVars,
     };
-    // Keep DB/group name when caller did not pass an explicit organiser_name.
-    if (!baseVars.organiser_name && !baseVars.group_name) {
+
+    if (hubertLaunching) {
+      const memberName =
+        (baseVars.user_name && String(baseVars.user_name).trim()) ||
+        nameByEmail.get(String(email).trim().toLowerCase()) ||
+        displayNameFromEmail(email);
+      variables.user_name = memberName;
+      variables.user_email = email;
+      variables.hubert_profile_url =
+        hubAccountSettingsUrl(host) + '?' + HUBERT_LAUNCHING_UTM + '#as-hubert-matchmaker';
+      variables.meet_people_url = host.replace(/\/$/, '') + '/account/?' + HUBERT_LAUNCHING_UTM + '#meet';
+    } else {
       variables.organiser_name = organiserName;
       variables.group_name = organiserName;
-    }
-
-    if (!rebrand) {
-      let claimUrl = baseVars.claim_url;
-      if (!claimUrl) {
-        try {
-          claimUrl = await resolveOrganiserClaimUrl(email, host);
-        } catch {
-          claimUrl =
-            host +
-            '/register?email=' +
-            encodeURIComponent(email) +
-            '&next=' +
-            encodeURIComponent('/organiser/?onboard=claim') +
-            '&intent=organiser-claim';
-        }
+      // Keep DB/group name when caller did not pass an explicit organiser_name.
+      if (!baseVars.organiser_name && !baseVars.group_name) {
+        variables.organiser_name = organiserName;
+        variables.group_name = organiserName;
       }
-      variables.claim_url = claimUrl;
+
+      if (!rebrand) {
+        let claimUrl = baseVars.claim_url;
+        if (!claimUrl) {
+          try {
+            claimUrl = await resolveOrganiserClaimUrl(email, host);
+          } catch {
+            claimUrl =
+              host +
+              '/register?email=' +
+              encodeURIComponent(email) +
+              '&next=' +
+              encodeURIComponent('/organiser/?onboard=claim') +
+              '&intent=organiser-claim';
+          }
+        }
+        variables.claim_url = claimUrl;
+      }
     }
 
     const sendOpts = {
