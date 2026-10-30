@@ -345,6 +345,10 @@ async function loadCurrentRankingsByOrganiserId(organiserIds) {
   }
 
   if (!snapshot) {
+    // Directory asks for every public organiser. Live recompute scans reviews /
+    // attendance for the whole catalogue and made /api/organisers multi-second.
+    // Skip badges until the monthly snapshot exists; single-id callers still compute.
+    if (ids.length > RANKING_ID_CHUNK) return {};
     try {
       const index = await computeLiveRankingIndex(sb);
       const out = {};

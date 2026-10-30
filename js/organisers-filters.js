@@ -57,6 +57,29 @@
     return ordered;
   }
 
+  /** Build search text when the directory API omits the duplicated `search` blob. */
+  function organiserSearchHaystack(org) {
+    if (!org) return '';
+    if (org.search) return String(org.search);
+    var locations = Array.isArray(org.locations) ? org.locations : [];
+    var locBits = locations
+      .map(function (location) {
+        return [location.city, location.postcode, location.outcode].filter(Boolean).join(' ');
+      })
+      .join(' ');
+    return [
+      org.name,
+      org.description,
+      org.industry,
+      Array.isArray(org.industries) ? org.industries.join(' ') : '',
+      Array.isArray(org.meetingFormats) ? org.meetingFormats.join(' ') : '',
+      locBits,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+  }
+
   function organiserMatchesFilters(org) {
     var tab = getActiveTab();
     if (tab === 'featured' && !org.featured) return false;
@@ -64,7 +87,7 @@
     var q = (searchInput && searchInput.value) || '';
     q = q.trim().toLowerCase();
     if (q) {
-      var hay = org.search || '';
+      var hay = organiserSearchHaystack(org);
       if (window.HubSearchMatch && typeof window.HubSearchMatch.haystackMatchesQuery === 'function') {
         if (!window.HubSearchMatch.haystackMatchesQuery(hay, q)) return false;
       } else {

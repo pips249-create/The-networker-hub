@@ -847,7 +847,9 @@
   }
 
   function loadCatalogAsync() {
-    return fetch('/api/opportunities', { credentials: 'same-origin', cache: 'no-store' })
+    // Honour API Cache-Control (s-maxage / browser max-age) so browse revisits
+    // do not re-download the full catalogue on every tab open.
+    return fetch('/api/opportunities', { credentials: 'same-origin' })
       .then(function (res) {
         return res.json().then(function (data) {
           return { ok: res.ok, data: data };
@@ -941,7 +943,7 @@
   }
 
   function fetchOpportunityFromCatalog(lookup) {
-    return fetch('/api/opportunities', { credentials: 'same-origin', cache: 'no-store' })
+    return fetch('/api/opportunities', { credentials: 'same-origin' })
       .then(function (res) {
         return res.json().then(function (data) {
           return { ok: res.ok, data: data };
