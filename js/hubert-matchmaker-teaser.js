@@ -4,6 +4,7 @@
  * While HUBERT_MATCHMAKER_PUBLIC is false:
  *   - Teaser is visible to everyone in "build your profile" mode (no live search).
  *   - CTA sends signed-in users to Meet people profile setup; others to register.
+ *   - Invite someone else shares a free join link (Web Share / clipboard).
  *
  * When the launch flag flips true:
  *   - Search lookalike returns; real search still requires sign-in.
@@ -22,9 +23,12 @@
       ledeEvents:
         'The room is crowded; the right intro isn’t. Hubert shortlists people worth meeting at events and after — customers, investors, hires, mentors — and only introduces you when both sides opt in. Build your profile now so you’re ready; contact details stay private.',
       submit: 'Build your profile',
+      invite: 'Invite someone else — free',
       badge: 'Launching soon',
       gateSignedOut: 'Search launches soon — build your profile now so you’re ready for warm intros.',
       gateSignedIn: 'Search launches soon — add a headline, who you want to meet, and Include me so you’re ready.',
+      inviteCopied: 'Invite link copied — send it to someone you’d like in the pool.',
+      inviteShared: 'Thanks — share Hubert with anyone you’d like to meet.',
     },
     search: {
       titleHome: 'Who do you want to meet?',
@@ -78,6 +82,26 @@
     return '/login?next=' + encodeURIComponent(next);
   }
 
+  function inviteShareUrl() {
+    var origin = window.location && window.location.origin ? window.location.origin : '';
+    return (
+      origin +
+      '/register?intent=attendee&utm_source=hubert&utm_medium=invite&utm_campaign=matchmaker_launch&next=' +
+      encodeURIComponent('/account/#meet')
+    );
+  }
+
+  function inviteSharePayload() {
+    var url = inviteShareUrl();
+    return {
+      title: 'Hubert on The Networker UK',
+      text:
+        'Hubert is launching on The Networker UK — warm intros to people worth meeting, free to join. Build your profile before search opens: ' +
+        url,
+      url: url,
+    };
+  }
+
   function fetchSession() {
     return fetch('/api/auth/session', { credentials: 'include', cache: 'no-store' })
       .then(function (res) {
@@ -90,10 +114,56 @@
       });
   }
 
+  function setInviteStatus(root, message) {
+    var status = root.querySelector('[data-hmm-teaser-invite-status]');
+    if (!status) return;
+    if (!message) {
+      status.hidden = true;
+      status.textContent = '';
+      return;
+    }
+    status.hidden = false;
+    status.textContent = message;
+  }
+
+  function shareInvite(root) {
+    var payload = inviteSharePayload();
+    setInviteStatus(root, '');
+    if (navigator.share) {
+      return navigator
+        .share(payload)
+        .then(function () {
+          setInviteStatus(root, COPY.profile.inviteShared);
+        })
+        .catch(function (err) {
+          if (err && err.name === 'AbortError') return;
+          return copyInvite(root, payload);
+        });
+    }
+    return copyInvite(root, payload);
+  }
+
+  function copyInvite(root, payload) {
+    var text = (payload && payload.text) || inviteSharePayload().text;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text).then(
+        function () {
+          setInviteStatus(root, COPY.profile.inviteCopied);
+        },
+        function () {
+          setInviteStatus(root, 'Copy this link: ' + inviteShareUrl());
+        }
+      );
+    }
+    setInviteStatus(root, 'Copy this link: ' + inviteShareUrl());
+    return Promise.resolve();
+  }
+
   function applyModeCopy(root, searchMode) {
     var title = root.querySelector('[data-hmm-teaser-title]');
     var lede = root.querySelector('[data-hmm-teaser-lede]');
     var submit = root.querySelector('[data-hmm-teaser-submit]');
+    var invite = root.querySelector('[data-hmm-teaser-invite]');
     var input = root.querySelector('[data-hmm-teaser-query]');
     var badge = root.querySelector('[data-hmm-teaser-badge]');
     var isEvents = root.classList.contains('hmm-teaser--events');
@@ -102,6 +172,7 @@
       if (title) title.textContent = isEvents ? COPY.search.titleEvents : COPY.search.titleHome;
       if (lede) lede.textContent = isEvents ? COPY.search.ledeEvents : COPY.search.ledeHome;
       if (submit) submit.textContent = COPY.search.submit;
+      if (invite) invite.hidden = true;
       if (badge) {
         badge.hidden = true;
         badge.textContent = '';
@@ -111,12 +182,17 @@
         input.required = false;
         input.removeAttribute('disabled');
       }
+      setInviteStatus(root, '');
       root.classList.remove('hmm-teaser--profile');
       root.classList.add('hmm-teaser--search');
     } else {
       if (title) title.textContent = COPY.profile.title;
       if (lede) lede.textContent = isEvents ? COPY.profile.ledeEvents : COPY.profile.ledeHome;
       if (submit) submit.textContent = COPY.profile.submit;
+      if (invite) {
+        invite.hidden = false;
+        invite.textContent = COPY.profile.invite;
+      }
       if (badge) {
         badge.hidden = false;
         badge.textContent = COPY.profile.badge;
@@ -136,6 +212,7 @@
     var form = root.querySelector('[data-hmm-teaser-form]');
     var input = root.querySelector('[data-hmm-teaser-query]');
     var gate = root.querySelector('[data-hmm-teaser-gate]');
+    var inviteBtn = root.querySelector('[data-hmm-teaser-invite]');
     var signedIn = Boolean(session && session.user);
     var searchMode = isMatchmakerPublic();
     var eligibleSearch = canUseMatchmaker(session);
@@ -159,6 +236,13 @@
         gate.hidden = true;
         gate.textContent = '';
       }
+    }
+
+    if (inviteBtn && inviteBtn.dataset.hmmBound !== '1') {
+      inviteBtn.dataset.hmmBound = '1';
+      inviteBtn.addEventListener('click', function () {
+        shareInvite(root);
+      });
     }
 
     if (!form || form.dataset.hmmBound === '1') return;
@@ -213,6 +297,7 @@
     profileUrl: profileUrl,
     registerUrl: registerUrl,
     loginUrl: loginUrl,
+    inviteShareUrl: inviteShareUrl,
     init: init,
   };
 
