@@ -392,15 +392,22 @@ module.exports = async function handler(req, res) {
             /* optional */
           }
         }
-        await ensureProviderConnection(sb, accountId, 'eventbrite');
+        let conn = await ensureProviderConnection(sb, accountId, 'eventbrite');
+        if (eventbriteWebhookNeedsTokenRotation(site, conn.webhook_token)) {
+          conn = await ensureProviderConnection(sb, accountId, 'eventbrite', { rotateToken: true });
+        }
         const groupId = String(body.groupId || body.organiserId || body.organiser_id || '').trim();
         const configPatch = {
           eventbritePrivateToken: token,
           eventbriteAuthMethod: 'private_token',
         };
         if (groupId) configPatch.defaultImportGroupId = groupId;
-        const conn = await mergeProviderConnectionConfig(sb, accountId, 'eventbrite', configPatch);
-        const endpointUrl = buildProviderWebhookPublicUrl(webhookSite, 'eventbrite', conn.webhook_token);
+        conn = await mergeProviderConnectionConfig(sb, accountId, 'eventbrite', configPatch);
+        const endpointUrl =
+          buildProviderWebhookPublicUrl(webhookSite, 'eventbrite', conn.webhook_token) ||
+          webhookSite +
+            '/api/integrations/providers/eventbrite/webhook?token=' +
+            encodeURIComponent(conn.webhook_token || '');
         let attendeeSync = null;
         try {
           attendeeSync = await syncEventbriteAttendeesForConnection({
@@ -433,6 +440,7 @@ module.exports = async function handler(req, res) {
           ok: true,
           eventbriteApiTokenConfigured: Boolean(eventbritePrivateTokenFromConfig(conn.config)),
           eventbriteAuthMethod: eventbriteAuthMethodFromConfig(conn.config) || 'private_token',
+          webhookUrl: endpointUrl || null,
           attendeeSync,
           orgSync,
           connectedActivated: Boolean(account && isConnectedPlanActive(account)),
