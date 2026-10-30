@@ -40,7 +40,8 @@ async function findEventsByEventbriteExternalId(sb, accountId, externalEventId) 
     if (existingLink && existingLink.event_id) {
       const { data: linkedEv } = await sb
         .from('events')
-        .select('id, title, external_booking_url, organiser_id, created_at, status, listing_status')
+        // listing_status is on organisers, not events
+        .select('id, title, external_booking_url, organiser_id, created_at, status')
         .eq('id', existingLink.event_id)
         .maybeSingle();
       if (linkedEv && linkedEv.id) {
@@ -60,7 +61,7 @@ async function findEventsByEventbriteExternalId(sb, accountId, externalEventId) 
   if (orgIds.length) {
     const { data: rows, error } = await sb
       .from('events')
-      .select('id, title, external_booking_url, organiser_id, created_at, status, listing_status')
+      .select('id, title, external_booking_url, organiser_id, created_at, status')
       .in('organiser_id', orgIds)
       .not('external_booking_url', 'is', null)
       .ilike('external_booking_url', '%' + eid + '%')
