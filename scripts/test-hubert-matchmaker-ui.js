@@ -36,9 +36,9 @@ assert(mm.canUseMatchmaker(null) === false, 'signed-out search blocked');
 assert(src.indexOf('searchEnabled') !== -1, 'searchEnabled gate for Ask Hubert');
 assert(src.indexOf('You’re in Hubert’s pool') !== -1, 'profile-ready copy while search gated');
 assert(src.indexOf('shareProfileInvite') !== -1, 'profile share invite helper');
-assert(src.indexOf('Invite someone else') !== -1 || true, 'invite CTA may live in html');
 const accountHtml = fs.readFileSync(path.join(__dirname, '../account/index.html'), 'utf8');
 assert(accountHtml.indexOf('data-hmm-profile-share') !== -1, 'Meet people has invite share control');
+assert(accountHtml.indexOf('Invite someone else') !== -1, 'Meet people invite CTA copy');
 assert(accountHtml.indexOf('hmm-profile-actions') !== -1, 'Meet people centers profile actions');
 
 assert(mm.shortDisplayName('Alex Morgan') === 'Alex M.', 'first + initial');
