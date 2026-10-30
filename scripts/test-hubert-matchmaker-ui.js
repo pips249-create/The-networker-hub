@@ -53,5 +53,7 @@ assert(src.indexOf('Include me stays opt-in') !== -1, 'no auto opt-in comment');
 assert(src.indexOf('applyProfileGate') !== -1, 'profile gate helper');
 assert(src.indexOf('confirmStopIncludingMe') !== -1, 'opt-out needs confirmation');
 assert(src.indexOf('Stop including me') !== -1, 'explicit opt-out control');
+assert(src.indexOf('maybeSeedQueryFromUrl') !== -1, 'seeds Meet query from teaser q=');
+assert(typeof mm._parseMeetQueryFromUrl === 'function', 'parseMeetQueryFromUrl exported');
 
 console.log('ok — hubert-matchmaker ui helpers');

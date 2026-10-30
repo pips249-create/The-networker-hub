@@ -1,0 +1,140 @@
+/* Hubert Matchmaker public teaser — Home + Events browse */
+
+.hmm-teaser[hidden] {
+  display: none !important;
+}
+
+.hmm-teaser {
+  --hmm-teaser-ink: #452d5c;
+  --hmm-teaser-muted: #635c5e;
+  --hmm-teaser-cream: #f5f0e8;
+  --hmm-teaser-line: #ebe0f0;
+  position: relative;
+  isolation: isolate;
+  padding: 28px 0 8px;
+}
+
+.hmm-teaser-inner {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px 18px;
+  align-items: start;
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 22px 22px 20px;
+  border-radius: 18px;
+  background:
+    linear-gradient(160deg, rgba(245, 240, 232, 0.95), rgba(255, 255, 255, 0.92)),
+    radial-gradient(circle at 12% 20%, rgba(154, 122, 168, 0.12), transparent 45%);
+  border: 1px solid var(--hmm-teaser-line);
+}
+
+.hmm-teaser-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  box-shadow: 0 6px 16px rgba(69, 45, 92, 0.12);
+}
+
+.hmm-teaser-copy {
+  min-width: 0;
+}
+
+.hmm-teaser-kicker {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #b8860b;
+}
+
+.hmm-teaser-title {
+  margin: 0 0 6px;
+  font-size: clamp(1.25rem, 2.2vw, 1.55rem);
+  line-height: 1.25;
+  color: var(--hmm-teaser-ink);
+  font-weight: 700;
+}
+
+.hmm-teaser-lede {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--hmm-teaser-muted);
+  max-width: 42rem;
+}
+
+.hmm-teaser-form {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.hmm-teaser-input {
+  flex: 1 1 220px;
+  min-width: 0;
+  font: inherit;
+  font-size: 15px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #d9c4e0;
+  background: #fff;
+  color: var(--hmm-teaser-ink);
+}
+
+.hmm-teaser-input:focus {
+  outline: 2px solid rgba(154, 122, 168, 0.45);
+  outline-offset: 1px;
+}
+
+.hmm-teaser-submit {
+  flex: 0 0 auto;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 12px 18px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  background: #2f6b45;
+  color: #fff;
+}
+
+.hmm-teaser-submit:hover {
+  filter: brightness(1.05);
+}
+
+.hmm-teaser-gate {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--hmm-teaser-muted);
+}
+
+.hmm-teaser--home .hmm-teaser-shell,
+.hmm-teaser--events .hmm-teaser-shell {
+  width: min(1100px, calc(100% - 32px));
+  margin: 0 auto;
+}
+
+@media (max-width: 640px) {
+  .hmm-teaser-inner {
+    grid-template-columns: 1fr;
+    padding: 18px 16px;
+  }
+
+  .hmm-teaser-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .hmm-teaser-submit {
+    width: 100%;
+  }
+}
