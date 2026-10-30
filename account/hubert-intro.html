@@ -138,6 +138,62 @@
       text-align: center;
       line-height: 1.5;
     }
+    .hi-onboard[hidden] { display: none !important; }
+    .hi-onboard {
+      margin-top: 18px;
+      text-align: left;
+    }
+    .hi-onboard-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #7a7580;
+      margin: 0 0 8px;
+    }
+    .hi-onboard-field { margin: 0 0 16px; }
+    .hi-onboard-select {
+      width: 100%;
+      box-sizing: border-box;
+      font: inherit;
+      font-size: 15px;
+      padding: 11px 12px;
+      border-radius: 10px;
+      border: 1px solid #d9c4e0;
+      background: #fff;
+      color: #452d5c;
+    }
+    .hi-onboard-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .hi-onboard-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin: 0;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #f7f4fb;
+      border: 1px solid #ebe0f0;
+      font-size: 13px;
+      font-weight: 600;
+      color: #452d5c;
+      cursor: pointer;
+    }
+    .hi-onboard-chip input { margin: 0; }
+    .hi-onboard-chip:has(input:checked) {
+      background: #ebe0f0;
+      border-color: #9a7aa8;
+    }
+    .hi-onboard-error {
+      margin: 0 0 12px;
+      font-size: 13px;
+      color: #8b3030;
+    }
+    .hi-onboard-error[hidden] { display: none !important; }
   </style>
 </head>
 <body class="auth-page">
@@ -169,6 +225,27 @@
         <button type="button" class="hi-btn--decline" id="hi-decline">Decline</button>
       </div>
 
+      <div class="hi-onboard" id="hi-onboard" hidden>
+        <p class="auth-lede" style="margin:0 0 14px;">
+          Two quick picks so Hubert can put you forward for useful intros later. Contact details stay private.
+        </p>
+        <div class="hi-onboard-field">
+          <label class="hi-onboard-label" for="hi-industry">Your industry</label>
+          <select class="hi-onboard-select" id="hi-industry" name="industry">
+            <option value="">Choose one…</option>
+          </select>
+        </div>
+        <div class="hi-onboard-field">
+          <span class="hi-onboard-label" id="hi-looking-label">Who you want to meet</span>
+          <div class="hi-onboard-chips" id="hi-looking" role="group" aria-labelledby="hi-looking-label"></div>
+        </div>
+        <p class="hi-onboard-error" id="hi-onboard-error" hidden role="alert"></p>
+        <div class="hi-choose" style="margin-top:4px;">
+          <button type="button" class="hi-btn--accept" id="hi-onboard-confirm">Confirm &amp; introduce us</button>
+          <button type="button" class="hi-btn--ghost" id="hi-onboard-back">Back</button>
+        </div>
+      </div>
+
       <div class="hi-actions" id="hi-actions" hidden>
         <a class="hi-btn--primary" id="hi-open-thread" href="/account/#meet">Open Meet people</a>
         <a class="hi-btn--ghost" href="/account/">Back to your dashboard</a>
@@ -195,7 +272,44 @@
       var acceptBtn = document.getElementById('hi-accept');
       var declineBtn = document.getElementById('hi-decline');
       var openThread = document.getElementById('hi-open-thread');
+      var onboardEl = document.getElementById('hi-onboard');
+      var industryEl = document.getElementById('hi-industry');
+      var lookingEl = document.getElementById('hi-looking');
+      var onboardError = document.getElementById('hi-onboard-error');
+      var onboardConfirm = document.getElementById('hi-onboard-confirm');
+      var onboardBack = document.getElementById('hi-onboard-back');
       var busy = false;
+      var lastPreview = null;
+      var DEFAULT_LOOKING = [
+        'Clients',
+        'Investors',
+        'Co-founders',
+        'Hires',
+        'Suppliers',
+        'Mentors',
+        'Partners',
+        'Press',
+      ];
+      var DEFAULT_INDUSTRIES = [
+        'Accountancy & Finance',
+        'Banking & Insurance',
+        'Legal',
+        'Marketing, PR & Media',
+        'IT, Software & Technology',
+        'Consulting & Professional Services',
+        'Construction & Trades',
+        'Property & Real Estate',
+        'Healthcare & Medical',
+        'Education & Training',
+        'Manufacturing & Engineering',
+        'Retail, Hospitality & Leisure',
+        'Recruitment & HR',
+        'Creative, Design & Arts',
+        'Coaching & Personal Development',
+        'Transport & Logistics',
+        'Energy & Environment',
+        'Charity, Public & Social Enterprise',
+      ];
 
       function withTimeout(ms) {
         var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
@@ -242,6 +356,7 @@
         titleEl.textContent = title;
         bodyEl.textContent = body;
         chooseEl.hidden = true;
+        if (onboardEl) onboardEl.hidden = true;
         actionsEl.hidden = false;
         if (introId && openThread) {
           openThread.href = '/account/#meet?intro=' + encodeURIComponent(introId);
@@ -249,13 +364,85 @@
         setButtonsEnabled(true);
       }
 
+      function fillOnboardingOptions(preview) {
+        var onboard = (preview && preview.acceptOnboarding) || {};
+        var industries = onboard.industryOptions && onboard.industryOptions.length
+          ? onboard.industryOptions
+          : DEFAULT_INDUSTRIES;
+        var looking = onboard.lookingToMeetOptions && onboard.lookingToMeetOptions.length
+          ? onboard.lookingToMeetOptions
+          : DEFAULT_LOOKING;
+        if (industryEl) {
+          var keep = industryEl.value || '';
+          industryEl.innerHTML = '<option value="">Choose one…</option>';
+          industries.forEach(function (label) {
+            var opt = document.createElement('option');
+            opt.value = label;
+            opt.textContent = label;
+            if (keep && keep === label) opt.selected = true;
+            industryEl.appendChild(opt);
+          });
+        }
+        if (lookingEl) {
+          lookingEl.innerHTML = looking
+            .map(function (label) {
+              return (
+                '<label class="hi-onboard-chip"><input type="checkbox" value="' +
+                String(label).replace(/"/g, '&quot;') +
+                '" /><span>' +
+                String(label).replace(/</g, '&lt;') +
+                '</span></label>'
+              );
+            })
+            .join('');
+        }
+      }
+
+      function selectedLooking() {
+        if (!lookingEl) return [];
+        return Array.prototype.slice
+          .call(lookingEl.querySelectorAll('input[type="checkbox"]:checked'))
+          .map(function (el) {
+            return el.value;
+          });
+      }
+
+      function setOnboardError(msg) {
+        if (!onboardError) return;
+        if (msg) {
+          onboardError.hidden = false;
+          onboardError.textContent = msg;
+        } else {
+          onboardError.hidden = true;
+          onboardError.textContent = '';
+        }
+      }
+
+      function showOnboarding(preview) {
+        lastPreview = preview || lastPreview;
+        busy = false;
+        chooseEl.hidden = true;
+        actionsEl.hidden = true;
+        if (onboardEl) onboardEl.hidden = false;
+        fillOnboardingOptions(lastPreview);
+        setOnboardError('');
+        setStatus('', 'Almost there');
+        titleEl.textContent = 'Two quick picks';
+        bodyEl.textContent =
+          'Tell Hubert your industry and who you want to meet. Then he’ll open the intro thread — still no email, phone, or LinkedIn shared.';
+        if (industryEl) industryEl.focus();
+      }
+
       function showPrompt(preview, intended) {
         busy = false;
         setButtonsEnabled(true);
         actionsEl.hidden = true;
+        if (onboardEl) onboardEl.hidden = true;
         chooseEl.hidden = false;
+        lastPreview = preview || lastPreview;
         topicEl.hidden = !(preview && preview.topic);
         if (preview && preview.topic) topicText.textContent = preview.topic;
+        if (preview) fillOnboardingOptions(preview);
 
         var who =
           (preview && (preview.requesterLabel || preview.requesterDisplayName)) || 'Someone';
@@ -296,7 +483,7 @@
         });
       }
 
-      function submitDecision(nextDecision) {
+      function submitDecision(nextDecision, onboardPayload) {
         if (busy) return;
         if (!token) {
           showDone(false, 'Invalid link', 'This introduction link is missing details. Open the email again.');
@@ -304,6 +491,7 @@
         }
         busy = true;
         setButtonsEnabled(false);
+        if (onboardConfirm) onboardConfirm.disabled = true;
         actionsEl.hidden = true;
         setStatus('pending', 'Saving your answer…');
         titleEl.textContent = nextDecision === 'accept' ? 'Accepting introduction' : 'Declining introduction';
@@ -319,11 +507,17 @@
           }, REQUEST_MS);
         }
 
+        var payload = { token: token, decision: nextDecision };
+        if (nextDecision === 'accept' && onboardPayload) {
+          payload.industry = onboardPayload.industry;
+          payload.lookingToMeet = onboardPayload.lookingToMeet;
+        }
+
         var fetchOpts = {
           method: 'POST',
           credentials: 'same-origin',
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify({ token: token, decision: nextDecision }),
+          body: JSON.stringify(payload),
         };
         if (controller) fetchOpts.signal = controller.signal;
 
@@ -335,8 +529,14 @@
           })
           .then(function (result) {
             if (timer) clearTimeout(timer);
+            if (onboardConfirm) onboardConfirm.disabled = false;
             var data = result.data || {};
             if (!data.ok) {
+              if (data.needsAcceptOnboarding || data.error === 'accept_industry_required' || data.error === 'accept_looking_required') {
+                showOnboarding(lastPreview);
+                setOnboardError(data.message || 'Pick your industry and who you want to meet.');
+                return;
+              }
               showDone(false, 'Could not update', data.message || 'Please try again from the email link.');
               chooseEl.hidden = false;
               return;
@@ -355,14 +555,40 @@
           })
           .catch(function () {
             if (timer) clearTimeout(timer);
+            if (onboardConfirm) onboardConfirm.disabled = false;
             showDone(false, 'Connection issue', 'Check your connection and try again.');
             chooseEl.hidden = false;
             setButtonsEnabled(true);
           });
       }
 
-      if (acceptBtn) acceptBtn.addEventListener('click', function () { submitDecision('accept'); });
+      function confirmAcceptWithTags() {
+        var industry = industryEl ? String(industryEl.value || '').trim() : '';
+        var looking = selectedLooking();
+        if (!industry) {
+          setOnboardError('Pick your industry to continue.');
+          return;
+        }
+        if (!looking.length) {
+          setOnboardError('Pick who you want to meet to continue.');
+          return;
+        }
+        setOnboardError('');
+        submitDecision('accept', { industry: industry, lookingToMeet: looking });
+      }
+
+      if (acceptBtn) {
+        acceptBtn.addEventListener('click', function () {
+          showOnboarding(lastPreview);
+        });
+      }
       if (declineBtn) declineBtn.addEventListener('click', function () { submitDecision('decline'); });
+      if (onboardConfirm) onboardConfirm.addEventListener('click', confirmAcceptWithTags);
+      if (onboardBack) {
+        onboardBack.addEventListener('click', function () {
+          showPrompt(lastPreview, decision || '');
+        });
+      }
 
       if (!token) {
         showDone(false, 'Invalid link', 'This introduction link is missing details.');

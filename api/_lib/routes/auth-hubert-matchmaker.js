@@ -79,6 +79,8 @@ function mapIntroError(e) {
     cannot_intro_self: 400,
     intro_quota_exceeded: 429,
     search_quota_exceeded: 429,
+    accept_industry_required: 400,
+    accept_looking_required: 400,
     intro_already_pending: 409,
     target_not_found: 404,
     target_email_missing: 400,
@@ -361,11 +363,19 @@ module.exports = async function handler(req, res) {
         token: body.token,
         decision: action,
         reason: body.reason,
+        industry: body.industry || body.businessSector || body.business_sector,
+        lookingToMeet: body.lookingToMeet || body.looking_to_meet,
       });
       return json(res, 200, { ok: true, ...result });
     } catch (e) {
       const mapped = mapIntroError(e);
-      return json(res, mapped.status, { ok: false, error: mapped.error, message: mapped.message });
+      return json(res, mapped.status, {
+        ok: false,
+        error: mapped.error,
+        message: mapped.message,
+        needsAcceptOnboarding:
+          mapped.error === 'accept_industry_required' || mapped.error === 'accept_looking_required',
+      });
     }
   }
 
