@@ -1289,11 +1289,25 @@
         el.hidden = true;
         return;
       }
+      var referral = q.referral || null;
+      var unlockHint = '';
+      if (referral && !referral.unlocked && Number(referral.remainingToUnlock) > 0) {
+        unlockHint =
+          ' Invite ' +
+          referral.remainingToUnlock +
+          ' colleague' +
+          (referral.remainingToUnlock === 1 ? '' : 's') +
+          ' who join to unlock ' +
+          (referral.unlockedSearchCap || 10) +
+          '/week.';
+      } else if (referral && referral.unlocked) {
+        unlockHint = ' Unlocked with referrals.';
+      }
       el.hidden = false;
       el.textContent =
-        remaining <= 0
+        (remaining <= 0
           ? 'You’ve used your ' + cap + ' searches this week.'
-          : remaining + ' of ' + cap + ' searches left this week.';
+          : remaining + ' of ' + cap + ' searches left this week.') + unlockHint;
     });
   }
 
@@ -1318,6 +1332,8 @@
             cap: data.cap,
             enforced: data.enforced !== false,
             searchQuotaPerWeek: data.searchQuotaPerWeek,
+            unlocked: data.unlocked,
+            referral: data.referral || null,
           });
         }
       })

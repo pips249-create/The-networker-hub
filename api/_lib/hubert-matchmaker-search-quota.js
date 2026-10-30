@@ -1,18 +1,27 @@
 /**
- * Hubert Matchmaker — weekly search quota (members 3 / week; admins higher).
+ * Hubert Matchmaker — weekly search quota.
+ * Members: 3 / week base; 10 / week after 2 Hub invitees join.
+ * Admins: higher cap for preview/ops.
  * Soft-skips enforcement if migration 344 has not been applied yet.
  */
 const { isAdminRole } = require('./auth');
+const {
+  SEARCHES_PER_WEEK_BASE,
+  SEARCHES_PER_WEEK_UNLOCKED,
+  getReferralUnlockStatus,
+} = require('./hubert-referral-unlock');
 
-const SEARCHES_PER_WEEK = 3;
+const SEARCHES_PER_WEEK = SEARCHES_PER_WEEK_BASE;
 const ADMIN_SEARCHES_PER_WEEK = 50;
 
 function weekAgoIso() {
   return new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 }
 
-function searchCapForSession(session) {
-  return isAdminRole(session && session.role) ? ADMIN_SEARCHES_PER_WEEK : SEARCHES_PER_WEEK;
+function sessionUserId(session) {
+  return (
+    String((session && (session.userId || session.sub || session.id)) || '').trim() || null
+  );
 }
 
 function isMissingSearchTableError(error) {
@@ -45,15 +54,57 @@ async function countRecentSearches(sb, attendeeId) {
   return { used: Number(count || 0), enforced: true };
 }
 
+/**
+ * Sync helper kept for tests — base member cap only (no referral).
+ * Prefer resolveSearchCap for live quota.
+ */
+function searchCapForSession(session) {
+  return isAdminRole(session && session.role) ? ADMIN_SEARCHES_PER_WEEK : SEARCHES_PER_WEEK;
+}
+
+async function resolveSearchCap(sb, session, attendeeId) {
+  if (isAdminRole(session && session.role)) {
+    return {
+      cap: ADMIN_SEARCHES_PER_WEEK,
+      searchQuotaPerWeek: SEARCHES_PER_WEEK,
+      referral: null,
+      unlocked: false,
+    };
+  }
+
+  let referral = null;
+  try {
+    referral = await getReferralUnlockStatus(sb, {
+      inviterAttendeeId: attendeeId || null,
+      inviterUserId: sessionUserId(session),
+    });
+  } catch (e) {
+    console.warn(
+      '[hubert-search-quota] referral status failed',
+      e && e.message ? e.message : e
+    );
+  }
+
+  const unlocked = Boolean(referral && referral.unlocked);
+  return {
+    cap: unlocked ? SEARCHES_PER_WEEK_UNLOCKED : SEARCHES_PER_WEEK_BASE,
+    searchQuotaPerWeek: SEARCHES_PER_WEEK_BASE,
+    referral,
+    unlocked,
+  };
+}
+
 async function getSearchQuota(sb, session, attendeeId) {
-  const cap = searchCapForSession(session);
+  const resolved = await resolveSearchCap(sb, session, attendeeId);
   const { used, enforced } = await countRecentSearches(sb, attendeeId);
   return {
     used,
-    remaining: Math.max(0, cap - used),
-    cap,
-    searchQuotaPerWeek: SEARCHES_PER_WEEK,
+    remaining: Math.max(0, resolved.cap - used),
+    cap: resolved.cap,
+    searchQuotaPerWeek: resolved.searchQuotaPerWeek,
     enforced,
+    unlocked: resolved.unlocked,
+    referral: resolved.referral,
   };
 }
 
@@ -81,8 +132,18 @@ async function recordSearch(sb, { attendeeId, userId, query, matchCount }) {
 async function consumeSearchQuota(sb, session, attendeeId, { query, matchCount, userId }) {
   const before = await getSearchQuota(sb, session, attendeeId);
   if (before.enforced && before.used >= before.cap) {
+    const unlockHint =
+      before.referral && !before.referral.unlocked
+        ? ' Invite ' +
+          before.referral.remainingToUnlock +
+          ' colleague' +
+          (before.referral.remainingToUnlock === 1 ? '' : 's') +
+          ' who join to unlock ' +
+          SEARCHES_PER_WEEK_UNLOCKED +
+          ' searches / week.'
+        : '';
     const err = new Error(
-      'You’ve used this week’s searches (' + before.cap + '). Try again next week.'
+      'You’ve used this week’s searches (' + before.cap + '). Try again next week.' + unlockHint
     );
     err.code = 'search_quota_exceeded';
     err.status = 429;
@@ -92,10 +153,7 @@ async function consumeSearchQuota(sb, session, attendeeId, { query, matchCount, 
 
   const recorded = await recordSearch(sb, {
     attendeeId,
-    userId:
-      userId ||
-      String((session && (session.userId || session.sub || session.id)) || '').trim() ||
-      null,
+    userId: userId || sessionUserId(session),
     query,
     matchCount,
   });
@@ -109,16 +167,20 @@ async function consumeSearchQuota(sb, session, attendeeId, { query, matchCount, 
     used,
     remaining: Math.max(0, before.cap - used),
     cap: before.cap,
-    searchQuotaPerWeek: SEARCHES_PER_WEEK,
+    searchQuotaPerWeek: before.searchQuotaPerWeek,
     enforced: true,
     recorded: true,
+    unlocked: before.unlocked,
+    referral: before.referral,
   };
 }
 
 module.exports = {
   SEARCHES_PER_WEEK,
+  SEARCHES_PER_WEEK_UNLOCKED,
   ADMIN_SEARCHES_PER_WEEK,
   searchCapForSession,
+  resolveSearchCap,
   isMissingSearchTableError,
   countRecentSearches,
   getSearchQuota,

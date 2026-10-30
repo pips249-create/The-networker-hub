@@ -549,6 +549,15 @@ async function registerUser({ email, password, name, marketingOptIn, hubertOptIn
     } catch (claimError) {
       console.error('[auth] roster claim after registration failed', claimError);
     }
+    try {
+      const { attributeHubInviteJoin } = require('./hubert-referral-unlock');
+      await attributeHubInviteJoin(sb, {
+        email: em,
+        attendeeId: attendeeRes.data.id,
+      });
+    } catch (inviteAttrError) {
+      console.error('[auth] hubert hub invite attribution failed', inviteAttrError);
+    }
   }
 
   return {
