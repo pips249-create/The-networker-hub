@@ -1195,6 +1195,39 @@
     return clock ? day + 'T' + clock : day;
   }
 
+  function intlOfferCurrency(code) {
+    var c = String(code || '')
+      .trim()
+      .toUpperCase();
+    if (c === 'GB' || c === 'UK') return 'GBP';
+    if (c === 'CA') return 'CAD';
+    if (c === 'AU') return 'AUD';
+    if (c === 'NZ') return 'NZD';
+    if (
+      c === 'IE' ||
+      c === 'DE' ||
+      c === 'FR' ||
+      c === 'ES' ||
+      c === 'IT' ||
+      c === 'NL' ||
+      c === 'BE' ||
+      c === 'AT' ||
+      c === 'PT' ||
+      c === 'FI' ||
+      c === 'EE' ||
+      c === 'LV' ||
+      c === 'LT' ||
+      c === 'SK' ||
+      c === 'SI' ||
+      c === 'LU' ||
+      c === 'MT' ||
+      c === 'CY'
+    ) {
+      return 'EUR';
+    }
+    return 'USD';
+  }
+
   function buildEventsItemListJsonLd(events) {
     var list = Array.isArray(events) ? events : [];
     var items = [];
@@ -1204,10 +1237,44 @@
       var startDate = toEventSchemaDate(row.startsOn, row.startsAtLocal);
       if (!startDate) continue;
       var online = isOnlineEvent(row);
+      var endsOn = String(row.endsOn || '').trim();
+      var endDate = startDate;
+      if (endsOn) {
+        if (endsOn === String(row.startsOn) && startDate.indexOf('T') !== -1) endDate = startDate;
+        else endDate = toEventSchemaDate(endsOn, null) || endsOn;
+      }
+      var description = String(row.description || '')
+        .trim()
+        .slice(0, 500);
+      if (!description) {
+        var place = [row.city, row.countryName]
+          .map(function (part) {
+            return String(part || '').trim();
+          })
+          .filter(Boolean)
+          .join(', ');
+        var who = String(row.organiserName || '').trim();
+        description = 'Business networking event';
+        if (place) description += ' in ' + place;
+        if (who) description += ' hosted by ' + who;
+        description += '. Book on the organiser’s site.';
+        description = description.slice(0, 500);
+      }
+      var validFrom = startDate;
+      var created = String(row.createdAt || '').trim();
+      if (created) {
+        var createdMs = Date.parse(created);
+        if (!isNaN(createdMs)) validFrom = new Date(createdMs).toISOString();
+      }
+      var price = 0;
+      if (row.priceNum != null && isFinite(Number(row.priceNum))) price = Number(row.priceNum);
+      else if (row.price != null && isFinite(Number(row.price))) price = Number(row.price);
       var eventNode = {
         '@type': 'Event',
         name: String(row.title),
+        description: description,
         startDate: startDate,
+        endDate: endDate,
         eventAttendanceMode: online
           ? 'https://schema.org/OnlineEventAttendanceMode'
           : 'https://schema.org/OfflineEventAttendanceMode',
@@ -1232,19 +1299,26 @@
           '@type': 'Offer',
           url: String(row.externalUrl),
           availability: 'https://schema.org/InStock',
+          price: price,
+          priceCurrency: intlOfferCurrency(row.countryCode),
+          validFrom: validFrom,
         },
       };
-      if (row.endsOn && String(row.endsOn) !== String(row.startsOn)) {
-        eventNode.endDate = toEventSchemaDate(row.endsOn, null) || String(row.endsOn);
-      }
-      if (row.description) eventNode.description = String(row.description).slice(0, 500);
       if (row.imageUrl) eventNode.image = [String(row.imageUrl)];
       if (row.organiserName) {
+        var orgName = String(row.organiserName);
         eventNode.organizer = {
           '@type': 'Organization',
-          name: String(row.organiserName),
+          name: orgName,
         };
-        if (row.organiserWebsite) eventNode.organizer.url = String(row.organiserWebsite);
+        eventNode.performer = {
+          '@type': 'PerformingGroup',
+          name: orgName,
+        };
+        if (row.organiserWebsite) {
+          eventNode.organizer.url = String(row.organiserWebsite);
+          eventNode.performer.url = String(row.organiserWebsite);
+        }
       }
       items.push({
         '@type': 'ListItem',
