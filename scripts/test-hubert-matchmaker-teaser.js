@@ -68,11 +68,19 @@ assert.ok(homeHtml.indexOf('Invite someone else') !== -1, 'home teaser has invit
 assert.ok(homeHtml.indexOf('Launching soon') !== -1, 'home teaser shows launching soon');
 assert.ok(homeHtml.indexOf('hmm-teaser-hero') !== -1, 'home teaser uses hero layout like Meet people');
 assert.ok(homeHtml.indexOf('private Hub thread') === -1, 'home teaser drops Hub wording');
-assert.ok(/warm intros|matchmaker|shortlist/i.test(homeHtml), 'home teaser sells warm intros');
-assert.ok(/LinkedIn|guest-list|both sides|say yes/i.test(homeHtml), 'home teaser explains privacy + double opt-in');
+assert.ok(/shortlists members worth meeting/i.test(homeHtml), 'home teaser says what Hubert does');
+assert.ok(/both say yes|when you both say yes/i.test(homeHtml), 'home teaser explains double opt-in');
+const homeTeaser = homeHtml.slice(homeHtml.indexOf('data-hmm-teaser'), homeHtml.indexOf('</section>', homeHtml.indexOf('data-hmm-teaser')));
+const eventsTeaser = eventsHtml.slice(
+  eventsHtml.indexOf('data-hmm-teaser'),
+  eventsHtml.indexOf('</section>', eventsHtml.indexOf('data-hmm-teaser'))
+);
+assert.ok(homeTeaser.indexOf('\u2014') === -1, 'home teaser block has no em dashes');
 assert.ok(eventsHtml.indexOf('Launching soon') !== -1, 'events teaser shows launching soon');
 assert.ok(eventsHtml.indexOf('Invite someone else') !== -1, 'events teaser has invite CTA');
-assert.ok(/warm intros|crowded|right intro/i.test(eventsHtml), 'events teaser sells the why');
+assert.ok(/shortlists people worth meeting/i.test(eventsHtml), 'events teaser says what Hubert does');
+assert.ok(eventsTeaser.indexOf('\u2014') === -1, 'events teaser block has no em dashes');
+assert.ok(teaserSrc.indexOf('\u2014') === -1, 'teaser JS copy has no em dashes');
 assert.ok(teaserSrc.indexOf('Launching soon') !== -1, 'teaser JS has launching soon badge copy');
 assert.ok(teaserSrc.indexOf('inviteShareUrl') !== -1, 'teaser exports invite share url');
 assert.strictEqual(typeof teaser.inviteShareUrl, 'function', 'inviteShareUrl helper');
