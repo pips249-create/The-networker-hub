@@ -10,6 +10,8 @@
  * fast, but must not admit people solely for having any upcoming event.
  */
 const MAX_SHORTLIST = 5;
+/** Rotate the shortlist across this many top-scoring candidates. */
+const SHORTLIST_ROTATION_POOL = 12;
 const MIN_QUERY_LEN = 3;
 /** Meaningful text hits required unless this is an event-attendee lookup. */
 const MIN_TEXT_SCORE = 6;
@@ -296,11 +298,88 @@ function matchedEventBoost(person) {
   return person && person.matchedEvent && person.matchedEvent.eventId ? 55 : 0;
 }
 
-function rankCandidates(candidates, query, requesterEventIds) {
+/** Stable 32-bit hash for weekly shortlist rotation. */
+function hashSeed(raw) {
+  let h = 2166136261;
+  const s = String(raw || '');
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+function weekBucket(nowMs) {
+  const ms = Number.isFinite(nowMs) ? Number(nowMs) : Date.now();
+  return Math.floor(ms / (7 * 24 * 60 * 60 * 1000));
+}
+
+/**
+ * Slide a window of MAX_SHORTLIST across the top SHORTLIST_ROTATION_POOL
+ * so the same ask does not always surface the same five people.
+ * Quality order inside the pool is preserved; only the window moves.
+ */
+function rotateShortlistWindow(rankedRows, opts) {
+  const rows = Array.isArray(rankedRows) ? rankedRows : [];
+  if (rows.length <= MAX_SHORTLIST) return rows;
+  const poolSize = Math.min(rows.length, SHORTLIST_ROTATION_POOL);
+  const pool = rows.slice(0, poolSize);
+  if (opts && opts.disableRotation) {
+    return pool.slice(0, MAX_SHORTLIST);
+  }
+  const maxOffset = Math.max(0, pool.length - MAX_SHORTLIST);
+  if (maxOffset === 0) return pool.slice(0, MAX_SHORTLIST);
+  const seed = hashSeed(
+    [
+      (opts && opts.rotationKey) || '',
+      weekBucket(opts && opts.nowMs),
+      String((opts && opts.query) || '')
+        .trim()
+        .toLowerCase(),
+    ].join('|')
+  );
+  const offset = seed % (maxOffset + 1);
+  return pool.slice(offset, offset + MAX_SHORTLIST);
+}
+
+/**
+ * Public shortlist card — privacy-safe.
+ * Never include company (LinkedIn cut-out risk with first name + company),
+ * email, phone, or LinkedIn. Role / industry only.
+ */
+function toPublicShortlistCard(row) {
+  return {
+    id: row.person.id,
+    kind: row.person.kind,
+    displayName: row.person.displayName,
+    role: row.person.role || '',
+    industry: row.person.industry || '',
+    // Intentionally omitted from the client payload — used only for BOH ranking.
+    company: '',
+    why: buildWhy(row) || row.person.why || '',
+    nextEvent: row.person.nextEvent
+      ? {
+          title: row.person.nextEvent.title,
+          dateLabel: row.person.nextEvent.dateLabel || '',
+          eventId: row.person.nextEvent.eventId || '',
+        }
+      : row.person.matchedEvent
+        ? {
+            title: row.person.matchedEvent.title,
+            dateLabel: row.person.matchedEvent.dateLabel || '',
+            eventId: row.person.matchedEvent.eventId || '',
+          }
+        : null,
+    onHub: Boolean(row.person.onHub),
+    score: row.total,
+  };
+}
+
+function rankCandidates(candidates, query, requesterEventIds, opts) {
   const tokens = tokenize(query);
   const intent = extractQueryIntent(query);
 
-  return (candidates || [])
+  const ranked = (candidates || [])
     .map((person) => {
       const textScore = scoreAgainstQuery(person, tokens);
       const roleScore = roleFitScore(person, intent);
@@ -326,31 +405,13 @@ function rankCandidates(candidates, query, requesterEventIds) {
         b.matchedBoost - a.matchedBoost ||
         b.boost - a.boost ||
         String(a.person.displayName).localeCompare(String(b.person.displayName))
-    )
-    .slice(0, MAX_SHORTLIST)
-    .map((row) => ({
-      id: row.person.id,
-      kind: row.person.kind,
-      displayName: row.person.displayName,
-      role: row.person.role || '',
-      company: row.person.company || '',
-      why: buildWhy(row) || row.person.why || '',
-      nextEvent: row.person.nextEvent
-        ? {
-            title: row.person.nextEvent.title,
-            dateLabel: row.person.nextEvent.dateLabel || '',
-            eventId: row.person.nextEvent.eventId || '',
-          }
-        : row.person.matchedEvent
-          ? {
-              title: row.person.matchedEvent.title,
-              dateLabel: row.person.matchedEvent.dateLabel || '',
-              eventId: row.person.matchedEvent.eventId || '',
-            }
-          : null,
-      onHub: Boolean(row.person.onHub),
-      score: row.total,
-    }));
+    );
+
+  return rotateShortlistWindow(ranked, {
+    rotationKey: opts && opts.rotationKey,
+    nowMs: opts && opts.nowMs,
+    query,
+  }).map(toPublicShortlistCard);
 }
 
 function buildWhy(row) {
@@ -702,9 +763,13 @@ async function searchMatchmaker(opts) {
     }
   }
 
-  const matches = rankCandidates(candidates, query, requesterEventIds);
+  const matches = rankCandidates(candidates, query, requesterEventIds, {
+    rotationKey: excludeAttendeeId || '',
+    query,
+  });
   const meta = {
     max: MAX_SHORTLIST,
+    rotationPool: SHORTLIST_ROTATION_POOL,
     candidateCount: candidates.length,
     requesterUpcomingEvents: requesterEventIds.length,
     matchedEvents: matchedEvents.map((e) => ({ id: e.id, title: e.title, dateLabel: e.dateLabel })),
@@ -758,6 +823,7 @@ function emptyStateCopy(meta) {
 
 module.exports = {
   MAX_SHORTLIST,
+  SHORTLIST_ROTATION_POOL,
   MIN_QUERY_LEN,
   MIN_TEXT_SCORE,
   shortDisplayName,
@@ -771,6 +837,9 @@ module.exports = {
   scoreEventTitle,
   eventBoost,
   matchedEventBoost,
+  hashSeed,
+  weekBucket,
+  rotateShortlistWindow,
   rankCandidates,
   mapSeedRow,
   mapMemberRow,

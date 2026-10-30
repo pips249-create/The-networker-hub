@@ -11,8 +11,11 @@ const {
   eventBoost,
   matchedEventBoost,
   rankCandidates,
+  rotateShortlistWindow,
+  weekBucket,
   emptyStateCopy,
   MAX_SHORTLIST,
+  SHORTLIST_ROTATION_POOL,
 } = require('../api/_lib/hubert-matchmaker-search');
 
 function assert(cond, msg) {
@@ -66,7 +69,7 @@ for (let i = 0; i < 8; i++) {
     fullName: 'Person ' + i + ' Test',
     displayName: 'Person T.',
     role: 'Founder',
-    company: 'Co',
+    company: 'Secret Co ' + i,
     industry: 'SaaS',
     professionalRole: 'Founder',
     lookingToMeet: [],
@@ -75,11 +78,43 @@ for (let i = 0; i < 8; i++) {
     onHub: true,
   });
 }
-const ranked = rankCandidates(many, 'fintech founders manchester', ['evt-1']);
+const ranked = rankCandidates(many, 'fintech founders manchester', ['evt-1'], {
+  disableRotation: true,
+});
 assert(ranked.length === MAX_SHORTLIST, 'caps at 5');
-assert(ranked[0].id === 'member:0', 'same-event ranks first');
+assert(ranked[0].id === 'member:0', 'same-event ranks first without rotation');
 assert(!ranked.some((m) => m.email || m.linkedinUrl || m.phone), 'no contact fields');
+assert(
+  ranked.every((m) => !m.company),
+  'company stripped from shortlist (LinkedIn cut-out guard)'
+);
+assert(ranked.every((m) => m.industry === 'SaaS'), 'industry kept for context');
 assert(/Matches what you asked|same upcoming event|Founder/i.test(ranked[0].why || ''), 'why explains fit');
+
+const wide = [];
+for (let i = 0; i < 12; i++) {
+  wide.push({ person: { id: 'm' + i, displayName: 'P' + i }, total: 100 - i });
+}
+const windowA = rotateShortlistWindow(wide, {
+  rotationKey: 'user-a',
+  nowMs: 0,
+  query: 'fintech',
+});
+const windowB = rotateShortlistWindow(wide, {
+  rotationKey: 'user-a',
+  nowMs: 7 * 24 * 60 * 60 * 1000,
+  query: 'fintech',
+});
+assert(windowA.length === MAX_SHORTLIST, 'rotation window size');
+assert(SHORTLIST_ROTATION_POOL >= MAX_SHORTLIST, 'pool wider than shortlist');
+assert(
+  JSON.stringify(windowA.map((r) => r.person.id)) !==
+    JSON.stringify(windowB.map((r) => r.person.id)),
+  'weekly rotation changes the shortlist window'
+);
+assert(typeof weekBucket(Date.now()) === 'number', 'week bucket');
+const noRotate = rotateShortlistWindow(wide, { disableRotation: true });
+assert(noRotate[0].person.id === 'm0', 'disableRotation keeps top rank');
 
 const attendeeOnly = {
   id: 'member:att',
