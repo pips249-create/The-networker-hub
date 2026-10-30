@@ -308,6 +308,8 @@
   ];
 
   var allListings = [];
+  /** loading | ready | error — keeps cold API failures from looking like “no matches”. */
+  var catalogLoadState = 'loading';
   var activeTypes = [];
   var activeInvestTier = 'all';
   var activeCategories = [];
@@ -2315,13 +2317,81 @@
     heading.textContent = industryHeading || 'All opportunities';
   }
 
+  function catalogLoadingHtml() {
+    return (
+      '<div class="events-empty opp-empty-state" role="status">' +
+      '<h3 class="opp-empty-title">Loading business opportunities…</h3>' +
+      '<p class="opp-empty-copy">Fetching the latest franchises, partnerships and side hustles.</p>' +
+      '</div>'
+    );
+  }
+
+  function catalogErrorHtml() {
+    return (
+      '<div class="events-empty opp-empty-state" role="alert">' +
+      '<h3 class="opp-empty-title">Couldn’t load business opportunities</h3>' +
+      '<p class="opp-empty-copy">The directory took too long to respond. Please try again.</p>' +
+      '<div class="opp-empty-actions">' +
+      '<button type="button" class="opp-empty-btn" id="opp-retry-catalog">Try again</button>' +
+      '</div>' +
+      '</div>'
+    );
+  }
+
+  function bindCatalogRetry() {
+    var btn = document.getElementById('opp-retry-catalog');
+    if (!btn || btn.dataset.bound === '1') return;
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', function () {
+      reloadCatalogFromApi();
+    });
+  }
+
+  function reloadCatalogFromApi() {
+    if (!catalog || !catalog.loadCatalogAsync) return;
+    catalogLoadState = 'loading';
+    renderListings();
+    catalog
+      .loadCatalogAsync()
+      .then(function (merged) {
+        catalogLoadState = 'ready';
+        bootListings(merged || []);
+        if (saves) saves.refreshButtons(document);
+      })
+      .catch(function () {
+        catalogLoadState = 'error';
+        renderListings();
+      });
+  }
+
   function renderListings() {
     if (!els.mount) return;
 
-    var totalMatches = sortListings(getFilteredList());
-    var filtered = sortListings(getGridListings());
     var listingsBlock = document.getElementById('listings-view');
     if (listingsBlock) listingsBlock.hidden = viewMode === 'map';
+
+    if (!allListings.length && catalogLoadState === 'loading') {
+      els.mount.innerHTML = catalogLoadingHtml();
+      if (els.resultsCount) {
+        var loadingWrap = els.resultsCount.closest('.events-results-count');
+        if (loadingWrap) {
+          loadingWrap.innerHTML =
+            '<span id="opp-results-loading">Loading business opportunities…</span>' +
+            '<span id="opp-results-ready" hidden>Showing <strong id="opp-results-count">0</strong> results</span>';
+          els.resultsCount = document.getElementById('opp-results-count');
+        }
+      }
+      return;
+    }
+
+    if (!allListings.length && catalogLoadState === 'error') {
+      els.mount.innerHTML = catalogErrorHtml();
+      bindCatalogRetry();
+      return;
+    }
+
+    var totalMatches = sortListings(getFilteredList());
+    var filtered = sortListings(getGridListings());
 
     if (viewMode === 'map') {
       updateResultsCount(totalMatches.length);
@@ -3544,6 +3614,7 @@
 
   function bootListings(listings) {
     allListings = listings || [];
+    catalogLoadState = 'ready';
     updateFilterCounts();
     syncTypeChipUi();
     resetSpotlightOrder();
@@ -3596,6 +3667,7 @@
     cacheEls();
     readFiltersFromUrl();
     allListings = catalog ? catalog.loadCatalog() : [];
+    catalogLoadState = allListings.length ? 'ready' : 'loading';
     if (window.HubOpportunityInvestment) {
       window.HubOpportunityInvestment.bindCardPopovers(function (id) {
         for (var i = 0; i < allListings.length; i++) {
@@ -3635,17 +3707,24 @@
     scrollToResultsAfterLanding();
 
     if (catalog && catalog.loadCatalogAsync) {
-      catalog.loadCatalogAsync().then(function (merged) {
-        if (saves) saves.refreshButtons(document);
-        if (!merged || !merged.length) return;
-        var prevIds = allListings.map(function (item) {
-          return item.id;
-        }).join(',');
-        var nextIds = merged.map(function (item) {
-          return item.id;
-        }).join(',');
-        if (prevIds !== nextIds) bootListings(merged);
-      });
+      catalog
+        .loadCatalogAsync()
+        .then(function (merged) {
+          catalogLoadState = 'ready';
+          if (saves) saves.refreshButtons(document);
+          bootListings(merged || []);
+        })
+        .catch(function () {
+          if (allListings.length) {
+            catalogLoadState = 'ready';
+            return;
+          }
+          catalogLoadState = 'error';
+          renderListings();
+        });
+    } else {
+      catalogLoadState = allListings.length ? 'ready' : 'error';
+      renderListings();
     }
   }
 

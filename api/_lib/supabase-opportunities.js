@@ -486,10 +486,8 @@ const BROWSE_OPPORTUNITY_SELECT = [
   'approval_status',
   'owner_email',
   'ownership_claim_status',
-  'listing_paid_at',
+  // listingPaymentCurrent only needs listing_expires_at (+ status/published_at).
   'listing_expires_at',
-  'listing_stripe_subscription_id',
-  'listing_months',
   'outcode',
   'region_slug',
   'created_at',
@@ -499,6 +497,8 @@ const BROWSE_OPPORTUNITY_SELECT = [
 
 const BROWSE_DESCRIPTION_MAX = 320;
 const BROWSE_LIST_CACHE_MS = 120_000;
+/** Drop a hung browse build so later requests are not stuck on a dead inflight. */
+const BROWSE_LIST_BUILD_TIMEOUT_MS = 20_000;
 
 let browseListCache = { expires: 0, payload: null, inflight: null };
 
@@ -986,13 +986,22 @@ async function listPublishedOpportunityCards() {
   }
   if (browseListCache.inflight) return browseListCache.inflight;
 
-  const inflight = buildPublishedOpportunityBrowseCards()
+  let timeoutId = null;
+  const inflight = Promise.race([
+    buildPublishedOpportunityBrowseCards(),
+    new Promise((_, reject) => {
+      timeoutId = setTimeout(() => {
+        reject(new Error('opportunity_browse_timeout'));
+      }, BROWSE_LIST_BUILD_TIMEOUT_MS);
+    }),
+  ])
     .then((payload) => {
       browseListCache.payload = payload;
       browseListCache.expires = Date.now() + BROWSE_LIST_CACHE_MS;
       return payload;
     })
     .finally(() => {
+      if (timeoutId) clearTimeout(timeoutId);
       browseListCache.inflight = null;
     });
   browseListCache.inflight = inflight;
@@ -1033,6 +1042,20 @@ async function getPublishedOpportunityBySlug(slug) {
   }
 
   const sb = getSupabaseAdmin();
+
+  // Fast path: stored slug column (avoids loading the full published catalogue).
+  const { data: bySlug, error: bySlugError } = await sb
+    .from('business_opportunities')
+    .select('*')
+    .eq('slug', s)
+    .eq('status', 'published')
+    .eq('approval_status', 'Approved')
+    .maybeSingle();
+  if (bySlugError) throw new Error(bySlugError.message);
+  if (bySlug && listingPaymentCurrent(bySlug) && slugMatchesPublicRow(bySlug, s)) {
+    return rowToListing(bySlug);
+  }
+
   const { data, error } = await sb
     .from('business_opportunities')
     .select('*')

@@ -265,7 +265,21 @@ module.exports = wrapHandler(async function handler(req, res) {
     const opportunities = await listPublishedOpportunityCards();
     try {
       const { attachOpenDayFlagsToListings } = require('./_lib/opportunity-open-days');
-      await attachOpenDayFlagsToListings(opportunities);
+      // Bound open-day enrichment so a slow secondary query cannot push the
+      // catalogue past Vercel's function limit (empty browse page for users).
+      await Promise.race([
+        attachOpenDayFlagsToListings(opportunities),
+        new Promise((resolve) => {
+          setTimeout(() => {
+            (opportunities || []).forEach((row) => {
+              if (row && typeof row === 'object' && row.hasOpenDay == null) {
+                row.hasOpenDay = false;
+              }
+            });
+            resolve(opportunities);
+          }, 2000);
+        }),
+      ]);
     } catch {
       (opportunities || []).forEach((row) => {
         if (row && typeof row === 'object') row.hasOpenDay = false;

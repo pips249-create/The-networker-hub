@@ -346,7 +346,7 @@
     "api/events.js": { "maxDuration": 30 },
     "api/seo.js": { "maxDuration": 30 },
     "api/sitemap.js": { "maxDuration": 30 },
-    "api/opportunities.js": { "maxDuration": 15 },
+    "api/opportunities.js": { "maxDuration": 30 },
     "api/browse-analytics.js": { "maxDuration": 10 },
     "api/promote-analytics.js": { "maxDuration": 10 },
     "api/pitch-analytics.js": { "maxDuration": 10 },
