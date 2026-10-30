@@ -19,6 +19,7 @@ const {
   logoFooterLightUrl,
   logoEmailHubertLaunchUrl,
   hubertIconUrl,
+  hubertIconCircleUrl,
   supportEmail,
   eventPublicUrl,
   organiserPublicUrl,
@@ -340,7 +341,7 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     const launchUtm =
       'utm_source=hubert&utm_medium=email&utm_campaign=matchmaker_launching';
     vars.user_name = vars.user_name || 'Alex';
-    vars.hubert_icon_url = hubertIconUrl(site);
+    vars.hubert_icon_url = hubertIconCircleUrl(site);
     // Query before hash so #as-hubert-matchmaker still matches settings deep-link.
     // Always set (basePreviewVars already has a non-UTM hubert_profile_url).
     vars.hubert_profile_url =

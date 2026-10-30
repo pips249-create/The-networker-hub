@@ -25,6 +25,10 @@ assert.ok(html.includes('{{meet_people_url}}'), 'Meet people link');
 assert.ok(html.includes('Include me'), 'asks for Include me');
 assert.ok(html.includes('Before I open'), 'forthcoming / launching framing');
 assert.ok(!/we have launched/i.test(html), 'not past-tense launched');
+assert.ok(!/[—–]|&mdash;|&ndash;/.test(html), 'no em/en dashes in body');
+assert.ok(!/[—–]/.test(entry.subject), 'no em dash in subject');
+assert.ok(!html.includes('hubert-avatar'), 'no square avatar frame');
+assert.ok(html.includes('hubert-icon'), 'circular hubert icon class');
 assert.ok(html.includes('width="200"') && html.includes('max-width:200px'), 'compact header logo');
 assert.ok(html.includes('width="168"') && html.includes('max-width:168px'), 'compact footer logo');
 assert.ok(!html.includes('width="300"'), 'oversized 300px header retired');
@@ -45,6 +49,11 @@ assert.ok(
   'meet UTM before hash'
 );
 assert.ok(vars.hubert_icon_url, 'hubert icon');
+assert.ok(/hubert-icon-circle\.png/.test(vars.hubert_icon_url || ''), 'uses circular hubert icon');
+assert.ok(
+  fs.existsSync(path.join(__dirname, '../assets/hubert-icon-circle.png')),
+  'circular hubert asset present'
+);
 assert.ok(
   /logo-networker-uk-email-navy\.png/.test(vars.logo_url || ''),
   'header uses attached navy lockup'

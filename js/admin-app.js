@@ -26270,7 +26270,7 @@
       '<option value="organiser_rebrand_announcement">Email 1 — Rebrand announcement (send first)</option>' +
       '<option value="organiser_launch_invite">Email 2 — Confirm organiser page (3–5 days later)</option>' +
       '<option value="organiser_claim_invite">Short claim nudge / pre-launch rematch</option>' +
-      '<option value="hubert_matchmaker_launching">Members — We\'re launching Hubert (get profile ready)</option>' +
+      '<option value="hubert_matchmaker_launching">Members: We\'re launching Hubert (get profile ready)</option>' +
       '</select>' +
       '<label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="campaign-recipients">Recipient emails</label>' +
       '<textarea id="campaign-recipients" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono min-h-[120px]" placeholder="organiser@example.com&#10;one per line"></textarea>' +
