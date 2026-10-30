@@ -22,8 +22,9 @@
       ledeEvents:
         'The room is crowded; the right intro isn’t. Hubert shortlists people worth meeting at events and after — customers, investors, hires, mentors — and only introduces you when both sides opt in. Build your profile now so you’re ready; contact details stay private.',
       submit: 'Build your profile',
-      gateSignedOut: 'Free to join — build your profile and be ready for warm intros when search opens.',
-      gateSignedIn: 'Add a headline, who you want to meet, and Include me — then others can find you and you’ll be ready to ask.',
+      badge: 'Launching soon',
+      gateSignedOut: 'Search launches soon — build your profile now so you’re ready for warm intros.',
+      gateSignedIn: 'Search launches soon — add a headline, who you want to meet, and Include me so you’re ready.',
     },
     search: {
       titleHome: 'Who do you want to meet?',
@@ -33,6 +34,7 @@
       ledeEvents:
         'Looking for someone at an event — or the right intro after? Hubert shortlists relevant members and can introduce you privately. Contact details stay private.',
       submit: 'Try Hubert',
+      badge: '',
       gateSignedOut: 'Create a free account to see matches and request intros.',
     },
   };
@@ -93,12 +95,17 @@
     var lede = root.querySelector('[data-hmm-teaser-lede]');
     var submit = root.querySelector('[data-hmm-teaser-submit]');
     var input = root.querySelector('[data-hmm-teaser-query]');
+    var badge = root.querySelector('[data-hmm-teaser-badge]');
     var isEvents = root.classList.contains('hmm-teaser--events');
 
     if (searchMode) {
       if (title) title.textContent = isEvents ? COPY.search.titleEvents : COPY.search.titleHome;
       if (lede) lede.textContent = isEvents ? COPY.search.ledeEvents : COPY.search.ledeHome;
       if (submit) submit.textContent = COPY.search.submit;
+      if (badge) {
+        badge.hidden = true;
+        badge.textContent = '';
+      }
       if (input) {
         input.hidden = false;
         input.required = false;
@@ -110,6 +117,10 @@
       if (title) title.textContent = COPY.profile.title;
       if (lede) lede.textContent = isEvents ? COPY.profile.ledeEvents : COPY.profile.ledeHome;
       if (submit) submit.textContent = COPY.profile.submit;
+      if (badge) {
+        badge.hidden = false;
+        badge.textContent = COPY.profile.badge;
+      }
       if (input) {
         input.hidden = true;
         input.value = '';

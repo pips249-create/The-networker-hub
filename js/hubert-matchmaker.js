@@ -1687,7 +1687,7 @@
         el.textContent = 'Admin preview — search not visible to other members yet.';
       } else {
         el.hidden = false;
-        el.textContent = 'Build your profile now — search opens to everyone soon.';
+        el.textContent = 'Launching soon — build your profile now.';
       }
     });
   }
