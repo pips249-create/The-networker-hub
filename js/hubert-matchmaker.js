@@ -234,6 +234,13 @@
       }
     }
     if (Number(m.candidateCount || 0) === 0) {
+      if (m.requesterDiscoverable) {
+        return {
+          title: 'Nobody else is in the pool yet',
+          text:
+            'You’re included — Hubert never shows you your own profile. Add people in Admin → Hubert Matchmaker (seed list), or have another member tick Include me, then try again.',
+        };
+      }
       return {
         title: 'No one came back yet',
         text: 'The member pool is still thin for that ask. Try another description, or check back after more people opt in.',
