@@ -193,6 +193,7 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'attendance_claim_request',
   'attendance_claim_confirmed_review',
   'hubert_intro_request',
+  'hubert_intro_reminder',
   'hubert_intro_accepted',
   'event_saved_search_match',
   'guest_visit_followup',
@@ -785,6 +786,7 @@ function shouldSkipEmailAllowlist(slug) {
     slug === 'attendance_claim_request' ||
     slug === 'attendance_claim_confirmed_review' ||
     slug === 'hubert_intro_request' ||
+    slug === 'hubert_intro_reminder' ||
     slug === 'hubert_intro_accepted' ||
     slug === 'partner_programme_invite' ||
     slug === 'city_partner_payment_welcome' ||

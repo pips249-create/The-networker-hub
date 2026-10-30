@@ -330,6 +330,10 @@
     {
       "path": "/api/cron/eventbrite-event-sync",
       "schedule": "40 * * * *"
+    },
+    {
+      "path": "/api/cron/hubert-seed-intro-followups",
+      "schedule": "35 8 * * *"
     }
   ],
   "functions": {

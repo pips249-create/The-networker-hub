@@ -1030,7 +1030,7 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
         encodeURIComponent('/account/#memberships');
   }
 
-  if (slug === 'hubert_intro_request') {
+  if (slug === 'hubert_intro_request' || slug === 'hubert_intro_reminder') {
     vars.user_name = vars.user_name || 'Rosie';
     vars.requester_name = vars.requester_name || 'Catherine H.';
     vars.requester_title_company =
