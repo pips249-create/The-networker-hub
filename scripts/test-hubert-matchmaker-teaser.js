@@ -58,9 +58,23 @@ assert.ok(teaser.registerUrl('x').indexOf(encodeURIComponent('/account/#meet?q=x
 assert.ok(homeHtml.indexOf('data-hmm-teaser') !== -1, 'home mounts teaser');
 assert.ok(homeHtml.indexOf('hubert-matchmaker-teaser.css') !== -1, 'home loads teaser css');
 assert.ok(homeHtml.indexOf('hubert-matchmaker-teaser.js') !== -1, 'home loads teaser js');
+assert.ok(
+  /Try:.*solicitor|Try:.*SaaS founder/i.test(homeHtml),
+  'home teaser placeholder guides role/industry asks'
+);
 assert.ok(eventsHtml.indexOf('data-hmm-teaser') !== -1, 'events mounts teaser');
 assert.ok(eventsHtml.indexOf('hubert-matchmaker-teaser.css') !== -1, 'events loads teaser css');
 assert.ok(eventsHtml.indexOf('hubert-matchmaker-teaser.js') !== -1, 'events loads teaser js');
+assert.ok(
+  /Try:.*solicitor|Try:.*SaaS founder/i.test(eventsHtml),
+  'events teaser placeholder guides role/industry asks'
+);
+
+const accountHtml = fs.readFileSync(path.join(__dirname, '../account/index.html'), 'utf8');
+assert.ok(
+  accountHtml.indexOf('Try: commercial solicitor in Manchester, or B2B SaaS founder') !== -1,
+  'Meet people placeholder guides short role asks'
+);
 
 assert.ok(
   /hash\.indexOf\(['"]meet\?['"]\)\s*===\s*0/.test(dashSrc),
