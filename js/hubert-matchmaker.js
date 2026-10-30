@@ -54,7 +54,8 @@
         id: 'stub-1',
         fullName: 'Alex Morgan',
         role: 'Founder',
-        company: 'Northbridge Labs',
+        industry: 'SaaS',
+        company: '',
         why: 'Founder · SaaS — close to “' + q.slice(0, 48) + '”',
         nextEvent: { title: 'Manchester Founders Breakfast', dateLabel: '12 Nov 2026' },
         onHub: true,
@@ -63,7 +64,8 @@
         id: 'stub-2',
         fullName: 'Priya Shah',
         role: 'Investor',
-        company: 'Harbour Capital',
+        industry: 'Venture capital',
+        company: '',
         why: 'Investor looking to meet founders',
         nextEvent: {
           title: 'Women In Business Network · King’s Cross',
@@ -75,7 +77,8 @@
         id: 'stub-3',
         fullName: 'James Okafor',
         role: 'Service provider',
-        company: 'Okafor Advisory',
+        industry: 'Professional services',
+        company: '',
         why: 'Service provider in professional services',
         nextEvent: null,
         onHub: false,
@@ -84,7 +87,8 @@
         id: 'stub-4',
         fullName: 'Sam Taylor',
         role: 'Recruiter',
-        company: 'Taylor Talent',
+        industry: 'HR',
+        company: '',
         why: 'Recruiter · HR',
         nextEvent: { title: 'The Business Show London', dateLabel: '11 Nov 2026' },
         onHub: true,
@@ -93,7 +97,8 @@
         id: 'stub-5',
         fullName: 'Jordan Lee',
         role: 'Founder',
-        company: 'Lee & Co',
+        industry: 'Professional services',
+        company: '',
         why: 'Founder looking for suppliers',
         nextEvent: null,
         onHub: false,
@@ -102,7 +107,8 @@
         id: 'stub-6',
         fullName: 'Hidden Extra',
         role: 'Should not show',
-        company: 'Cap test',
+        industry: 'Cap test',
+        company: '',
         why: 'Over the max-5 cap',
         nextEvent: null,
         onHub: true,
@@ -163,7 +169,7 @@
       esc(personLabel(person)) +
       '</h3>' +
       '<p class="hmm-match-meta">' +
-      esc([person.role, person.company].filter(Boolean).join(' · ')) +
+      esc([person.role, person.industry || person.company].filter(Boolean).join(' · ')) +
       '</p>' +
       '<div class="hmm-match-chips">' +
       status +
