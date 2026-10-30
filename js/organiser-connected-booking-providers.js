@@ -263,6 +263,7 @@
   function renderEventbriteConnect(p, data) {
     var connected = Boolean(p.eventbriteApiTokenConfigured);
     var canOauth = oauthAvailable(data, p);
+    var hasWebhook = Boolean(p.webhookUrl);
     var statusLine = connected
       ? '<p class="ee-hint ee-alert-ok">Eventbrite is connected on this account.</p>'
       : '<p class="ee-hint">Connect once here — then import live events from My events.</p>';
@@ -272,6 +273,31 @@
       : canOauth
         ? '<button type="button" class="ee-btn ee-btn-gold ee-btn-sm" data-cb-eb-oauth>Connect with Eventbrite</button>'
         : '';
+
+    var enableBtn = !hasWebhook
+      ? '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-enable-provider="eventbrite">Enable Eventbrite</button>'
+      : '';
+    var copyWebhookBtn = hasWebhook
+      ? '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-copy-provider-webhook="' +
+        esc(p.webhookUrl) +
+        '">Copy webhook URL</button>'
+      : '';
+
+    var webhookBlock = hasWebhook
+      ? '<div class="cb-provider-webhook-block">' +
+        '<p class="ee-hint"><strong>Account webhook</strong> (once per Eventbrite account) — keep the <code>www</code>.</p>' +
+        '<code class="cb-provider-webhook-url">' +
+        esc(p.webhookUrl) +
+        '</code>' +
+        '<p class="ee-hint" style="margin-top:8px">Saving your private token usually registers this in Eventbrite for you. To check or paste by hand: Eventbrite → Account settings → <strong>Webhooks</strong> → Payload URL, action <code>order.placed</code>.</p>' +
+        '<p class="ee-attendance-next">' +
+        copyWebhookBtn +
+        '</p>' +
+        '</div>'
+      : '<div class="cb-provider-webhook-block">' +
+        '<p class="ee-hint">Press <strong>Enable Eventbrite</strong> to generate your account webhook URL here (same URL used on Connected setup).</p>' +
+        (enableBtn ? '<p class="ee-attendance-next">' + enableBtn + '</p>' : '') +
+        '</div>';
 
     var tokenBlock =
       '<details class="cb-provider-howto"' +
@@ -314,10 +340,11 @@
       ? '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-cb-eb-disconnect>Disconnect Eventbrite</button>'
       : '';
 
-    // Connected: lead with import CTA + next steps; keep reconnect collapsed at the bottom.
+    // Connected: webhook + import CTA first; keep reconnect collapsed at the bottom.
     if (connected) {
       return (
         statusLine +
+        webhookBlock +
         '<div class="cb-provider-actions">' +
         primaryBtn +
         disconnectBtn +
@@ -331,6 +358,7 @@
       statusLine +
       (primaryBtn ? '<div class="cb-provider-actions">' + primaryBtn + '</div>' : '') +
       tokenBlock +
+      webhookBlock +
       after
     );
   }
@@ -467,6 +495,35 @@
     bindCopyWebhookButtons(detail);
     bindSendTestBookingButtons(detail, (data && data.eventLinks) || []);
     bindDetailActions(p, data);
+
+    // Token-connected Eventbrite with no webhook URL yet — generate it so the panel always shows /w/eb/…
+    if (
+      p.id === 'eventbrite' &&
+      p.eventbriteApiTokenConfigured &&
+      !p.webhookUrl &&
+      !detail.getAttribute('data-cb-eb-webhook-heal')
+    ) {
+      detail.setAttribute('data-cb-eb-webhook-heal', '1');
+      setDetailStatus('Generating your account webhook…');
+      patchProviders({ action: 'enable_provider', provider: 'eventbrite' })
+        .then(function (res) {
+          if (!res.ok) {
+            setDetailStatus(
+              res.body.message ||
+                res.body.error ||
+                'Could not generate webhook URL. Press Enable Eventbrite.',
+              'error'
+            );
+            detail.removeAttribute('data-cb-eb-webhook-heal');
+            return;
+          }
+          loadProviders();
+        })
+        .catch(function () {
+          setDetailStatus('Could not generate webhook URL. Press Enable Eventbrite.', 'error');
+          detail.removeAttribute('data-cb-eb-webhook-heal');
+        });
+    }
   }
 
   function bindDetailActions(p, data) {
@@ -556,7 +613,13 @@
               setDetailStatus(res.body.message || res.body.error || 'Could not save token.', 'error');
               return;
             }
-            setDetailStatus('Connected. You can import events from My events.', 'ok');
+            var wh = res.body && res.body.webhookUrl ? String(res.body.webhookUrl) : '';
+            setDetailStatus(
+              wh
+                ? 'Connected. Your account webhook is on this panel — copy it if Eventbrite Webhooks is empty.'
+                : 'Connected. You can import events from My events.',
+              'ok'
+            );
             if (input) input.value = '';
             loadProviders();
             if (typeof window.refreshOrganiserConnectedBooking === 'function') {
