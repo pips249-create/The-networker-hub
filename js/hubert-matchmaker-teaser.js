@@ -1,10 +1,12 @@
 /**
  * Public Matchmaker teaser — Home + Events browse.
- * Hidden for everyone except admins until HUBERT_MATCHMAKER_PUBLIC is true
- * (same launch flag as dashboard Meet people).
  *
- * Submit never runs a public people search. Signed-in eligible users go to
- * Meet people; everyone else is sent to register/sign-in.
+ * While HUBERT_MATCHMAKER_PUBLIC is false:
+ *   - Teaser is visible to everyone in "build your profile" mode (no live search).
+ *   - CTA sends signed-in users to Meet people profile setup; others to register.
+ *
+ * When the launch flag flips true:
+ *   - Search lookalike returns; real search still requires sign-in.
  */
 (function () {
   'use strict';
@@ -12,29 +14,57 @@
   /** Keep in sync with js/hubert-matchmaker.js */
   var HUBERT_MATCHMAKER_PUBLIC = false;
 
+  var COPY = {
+    profile: {
+      title: 'Build your Hubert profile',
+      ledeHome:
+        'Build your Hubert profile so he can put you forward for the right introductions. Shortlists stay private — first name and initial only; email, phone, and LinkedIn stay private.',
+      ledeEvents:
+        'Looking for someone at an event — or the right intro after? Build your Hubert profile so he can put you forward. Contact details stay private.',
+      submit: 'Build your profile',
+      gateSignedOut: 'Create a free account to build your Hubert profile.',
+      gateSignedIn: 'Finish your headline, who you want to meet, and Include me — search opens soon.',
+    },
+    search: {
+      titleHome: 'Who do you want to meet?',
+      titleEvents: 'Meet people beyond the room',
+      ledeHome:
+        'Tell Hubert what you’re working on. He shortlists relevant people on The Networker UK and can introduce you privately — email, phone, and LinkedIn stay private.',
+      ledeEvents:
+        'Looking for someone at an event — or the right intro after? Hubert shortlists relevant members and can introduce you privately. Contact details stay private.',
+      submit: 'Try Hubert',
+      gateSignedOut: 'Create a free account to see matches and request intros.',
+    },
+  };
+
   function isMatchmakerPublic() {
     return HUBERT_MATCHMAKER_PUBLIC === true;
   }
 
-  function canSeeTeaser(sessionOrUser) {
+  /** Profile-build teaser is public; search teaser follows the same launch flag. */
+  function canSeeTeaser() {
+    return true;
+  }
+
+  function canUseMatchmaker(sessionOrUser) {
     if (isMatchmakerPublic()) return true;
     var user = sessionOrUser && sessionOrUser.user ? sessionOrUser.user : sessionOrUser;
     return Boolean(user && user.role === 'admin');
   }
 
-  function canUseMatchmaker(sessionOrUser) {
-    return canSeeTeaser(sessionOrUser);
-  }
-
   function meetUrl(query) {
     var q = String(query || '').trim();
     var base = '/account/#meet';
-    if (!q) return base;
+    if (!q || !isMatchmakerPublic()) return base;
     return base + '?q=' + encodeURIComponent(q.slice(0, 240));
   }
 
+  function profileUrl() {
+    return '/account/#meet';
+  }
+
   function registerUrl(query) {
-    var next = meetUrl(query);
+    var next = isMatchmakerPublic() ? meetUrl(query) : profileUrl();
     return (
       '/register?intent=attendee&utm_source=hubert&utm_medium=teaser&utm_campaign=matchmaker&next=' +
       encodeURIComponent(next)
@@ -42,7 +72,7 @@
   }
 
   function loginUrl(query) {
-    var next = meetUrl(query);
+    var next = isMatchmakerPublic() ? meetUrl(query) : profileUrl();
     return '/login?next=' + encodeURIComponent(next);
   }
 
@@ -58,24 +88,62 @@
       });
   }
 
+  function applyModeCopy(root, searchMode) {
+    var title = root.querySelector('[data-hmm-teaser-title]');
+    var lede = root.querySelector('[data-hmm-teaser-lede]');
+    var submit = root.querySelector('[data-hmm-teaser-submit]');
+    var input = root.querySelector('[data-hmm-teaser-query]');
+    var isEvents = root.classList.contains('hmm-teaser--events');
+
+    if (searchMode) {
+      if (title) title.textContent = isEvents ? COPY.search.titleEvents : COPY.search.titleHome;
+      if (lede) lede.textContent = isEvents ? COPY.search.ledeEvents : COPY.search.ledeHome;
+      if (submit) submit.textContent = COPY.search.submit;
+      if (input) {
+        input.hidden = false;
+        input.required = false;
+        input.removeAttribute('disabled');
+      }
+      root.classList.remove('hmm-teaser--profile');
+      root.classList.add('hmm-teaser--search');
+    } else {
+      if (title) title.textContent = COPY.profile.title;
+      if (lede) lede.textContent = isEvents ? COPY.profile.ledeEvents : COPY.profile.ledeHome;
+      if (submit) submit.textContent = COPY.profile.submit;
+      if (input) {
+        input.hidden = true;
+        input.value = '';
+        input.removeAttribute('required');
+      }
+      root.classList.add('hmm-teaser--profile');
+      root.classList.remove('hmm-teaser--search');
+    }
+  }
+
   function bindRoot(root, session) {
     if (!root) return;
     var form = root.querySelector('[data-hmm-teaser-form]');
     var input = root.querySelector('[data-hmm-teaser-query]');
     var gate = root.querySelector('[data-hmm-teaser-gate]');
     var signedIn = Boolean(session && session.user);
-    var eligible = canUseMatchmaker(session);
+    var searchMode = isMatchmakerPublic();
+    var eligibleSearch = canUseMatchmaker(session);
 
-    root.hidden = !canSeeTeaser(session);
+    root.hidden = !canSeeTeaser();
     if (root.hidden) return;
 
+    applyModeCopy(root, searchMode);
+
     if (gate) {
-      if (isMatchmakerPublic() && !signedIn) {
+      if (searchMode && !signedIn) {
         gate.hidden = false;
-        gate.textContent = 'Create a free account to see matches and request intros.';
-      } else if (!isMatchmakerPublic()) {
+        gate.textContent = COPY.search.gateSignedOut;
+      } else if (!searchMode && !signedIn) {
         gate.hidden = false;
-        gate.textContent = 'Admin preview — Matchmaker is not public yet.';
+        gate.textContent = COPY.profile.gateSignedOut;
+      } else if (!searchMode && signedIn) {
+        gate.hidden = false;
+        gate.textContent = COPY.profile.gateSignedIn;
       } else {
         gate.hidden = true;
         gate.textContent = '';
@@ -86,13 +154,21 @@
     form.dataset.hmmBound = '1';
     form.addEventListener('submit', function (e) {
       e.preventDefault();
-      var q = input ? String(input.value || '').trim() : '';
-      if (signedIn && eligible) {
+      var q = input && !input.hidden ? String(input.value || '').trim() : '';
+      if (!searchMode) {
+        if (signedIn) {
+          window.location.href = profileUrl();
+          return;
+        }
+        window.location.href = registerUrl();
+        return;
+      }
+      if (signedIn && eligibleSearch) {
         window.location.href = meetUrl(q);
         return;
       }
-      if (signedIn && !eligible) {
-        window.location.href = '/account/';
+      if (signedIn && !eligibleSearch) {
+        window.location.href = '/account/#meet';
         return;
       }
       window.location.href = registerUrl(q);
@@ -103,12 +179,11 @@
     var roots = document.querySelectorAll('[data-hmm-teaser]');
     if (!roots.length) return;
 
-    // Before session: stay hidden when gated so members never flash the teaser.
-    if (!isMatchmakerPublic()) {
-      roots.forEach(function (root) {
-        root.hidden = true;
-      });
-    }
+    // Paint profile mode immediately so members never wait on session for copy.
+    roots.forEach(function (root) {
+      root.hidden = false;
+      applyModeCopy(root, isMatchmakerPublic());
+    });
 
     fetchSession().then(function (data) {
       var session = data && data.user ? data : { user: data && data.ok === false ? null : data };
@@ -122,7 +197,9 @@
   window.HubHubertMatchmakerTeaser = {
     isMatchmakerPublic: isMatchmakerPublic,
     canSeeTeaser: canSeeTeaser,
+    canUseMatchmaker: canUseMatchmaker,
     meetUrl: meetUrl,
+    profileUrl: profileUrl,
     registerUrl: registerUrl,
     loginUrl: loginUrl,
     init: init,

@@ -8,12 +8,12 @@
 
 ### Build visibility (non-negotiable while shipping)
 
-Until product explicitly turns Matchmaker on for everyone:
+Until product explicitly turns Matchmaker **search** on for everyone:
 
-- **UI, search, teaser, and Hubert meet intents are admin-only** (Hub admin / platform staff).
-- Regular attendees and logged-out visitors must **not** see the search bar, Meet people nav, or public teaser as a live feature.
+- **Profile setup is open to every signed-in member** (Meet people + Settings + public “Build your profile” teaser) so the discoverable pool fills before search launch.
+- **Search, intro requests, Overview ask strip, and invite-to-join stay admin-only** (platform staff) until `HUBERT_MATCHMAKER_PUBLIC`.
 - Intro emails to real B’s stay **off or staff-triggered only** until soft launch (avoid accidental outbound while testing).
-- Prefer a single feature flag (e.g. `hubert_matchmaker` / admin gate) so we can flip visibility without a redesign.
+- Prefer a single feature flag (e.g. `HUBERT_MATCHMAKER_PUBLIC` / admin gate) so we can flip search without a redesign.
 
 Implementation branch: `cursor/hubert-matchmaker-8ac8` (off `main` after this spec).
 

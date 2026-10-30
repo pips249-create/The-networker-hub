@@ -1,11 +1,12 @@
 /**
  * Hubert Matchmaker — attendee dashboard Meet people UI.
- * Phase 1 build: admin-only until HUBERT_MATCHMAKER_PUBLIC is flipped.
+ * Profile setup is open to every signed-in member.
+ * Search / intros stay admin-only until HUBERT_MATCHMAKER_PUBLIC is flipped.
  */
 (function () {
   'use strict';
 
-  /** Flip to true (plus deploy) when Matchmaker is ready for all members. */
+  /** Flip to true (plus deploy) when Matchmaker search is ready for all members. */
   var HUBERT_MATCHMAKER_PUBLIC = false;
   var MAX_SHORTLIST = 5;
   var TOPIC_MIN_LEN = 25;
@@ -13,6 +14,7 @@
 
   var mounts = [];
   var visible = false;
+  var searchEnabled = false;
   var lastQuery = '';
   var lastMatches = [];
   var pendingByTarget = {};
@@ -26,9 +28,20 @@
     return HUBERT_MATCHMAKER_PUBLIC === true;
   }
 
+  function sessionUser(sessionOrUser) {
+    return sessionOrUser && sessionOrUser.user ? sessionOrUser.user : sessionOrUser;
+  }
+
+  /** Meet people nav + profile form — any signed-in member. */
+  function canBuildProfile(sessionOrUser) {
+    var user = sessionUser(sessionOrUser);
+    return Boolean(user && (user.id || user.email || user.role));
+  }
+
+  /** Live search / intro requests — public launch or admin preview. */
   function canUseMatchmaker(sessionOrUser) {
     if (isMatchmakerPublic()) return true;
-    var user = sessionOrUser && sessionOrUser.user ? sessionOrUser.user : sessionOrUser;
+    var user = sessionUser(sessionOrUser);
     return Boolean(user && user.role === 'admin');
   }
 
@@ -388,6 +401,13 @@
   }
 
   function requestIntro(person, mount) {
+    if (!searchEnabled) {
+      if (mount && mount.els.error) {
+        mount.els.error.textContent = 'Intro requests open to everyone soon — finish your profile for now.';
+        mount.els.error.hidden = false;
+      }
+      return;
+    }
     if (!person || String(person.id || '').indexOf('stub-') === 0) {
       if (mount && mount.els.error) {
         mount.els.error.textContent = 'Run a live search before requesting an intro.';
@@ -486,6 +506,19 @@
     if (err) {
       err.hidden = true;
       err.textContent = '';
+    }
+    if (!searchEnabled) {
+      if (mount.mode === 'overview' && typeof mount.onExpand === 'function') {
+        mount.onExpand(query || '');
+      }
+      focusProfileGate(
+        'Search opens to everyone soon — save your Hubert profile (headline, who you want to meet, Include me) so you’re ready.'
+      );
+      if (err) {
+        err.textContent = 'Search isn’t open to everyone yet — build your profile above.';
+        err.hidden = false;
+      }
+      return;
     }
     if (!profileReady) {
       if (mount.mode === 'overview' && typeof mount.onExpand === 'function') {
@@ -776,6 +809,7 @@
   function applyProfileGate(profile) {
     lastProfile = profile || null;
     profileReady = Boolean(profile && profile.matchmakerReady);
+    var canSearch = searchEnabled && profileReady;
     var panel = document.querySelector('[data-hmm-profile-panel]');
     var ask = document.querySelector('[data-hmm-ask-block]');
     var lockNote = document.querySelector('[data-hmm-ask-lock-note]');
@@ -785,6 +819,7 @@
     var saveBtn = document.querySelector('[data-hmm-profile-save]');
     var pageInput = document.querySelector('#hmm-query');
     var pageSubmit = document.querySelector('.hmm-composer-submit');
+    var comingSoon = document.querySelector('[data-hmm-search-soon]');
 
     if (panel) {
       panel.classList.toggle('hmm-setup--gate', !profileReady);
@@ -792,36 +827,60 @@
       panel.hidden = false;
     }
     if (ask) {
-      ask.hidden = false;
-      ask.classList.toggle('hmm-ask-block--locked', !profileReady);
+      // Search UI only for admins / after public launch.
+      ask.hidden = !searchEnabled;
+      ask.classList.toggle('hmm-ask-block--locked', searchEnabled && !profileReady);
     }
-    if (lockNote) lockNote.hidden = profileReady;
-    if (pageInput) pageInput.disabled = !profileReady;
-    if (pageSubmit) pageSubmit.disabled = !profileReady;
-    if (invite) invite.hidden = !profileReady;
+    if (lockNote) {
+      if (!searchEnabled) {
+        lockNote.hidden = true;
+      } else {
+        lockNote.hidden = profileReady;
+      }
+    }
+    if (comingSoon) {
+      comingSoon.hidden = searchEnabled || !profileReady;
+    }
+    if (pageInput) pageInput.disabled = !canSearch;
+    if (pageSubmit) pageSubmit.disabled = !canSearch;
+    if (invite) invite.hidden = !canSearch;
     if (heroTitle) {
-      heroTitle.textContent = profileReady
-        ? 'I can introduce you to the people you need'
-        : 'Before I introduce you';
+      if (!searchEnabled) {
+        heroTitle.textContent = profileReady ? 'You’re in Hubert’s pool' : 'Build your Hubert profile';
+      } else {
+        heroTitle.textContent = profileReady
+          ? 'I can introduce you to the people you need'
+          : 'Before I introduce you';
+      }
     }
     if (heroSub) {
-      heroSub.textContent = profileReady
-        ? 'Customers, investors, hires, your next role — or someone who’s already solved your problem. Tell me what you’re working on.'
-        : 'Tell me who you are and who you want to meet. Shortlists stay private — first name and initial only, never email, phone, or LinkedIn.';
+      if (!searchEnabled) {
+        heroSub.textContent = profileReady
+          ? 'Headline, who you want to meet, and Include me are saved. Search and intros open to everyone soon — email, phone, and LinkedIn stay private.'
+          : 'Tell me who you are and who you want to meet. Shortlists stay private — first name and initial only, never email, phone, or LinkedIn.';
+      } else {
+        heroSub.textContent = profileReady
+          ? 'Customers, investors, hires, your next role — or someone who’s already solved your problem. Tell me what you’re working on.'
+          : 'Tell me who you are and who you want to meet. Shortlists stay private — first name and initial only, never email, phone, or LinkedIn.';
+      }
     }
     if (saveBtn) {
-      saveBtn.textContent = profileReady ? 'Save profile' : 'Save and continue';
+      if (!searchEnabled) {
+        saveBtn.textContent = profileReady ? 'Save profile' : 'Save profile';
+      } else {
+        saveBtn.textContent = profileReady ? 'Save profile' : 'Save and continue';
+      }
     }
 
     mounts.forEach(function (m) {
       if (!m || !m.els) return;
-      if (m.els.input) m.els.input.disabled = !profileReady;
+      if (m.els.input) m.els.input.disabled = !canSearch;
       if (m.els.form) {
         var submit = m.els.form.querySelector('button[type="submit"]');
-        if (submit) submit.disabled = !profileReady;
+        if (submit) submit.disabled = !canSearch;
       }
     });
-    if (profileReady) maybeSeedQueryFromUrl();
+    if (canSearch) maybeSeedQueryFromUrl();
   }
 
   function confirmStopIncludingMe() {
@@ -839,9 +898,16 @@
     if (wrap) wrap.classList.toggle('is-included', included);
     if (offBtn) offBtn.hidden = !included;
     if (hint) {
-      hint.textContent = included
-        ? 'You’re included. Use “Stop including me” if you want to opt out — it won’t untick from a casual click.'
-        : 'Required to unlock search. Stays off until you tick it. Turning it off needs confirmation.';
+      if (included) {
+        hint.textContent =
+          'You’re included. Use “Stop including me” if you want to opt out — it won’t untick from a casual click.';
+      } else if (searchEnabled) {
+        hint.textContent =
+          'Required to unlock search. Stays off until you tick it. Turning it off needs confirmation.';
+      } else {
+        hint.textContent =
+          'Required to join Hubert’s pool. Stays off until you tick it. Turning it off needs confirmation.';
+      }
     }
     void disc;
     void profile;
@@ -1179,16 +1245,27 @@
         }
         fillProfileForm(data.profile || {});
         if (data.profile && data.profile.matchmakerReady) {
-          setProfileStatus(true, 'Profile saved — search is unlocked below.');
-          var ask = document.querySelector('[data-hmm-ask-block]');
-          if (ask && ask.scrollIntoView) ask.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          if (document.querySelector('#hmm-query')) document.querySelector('#hmm-query').focus();
+          if (searchEnabled) {
+            setProfileStatus(true, 'Profile saved — search is unlocked below.');
+            var ask = document.querySelector('[data-hmm-ask-block]');
+            if (ask && ask.scrollIntoView) ask.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (document.querySelector('#hmm-query')) document.querySelector('#hmm-query').focus();
+          } else {
+            setProfileStatus(
+              true,
+              'Profile saved — you’re in Hubert’s pool. Search opens to everyone soon.'
+            );
+            var soon = document.querySelector('[data-hmm-search-soon]');
+            if (soon && soon.scrollIntoView) soon.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
         } else {
           var needed = missingReadyLabels(data.profile || {});
           setProfileStatus(
             false,
             needed.length
-              ? 'Saved, but still need ' + needed.join(', ') + ' before search unlocks.'
+              ? 'Saved, but still need ' +
+                  needed.join(', ') +
+                  (searchEnabled ? ' before search unlocks.' : ' to finish your Hubert profile.')
               : 'Saved, but Hubert couldn’t confirm your profile yet. Pick who you want to meet, tick Include me, and save again.'
           );
         }
@@ -1599,16 +1676,32 @@
     if (panel) panel.hidden = !isVisible;
   }
 
+  function updateAdminBadges() {
+    document.querySelectorAll('[data-hmm-admin-badge]').forEach(function (el) {
+      if (isMatchmakerPublic()) {
+        el.hidden = true;
+        return;
+      }
+      if (searchEnabled) {
+        el.hidden = false;
+        el.textContent = 'Admin preview — search not visible to other members yet.';
+      } else {
+        el.hidden = false;
+        el.textContent = 'Build your profile now — search opens to everyone soon.';
+      }
+    });
+  }
+
   function mountRoot(root, mode, hooks) {
     if (!root) return null;
+    // Overview strip is search-only; skip for profile-build members.
+    if (mode === 'overview' && !searchEnabled) return null;
     var mount = {
       els: cacheEls(root),
       mode: mode || 'page',
       onExpand: hooks && hooks.onExpand,
     };
-    if (mount.els.adminBadge) {
-      mount.els.adminBadge.hidden = isMatchmakerPublic();
-    }
+    updateAdminBadges();
     bind(mount);
     mounts.push(mount);
     return mount;
@@ -1667,35 +1760,42 @@
   function init(options) {
     mounts = [];
     var session = options && options.session;
-    visible = canUseMatchmaker(session);
+    visible = canBuildProfile(session);
+    searchEnabled = canUseMatchmaker(session);
     setNavVisibility(visible);
-    setOverviewVisibility(visible);
+    // Overview ask strip is live search — keep admin/public only.
+    setOverviewVisibility(searchEnabled);
+    updateAdminBadges();
 
     if (!visible) {
-      return { visible: false };
+      return { visible: false, searchEnabled: false };
     }
 
     var meetPage = document.getElementById('ad-page-meet');
     var overview = document.getElementById('ad-overview-hubert-meet');
 
     mountRoot(meetPage, 'page');
-    mountRoot(overview, 'overview', {
-      onExpand: function (query) {
-        if (options && typeof options.onOverviewSearch === 'function') {
-          options.onOverviewSearch(query);
-        }
-      },
-    });
+    if (searchEnabled) {
+      mountRoot(overview, 'overview', {
+        onExpand: function (query) {
+          if (options && typeof options.onOverviewSearch === 'function') {
+            options.onOverviewSearch(query);
+          }
+        },
+      });
+    }
 
     bindProfilePanel();
     bindHubertOptInModal();
     loadMatchmakerProfile();
-    loadMyIntros();
-    refreshSearchQuota();
-    maybeOpenIntroFromUrl();
-    maybeSeedQueryFromUrl();
+    if (searchEnabled) {
+      loadMyIntros();
+      refreshSearchQuota();
+      maybeOpenIntroFromUrl();
+      maybeSeedQueryFromUrl();
+    }
 
-    if (lastQuery) {
+    if (searchEnabled && lastQuery) {
       mounts.forEach(function (m) {
         if (m.els.input) m.els.input.value = lastQuery;
         setResults(m, lastMatches.length ? lastMatches : stubShortlist(lastQuery), lastQuery, {
@@ -1704,7 +1804,7 @@
       });
     }
 
-    return { visible: true };
+    return { visible: true, searchEnabled: searchEnabled };
   }
 
   function render() {
@@ -1721,6 +1821,7 @@
     TOPIC_MIN_LEN: TOPIC_MIN_LEN,
     HUBERT_ICON: HUBERT_ICON,
     isMatchmakerPublic: isMatchmakerPublic,
+    canBuildProfile: canBuildProfile,
     canUseMatchmaker: canUseMatchmaker,
     shortDisplayName: shortDisplayName,
     emptyStateCopy: emptyStateCopy,

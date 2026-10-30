@@ -393,7 +393,7 @@
       } else {
         status.hidden = false;
         status.textContent =
-          'Required before search on Meet people: headline, who you want to meet, and Include me.';
+          'Required for Meet people: headline, who you want to meet, and Include me.';
       }
     }
   }

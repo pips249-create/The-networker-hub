@@ -5612,6 +5612,22 @@ body.ad-hubert-optin-modal-open {
   max-width: 36rem;
 }
 
+.hmm-search-soon {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  max-width: 36rem;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ad-text-mid, #635c5e);
+  background: rgba(47, 107, 69, 0.08);
+  border: 1px solid rgba(47, 107, 69, 0.18);
+  border-radius: 12px;
+}
+
+.hmm-search-soon[hidden] {
+  display: none !important;
+}
+
 .hmm-ask-kicker {
   margin: 0 0 10px;
   font-size: 11px;

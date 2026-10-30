@@ -25,10 +25,16 @@ function assert(cond, msg) {
 }
 
 assert(mm.isMatchmakerPublic() === false, 'public launch must be off');
-assert(mm.canUseMatchmaker({ role: 'admin' }) === true, 'admin can use');
-assert(mm.canUseMatchmaker({ user: { role: 'admin' } }) === true, 'admin session can use');
-assert(mm.canUseMatchmaker({ role: 'client' }) === false, 'client blocked while gated');
-assert(mm.canUseMatchmaker(null) === false, 'signed-out blocked');
+assert(mm.canBuildProfile({ role: 'client' }) === true, 'client can build profile');
+assert(mm.canBuildProfile({ user: { role: 'client', email: 'a@b.co' } }) === true, 'client session can build');
+assert(mm.canBuildProfile({ role: 'admin' }) === true, 'admin can build profile');
+assert(mm.canBuildProfile(null) === false, 'signed-out cannot build profile');
+assert(mm.canUseMatchmaker({ role: 'admin' }) === true, 'admin can search');
+assert(mm.canUseMatchmaker({ user: { role: 'admin' } }) === true, 'admin session can search');
+assert(mm.canUseMatchmaker({ role: 'client' }) === false, 'client search blocked while gated');
+assert(mm.canUseMatchmaker(null) === false, 'signed-out search blocked');
+assert(src.indexOf('searchEnabled') !== -1, 'searchEnabled gate for Ask Hubert');
+assert(src.indexOf('You’re in Hubert’s pool') !== -1, 'profile-ready copy while search gated');
 
 assert(mm.shortDisplayName('Alex Morgan') === 'Alex M.', 'first + initial');
 assert(mm.shortDisplayName('Priya') === 'Priya', 'single name');
