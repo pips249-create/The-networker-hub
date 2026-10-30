@@ -135,13 +135,17 @@
     if (connectBtn) {
       // Keep OAuth reconnect out of the main toolbar once connected — Refresh stays primary.
       connectBtn.hidden = connected;
+      connectBtn.style.display = connected ? 'none' : '';
       connectBtn.textContent = 'Connect Eventbrite';
       connectBtn.classList.add('org-btn-primary');
       connectBtn.classList.remove('org-btn-outline');
     }
     if (refreshBtn) refreshBtn.hidden = !connected;
     if (dedupeBtn) dedupeBtn.hidden = !connected;
-    if (disconnectBtn) disconnectBtn.hidden = !connected;
+    if (disconnectBtn) {
+      disconnectBtn.hidden = !connected;
+      disconnectBtn.style.display = connected ? '' : 'none';
+    }
     if (tokenWrap) tokenWrap.hidden = connected;
     if (label) {
       label.textContent = connected ? 'Eventbrite events' : 'Connect Eventbrite';
@@ -274,6 +278,13 @@
                       ' onto your organiser page.',
                     'ok'
                   );
+                  if (typeof window.refreshOrganiserEvents === 'function') {
+                    try {
+                      window.refreshOrganiserEvents();
+                    } catch (_e) {
+                      /* ignore */
+                    }
+                  }
                 }
               });
             })
