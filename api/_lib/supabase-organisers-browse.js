@@ -13,16 +13,17 @@ const { isFeaturedUntilActive } = require('./admin-featured-until');
 const DIRECTORY_EVENT_SELECT =
   'id, organiser_id, title, slug, starts_at, city, postcode, outcode, location_label, venue, meeting_type, approval_status, status';
 /**
- * Directory cards only. Avoid select * — refund copy, Stripe ids, and claim
- * tokens are unused on browse and inflate the catalogue read.
+ * Directory cards only. Avoid select * — refund copy, Stripe ids, claim tokens,
+ * and social URLs (profile page only) inflate the catalogue read.
  */
 const DIRECTORY_ORG_SELECT =
-  'id, name, slug, description, photo_url, industries, meeting_formats, average_rating, review_count, complimentary_visits_allowed, featured, featured_until, founding_organiser_at, founding_homepage_until, website, instagram_url, facebook_url, linkedin_url, x_url, listing_status, verification_status, ownership_claim_status, outcode';
+  'id, name, slug, description, photo_url, industries, meeting_formats, average_rating, review_count, complimentary_visits_allowed, featured, featured_until, founding_organiser_at, founding_homepage_until, listing_status, verification_status, ownership_claim_status, outcode';
 /** Upcoming events only — “Has live listings” and city matching use current meetings. */
 const DIRECTORY_EVENT_QUERY = { select: DIRECTORY_EVENT_SELECT, upcomingOnly: true };
 const MAX_LOCATIONS_PER_ORG = 16;
 const ORG_PAGE_SIZE = 1000;
-const DIRECTORY_CACHE_MS = 60_000;
+/** Keep warm across overlapping browse tabs; CDN s-maxage covers cold instances. */
+const DIRECTORY_CACHE_MS = 180_000;
 /** Card blurbs are ~140 characters; keep a little extra for search snippets. */
 const DIRECTORY_DESCRIPTION_MAX = 280;
 
@@ -137,6 +138,7 @@ function organiserDisplayPhotoUrl(row) {
 
 function rowToPublicOrganiser(row, eventCount, options) {
   options = options || {};
+  const listCard = Boolean(options.listCard);
   const industries = Array.isArray(row.industries) ? row.industries.filter(Boolean) : [];
   const meetingFormats = Array.isArray(row.meeting_formats)
     ? row.meeting_formats.filter(Boolean)
@@ -146,6 +148,9 @@ function rowToPublicOrganiser(row, eventCount, options) {
   const reviews = Number(row.review_count) || 0;
   const name = String(row.name || 'Untitled organiser').trim();
   let description = String(row.description || '').trim();
+  if (listCard && description.length > DIRECTORY_DESCRIPTION_MAX) {
+    description = description.slice(0, DIRECTORY_DESCRIPTION_MAX - 1).trim() + '…';
+  }
   const slug = publicOrganiserSlug(row) || '';
   const locations = Array.isArray(options.locations) ? options.locations : [];
 
@@ -170,27 +175,32 @@ function rowToPublicOrganiser(row, eventCount, options) {
     foundingHomepage: Boolean(
       row.founding_homepage_until && new Date(row.founding_homepage_until).getTime() > Date.now()
     ),
-    website: String(row.website || '').trim(),
-    instagramUrl: String(row.instagram_url || '').trim(),
-    facebookUrl: String(row.facebook_url || '').trim(),
-    linkedinUrl: String(row.linkedin_url || '').trim(),
-    xUrl: String(row.x_url || '').trim(),
-    search: [
+    claimable: isOrganiserClaimable(row),
+  };
+
+  // Profile detail keeps social links. Directory cards never render them, and the
+  // prebuilt `search` blob duplicated description (~400KB+) across 1k+ groups.
+  if (!listCard) {
+    base.website = String(row.website || '').trim();
+    base.instagramUrl = String(row.instagram_url || '').trim();
+    base.facebookUrl = String(row.facebook_url || '').trim();
+    base.linkedinUrl = String(row.linkedin_url || '').trim();
+    base.xUrl = String(row.x_url || '').trim();
+    base.search = [
       name,
       description,
       industry,
       industries.join(' '),
       meetingFormats.join(' '),
-      locations.map((location) => [location.city, location.postcode, location.outcode].filter(Boolean).join(' ')).join(' '),
+      locations
+        .map((location) =>
+          [location.city, location.postcode, location.outcode].filter(Boolean).join(' ')
+        )
+        .join(' '),
     ]
       .filter(Boolean)
       .join(' ')
-      .toLowerCase(),
-    claimable: isOrganiserClaimable(row),
-  };
-
-  if (options.listCard && description.length > DIRECTORY_DESCRIPTION_MAX) {
-    base.description = description.slice(0, DIRECTORY_DESCRIPTION_MAX - 1).trim() + '…';
+      .toLowerCase();
   }
 
   if (options.membershipPlan && options.membershipPlan.offered) {

@@ -18,7 +18,7 @@ module.exports = wrapHandler(async function handler(req, res) {
   }
 
   const {
-    listPublishedOpportunities,
+    listPublishedOpportunityCards,
     getPublishedOpportunityById,
     getPublishedOpportunityBySlug,
     createOpportunityEnquiry,
@@ -262,7 +262,7 @@ module.exports = wrapHandler(async function handler(req, res) {
       opportunity.hasOpenDay = Array.isArray(opportunity.openDays) && opportunity.openDays.length > 0;
       return json(res, 200, { ok: true, opportunity, softLaunch });
     }
-    const opportunities = await listPublishedOpportunities();
+    const opportunities = await listPublishedOpportunityCards();
     try {
       const { attachOpenDayFlagsToListings } = require('./_lib/opportunity-open-days');
       await attachOpenDayFlagsToListings(opportunities);

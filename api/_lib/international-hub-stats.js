@@ -3,7 +3,6 @@
  */
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { applyPublicOrganiserBrowseFilter } = require('./supabase-organisers-browse');
-const { listPublishedOpportunities } = require('./supabase-opportunities');
 
 const SUPPORTED_HUBS = new Set(['GB']);
 
@@ -41,14 +40,26 @@ async function getInternationalHubStats(countryCode) {
   let organisersQuery = sb.from('organisers').select('id', { count: 'exact', head: true });
   organisersQuery = applyPublicOrganiserBrowseFilter(organisersQuery);
 
-  const [eventsRes, organisersRes, opportunities] = await Promise.all([
+  const nowIso = new Date().toISOString();
+  let opportunitiesQuery = sb
+    .from('business_opportunities')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'published')
+    .eq('approval_status', 'Approved')
+    // Match listingPaymentCurrent: active term, or legacy with no expiry.
+    .or('listing_expires_at.is.null,listing_expires_at.gt.' + nowIso);
+
+  const [eventsRes, organisersRes, opportunitiesRes] = await Promise.all([
     eventsQuery,
     organisersQuery,
-    listPublishedOpportunities(),
+    opportunitiesQuery,
   ]);
 
   if (eventsRes.error) throw new Error(eventsRes.error.message || 'events_count_failed');
   if (organisersRes.error) throw new Error(organisersRes.error.message || 'organisers_count_failed');
+  if (opportunitiesRes.error) {
+    throw new Error(opportunitiesRes.error.message || 'opportunities_count_failed');
+  }
 
   return {
     ok: true,
@@ -56,7 +67,7 @@ async function getInternationalHubStats(countryCode) {
     configured: true,
     events: eventsRes.count || 0,
     organisers: organisersRes.count || 0,
-    opportunities: Array.isArray(opportunities) ? opportunities.length : 0,
+    opportunities: opportunitiesRes.count || 0,
   };
 }
 
