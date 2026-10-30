@@ -160,7 +160,98 @@ const EVENT_STOP = new Set([
   'list',
   'any',
   'some',
+  // Generic event words — match almost every Hub listing if left in.
+  'virtual',
+  'online',
+  'hybrid',
+  'zoom',
+  'networking',
+  'network',
+  'meetup',
+  'meeting',
+  'meetings',
+  'club',
+  'multi',
+  'business',
+  'women',
+  'men',
+  'community',
+  'session',
+  'sessions',
+  'group',
+  'groups',
+  'lunch',
+  'breakfast',
+  'dinner',
+  'drinks',
+  'mixer',
+  'forum',
+  'summit',
+  'conference',
+  'workshop',
+  'webinar',
+  'panel',
+  'roundtable',
+  'mastermind',
+  // Date noise — used for proximity, not title scoring.
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday',
+  'january',
+  'february',
+  'march',
+  'april',
+  'june',
+  'july',
+  'august',
+  'september',
+  'october',
+  'november',
+  'december',
+  'jan',
+  'feb',
+  'mar',
+  'apr',
+  'jun',
+  'jul',
+  'aug',
+  'sep',
+  'sept',
+  'oct',
+  'nov',
+  'dec',
 ]);
+
+const MONTH_INDEX = {
+  january: 0,
+  jan: 0,
+  february: 1,
+  feb: 1,
+  march: 2,
+  mar: 2,
+  april: 3,
+  apr: 3,
+  may: 4,
+  june: 5,
+  jun: 5,
+  july: 6,
+  jul: 6,
+  august: 7,
+  aug: 7,
+  september: 8,
+  sep: 8,
+  sept: 8,
+  october: 9,
+  oct: 9,
+  november: 10,
+  nov: 10,
+  december: 11,
+  dec: 11,
+};
 
 function shortDisplayName(fullName) {
   const parts = String(fullName || '')
@@ -182,14 +273,59 @@ function tokenize(query) {
     .slice(0, 24);
 }
 
+function isDateNoiseToken(t) {
+  const s = String(t || '');
+  if (/^\d{4}$/.test(s)) return true; // year
+  if (/^\d{1,2}(st|nd|rd|th)?$/.test(s)) return true; // 29 / 29th
+  return false;
+}
+
 function eventSearchTokens(query) {
   return String(query || '')
     .toLowerCase()
     .replace(/[^a-z0-9+#&\s-]/gi, ' ')
     .split(/\s+/)
     .map((t) => t.trim())
-    .filter((t) => t.length >= 3 && !EVENT_STOP.has(t) && !QUERY_STOP.has(t))
+    .filter(
+      (t) =>
+        t.length >= 3 &&
+        !EVENT_STOP.has(t) &&
+        !QUERY_STOP.has(t) &&
+        !isDateNoiseToken(t)
+    )
     .slice(0, 24);
+}
+
+/**
+ * Best-effort date from the ask (e.g. “Thursday 29th October 2026”).
+ * Used to prefer the right session when several titles share a brand.
+ */
+function extractQueryEventDate(query) {
+  const text = String(query || '').toLowerCase();
+  const yearMatch = text.match(/\b(20\d{2})\b/);
+  const year = yearMatch ? Number(yearMatch[1]) : null;
+  let month = null;
+  Object.keys(MONTH_INDEX).forEach((name) => {
+    if (new RegExp('\\b' + name + '\\b', 'i').test(text)) {
+      month = MONTH_INDEX[name];
+    }
+  });
+  const dayMatch = text.match(/\b(\d{1,2})(?:st|nd|rd|th)?\b/);
+  let day = null;
+  if (dayMatch) {
+    const n = Number(dayMatch[1]);
+    // Ignore bare years already captured; ignore tiny/noise numbers.
+    if (n >= 1 && n <= 31 && !(yearMatch && dayMatch[1] === yearMatch[1])) {
+      day = n;
+    }
+  }
+  if (year == null || month == null || day == null) return null;
+  const dt = new Date(Date.UTC(year, month, day, 12, 0, 0));
+  if (Number.isNaN(dt.getTime())) return null;
+  if (dt.getUTCFullYear() !== year || dt.getUTCMonth() !== month || dt.getUTCDate() !== day) {
+    return null;
+  }
+  return dt;
 }
 
 function looksLikeEventAttendeeQuery(query) {
@@ -502,12 +638,30 @@ function mapMemberRow(row, nextEvent, matchedEvent) {
 
 function scoreEventTitle(title, tokens) {
   const hay = String(title || '').toLowerCase();
-  if (!hay || !tokens.length) return 0;
+  const toks = Array.isArray(tokens) ? tokens : [];
+  if (!hay || !toks.length) return 0;
   let score = 0;
-  tokens.forEach((t) => {
+  let misses = 0;
+  toks.forEach((t) => {
     if (hay.includes(t)) score += t.length >= 6 ? 3 : 2;
+    else misses += 1;
   });
+  // Distinctive brand tokens (evolution, barnsgate, …) must all appear.
+  // Prevents “virtual networking” from latching onto any virtual mixer.
+  if (misses > 0) return 0;
   return score;
+}
+
+function eventDateProximityBoost(startsAt, queryDate) {
+  if (!queryDate || !startsAt) return 0;
+  const start = new Date(startsAt);
+  if (Number.isNaN(start.getTime())) return 0;
+  const diffMs = Math.abs(start.getTime() - queryDate.getTime());
+  const dayMs = 24 * 60 * 60 * 1000;
+  if (diffMs <= dayMs) return 40;
+  if (diffMs <= 3 * dayMs) return 20;
+  if (diffMs <= 7 * dayMs) return 8;
+  return 0;
 }
 
 function isUsableEventStatus(status) {
@@ -522,6 +676,7 @@ async function findMatchingEvents(sb, query) {
   const tokens = eventSearchTokens(query);
   if (!tokens.length) return [];
 
+  const queryDate = extractQueryEventDate(query);
   const fromIso = new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString();
   const toIso = new Date(Date.now() + 120 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -541,17 +696,27 @@ async function findMatchingEvents(sb, query) {
   }
 
   const scored = rows
-    .map((ev) => ({
-      event: ev,
-      score: scoreEventTitle(ev.title, tokens),
-    }))
-    .filter((row) => row.score > 0)
-    .sort((a, b) => b.score - a.score || String(b.event.starts_at).localeCompare(String(a.event.starts_at)));
+    .map((ev) => {
+      const titleScore = scoreEventTitle(ev.title, tokens);
+      const dateBoost = eventDateProximityBoost(ev.starts_at, queryDate);
+      return {
+        event: ev,
+        titleScore,
+        score: titleScore + dateBoost,
+      };
+    })
+    .filter((row) => row.titleScore > 0)
+    .sort(
+      (a, b) =>
+        b.score - a.score ||
+        b.titleScore - a.titleScore ||
+        String(b.event.starts_at).localeCompare(String(a.event.starts_at))
+    );
 
-  // Prefer a clear title match: at least one solid token hit.
+  // At least one distinctive brand token must hit the title.
   const minScore = tokens.some((t) => t.length >= 6) ? 3 : 2;
   return scored
-    .filter((row) => row.score >= minScore)
+    .filter((row) => row.titleScore >= minScore)
     .slice(0, 5)
     .map((row) => ({
       id: String(row.event.id),
@@ -829,12 +994,14 @@ module.exports = {
   shortDisplayName,
   tokenize,
   eventSearchTokens,
+  extractQueryEventDate,
   looksLikeEventAttendeeQuery,
   extractQueryIntent,
   roleFitScore,
   isInternalMatchCandidate,
   scoreAgainstQuery,
   scoreEventTitle,
+  eventDateProximityBoost,
   eventBoost,
   matchedEventBoost,
   hashSeed,
