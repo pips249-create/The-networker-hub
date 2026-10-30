@@ -4236,7 +4236,20 @@
     return Boolean(e && /timed out/i.test(String((e && e.message) || '')));
   }
 
-  async function fetchOrganiserBootstrap(prefetch) {
+  async function fetchOrganiserBootstrap(prefetch, options) {
+    // Nav / pageshow soft-refresh: never wait on the heavy lean workspace.
+    // Scope switches and mutations pass groupsOnly:false (full bootstrap + fallback).
+    if (options && options.groupsOnly && !prefetch) {
+      const lite = await apiWithTimeout(
+        '/api/organiser/bootstrap?groupsOnly=1',
+        {},
+        BOOTSTRAP_FALLBACK_TIMEOUT_MS
+      );
+      if (lite && lite.ok && lite.data) {
+        lite.data = Object.assign({ lite: true }, lite.data);
+      }
+      return lite;
+    }
     try {
       return await (prefetch || apiWithTimeout('/api/organiser/bootstrap', {}, BOOTSTRAP_TIMEOUT_MS));
     } catch (e) {
@@ -4973,10 +4986,51 @@
   }
 
   /** Match public event page series grouping (title fallback when recurrence is incomplete). */
+  let titlePeerCountsCache = null;
+  let titlePeerCountsCacheKey = '';
+
+  function titlePeerCountsCacheToken(events) {
+    const list = events || [];
+    const first = list[0];
+    const last = list.length ? list[list.length - 1] : null;
+    return (
+      String(list.length) +
+      ':' +
+      String((first && first.id) || '') +
+      ':' +
+      String((last && last.id) || '') +
+      ':' +
+      String(eventsLoadGen)
+    );
+  }
+
+  function buildTitlePeerCounts(events) {
+    const titlePeerCounts = new Map();
+    (events || []).forEach(function (ev) {
+      if (!ev) return;
+      if (String(ev.seriesGroupId || '').trim()) return;
+      if (String(ev.duplicatedFromEventId || '').trim()) return;
+      const peerKey =
+        eventOrganiserGroupId(ev) + '\0' + String(ev.title || '').trim().toLowerCase();
+      titlePeerCounts.set(peerKey, (titlePeerCounts.get(peerKey) || 0) + 1);
+    });
+    return titlePeerCounts;
+  }
+
+  function titlePeerCountsFor(events) {
+    const list = events || [];
+    const token = titlePeerCountsCacheToken(list);
+    if (titlePeerCountsCache && titlePeerCountsCacheKey === token) {
+      return titlePeerCountsCache;
+    }
+    titlePeerCountsCache = buildTitlePeerCounts(list);
+    titlePeerCountsCacheKey = token;
+    return titlePeerCountsCache;
+  }
+
   function eventSeriesBucketKey(ev, context) {
     const groupId = eventOrganiserGroupId(ev);
     const title = String(ev.title || '').trim().toLowerCase();
-    const allEvents = (context && context.allEvents) || state.events || [];
     const titlePeerCounts = context && context.titlePeerCounts;
 
     const seriesGroupId = String(ev.seriesGroupId || '').trim();
@@ -4991,21 +5045,13 @@
     if (pattern && endDate) {
       return 'rec:' + groupId + '\0' + title + '\0' + pattern + '\0' + endDate;
     }
-    if (titlePeerCounts) {
-      const peerKey = groupId + '\0' + title;
-      if ((titlePeerCounts.get(peerKey) || 0) > 1) {
-        return titleSeriesBucketKey(ev);
-      }
-      return 'solo:' + String(ev.id || '');
-    }
-    const sameTitlePeers = allEvents.filter(function (peer) {
-      if (eventOrganiserGroupId(peer) !== groupId) return false;
-      if (String(peer.title || '').trim().toLowerCase() !== title) return false;
-      if (String(peer.seriesGroupId || '').trim()) return false;
-      if (String(peer.duplicatedFromEventId || '').trim()) return false;
-      return true;
-    });
-    if (sameTitlePeers.length > 1) {
+    // Always prefer the O(1) peer map. Callers that used to pass only allEvents
+    // caused an O(n) filter per row and froze franchise-scale catalogues.
+    const peers =
+      titlePeerCounts ||
+      titlePeerCountsFor((context && context.allEvents) || state.events || []);
+    const peerKey = groupId + '\0' + title;
+    if ((peers.get(peerKey) || 0) > 1) {
       return titleSeriesBucketKey(ev);
     }
     return 'solo:' + String(ev.id || '');
@@ -5013,7 +5059,10 @@
 
   function eventSeriesKeyForRow(ev) {
     const source = (ev && ev.seriesEvents && ev.seriesEvents[0]) || ev;
-    return eventSeriesBucketKey(source, { allEvents: state.events });
+    return eventSeriesBucketKey(source, {
+      allEvents: state.events,
+      titlePeerCounts: titlePeerCountsFor(state.events),
+    });
   }
 
   function sortEventsByDate(events) {
@@ -5211,14 +5260,7 @@
   function groupEventsIntoSeries(events) {
     const all = events || [];
     // Precompute title peer counts once — per-event filters were O(n²) and froze franchise workspaces.
-    const titlePeerCounts = new Map();
-    all.forEach(function (ev) {
-      if (String(ev.seriesGroupId || '').trim()) return;
-      if (String(ev.duplicatedFromEventId || '').trim()) return;
-      const peerKey =
-        eventOrganiserGroupId(ev) + '\0' + String(ev.title || '').trim().toLowerCase();
-      titlePeerCounts.set(peerKey, (titlePeerCounts.get(peerKey) || 0) + 1);
-    });
+    const titlePeerCounts = buildTitlePeerCounts(all);
     const buckets = new Map();
     all.forEach((ev) => {
       const key = eventSeriesBucketKey(ev, { allEvents: all, titlePeerCounts: titlePeerCounts });
@@ -8173,7 +8215,24 @@
       hint.hidden = false;
       hint.textContent = 'Loading cancellations…';
     }
-    const { ok, data } = await api('/api/organiser/attendees?eventId=all&view=cancellations');
+    let ok = false;
+    let data = {};
+    try {
+      const res = await apiWithTimeout(
+        '/api/organiser/attendees?eventId=all&view=cancellations',
+        {},
+        ATTENDEES_TIMEOUT_MS
+      );
+      ok = Boolean(res && res.ok);
+      data = (res && res.data) || {};
+    } catch (e) {
+      ok = false;
+      data = {
+        message:
+          (e && e.message) ||
+          'Could not load cancellations. Please refresh and try again.',
+      };
+    }
     if (hint) hint.hidden = true;
     if (ok) {
       state.cancellationsAll = data.cancellations || [];
@@ -9229,14 +9288,22 @@
   function resolveSeriesPeersForEvent(ev) {
     if (!ev || !ev.id) return { eventIds: [], events: [] };
     const allEvents = state.events.slice();
+    const seenIds = new Set(
+      allEvents.map(function (e) {
+        return e && e.id;
+      })
+    );
     (state.upcomingEvents || []).forEach(function (peer) {
-      if (peer && peer.id && !allEvents.some(function (e) {
-        return e.id === peer.id;
-      })) {
+      if (peer && peer.id && !seenIds.has(peer.id)) {
+        seenIds.add(peer.id);
         allEvents.push(peer);
       }
     });
-    const key = eventSeriesBucketKey(ev, { allEvents: allEvents });
+    const titlePeerCounts = buildTitlePeerCounts(allEvents);
+    const key = eventSeriesBucketKey(ev, {
+      allEvents: allEvents,
+      titlePeerCounts: titlePeerCounts,
+    });
     if (key.indexOf('solo:') === 0) {
       return {
         eventIds: [ev.id],
@@ -9251,7 +9318,12 @@
       };
     }
     const peers = allEvents.filter(function (peer) {
-      return eventSeriesBucketKey(peer, { allEvents: allEvents }) === key;
+      return (
+        eventSeriesBucketKey(peer, {
+          allEvents: allEvents,
+          titlePeerCounts: titlePeerCounts,
+        }) === key
+      );
     });
     const sorted = sortEventsByDate(peers);
     return {
@@ -10921,7 +10993,7 @@
     closePayoutModal();
     closeModals();
     showOrganiserAlert(data.message || 'Payout request submitted.', false);
-    await refresh();
+    await refresh({ full: true });
     setRoute('events-revenue');
   }
 
@@ -10946,7 +11018,7 @@
       return;
     }
     showOrganiserAlert(data.message || 'Refunds verified.', false);
-    await refresh();
+    await refresh({ full: true });
     setRoute('events-revenue');
   }
 
@@ -12167,7 +12239,7 @@
     renderVisibilityHubMeta();
     if (!state.eventsLoaded || !state.opportunitiesLoaded) {
       requestAnimationFrame(function () {
-        if (!state.eventsLoaded) refresh();
+        if (!state.eventsLoaded) refresh({ full: true });
         if (!state.opportunitiesLoaded) {
           loadOpportunitiesList().then(function () {
             renderVisibilityHubMeta();
@@ -14283,12 +14355,12 @@
     if (e.target.id === 'btn-scope-my') {
       setOrganiserScopeCookie('my');
       closeNotificationsPanel();
-      refresh();
+      refresh({ full: true });
     }
     if (e.target.id === 'btn-scope-all') {
       setOrganiserScopeCookie('all');
       closeNotificationsPanel();
-      refresh();
+      refresh({ full: true });
     }
   }
 
@@ -18727,17 +18799,33 @@
     const silent = Boolean(options && options.silent);
     const skipClaimUi = Boolean(options && options.skipClaimUi);
     const skipRenderIfGroupDrawer = Boolean(options && options.skipRenderIfGroupDrawer);
+    const groupsOnly = Boolean(options && options.groupsOnly);
     const prefetch = options && options.prefetch;
     if (!silent) setDashboardLoading(true);
     let postReady = null;
     try {
-    const { ok, data } = await fetchOrganiserBootstrap(prefetch);
+    const { ok, data } = await fetchOrganiserBootstrap(prefetch, { groupsOnly: groupsOnly });
     if (!ok) throw new Error(data.message || data.error || 'load_failed');
+    // groupsOnly / timeout-fallback payloads omit claims, permissions, and event
+    // summaries — keep whatever the shell already has so soft-refresh cannot wipe UI.
+    const lite = groupsOnly || Boolean(data.partial) || Boolean(data.lite);
     cacheBootstrapForEmbed(data);
     state.groups = dedupeGroupsById(data.groups || []);
-    state.pendingClaimGroups = sortPendingClaimGroups(data.pendingClaimGroups || []);
-    state.pendingClaimOpportunities = data.pendingClaimOpportunities || [];
-    state.pendingSetupReviews = data.pendingSetupReviews || [];
+    if (!lite) {
+      state.pendingClaimGroups = sortPendingClaimGroups(data.pendingClaimGroups || []);
+      state.pendingClaimOpportunities = data.pendingClaimOpportunities || [];
+      state.pendingSetupReviews = data.pendingSetupReviews || [];
+    } else {
+      if (Array.isArray(data.pendingClaimGroups) && data.pendingClaimGroups.length) {
+        state.pendingClaimGroups = sortPendingClaimGroups(data.pendingClaimGroups);
+      }
+      if (Array.isArray(data.pendingClaimOpportunities) && data.pendingClaimOpportunities.length) {
+        state.pendingClaimOpportunities = data.pendingClaimOpportunities;
+      }
+      if (Array.isArray(data.pendingSetupReviews) && data.pendingSetupReviews.length) {
+        state.pendingSetupReviews = data.pendingSetupReviews;
+      }
+    }
     const incomingEvents = Array.isArray(data.events) ? data.events : [];
     const incomingUpcoming = Array.isArray(data.upcomingEvents) ? data.upcomingEvents : [];
     const incomingTickets = Array.isArray(data.tickets) ? data.tickets : [];
@@ -18793,8 +18881,10 @@
     if (!state.eventsLoaded) {
       state.eventsFullyLoaded = !state.eventsHasMore;
     }
-    state.pendingApplicationsCount = Number(data.pendingApplications?.count) || 0;
-    state.pendingApplicationsPreview = data.pendingApplications?.preview || [];
+    if (!lite) {
+      state.pendingApplicationsCount = Number(data.pendingApplications?.count) || 0;
+      state.pendingApplicationsPreview = data.pendingApplications?.preview || [];
+    }
     if (!silent) {
       state.attendeesLoaded = false;
       state.attendeesAll = [];
@@ -18804,27 +18894,35 @@
       loadCancellationsAll().then(() => renderCancellations());
     }
     state.groupsError = data.groupsError;
-    state.adminView = data.adminView;
-    state.personalScope = data.personalScope;
-    state.isAdmin = data.isAdmin;
+    if (typeof data.adminView === 'boolean') state.adminView = data.adminView;
+    if (typeof data.personalScope === 'boolean') state.personalScope = data.personalScope;
+    if (typeof data.isAdmin === 'boolean') state.isAdmin = data.isAdmin;
     if (data.user) {
       state.user = { ...state.user, ...data.user };
     }
-    state.canManageTeam = data.canManageTeam !== false;
-    state.canDeleteEvents = data.canDeleteEvents !== false;
-    state.canManagePayments = data.canManagePayments !== false;
-    state.canCreateGroups = data.canCreateGroups !== false;
-    state.canManageEvents = data.canManageEvents !== false;
-    state.canViewRevenue = data.canViewRevenue !== false;
-    state.canViewRegistrations = data.canViewRegistrations !== false;
-    state.canAccessPromote = data.canAccessPromote !== false;
-    state.canAccessCommunicate = data.canAccessCommunicate !== false;
-    state.isMarketing = data.isMarketing === true || data.organiserRole === 'marketing';
-    state.organiserRole = data.organiserRole || 'owner';
-    state.useTeamWorkspace = Boolean(data.useTeamWorkspace);
-    state.stripeConnectEnabled = Boolean(data.stripeConnectEnabled);
-    state.organiserAccess = data.organiserAccess === true;
-    state.organiserEmailVerified = data.organiserEmailVerified === true;
+    if (!lite) {
+      state.canManageTeam = data.canManageTeam !== false;
+      state.canDeleteEvents = data.canDeleteEvents !== false;
+      state.canManagePayments = data.canManagePayments !== false;
+      state.canCreateGroups = data.canCreateGroups !== false;
+      state.canManageEvents = data.canManageEvents !== false;
+      state.canViewRevenue = data.canViewRevenue !== false;
+      state.canViewRegistrations = data.canViewRegistrations !== false;
+      state.canAccessPromote = data.canAccessPromote !== false;
+      state.canAccessCommunicate = data.canAccessCommunicate !== false;
+      state.isMarketing = data.isMarketing === true || data.organiserRole === 'marketing';
+      state.organiserRole = data.organiserRole || 'owner';
+      state.useTeamWorkspace = Boolean(data.useTeamWorkspace);
+    }
+    if (typeof data.stripeConnectEnabled === 'boolean') {
+      state.stripeConnectEnabled = data.stripeConnectEnabled;
+    }
+    if (typeof data.organiserAccess === 'boolean') {
+      state.organiserAccess = data.organiserAccess;
+    }
+    if (typeof data.organiserEmailVerified === 'boolean') {
+      state.organiserEmailVerified = data.organiserEmailVerified;
+    }
     applyMarketingWorkspaceUi();
     if (isMarketingWorkspace()) {
       const currentHash = (location.hash.replace('#', '') || '').trim().toLowerCase();
@@ -18856,7 +18954,8 @@
       state.dashboardScope = null;
     }
 
-    if (data.partial) {
+    // Only surface the timeout-fallback snapshot on a visible first load.
+    if (data.partial && !silent && !groupsOnly) {
       showOrganiserAlert(
         'Dashboard opened with a quicker snapshot — attendees and events will finish loading in this tab.',
         false
@@ -18946,12 +19045,15 @@
     }
   }
 
-  async function refresh() {
+  async function refresh(options) {
+    // Default soft-refresh is groups-only so pageshow / hash / bottom-nav cannot
+    // re-hit the 45s lean bootstrap (Sentry: refresh → loadBootstrap → apiWithTimeout).
+    // Pass { full: true } after mutations or scope switches that need fresh workspace data.
+    const full = Boolean(options && options.full);
     try {
-      await loadBootstrap({ silent: true });
+      await loadBootstrap({ silent: true, groupsOnly: !full });
     } catch (e) {
-      // Silent refresh (pageshow / hash / scope) must not become an unhandled
-      // rejection — that was the Sentry "Request timed out" on #events-list.
+      // Silent refresh must not become an unhandled rejection.
       if (typeof console !== 'undefined' && console.warn) {
         console.warn('[organiser] silent refresh failed', e && e.message ? e.message : e);
       }
@@ -19100,7 +19202,7 @@
       closeModals();
       document.getElementById('form-group').reset();
       resetGroupLogoPicker();
-      await refresh();
+      await refresh({ full: true });
       setRoute('groups');
       if (logoWarning) alert(logoWarning);
       else if (logoResolutionWarning) alert(logoResolutionWarning);
@@ -19147,7 +19249,7 @@
           : 'Free';
       closeModals();
       document.getElementById('form-ticket').reset();
-      await refresh();
+      await refresh({ full: true });
       setRoute('events-tickets');
       let message =
         '<strong>Ticket created.</strong> “' +
