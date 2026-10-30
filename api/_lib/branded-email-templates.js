@@ -382,6 +382,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v3-navy-logo-hubert-led',
     subject: '{{inviter_first_name}} asked Hubert to introduce you',
   },
+  hubert_organiser_pre_event: {
+    file: 'hubert-organiser-pre-event.html',
+    marker: 'hub-email-layout-v3-purple-hubert-organiser',
+    subject: 'Who do you want to meet at {{event_name}}?',
+  },
   organiser_low_upcoming_events: {
     file: 'organiser-low-upcoming-events.html',
     marker: 'hub-email-layout-v3-purple',

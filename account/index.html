@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20261029dash2" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20261029dash2" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261029searchquota1" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261030eventpick1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20261023nextup2" />
     <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"></script>
 
@@ -127,7 +127,7 @@
                       <span>I can introduce you to the people you need</span>
                     </div>
                     <form class="hmm-composer hmm-overview-ask" data-hmm-form>
-                      <label class="visually-hidden" for="hmm-overview-query">What are you working on?</label>
+                      <label class="visually-hidden" for="hmm-overview-query">Who do you want to meet?</label>
                       <input
                         id="hmm-overview-query"
                         class="hmm-composer-input"
@@ -136,7 +136,7 @@
                         data-hmm-query
                         maxlength="240"
                         autocomplete="off"
-                        placeholder="e.g. raising seed and need fintech angels in Manchester"
+                        placeholder="Try: commercial solicitor in Manchester, or B2B SaaS founder…"
                         required
                       />
                       <button type="submit" class="ad-btn hmm-overview-submit">Try Hubert</button>
@@ -149,6 +149,7 @@
                     <h3 class="ad-empty-state-title">No one came back yet</h3>
                     <p class="ad-empty-state-text">Try another way of describing who you need — a bit more context helps.</p>
                   </div>
+                  <div class="hmm-event-pick" data-hmm-event-pick hidden role="group" aria-label="Choose which event Hubert should use"></div>
                 </div>
 
                 <button type="button" class="ad-portal ad-portal--events" data-ad-portal="tickets">
@@ -871,7 +872,7 @@
                   Save your profile above (headline, who you want to meet, and Include me) to unlock search.
                 </p>
                 <form class="hmm-composer" data-hmm-form>
-                  <label class="visually-hidden" for="hmm-query">What are you working on?</label>
+                  <label class="visually-hidden" for="hmm-query">Who do you want to meet?</label>
                   <div class="hmm-composer-row">
                     <img class="hmm-composer-avatar" src="../assets/hubert-icon.png" width="40" height="40" alt="" />
                     <input
@@ -882,7 +883,7 @@
                       data-hmm-query
                       maxlength="240"
                       autocomplete="off"
-                      placeholder="e.g. raising seed and need fintech angels in Manchester"
+                      placeholder="Try: commercial solicitor in Manchester, or B2B SaaS founder…"
                       required
                       disabled
                     />
@@ -897,6 +898,7 @@
                   <h3 class="ad-empty-state-title">No one came back yet</h3>
                   <p class="ad-empty-state-text">Try another way of describing who you need — a bit more context helps.</p>
                 </div>
+                <div class="hmm-event-pick" data-hmm-event-pick hidden role="group" aria-label="Choose which event Hubert should use"></div>
                 <div class="hmm-intros" data-hmm-intros hidden></div>
                 <div class="hmm-thread-panel" data-hmm-thread hidden></div>
                 </div>
@@ -905,6 +907,7 @@
                   <h3 class="hmm-invite-title">Introduce them to The Networker UK &amp; Hubert</h3>
                   <p class="hmm-invite-copy">
                     I&rsquo;ll invite them to join The Networker UK. They won&rsquo;t see your details — just a note from me to get started.
+                    Invite <strong>2 colleagues who join</strong> and Hubert unlocks <strong>10 searches a week</strong> for you (from 3).
                   </p>
                   <button type="button" class="ad-btn ad-btn-ghost hmm-invite-cta" data-hmm-invite>
                     Introduce someone
@@ -1409,7 +1412,7 @@
     <script src="../js/attendee-auth-gate.js?v=20261021confirm2"></script>
     <script src="../js/organiser-image-upload.js?v=20261002offerimage1" defer></script>
     <script src="../js/attendee-member-offers.js?v=20261015offers1" defer></script>
-    <script src="../js/hubert-matchmaker.js?v=20261029searchquota1" defer></script>
-    <script src="../js/attendee-dashboard.js?v=20261029hubertwhy1" defer></script>
+    <script src="../js/hubert-matchmaker.js?v=20261030eventpick1" defer></script>
+    <script src="../js/attendee-dashboard.js?v=20261030teaser1" defer></script>
   </body>
 </html>

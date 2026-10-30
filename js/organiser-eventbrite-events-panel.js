@@ -216,23 +216,82 @@
     });
   }
 
-  function refreshEvents() {
+  function refreshEvents(opts) {
+    var options = opts && typeof opts === 'object' ? opts : {};
+    var allowAutoImport = options.autoImport !== false;
     if (loading) return Promise.resolve();
     loading = true;
     setMsg('Loading Eventbrite events…');
     return patchProviders({ action: 'list_eventbrite_events' })
       .then(function (res) {
-        loading = false;
         if (!res.ok) {
+          loading = false;
           setMsg(res.data.message || res.data.error || 'Could not load Eventbrite events.', 'error');
           return;
         }
         setConnectedUi(true);
         setExpanded(true);
-        renderEvents(res.data.events || []);
+        var events = res.data.events || [];
+        var groupId = selectedGroupId();
+        var pending = events.filter(function (evt) {
+          return evt && evt.id && !evt.alreadyLinked;
+        });
+        // Auto-import onto the chosen organiser page so organisers are not stuck clicking Import.
+        if (allowAutoImport && groupId && pending.length) {
+          setMsg(
+            'Importing ' +
+              pending.length +
+              ' Eventbrite event' +
+              (pending.length === 1 ? '' : 's') +
+              '…',
+            'ok'
+          );
+          return patchProviders({
+            action: 'sync_eventbrite_org_events',
+            groupId: groupId,
+          })
+            .then(function (syncRes) {
+              loading = false;
+              if (!syncRes.ok) {
+                renderEvents(events);
+                setMsg(
+                  syncRes.data.message ||
+                    syncRes.data.error ||
+                    'Could not auto-import. Use Import on each event.',
+                  'error'
+                );
+                return;
+              }
+              var sync = syncRes.data.orgSync || syncRes.data || {};
+              var created = Number(sync.created) || 0;
+              return refreshEvents({ autoImport: false }).then(function () {
+                if (created) {
+                  setMsg(
+                    'Imported ' +
+                      created +
+                      ' event' +
+                      (created === 1 ? '' : 's') +
+                      ' onto your organiser page.',
+                    'ok'
+                  );
+                }
+              });
+            })
+            .catch(function () {
+              loading = false;
+              renderEvents(events);
+              setMsg('Could not auto-import. Use Import on each event.', 'error');
+            });
+        }
+        loading = false;
+        renderEvents(events);
         setMsg(
-          (res.data.events || []).length
-            ? 'Pick an event and click Import.'
+          events.length
+            ? pending.length && !groupId
+              ? 'Choose an organiser page above, then we will import automatically.'
+              : pending.length
+                ? 'Pick an event and click Import.'
+                : 'All listed Eventbrite events are already on The Networker UK.'
             : 'No live Eventbrite events found for this account.',
           'ok'
         );

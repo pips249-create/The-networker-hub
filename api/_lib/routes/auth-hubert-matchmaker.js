@@ -79,6 +79,8 @@ function mapIntroError(e) {
     cannot_intro_self: 400,
     intro_quota_exceeded: 429,
     search_quota_exceeded: 429,
+    accept_industry_required: 400,
+    accept_looking_required: 400,
     intro_already_pending: 409,
     target_not_found: 404,
     target_email_missing: 400,
@@ -284,16 +286,24 @@ module.exports = async function handler(req, res) {
       const gated = await requireMatchmakerProfile(session);
       const result = await searchMatchmaker({
         query: body.query || body.q || '',
+        eventId: body.eventId || body.event_id || '',
         excludeAttendeeId: gated.attendeeId,
       });
       if (!result.ok) {
         const status = result.error === 'query_too_short' ? 400 : 503;
         return json(res, status, result);
       }
-      const searchQuota = await consumeSearchQuota(gated.sb, session, gated.attendeeId, {
-        query: result.query,
-        matchCount: Array.isArray(result.matches) ? result.matches.length : 0,
-      });
+      // Confirming which event you meant is not a people-search — don't burn quota.
+      const needsEventPick = Boolean(result.meta && result.meta.needsEventPick);
+      let searchQuota;
+      if (needsEventPick) {
+        searchQuota = await getSearchQuota(gated.sb, session, gated.attendeeId);
+      } else {
+        searchQuota = await consumeSearchQuota(gated.sb, session, gated.attendeeId, {
+          query: result.query,
+          matchCount: Array.isArray(result.matches) ? result.matches.length : 0,
+        });
+      }
       return json(res, 200, {
         ok: true,
         query: result.query,
@@ -361,11 +371,19 @@ module.exports = async function handler(req, res) {
         token: body.token,
         decision: action,
         reason: body.reason,
+        industry: body.industry || body.businessSector || body.business_sector,
+        lookingToMeet: body.lookingToMeet || body.looking_to_meet,
       });
       return json(res, 200, { ok: true, ...result });
     } catch (e) {
       const mapped = mapIntroError(e);
-      return json(res, mapped.status, { ok: false, error: mapped.error, message: mapped.message });
+      return json(res, mapped.status, {
+        ok: false,
+        error: mapped.error,
+        message: mapped.message,
+        needsAcceptOnboarding:
+          mapped.error === 'accept_industry_required' || mapped.error === 'accept_looking_required',
+      });
     }
   }
 

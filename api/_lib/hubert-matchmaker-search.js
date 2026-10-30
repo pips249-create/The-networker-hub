@@ -10,6 +10,8 @@
  * fast, but must not admit people solely for having any upcoming event.
  */
 const MAX_SHORTLIST = 5;
+/** Rotate the shortlist across this many top-scoring candidates. */
+const SHORTLIST_ROTATION_POOL = 12;
 const MIN_QUERY_LEN = 3;
 /** Meaningful text hits required unless this is an event-attendee lookup. */
 const MIN_TEXT_SCORE = 6;
@@ -158,7 +160,98 @@ const EVENT_STOP = new Set([
   'list',
   'any',
   'some',
+  // Generic event words — match almost every Hub listing if left in.
+  'virtual',
+  'online',
+  'hybrid',
+  'zoom',
+  'networking',
+  'network',
+  'meetup',
+  'meeting',
+  'meetings',
+  'club',
+  'multi',
+  'business',
+  'women',
+  'men',
+  'community',
+  'session',
+  'sessions',
+  'group',
+  'groups',
+  'lunch',
+  'breakfast',
+  'dinner',
+  'drinks',
+  'mixer',
+  'forum',
+  'summit',
+  'conference',
+  'workshop',
+  'webinar',
+  'panel',
+  'roundtable',
+  'mastermind',
+  // Date noise — used for proximity, not title scoring.
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday',
+  'january',
+  'february',
+  'march',
+  'april',
+  'june',
+  'july',
+  'august',
+  'september',
+  'october',
+  'november',
+  'december',
+  'jan',
+  'feb',
+  'mar',
+  'apr',
+  'jun',
+  'jul',
+  'aug',
+  'sep',
+  'sept',
+  'oct',
+  'nov',
+  'dec',
 ]);
+
+const MONTH_INDEX = {
+  january: 0,
+  jan: 0,
+  february: 1,
+  feb: 1,
+  march: 2,
+  mar: 2,
+  april: 3,
+  apr: 3,
+  may: 4,
+  june: 5,
+  jun: 5,
+  july: 6,
+  jul: 6,
+  august: 7,
+  aug: 7,
+  september: 8,
+  sep: 8,
+  sept: 8,
+  october: 9,
+  oct: 9,
+  november: 10,
+  nov: 10,
+  december: 11,
+  dec: 11,
+};
 
 function shortDisplayName(fullName) {
   const parts = String(fullName || '')
@@ -180,14 +273,59 @@ function tokenize(query) {
     .slice(0, 24);
 }
 
+function isDateNoiseToken(t) {
+  const s = String(t || '');
+  if (/^\d{4}$/.test(s)) return true; // year
+  if (/^\d{1,2}(st|nd|rd|th)?$/.test(s)) return true; // 29 / 29th
+  return false;
+}
+
 function eventSearchTokens(query) {
   return String(query || '')
     .toLowerCase()
     .replace(/[^a-z0-9+#&\s-]/gi, ' ')
     .split(/\s+/)
     .map((t) => t.trim())
-    .filter((t) => t.length >= 3 && !EVENT_STOP.has(t) && !QUERY_STOP.has(t))
+    .filter(
+      (t) =>
+        t.length >= 3 &&
+        !EVENT_STOP.has(t) &&
+        !QUERY_STOP.has(t) &&
+        !isDateNoiseToken(t)
+    )
     .slice(0, 24);
+}
+
+/**
+ * Best-effort date from the ask (e.g. “Thursday 29th October 2026”).
+ * Used to prefer the right session when several titles share a brand.
+ */
+function extractQueryEventDate(query) {
+  const text = String(query || '').toLowerCase();
+  const yearMatch = text.match(/\b(20\d{2})\b/);
+  const year = yearMatch ? Number(yearMatch[1]) : null;
+  let month = null;
+  Object.keys(MONTH_INDEX).forEach((name) => {
+    if (new RegExp('\\b' + name + '\\b', 'i').test(text)) {
+      month = MONTH_INDEX[name];
+    }
+  });
+  const dayMatch = text.match(/\b(\d{1,2})(?:st|nd|rd|th)?\b/);
+  let day = null;
+  if (dayMatch) {
+    const n = Number(dayMatch[1]);
+    // Ignore bare years already captured; ignore tiny/noise numbers.
+    if (n >= 1 && n <= 31 && !(yearMatch && dayMatch[1] === yearMatch[1])) {
+      day = n;
+    }
+  }
+  if (year == null || month == null || day == null) return null;
+  const dt = new Date(Date.UTC(year, month, day, 12, 0, 0));
+  if (Number.isNaN(dt.getTime())) return null;
+  if (dt.getUTCFullYear() !== year || dt.getUTCMonth() !== month || dt.getUTCDate() !== day) {
+    return null;
+  }
+  return dt;
 }
 
 function looksLikeEventAttendeeQuery(query) {
@@ -296,11 +434,88 @@ function matchedEventBoost(person) {
   return person && person.matchedEvent && person.matchedEvent.eventId ? 55 : 0;
 }
 
-function rankCandidates(candidates, query, requesterEventIds) {
+/** Stable 32-bit hash for weekly shortlist rotation. */
+function hashSeed(raw) {
+  let h = 2166136261;
+  const s = String(raw || '');
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+function weekBucket(nowMs) {
+  const ms = Number.isFinite(nowMs) ? Number(nowMs) : Date.now();
+  return Math.floor(ms / (7 * 24 * 60 * 60 * 1000));
+}
+
+/**
+ * Slide a window of MAX_SHORTLIST across the top SHORTLIST_ROTATION_POOL
+ * so the same ask does not always surface the same five people.
+ * Quality order inside the pool is preserved; only the window moves.
+ */
+function rotateShortlistWindow(rankedRows, opts) {
+  const rows = Array.isArray(rankedRows) ? rankedRows : [];
+  if (rows.length <= MAX_SHORTLIST) return rows;
+  const poolSize = Math.min(rows.length, SHORTLIST_ROTATION_POOL);
+  const pool = rows.slice(0, poolSize);
+  if (opts && opts.disableRotation) {
+    return pool.slice(0, MAX_SHORTLIST);
+  }
+  const maxOffset = Math.max(0, pool.length - MAX_SHORTLIST);
+  if (maxOffset === 0) return pool.slice(0, MAX_SHORTLIST);
+  const seed = hashSeed(
+    [
+      (opts && opts.rotationKey) || '',
+      weekBucket(opts && opts.nowMs),
+      String((opts && opts.query) || '')
+        .trim()
+        .toLowerCase(),
+    ].join('|')
+  );
+  const offset = seed % (maxOffset + 1);
+  return pool.slice(offset, offset + MAX_SHORTLIST);
+}
+
+/**
+ * Public shortlist card — privacy-safe.
+ * Never include company (LinkedIn cut-out risk with first name + company),
+ * email, phone, or LinkedIn. Role / industry only.
+ */
+function toPublicShortlistCard(row) {
+  return {
+    id: row.person.id,
+    kind: row.person.kind,
+    displayName: row.person.displayName,
+    role: row.person.role || '',
+    industry: row.person.industry || '',
+    // Intentionally omitted from the client payload — used only for BOH ranking.
+    company: '',
+    why: buildWhy(row) || row.person.why || '',
+    nextEvent: row.person.nextEvent
+      ? {
+          title: row.person.nextEvent.title,
+          dateLabel: row.person.nextEvent.dateLabel || '',
+          eventId: row.person.nextEvent.eventId || '',
+        }
+      : row.person.matchedEvent
+        ? {
+            title: row.person.matchedEvent.title,
+            dateLabel: row.person.matchedEvent.dateLabel || '',
+            eventId: row.person.matchedEvent.eventId || '',
+          }
+        : null,
+    onHub: Boolean(row.person.onHub),
+    score: row.total,
+  };
+}
+
+function rankCandidates(candidates, query, requesterEventIds, opts) {
   const tokens = tokenize(query);
   const intent = extractQueryIntent(query);
 
-  return (candidates || [])
+  const ranked = (candidates || [])
     .map((person) => {
       const textScore = scoreAgainstQuery(person, tokens);
       const roleScore = roleFitScore(person, intent);
@@ -326,31 +541,13 @@ function rankCandidates(candidates, query, requesterEventIds) {
         b.matchedBoost - a.matchedBoost ||
         b.boost - a.boost ||
         String(a.person.displayName).localeCompare(String(b.person.displayName))
-    )
-    .slice(0, MAX_SHORTLIST)
-    .map((row) => ({
-      id: row.person.id,
-      kind: row.person.kind,
-      displayName: row.person.displayName,
-      role: row.person.role || '',
-      company: row.person.company || '',
-      why: buildWhy(row) || row.person.why || '',
-      nextEvent: row.person.nextEvent
-        ? {
-            title: row.person.nextEvent.title,
-            dateLabel: row.person.nextEvent.dateLabel || '',
-            eventId: row.person.nextEvent.eventId || '',
-          }
-        : row.person.matchedEvent
-          ? {
-              title: row.person.matchedEvent.title,
-              dateLabel: row.person.matchedEvent.dateLabel || '',
-              eventId: row.person.matchedEvent.eventId || '',
-            }
-          : null,
-      onHub: Boolean(row.person.onHub),
-      score: row.total,
-    }));
+    );
+
+  return rotateShortlistWindow(ranked, {
+    rotationKey: opts && opts.rotationKey,
+    nowMs: opts && opts.nowMs,
+    query,
+  }).map(toPublicShortlistCard);
 }
 
 function buildWhy(row) {
@@ -441,12 +638,30 @@ function mapMemberRow(row, nextEvent, matchedEvent) {
 
 function scoreEventTitle(title, tokens) {
   const hay = String(title || '').toLowerCase();
-  if (!hay || !tokens.length) return 0;
+  const toks = Array.isArray(tokens) ? tokens : [];
+  if (!hay || !toks.length) return 0;
   let score = 0;
-  tokens.forEach((t) => {
+  let misses = 0;
+  toks.forEach((t) => {
     if (hay.includes(t)) score += t.length >= 6 ? 3 : 2;
+    else misses += 1;
   });
+  // Distinctive brand tokens (evolution, barnsgate, …) must all appear.
+  // Prevents “virtual networking” from latching onto any virtual mixer.
+  if (misses > 0) return 0;
   return score;
+}
+
+function eventDateProximityBoost(startsAt, queryDate) {
+  if (!queryDate || !startsAt) return 0;
+  const start = new Date(startsAt);
+  if (Number.isNaN(start.getTime())) return 0;
+  const diffMs = Math.abs(start.getTime() - queryDate.getTime());
+  const dayMs = 24 * 60 * 60 * 1000;
+  if (diffMs <= dayMs) return 40;
+  if (diffMs <= 3 * dayMs) return 20;
+  if (diffMs <= 7 * dayMs) return 8;
+  return 0;
 }
 
 function isUsableEventStatus(status) {
@@ -457,10 +672,86 @@ function isUsableEventStatus(status) {
   return s !== 'cancelled' && s !== 'draft' && s !== 'rejected';
 }
 
+function toEventMatchCard(row) {
+  const ev = row.event || row;
+  return {
+    id: String(ev.id),
+    title: ev.title || 'Event',
+    startsAt: ev.starts_at || ev.startsAt || null,
+    dateLabel: formatDateLabel(ev.starts_at || ev.startsAt),
+    score: Number(row.score) || 0,
+    titleScore: Number(row.titleScore) || 0,
+  };
+}
+
+/**
+ * Only auto-load attendees when the title match is unambiguous.
+ * Otherwise return candidates for a “Which event?” confirm step —
+ * stopwords alone will never keep silent wrong picks from recurring.
+ */
+function resolveEventMatchSelection(scoredRows, opts) {
+  const rows = Array.isArray(scoredRows) ? scoredRows.map(toEventMatchCard) : [];
+  const minGap = opts && Number.isFinite(opts.minGap) ? Number(opts.minGap) : 15;
+  if (!rows.length) {
+    return { matchedEvents: [], eventCandidates: [], needsEventPick: false, confident: false };
+  }
+  if (rows.length === 1) {
+    return {
+      matchedEvents: [rows[0]],
+      eventCandidates: rows,
+      needsEventPick: false,
+      confident: true,
+    };
+  }
+  const top = rows[0];
+  const second = rows[1];
+  const clearWinner =
+    top.score >= second.score + minGap ||
+    (top.titleScore > second.titleScore && top.score > second.score);
+  if (clearWinner) {
+    return {
+      matchedEvents: [top],
+      eventCandidates: rows.slice(0, 5),
+      needsEventPick: false,
+      confident: true,
+    };
+  }
+  return {
+    matchedEvents: [],
+    eventCandidates: rows.slice(0, 5),
+    needsEventPick: true,
+    confident: false,
+  };
+}
+
+async function loadEventById(sb, eventId) {
+  const id = String(eventId || '').trim();
+  if (!id) return null;
+  try {
+    const { data, error } = await sb
+      .from('events')
+      .select('id, title, starts_at, status')
+      .eq('id', id)
+      .maybeSingle();
+    if (error || !data || !isUsableEventStatus(data.status)) return null;
+    return {
+      id: String(data.id),
+      title: data.title || 'Event',
+      startsAt: data.starts_at,
+      dateLabel: formatDateLabel(data.starts_at),
+      score: 100,
+      titleScore: 100,
+    };
+  } catch {
+    return null;
+  }
+}
+
 async function findMatchingEvents(sb, query) {
   const tokens = eventSearchTokens(query);
   if (!tokens.length) return [];
 
+  const queryDate = extractQueryEventDate(query);
   const fromIso = new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString();
   const toIso = new Date(Date.now() + 120 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -480,25 +771,26 @@ async function findMatchingEvents(sb, query) {
   }
 
   const scored = rows
-    .map((ev) => ({
-      event: ev,
-      score: scoreEventTitle(ev.title, tokens),
-    }))
-    .filter((row) => row.score > 0)
-    .sort((a, b) => b.score - a.score || String(b.event.starts_at).localeCompare(String(a.event.starts_at)));
+    .map((ev) => {
+      const titleScore = scoreEventTitle(ev.title, tokens);
+      const dateBoost = eventDateProximityBoost(ev.starts_at, queryDate);
+      return {
+        event: ev,
+        titleScore,
+        score: titleScore + dateBoost,
+      };
+    })
+    .filter((row) => row.titleScore > 0)
+    .sort(
+      (a, b) =>
+        b.score - a.score ||
+        b.titleScore - a.titleScore ||
+        String(b.event.starts_at).localeCompare(String(a.event.starts_at))
+    );
 
-  // Prefer a clear title match: at least one solid token hit.
+  // At least one distinctive brand token must hit the title.
   const minScore = tokens.some((t) => t.length >= 6) ? 3 : 2;
-  return scored
-    .filter((row) => row.score >= minScore)
-    .slice(0, 5)
-    .map((row) => ({
-      id: String(row.event.id),
-      title: row.event.title || 'Event',
-      startsAt: row.event.starts_at,
-      dateLabel: formatDateLabel(row.event.starts_at),
-      score: row.score,
-    }));
+  return scored.filter((row) => row.titleScore >= minScore).slice(0, 8);
 }
 
 function isActiveRegistration(row) {
@@ -691,25 +983,57 @@ async function searchMatchmaker(opts) {
 
   // Existing Hub bookings: only for attendee-intent asks (“who attended Evolution…”)
   let matchedEvents = [];
+  let eventCandidates = [];
+  let needsEventPick = false;
   let eventAttendeeCount = 0;
-  const eventQuery = looksLikeEventAttendeeQuery(query);
-  if (eventQuery) {
-    matchedEvents = await findMatchingEvents(sb, query);
-    if (matchedEvents.length) {
-      const eventPeople = await loadAttendeesForEvents(sb, matchedEvents, excludeAttendeeId);
-      eventAttendeeCount = eventPeople.length;
-      eventPeople.forEach(addCandidate);
+  const lockedEventId = String(opts.eventId || opts.event_id || '').trim();
+  const eventQuery = Boolean(lockedEventId) || looksLikeEventAttendeeQuery(query);
+
+  if (lockedEventId) {
+    const locked = await loadEventById(sb, lockedEventId);
+    if (locked) {
+      matchedEvents = [locked];
+      eventCandidates = [locked];
     }
+  } else if (eventQuery) {
+    const scored = await findMatchingEvents(sb, query);
+    const selection = resolveEventMatchSelection(scored);
+    matchedEvents = selection.matchedEvents;
+    eventCandidates = selection.eventCandidates;
+    needsEventPick = selection.needsEventPick;
   }
 
-  const matches = rankCandidates(candidates, query, requesterEventIds);
+  if (matchedEvents.length && !needsEventPick) {
+    const eventPeople = await loadAttendeesForEvents(sb, matchedEvents, excludeAttendeeId);
+    eventAttendeeCount = eventPeople.length;
+    eventPeople.forEach(addCandidate);
+  }
+
+  const matches = needsEventPick
+    ? []
+    : rankCandidates(candidates, query, requesterEventIds, {
+        rotationKey: excludeAttendeeId || '',
+        query,
+      });
   const meta = {
     max: MAX_SHORTLIST,
-    candidateCount: candidates.length,
+    rotationPool: SHORTLIST_ROTATION_POOL,
+    candidateCount: needsEventPick ? 0 : candidates.length,
     requesterUpcomingEvents: requesterEventIds.length,
-    matchedEvents: matchedEvents.map((e) => ({ id: e.id, title: e.title, dateLabel: e.dateLabel })),
+    matchedEvents: matchedEvents.map((e) => ({
+      id: e.id,
+      title: e.title,
+      dateLabel: e.dateLabel,
+    })),
+    eventCandidates: eventCandidates.map((e) => ({
+      id: e.id,
+      title: e.title,
+      dateLabel: e.dateLabel,
+    })),
     eventAttendeeCount,
     eventQuery,
+    needsEventPick,
+    lockedEventId: lockedEventId || null,
   };
   meta.empty = emptyStateCopy(meta);
   return {
@@ -726,6 +1050,12 @@ async function searchMatchmaker(opts) {
 function emptyStateCopy(meta) {
   const m = meta || {};
   if (m.eventQuery) {
+    if (m.needsEventPick) {
+      return {
+        title: 'Which event did you mean?',
+        text: 'A few listings look possible — pick the right one and I’ll introduce people from that room only.',
+      };
+    }
     const titles = Array.isArray(m.matchedEvents) ? m.matchedEvents.map((e) => e && e.title).filter(Boolean) : [];
     if (titles.length && Number(m.eventAttendeeCount || 0) === 0) {
       return {
@@ -758,19 +1088,26 @@ function emptyStateCopy(meta) {
 
 module.exports = {
   MAX_SHORTLIST,
+  SHORTLIST_ROTATION_POOL,
   MIN_QUERY_LEN,
   MIN_TEXT_SCORE,
   shortDisplayName,
   tokenize,
   eventSearchTokens,
+  extractQueryEventDate,
   looksLikeEventAttendeeQuery,
   extractQueryIntent,
   roleFitScore,
   isInternalMatchCandidate,
   scoreAgainstQuery,
   scoreEventTitle,
+  eventDateProximityBoost,
+  resolveEventMatchSelection,
   eventBoost,
   matchedEventBoost,
+  hashSeed,
+  weekBucket,
+  rotateShortlistWindow,
   rankCandidates,
   mapSeedRow,
   mapMemberRow,

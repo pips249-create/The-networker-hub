@@ -3,6 +3,8 @@ const {
   shortDisplayName,
   tokenize,
   eventSearchTokens,
+  extractQueryEventDate,
+  resolveEventMatchSelection,
   looksLikeEventAttendeeQuery,
   extractQueryIntent,
   isInternalMatchCandidate,
@@ -11,8 +13,11 @@ const {
   eventBoost,
   matchedEventBoost,
   rankCandidates,
+  rotateShortlistWindow,
+  weekBucket,
   emptyStateCopy,
   MAX_SHORTLIST,
+  SHORTLIST_ROTATION_POOL,
 } = require('../api/_lib/hubert-matchmaker-search');
 
 function assert(cond, msg) {
@@ -32,11 +37,72 @@ assert(looksLikeEventAttendeeQuery(evolutionQ) === true, 'event-intent query');
 assert(looksLikeEventAttendeeQuery('fintech founders in Manchester') === false, 'role query not event-intent');
 const evTokens = eventSearchTokens(evolutionQ);
 assert(evTokens.includes('evolution'), 'keeps evolution');
-assert(evTokens.includes('virtual'), 'keeps virtual');
-assert(evTokens.includes('networking'), 'keeps networking');
+assert(!evTokens.includes('virtual'), 'drops generic virtual');
+assert(!evTokens.includes('networking'), 'drops generic networking');
 assert(!evTokens.includes('attended'), 'drops attended stopword');
 assert(!evTokens.includes('morning'), 'drops morning stopword');
 assert(scoreEventTitle('Evolution Virtual Networking', evTokens) >= 3, 'event title scores');
+assert(
+  scoreEventTitle('Multi-Club Virtual Networking for Women in Business', evTokens) === 0,
+  'generic virtual networking must not steal Evolution asks'
+);
+
+const datedQ =
+  'people who have attended evolution virtual networking on Thursday 29th October 2026';
+const datedTokens = eventSearchTokens(datedQ);
+assert(datedTokens.includes('evolution'), 'dated ask keeps evolution');
+assert(!datedTokens.includes('thursday'), 'drops weekday');
+assert(!datedTokens.includes('october'), 'drops month');
+assert(!datedTokens.includes('2026'), 'drops year');
+assert(
+  scoreEventTitle('Multi-Club Virtual Networking for Women in Business', datedTokens) === 0,
+  'dated Evolution ask does not match Multi-Club'
+);
+const hint = extractQueryEventDate(datedQ);
+assert(hint && hint.getUTCFullYear() === 2026, 'parses year');
+assert(hint && hint.getUTCMonth() === 9, 'parses October');
+assert(hint && hint.getUTCDate() === 29, 'parses 29th');
+
+const closeScores = resolveEventMatchSelection([
+  {
+    event: { id: '1', title: 'Evolution Virtual Networking', starts_at: '2026-10-29T18:00:00Z' },
+    titleScore: 3,
+    score: 43,
+  },
+  {
+    event: { id: '2', title: 'Evolution After Hours', starts_at: '2026-10-28T18:00:00Z' },
+    titleScore: 3,
+    score: 35,
+  },
+]);
+assert(closeScores.needsEventPick === true, 'close scores need confirm pick');
+assert(closeScores.matchedEvents.length === 0, 'do not auto-load ambiguous rooms');
+assert(closeScores.eventCandidates.length === 2, 'candidates offered for pick');
+
+const clearWin = resolveEventMatchSelection([
+  {
+    event: { id: '1', title: 'Evolution Virtual Networking', starts_at: '2026-10-29T18:00:00Z' },
+    titleScore: 3,
+    score: 43,
+  },
+  {
+    event: { id: '2', title: 'Evolution After Hours', starts_at: '2026-09-01T18:00:00Z' },
+    titleScore: 3,
+    score: 11,
+  },
+]);
+assert(clearWin.needsEventPick === false, 'clear winner auto-selects');
+assert(clearWin.matchedEvents[0].id === '1', 'top event selected');
+
+const pickEmpty = emptyStateCopy({
+  eventQuery: true,
+  needsEventPick: true,
+  matchedEvents: [],
+  eventCandidates: [{ title: 'Evolution Virtual Networking' }],
+  eventAttendeeCount: 0,
+  candidateCount: 0,
+});
+assert(/Which event/i.test(pickEmpty.title), 'empty copy asks which event');
 
 const person = {
   fullName: 'Alex Morgan',
@@ -66,7 +132,7 @@ for (let i = 0; i < 8; i++) {
     fullName: 'Person ' + i + ' Test',
     displayName: 'Person T.',
     role: 'Founder',
-    company: 'Co',
+    company: 'Secret Co ' + i,
     industry: 'SaaS',
     professionalRole: 'Founder',
     lookingToMeet: [],
@@ -75,11 +141,43 @@ for (let i = 0; i < 8; i++) {
     onHub: true,
   });
 }
-const ranked = rankCandidates(many, 'fintech founders manchester', ['evt-1']);
+const ranked = rankCandidates(many, 'fintech founders manchester', ['evt-1'], {
+  disableRotation: true,
+});
 assert(ranked.length === MAX_SHORTLIST, 'caps at 5');
-assert(ranked[0].id === 'member:0', 'same-event ranks first');
+assert(ranked[0].id === 'member:0', 'same-event ranks first without rotation');
 assert(!ranked.some((m) => m.email || m.linkedinUrl || m.phone), 'no contact fields');
+assert(
+  ranked.every((m) => !m.company),
+  'company stripped from shortlist (LinkedIn cut-out guard)'
+);
+assert(ranked.every((m) => m.industry === 'SaaS'), 'industry kept for context');
 assert(/Matches what you asked|same upcoming event|Founder/i.test(ranked[0].why || ''), 'why explains fit');
+
+const wide = [];
+for (let i = 0; i < 12; i++) {
+  wide.push({ person: { id: 'm' + i, displayName: 'P' + i }, total: 100 - i });
+}
+const windowA = rotateShortlistWindow(wide, {
+  rotationKey: 'user-a',
+  nowMs: 0,
+  query: 'fintech',
+});
+const windowB = rotateShortlistWindow(wide, {
+  rotationKey: 'user-a',
+  nowMs: 7 * 24 * 60 * 60 * 1000,
+  query: 'fintech',
+});
+assert(windowA.length === MAX_SHORTLIST, 'rotation window size');
+assert(SHORTLIST_ROTATION_POOL >= MAX_SHORTLIST, 'pool wider than shortlist');
+assert(
+  JSON.stringify(windowA.map((r) => r.person.id)) !==
+    JSON.stringify(windowB.map((r) => r.person.id)),
+  'weekly rotation changes the shortlist window'
+);
+assert(typeof weekBucket(Date.now()) === 'number', 'week bucket');
+const noRotate = rotateShortlistWindow(wide, { disableRotation: true });
+assert(noRotate[0].person.id === 'm0', 'disableRotation keeps top rank');
 
 const attendeeOnly = {
   id: 'member:att',

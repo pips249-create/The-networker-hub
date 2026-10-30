@@ -28,6 +28,7 @@
 <link rel="stylesheet" href="../css/hub-mobile.css?v=20261007adslot">
 <link rel="stylesheet" href="../css/events-page.css?v=20261007adlabel">
 <link rel="stylesheet" href="../css/events-filter-bar.css?v=20261015country">
+<link rel="stylesheet" href="../css/hubert-matchmaker-teaser.css?v=20261030teaser1">
 <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml">
 <link rel="icon" href="/assets/favicon-32.png?v=20260823uk" type="image/png" sizes="32x32">
@@ -83,6 +84,36 @@
 </section>
 <script src="../js/cms-sponsor-fields.js?v=20260822creamlogo" defer></script>
 <script src="../js/sponsor-hub.js?v=20260828perf1" defer></script>
+
+<section class="hmm-teaser hmm-teaser--events" data-hmm-teaser hidden aria-label="Hubert Matchmaker">
+  <div class="hmm-teaser-shell">
+    <div class="hmm-teaser-inner">
+      <img class="hmm-teaser-icon" src="/assets/hubert-icon.png" width="48" height="48" alt="" />
+      <div class="hmm-teaser-copy">
+        <p class="hmm-teaser-kicker">Hubert</p>
+        <h2 class="hmm-teaser-title">Meet people beyond the room</h2>
+        <p class="hmm-teaser-lede">
+          Looking for someone at an event — or the right intro after? Hubert shortlists relevant members and can open a private Hub thread. Contact details stay private.
+        </p>
+      </div>
+      <form class="hmm-teaser-form" data-hmm-teaser-form>
+        <label class="visually-hidden" for="hmm-teaser-query-events">Who do you want to meet?</label>
+        <input
+          id="hmm-teaser-query-events"
+          class="hmm-teaser-input"
+          type="search"
+          name="q"
+          data-hmm-teaser-query
+          maxlength="240"
+          autocomplete="off"
+          placeholder="Try: B2B SaaS founder, or commercial solicitor in Manchester…"
+        />
+        <button type="submit" class="hmm-teaser-submit">Try Hubert</button>
+      </form>
+      <p class="hmm-teaser-gate" data-hmm-teaser-gate hidden></p>
+    </div>
+  </div>
+</section>
 
 <div class="shell">
   <p class="load-status" id="load-status" hidden>Loading…</p>
@@ -768,6 +799,7 @@
 
 <div id="hub-site-footer"></div>
 <script src="../js/site-footer.js?v=20260910pp1" data-root="../"></script>
+<script src="../js/hubert-matchmaker-teaser.js?v=20261030teaser1" defer></script>
 
 <script
   src="../js/hub-page-scripts.js?v=20261007req1"

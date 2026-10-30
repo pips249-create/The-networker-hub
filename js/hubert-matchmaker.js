@@ -19,6 +19,8 @@
   var profileReady = false;
   var lastProfile = null;
   var lastSearchQuota = null;
+  var pendingSeedQuery = '';
+  var seedQueryConsumed = false;
 
   function isMatchmakerPublic() {
     return HUBERT_MATCHMAKER_PUBLIC === true;
@@ -54,7 +56,8 @@
         id: 'stub-1',
         fullName: 'Alex Morgan',
         role: 'Founder',
-        company: 'Northbridge Labs',
+        industry: 'SaaS',
+        company: '',
         why: 'Founder · SaaS — close to “' + q.slice(0, 48) + '”',
         nextEvent: { title: 'Manchester Founders Breakfast', dateLabel: '12 Nov 2026' },
         onHub: true,
@@ -63,7 +66,8 @@
         id: 'stub-2',
         fullName: 'Priya Shah',
         role: 'Investor',
-        company: 'Harbour Capital',
+        industry: 'Venture capital',
+        company: '',
         why: 'Investor looking to meet founders',
         nextEvent: {
           title: 'Women In Business Network · King’s Cross',
@@ -75,7 +79,8 @@
         id: 'stub-3',
         fullName: 'James Okafor',
         role: 'Service provider',
-        company: 'Okafor Advisory',
+        industry: 'Professional services',
+        company: '',
         why: 'Service provider in professional services',
         nextEvent: null,
         onHub: false,
@@ -84,7 +89,8 @@
         id: 'stub-4',
         fullName: 'Sam Taylor',
         role: 'Recruiter',
-        company: 'Taylor Talent',
+        industry: 'HR',
+        company: '',
         why: 'Recruiter · HR',
         nextEvent: { title: 'The Business Show London', dateLabel: '11 Nov 2026' },
         onHub: true,
@@ -93,7 +99,8 @@
         id: 'stub-5',
         fullName: 'Jordan Lee',
         role: 'Founder',
-        company: 'Lee & Co',
+        industry: 'Professional services',
+        company: '',
         why: 'Founder looking for suppliers',
         nextEvent: null,
         onHub: false,
@@ -102,7 +109,8 @@
         id: 'stub-6',
         fullName: 'Hidden Extra',
         role: 'Should not show',
-        company: 'Cap test',
+        industry: 'Cap test',
+        company: '',
         why: 'Over the max-5 cap',
         nextEvent: null,
         onHub: true,
@@ -163,7 +171,7 @@
       esc(personLabel(person)) +
       '</h3>' +
       '<p class="hmm-match-meta">' +
-      esc([person.role, person.company].filter(Boolean).join(' · ')) +
+      esc([person.role, person.industry || person.company].filter(Boolean).join(' · ')) +
       '</p>' +
       '<div class="hmm-match-chips">' +
       status +
@@ -196,6 +204,12 @@
   function emptyStateCopy(meta) {
     var m = meta || {};
     if (m.eventQuery) {
+      if (m.needsEventPick) {
+        return {
+          title: 'Which event did you mean?',
+          text: 'A few listings look possible — pick the right one and I’ll introduce people from that room only.',
+        };
+      }
       var titles = Array.isArray(m.matchedEvents)
         ? m.matchedEvents
             .map(function (e) {
@@ -232,6 +246,55 @@
     };
   }
 
+  function clearEventPick(mount) {
+    var pick = mount && mount.els && mount.els.eventPick;
+    if (!pick) return;
+    pick.hidden = true;
+    pick.innerHTML = '';
+  }
+
+  function renderEventPick(mount, query, meta) {
+    var pick = mount && mount.els && mount.els.eventPick;
+    if (!pick) return;
+    var candidates =
+      meta && Array.isArray(meta.eventCandidates) ? meta.eventCandidates.filter(Boolean) : [];
+    if (!(meta && meta.needsEventPick) || !candidates.length) {
+      clearEventPick(mount);
+      return;
+    }
+    pick.hidden = false;
+    pick.innerHTML =
+      '<p class="hmm-event-pick-kicker">Confirm the event</p>' +
+      '<ul class="hmm-event-pick-list">' +
+      candidates
+        .map(function (ev) {
+          var label = String(ev.title || 'Event');
+          var date = ev.dateLabel ? ' · ' + String(ev.dateLabel) : '';
+          return (
+            '<li>' +
+            '<button type="button" class="hmm-event-pick-btn" data-hmm-event-id="' +
+            esc(ev.id) +
+            '">' +
+            '<span class="hmm-event-pick-title">' +
+            esc(label) +
+            '</span>' +
+            (date
+              ? '<span class="hmm-event-pick-date">' + esc(String(ev.dateLabel)) + '</span>'
+              : '') +
+            '</button>' +
+            '</li>'
+          );
+        })
+        .join('') +
+      '</ul>';
+    pick.querySelectorAll('[data-hmm-event-id]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.getAttribute('data-hmm-event-id');
+        runSearch(mount, query, { eventId: id });
+      });
+    });
+  }
+
   function setResults(mount, people, query, meta) {
     var results = mount.els.results;
     var empty = mount.els.empty;
@@ -240,19 +303,21 @@
     if (!results) return;
 
     var list = Array.isArray(people) ? people.slice(0, MAX_SHORTLIST) : [];
-    if (shell) shell.classList.toggle('is-searched', list.length > 0 || Boolean(query));
+    if (shell) shell.classList.toggle('is-searched', list.length > 0 || Boolean(query) || Boolean(meta && meta.needsEventPick));
 
     if (!list.length) {
       results.innerHTML = '';
       results.hidden = true;
       if (empty) {
         applyEmptyCopy(empty, meta);
-        empty.hidden = !query;
+        empty.hidden = !query && !(meta && meta.needsEventPick);
       }
+      renderEventPick(mount, query, meta);
       if (preview) preview.hidden = true;
       return;
     }
 
+    clearEventPick(mount);
     if (empty) empty.hidden = true;
     if (preview) {
       preview.hidden = false;
@@ -292,12 +357,14 @@
     });
   }
 
-  function fetchMatches(query) {
+  function fetchMatches(query, opts) {
+    var payload = { action: 'search', query: query };
+    if (opts && opts.eventId) payload.eventId = opts.eventId;
     return fetch('/api/auth/hubert-matchmaker', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'search', query: query }),
+      body: JSON.stringify(payload),
     }).then(function (res) {
       return res.json().then(function (data) {
         return { status: res.status, data: data };
@@ -409,7 +476,7 @@
     });
   }
 
-  function runSearch(mount, queryOverride) {
+  function runSearch(mount, queryOverride, searchOpts) {
     var input = mount.els.input;
     var query =
       queryOverride != null ? String(queryOverride).trim() : input ? String(input.value || '').trim() : '';
@@ -441,12 +508,15 @@
     }
 
     lastQuery = query;
+    clearEventPick(mount);
     if (mount.els.previewNote) {
       mount.els.previewNote.hidden = false;
-      mount.els.previewNote.textContent = 'Hubert is matching…';
+      mount.els.previewNote.textContent = searchOpts && searchOpts.eventId
+        ? 'Hubert is loading that room…'
+        : 'Hubert is matching…';
     }
 
-    fetchMatches(query)
+    fetchMatches(query, searchOpts)
       .then(function (result) {
         var data = result.data || {};
         if (data.searchQuota) paintSearchQuota(data.searchQuota);
@@ -751,6 +821,7 @@
         if (submit) submit.disabled = !profileReady;
       }
     });
+    if (profileReady) maybeSeedQueryFromUrl();
   }
 
   function confirmStopIncludingMe() {
@@ -783,13 +854,19 @@
     if (!disc || disc.dataset.hmmGuard === '1') return;
     disc.dataset.hmmGuard = '1';
 
+    // Checkbox click fires after the browser toggles `checked`. Opt-in must be
+    // allowed; only block a post-toggle untick (route opt-out through Stop).
     disc.addEventListener('click', function (e) {
-      if (!disc.checked) return; // allowing opt-in
-      // Already included — don’t let a casual click untick.
+      if (disc.checked) {
+        syncDiscoverableUi(lastProfile);
+        return;
+      }
       e.preventDefault();
+      disc.checked = true;
       if (offBtn) offBtn.focus();
     });
 
+    // keydown runs before the toggle — block Space/Enter only while already included.
     disc.addEventListener('keydown', function (e) {
       if (!disc.checked) return;
       if (e.key === ' ' || e.key === 'Enter') {
@@ -1247,6 +1324,7 @@
       error: root.querySelector('[data-hmm-error]'),
       results: root.querySelector('[data-hmm-results]'),
       empty: root.querySelector('[data-hmm-empty]'),
+      eventPick: root.querySelector('[data-hmm-event-pick]'),
       previewNote: root.querySelector('[data-hmm-preview]'),
       adminBadge: root.querySelector('[data-hmm-admin-badge]'),
       invitePanel: root.querySelector('[data-hmm-invite-panel]'),
@@ -1283,11 +1361,25 @@
         el.hidden = true;
         return;
       }
+      var referral = q.referral || null;
+      var unlockHint = '';
+      if (referral && !referral.unlocked && Number(referral.remainingToUnlock) > 0) {
+        unlockHint =
+          ' Invite ' +
+          referral.remainingToUnlock +
+          ' colleague' +
+          (referral.remainingToUnlock === 1 ? '' : 's') +
+          ' who join to unlock ' +
+          (referral.unlockedSearchCap || 10) +
+          '/week.';
+      } else if (referral && referral.unlocked) {
+        unlockHint = ' Unlocked with referrals.';
+      }
       el.hidden = false;
       el.textContent =
-        remaining <= 0
+        (remaining <= 0
           ? 'You’ve used your ' + cap + ' searches this week.'
-          : remaining + ' of ' + cap + ' searches left this week.';
+          : remaining + ' of ' + cap + ' searches left this week.') + unlockHint;
     });
   }
 
@@ -1312,6 +1404,8 @@
             cap: data.cap,
             enforced: data.enforced !== false,
             searchQuotaPerWeek: data.searchQuotaPerWeek,
+            unlocked: data.unlocked,
+            referral: data.referral || null,
           });
         }
       })
@@ -1520,6 +1614,42 @@
     return mount;
   }
 
+  function parseMeetQueryFromUrl() {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      var q = params.get('q') || params.get('query');
+      if (!q && window.location.hash) {
+        var raw = String(window.location.hash || '').replace(/^#/, '');
+        var queryPart = raw;
+        if (raw.indexOf('meet?') === 0) queryPart = raw.slice(5);
+        else if (raw.indexOf('meet&') === 0) queryPart = raw.slice(5);
+        else if (raw === 'meet') queryPart = '';
+        if (queryPart) {
+          var hashParams = new URLSearchParams(queryPart.charAt(0) === '?' ? queryPart.slice(1) : queryPart);
+          q = hashParams.get('q') || hashParams.get('query');
+        }
+      }
+      q = String(q || '').trim();
+      return q ? q.slice(0, 240) : '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function maybeSeedQueryFromUrl() {
+    if (seedQueryConsumed) return;
+    var q = pendingSeedQuery || parseMeetQueryFromUrl();
+    if (!q) return;
+    pendingSeedQuery = q;
+    mounts.forEach(function (m) {
+      if (m.els && m.els.input) m.els.input.value = q;
+    });
+    if (!profileReady || !mounts.length) return;
+    seedQueryConsumed = true;
+    pendingSeedQuery = '';
+    runSearch(mounts[0], q);
+  }
+
   function maybeOpenIntroFromUrl() {
     try {
       var params = new URLSearchParams(window.location.search);
@@ -1563,6 +1693,7 @@
     loadMyIntros();
     refreshSearchQuota();
     maybeOpenIntroFromUrl();
+    maybeSeedQueryFromUrl();
 
     if (lastQuery) {
       mounts.forEach(function (m) {
@@ -1598,6 +1729,7 @@
     search: search,
     openThread: openThread,
     _stubShortlist: stubShortlist,
+    _parseMeetQueryFromUrl: parseMeetQueryFromUrl,
     _parseTargetId: function (id) {
       return /^(member|seed):[0-9a-f-]{36}$/i.test(String(id || ''));
     },
