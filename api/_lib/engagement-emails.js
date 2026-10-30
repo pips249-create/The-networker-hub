@@ -1960,7 +1960,8 @@ async function runEngagementEmailMaintenance(sb) {
   // Disabled: "Only N events left on your calendar" was flooding organisers
   // (one email per group contact; shared contacts got many in one run).
   const lowEvents = { sent: 0, skipped: 0, errors: [], disabled: true };
-  const stripeConnect = await sendDueStripeConnectNudges(sb);
+  // Disabled: "Add your bank details to receive payouts" — paused at product request.
+  const stripeConnect = { sent: 0, skipped: 0, errors: [], disabled: true };
   return {
     guestVisitFollowup,
     categoryExclusivityPayment,
