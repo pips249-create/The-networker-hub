@@ -104,7 +104,9 @@
     tickets: [],
     attendeesAll: [],
     attendeesLoaded: false,
+    attendeesLoadedScope: '',
     attendeesTruncated: false,
+    attendeesTruncatedLimit: 0,
     attendeeBlocks: [],
     pendingApplicationsCount: 0,
     pendingApplicationsPreview: [],
@@ -5995,8 +5997,38 @@
 
   function renderAttendeesFilterNote() {
     const note = document.getElementById('attendees-filter-note');
-    if (!note) return;
-    note.hidden = !filters.attendeesPendingOnly;
+    const truncatedNote = document.getElementById('attendees-truncated-note');
+    if (note) {
+      note.hidden = !filters.attendeesPendingOnly;
+    }
+    if (truncatedNote) {
+      const show =
+        state.attendeesTruncated &&
+        filters.attendeesEvent === 'all' &&
+        filters.attendeesView !== 'blocked';
+      truncatedNote.hidden = !show;
+      if (show) {
+        const limit = Number(state.attendeesTruncatedLimit) || 80;
+        truncatedNote.textContent =
+          'Showing registrations from the ' +
+          limit +
+          ' newest events only. Pick a specific meeting above to load its full attendee list (needed for large Top Clubs / franchise catalogues).';
+      }
+    }
+  }
+
+  function attendeesLoadScopeKey() {
+    const ids = attendeesEventFilterIds();
+    if (!ids.length) return 'all';
+    if (ids.length === 1) return 'event:' + ids[0];
+    return 'series:' + ids.slice().sort().join(',');
+  }
+
+  function attendeesApiQueryForScope() {
+    const ids = attendeesEventFilterIds();
+    if (!ids.length) return 'eventId=all';
+    if (ids.length === 1) return 'eventId=' + encodeURIComponent(ids[0]);
+    return 'eventIds=' + ids.map(encodeURIComponent).join(',');
   }
 
   function maybeClearAttendeesPendingFilter() {
@@ -7106,8 +7138,21 @@
         }
       }
     }
+    const scopeKey = attendeesLoadScopeKey();
+    const needsReload =
+      !state.attendeesLoaded || state.attendeesLoadedScope !== scopeKey;
     if (!(options && options.skipRender)) {
       listPages.attendees = 1;
+    }
+    if (needsReload && !(options && options.skipLoad)) {
+      ensureAttendeesLoaded({ force: true }).then(function () {
+        if (!(options && options.skipRender) && eventsSubRoute === 'events-attendees') {
+          renderAttendees();
+        }
+      });
+      return;
+    }
+    if (!(options && options.skipRender)) {
       renderAttendees();
     }
   }
@@ -7218,11 +7263,15 @@
       filters.attendeesEventIds = preservedSeriesIds;
       setAttendeesEventFilterValue(filters.attendeesEvent, {
         skipRender: true,
+        skipLoad: true,
         seriesCount: preservedSeriesIds.length,
         seriesEventIds: preservedSeriesIds,
       });
     } else {
-      setAttendeesEventFilterValue(filters.attendeesEvent, { skipRender: true });
+      setAttendeesEventFilterValue(filters.attendeesEvent, {
+        skipRender: true,
+        skipLoad: true,
+      });
     }
     const panel = document.getElementById('filter-attendees-event-panel');
     if (panel && !panel.hidden) {
@@ -7233,9 +7282,12 @@
 
   function ensureAttendeesLoaded(options) {
     const force = Boolean(options && options.force);
-    if (state.attendeesLoaded && !force) return Promise.resolve(true);
+    const scopeKey = attendeesLoadScopeKey();
+    if (state.attendeesLoaded && state.attendeesLoadedScope === scopeKey && !force) {
+      return Promise.resolve(true);
+    }
     if (attendeesLoadingPromise && !force) return attendeesLoadingPromise;
-    attendeesLoadingPromise = loadAttendeesAll({ force }).finally(function () {
+    attendeesLoadingPromise = loadAttendeesAll({ force, scopeKey }).finally(function () {
       attendeesLoadingPromise = null;
     });
     return attendeesLoadingPromise;
@@ -7243,7 +7295,10 @@
 
   async function loadAttendeesAll(options) {
     const force = Boolean(options && options.force);
-    if (state.attendeesLoaded && !force) return true;
+    const scopeKey = (options && options.scopeKey) || attendeesLoadScopeKey();
+    if (state.attendeesLoaded && state.attendeesLoadedScope === scopeKey && !force) {
+      return true;
+    }
     const hint = document.getElementById('attendees-load-hint');
     const errEl = document.getElementById('attendees-load-error');
     if (hint) hint.hidden = false;
@@ -7252,8 +7307,9 @@
       errEl.textContent = '';
     }
     try {
+      const query = attendeesApiQueryForScope();
       const { ok, data } = await apiWithTimeout(
-        '/api/organiser/attendees?eventId=all',
+        '/api/organiser/attendees?' + query,
         {},
         ATTENDEES_TIMEOUT_MS
       );
@@ -7261,7 +7317,9 @@
         state.attendeesAll = data.attendees || [];
         state.attendeeBlocks = data.blocks || [];
         state.attendeesTruncated = Boolean(data.truncated);
+        state.attendeesTruncatedLimit = Number(data.eventCount) || 80;
         state.attendeesLoaded = true;
+        state.attendeesLoadedScope = scopeKey;
         maybeRelaxAttendeesHideArchived();
         maybeClearAttendeesPendingFilter();
         updateMyEventsTabCounts();
@@ -8092,6 +8150,14 @@
         text = filters.attendeesSearch
           ? 'No declined applications match this search. Try another name, email, industry, or event.'
           : 'Declined Category Exclusivity applications appear here so you can search and reconsider them when a seat opens.';
+      } else if (
+        !hasAttendees &&
+        state.attendeesTruncated &&
+        filters.attendeesEvent === 'all'
+      ) {
+        title = 'Pick a meeting to see attendees';
+        text =
+          'This workspace has more events than the All events preview can load. Choose a specific Top Club / meeting above to open its full registration list.';
       } else if (hasAttendees) {
         if (filters.attendeesPendingOnly) {
           title = 'No pending applications';
@@ -19066,8 +19132,10 @@
     }
     if (!silent) {
       state.attendeesLoaded = false;
+      state.attendeesLoadedScope = '';
       state.attendeesAll = [];
       state.attendeeBlocks = [];
+      state.attendeesTruncated = false;
     }
     if (eventsSubRoute === 'events-cancellations') {
       loadCancellationsAll().then(() => renderCancellations());

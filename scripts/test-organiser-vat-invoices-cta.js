@@ -56,8 +56,8 @@ assert(
 );
 assert(
   'organiser dashboard cache keys bumped',
-  /organiser-dashboard\.js\?v=20261030vatinvoice2/.test(html) &&
-    /organiser-dashboard\.css\?v=20261030vatinvoice2/.test(html)
+  /organiser-dashboard\.js\?v=20261030topclubsvat1/.test(html) &&
+    /organiser-dashboard\.css\?v=20261030topclubsvat1/.test(html)
 );
 assert(
   'opportunity edit cache key bumped',
