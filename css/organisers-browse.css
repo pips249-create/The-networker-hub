@@ -486,8 +486,20 @@ body.browse-mode-organisers .sponsor-hub--in-hero {
   box-shadow: 0 4px 18px rgba(37, 99, 235, 0.08);
 }
 
+/* Logo-only matches Events/Opportunities: float on the dark hero, no white card. */
+body.browse-mode-organisers .sponsor-hub--in-hero.sponsor-hub--logo-only {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
 body.browse-mode-organisers .sponsor-hub--in-hero .sponsor-hub-head .icon {
   color: #2563eb;
+}
+
+body.browse-mode-organisers .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-hub-head .icon {
+  color: rgba(255, 255, 255, 0.82);
 }
 
 body.browse-mode-organisers .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-wrap:focus-within {
