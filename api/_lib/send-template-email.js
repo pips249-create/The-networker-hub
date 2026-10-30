@@ -53,6 +53,7 @@ const {
   stripUnresolvedAccountWelcomePlaceholders,
 } = require('./booking-email-sections');
 const { isRecipientAllowed } = require('./email-allowlist');
+const { isSeedAttendeeEmail } = require('./seed-attendee-email');
 const {
   enrichOrganiserRegistrationVars,
   enrichOrganiserBookingCancelledVars,
@@ -631,6 +632,10 @@ async function sendViaResend({
     const err = new Error('missing_recipient');
     err.code = 'missing_recipient';
     throw err;
+  }
+
+  if (isSeedAttendeeEmail(recipient)) {
+    return { ok: true, skipped: true, reason: 'seed_attendee_email', to: recipient };
   }
 
   if (!skipAllowlist && !isRecipientAllowed(recipient)) {
