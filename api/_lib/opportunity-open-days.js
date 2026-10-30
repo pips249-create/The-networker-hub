@@ -1,7 +1,10 @@
 /**
  * Opportunity open days — dated visit sessions on a listing (not Hub events).
  */
-const { getSupabaseAdmin } = require('./supabase');
+const supabase = require('./supabase');
+function getSupabaseAdmin() {
+  return supabase.getSupabaseAdmin();
+}
 
 function isUuid(v) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
@@ -204,8 +207,10 @@ async function listUpcomingOpenDaysForOpportunity(opportunityId) {
 async function attachOpenDayFlagsToListings(listings) {
   const list = Array.isArray(listings) ? listings : [];
   if (!list.length) return list;
-  const ids = list.map((l) => String((l && l.id) || '').trim()).filter((id) => isUuid(id));
-  if (!ids.length) {
+  const idSet = new Set(
+    list.map((l) => String((l && l.id) || '').trim()).filter((id) => isUuid(id))
+  );
+  if (!idSet.size) {
     list.forEach((listing) => {
       if (listing && typeof listing === 'object') listing.hasOpenDay = false;
     });
@@ -213,11 +218,14 @@ async function attachOpenDayFlagsToListings(listings) {
   }
 
   const sb = getSupabaseAdmin();
+  // Scan upcoming open days once. Avoid `.in(opportunity_id, hundredsOfIds)` —
+  // that can blow PostgREST URL limits and stall `/api/opportunities` past its
+  // function timeout, leaving the browse page with zero results.
   const { data, error } = await sb
     .from('opportunity_open_days')
     .select('opportunity_id')
-    .in('opportunity_id', ids)
-    .gte('starts_at', new Date().toISOString());
+    .gte('starts_at', new Date().toISOString())
+    .limit(2000);
   if (error) {
     if (isMissingOpenDaysTableError(error)) {
       list.forEach((listing) => {
@@ -229,7 +237,9 @@ async function attachOpenDayFlagsToListings(listings) {
   }
 
   const withOpenDay = new Set(
-    (data || []).map((row) => String(row.opportunity_id || '').trim()).filter(Boolean)
+    (data || [])
+      .map((row) => String(row.opportunity_id || '').trim())
+      .filter((id) => id && idSet.has(id))
   );
   list.forEach((listing) => {
     if (!listing || typeof listing !== 'object') return;

@@ -846,19 +846,46 @@
     return loadedCatalog.slice();
   }
 
-  function loadCatalogAsync() {
+  function loadCatalogAsync(options) {
+    options = options || {};
+    var attempt = Number(options.attempt) || 0;
+    var maxAttempts = options.maxAttempts != null ? Number(options.maxAttempts) : 3;
+
+    function retry() {
+      return new Promise(function (resolve) {
+        var delay = Math.min(2500, 450 * Math.pow(2, attempt));
+        setTimeout(function () {
+          resolve(
+            loadCatalogAsync({
+              attempt: attempt + 1,
+              maxAttempts: maxAttempts,
+            })
+          );
+        }, delay);
+      });
+    }
+
     // Honour API Cache-Control (s-maxage / browser max-age) so browse revisits
     // do not re-download the full catalogue on every tab open.
     return fetch('/api/opportunities', { credentials: 'same-origin' })
       .then(function (res) {
-        return res.json().then(function (data) {
-          return { ok: res.ok, data: data };
-        });
+        return res
+          .json()
+          .then(function (data) {
+            return { ok: res.ok, status: res.status, data: data };
+          })
+          .catch(function () {
+            return { ok: false, status: res.status, data: null };
+          });
       })
       .then(function (result) {
         var data = result.data;
         if (!result.ok || !data || !data.ok || !Array.isArray(data.opportunities)) {
-          return loadedCatalog.slice();
+          if (attempt + 1 < maxAttempts) return retry();
+          var err = new Error('opportunities_catalog_unavailable');
+          err.code = 'opportunities_catalog_unavailable';
+          err.status = result.status || 0;
+          throw err;
         }
         loadedCatalog = data.opportunities.map(function (row, i) {
           return normalizeListing(apiRowToSeed(row), i);
@@ -872,8 +899,13 @@
         });
         return loadedCatalog.slice();
       })
-      .catch(function () {
-        return loadedCatalog.slice();
+      .catch(function (err) {
+        if (err && err.code === 'opportunities_catalog_unavailable') throw err;
+        if (attempt + 1 < maxAttempts) return retry();
+        var fail = new Error('opportunities_catalog_unavailable');
+        fail.code = 'opportunities_catalog_unavailable';
+        fail.cause = err;
+        throw fail;
       });
   }
 

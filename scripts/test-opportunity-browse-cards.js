@@ -47,6 +47,30 @@ assert(
       catalogSrc
     )
 );
+assert(
+  'catalogue list fetch retries on failure',
+  /maxAttempts/.test(catalogSrc) && /opportunities_catalog_unavailable/.test(catalogSrc)
+);
+
+const apiHandlerSrc = fs.readFileSync(path.join(__dirname, '../api/opportunities.js'), 'utf8');
+assert(
+  'public list bounds open-day enrichment',
+  /Promise\.race/.test(apiHandlerSrc) && /attachOpenDayFlagsToListings/.test(apiHandlerSrc)
+);
+
+const openDaysSrc = fs.readFileSync(path.join(__dirname, '../api/_lib/opportunity-open-days.js'), 'utf8');
+assert(
+  'open-day flags avoid huge opportunity_id IN lists',
+  /attachOpenDayFlagsToListings/.test(openDaysSrc) &&
+    !/\.in\(\s*'opportunity_id'\s*,\s*ids\s*\)/.test(openDaysSrc) &&
+    /\.gte\(\s*'starts_at'/.test(openDaysSrc)
+);
+
+const vercelSrc = fs.readFileSync(path.join(__dirname, '../vercel.json'), 'utf8');
+assert(
+  'opportunities API maxDuration is at least 30s',
+  /"api\/opportunities\.js":\s*\{\s*"maxDuration":\s*30\s*\}/.test(vercelSrc)
+);
 
 const { rowToBrowseCard, rowToListing } = require('../api/_lib/supabase-opportunities');
 const row = {

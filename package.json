@@ -66,6 +66,7 @@
     "test:county-partner-checkout": "node scripts/test-county-partner-checkout.js",
     "test:organiser-browse-directory": "node scripts/test-organiser-browse-directory.js",
     "test:opportunity-browse-cards": "node scripts/test-opportunity-browse-cards.js",
+    "test:opportunity-open-day-flags": "node scripts/test-opportunity-open-day-flags.js",
     "test:opportunity-county-match": "node scripts/test-opportunity-county-match.js",
     "test:opportunity-live-email": "node scripts/test-opportunity-live-email-dedupe.js",
     "test:opportunity-spotlight-slots": "node scripts/test-opportunity-spotlight-slots.js",
