@@ -320,11 +320,18 @@
     if (!disc || disc.dataset.asGuard === '1') return;
     disc.dataset.asGuard = '1';
 
+    // Checkbox click fires after the browser toggles `checked`. Opt-in must be
+    // allowed; only block a post-toggle untick (route opt-out through Stop).
     disc.addEventListener('click', function (e) {
-      if (!disc.checked) return;
+      if (disc.checked) {
+        syncDiscoverableUi();
+        return;
+      }
       e.preventDefault();
+      disc.checked = true;
       if (offBtn) offBtn.focus();
     });
+    // keydown runs before the toggle — block Space/Enter only while already included.
     disc.addEventListener('keydown', function (e) {
       if (!disc.checked) return;
       if (e.key === ' ' || e.key === 'Enter') {
@@ -337,6 +344,7 @@
     const label = document.querySelector('label[for="as-discoverable"]');
     if (label && label.dataset.asBound !== '1') {
       label.dataset.asBound = '1';
+      // Label click runs before the associated checkbox toggles.
       label.addEventListener('click', function (e) {
         if (!disc.checked) return;
         e.preventDefault();

@@ -568,6 +568,11 @@
   cursor: pointer;
 }
 
+/* Class display must not beat the hidden attribute (Stop only when included). */
+.as-discoverable-off[hidden] {
+  display: none !important;
+}
+
 .as-discoverable-off:hover,
 .as-discoverable-off:focus-visible {
   color: #5a2f6c;
