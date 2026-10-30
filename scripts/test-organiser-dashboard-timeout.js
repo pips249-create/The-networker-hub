@@ -89,7 +89,7 @@ assert(
 );
 assert(
   'HTML cache key bumped so browsers pick up the timeout fix',
-  /organiser-dashboard\.js\?v=20261030attendeeslite1/.test(html)
+  /organiser-dashboard\.js\?v=20261030ticketsvat1/.test(html)
 );
 assert(
   'Sentry ignores handled bootstrap timeout noise',
