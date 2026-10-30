@@ -65,7 +65,9 @@ assert.ok(homeHtml.indexOf('hubert-matchmaker-teaser.css') !== -1, 'home loads t
 assert.ok(homeHtml.indexOf('hubert-matchmaker-teaser.js') !== -1, 'home loads teaser js');
 assert.ok(homeHtml.indexOf('Build your profile') !== -1, 'home teaser CTA is build profile');
 assert.ok(homeHtml.indexOf('private Hub thread') === -1, 'home teaser drops Hub wording');
-assert.ok(/matchmaker|shortlist|both sides/i.test(homeHtml), 'home teaser explains what Hubert does');
+assert.ok(/warm intros|matchmaker|shortlist/i.test(homeHtml), 'home teaser sells warm intros');
+assert.ok(/LinkedIn|guest-list|both sides|say yes/i.test(homeHtml), 'home teaser explains privacy + double opt-in');
+assert.ok(/warm intros|crowded|right intro/i.test(eventsHtml), 'events teaser sells the why');
 assert.ok(
   /Try:.*solicitor|Try:.*SaaS founder/i.test(homeHtml),
   'home teaser placeholder guides role/industry asks'
