@@ -78,7 +78,7 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'Who is Hubert on The Networker UK?',
     answer:
-      'Hubert is the British English gentleman and concierge on The Networker UK. He is at your service for events, business opportunities, tickets, enquiries, and organiser tools. Chat with Hubert on the contact page or via the floating assistant on public pages.',
+      'Hubert is the British English gentleman and concierge on The Networker UK. He is at your service for events, business opportunities, tickets, enquiries, and organiser tools. Chat with Hubert on the contact page or ask him on the FAQ page. Signed-in members can also use Meet people in My account.',
     category: 'general',
     icon: '✨',
   },

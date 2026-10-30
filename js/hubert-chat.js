@@ -1,5 +1,5 @@
 /**
- * Hubert — shared chat logic for inline (contact) and floating widget.
+ * Hubert — shared chat logic for inline contact / FAQ ask (floating widget retired).
  */
 (function (global) {
   var HUBERT_GREETING =
