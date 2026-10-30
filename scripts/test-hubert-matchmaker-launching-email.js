@@ -12,14 +12,19 @@ const { mergeEmailPreviewVariables } = require('../api/_lib/email-preview-variab
 const entry = BRANDED_EMAIL_TEMPLATES.hubert_matchmaker_launching;
 assert.ok(entry, 'template registered');
 assert.strictEqual(entry.file, 'hubert-matchmaker-launching.html');
-assert.ok(/launching Hubert/i.test(entry.subject), 'subject is launching not launched');
+assert.ok(/launching Hubert Matchmaker/i.test(entry.subject), 'subject is launching Matchmaker');
 assert.ok(!/have launched/i.test(entry.subject), 'subject not past-tense launched');
 
 const html = fs.readFileSync(
   path.join(__dirname, '../email-templates/hubert-matchmaker-launching.html'),
   'utf8'
 );
-assert.ok(html.includes("We're launching Hubert") || html.includes('We&apos;re launching Hubert'), 'headline');
+assert.ok(
+  html.includes("We're launching Hubert Matchmaker") ||
+    html.includes('We&apos;re launching Hubert Matchmaker'),
+  'headline'
+);
+assert.ok(/Hubert Matchmaker/i.test(html), 'product name in body');
 assert.ok(html.includes('{{hubert_profile_url}}'), 'CTA to Hubert profile');
 assert.ok(html.includes('{{meet_people_url}}'), 'Meet people link');
 assert.ok(html.includes('Include me'), 'asks for Include me');
@@ -69,7 +74,7 @@ assert.ok(
 
 const admin = fs.readFileSync(path.join(__dirname, '../js/admin-app.js'), 'utf8');
 assert.ok(admin.includes('hubert_matchmaker_launching'), 'campaign picker includes template');
-assert.ok(/We\\?'re launching Hubert/.test(admin), 'campaign label uses launching');
+assert.ok(/We\\?'re launching Hubert Matchmaker/.test(admin), 'campaign label uses Matchmaker');
 assert.ok(admin.includes("slug === 'hubert_matchmaker_launching'"), 'hides claim URL for member blast');
 
 const sendSrc = fs.readFileSync(path.join(__dirname, '../api/_lib/send-template-email.js'), 'utf8');
