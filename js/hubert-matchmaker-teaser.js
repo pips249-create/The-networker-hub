@@ -1,5 +1,5 @@
 /**
- * Public Matchmaker teaser — Home + Events browse.
+ * Public Matchmaker teaser: Home + Events browse.
  *
  * While HUBERT_MATCHMAKER_PUBLIC is false:
  *   - Teaser is visible to everyone in "build your profile" mode (no live search).
@@ -19,24 +19,24 @@
     profile: {
       title: 'Build your Hubert profile',
       ledeHome:
-        'Want warm intros to the right people — without cold LinkedIn or guest-list dumps? Hubert is The Networker UK’s matchmaker: he shortlists members worth meeting (customers, investors, hires, mentors) and only opens an intro when you both say yes. Build your profile now so you’re in the pool when search opens; email, phone, and LinkedIn stay private.',
+        'Hubert shortlists members worth meeting (customers, investors, hires, mentors) and only opens an intro when you both say yes. Build your profile now so you’re ready when search opens.',
       ledeEvents:
-        'The room is crowded; the right intro isn’t. Hubert shortlists people worth meeting at events and after — customers, investors, hires, mentors — and only introduces you when both sides opt in. Build your profile now so you’re ready; contact details stay private.',
+        'Hubert shortlists people worth meeting at events and after (customers, investors, hires, mentors) and only introduces you when both sides opt in. Build your profile now so you’re ready when search opens.',
       submit: 'Build your profile',
-      invite: 'Invite someone else — free',
+      invite: 'Invite someone else for free',
       badge: 'Launching soon',
-      gateSignedOut: 'Search launches soon — build your profile now so you’re ready for warm intros.',
-      gateSignedIn: 'Search launches soon — add a headline, who you want to meet, and Include me so you’re ready.',
-      inviteCopied: 'Invite link copied — send it to someone you’d like in the pool.',
-      inviteShared: 'Thanks — share Hubert with anyone you’d like to meet.',
+      gateSignedOut: 'Search launches soon. Build your profile now so you’re ready for warm intros.',
+      gateSignedIn: 'Search launches soon. Add a headline, who you want to meet, and Include me so you’re ready.',
+      inviteCopied: 'Invite link copied. Send it to someone you’d like in the pool.',
+      inviteShared: 'Thanks. Share Hubert with anyone you’d like to meet.',
     },
     search: {
       titleHome: 'Who do you want to meet?',
       titleEvents: 'Meet people beyond the room',
       ledeHome:
-        'Tell Hubert what you’re working on. He shortlists relevant people on The Networker UK and can introduce you privately — email, phone, and LinkedIn stay private.',
+        'Tell Hubert what you’re working on. He shortlists relevant people on The Networker UK and can introduce you privately. Email, phone, and LinkedIn stay private.',
       ledeEvents:
-        'Looking for someone at an event — or the right intro after? Hubert shortlists relevant members and can introduce you privately. Contact details stay private.',
+        'Looking for someone at an event, or the right intro after? Hubert shortlists relevant members and can introduce you privately. Contact details stay private.',
       submit: 'Try Hubert',
       badge: '',
       gateSignedOut: 'Create a free account to see matches and request intros.',
@@ -96,7 +96,7 @@
     return {
       title: 'Hubert on The Networker UK',
       text:
-        'Hubert is launching on The Networker UK — warm intros to people worth meeting, free to join. Build your profile before search opens: ' +
+        'Hubert is launching on The Networker UK: warm intros to people worth meeting, free to join. Build your profile before search opens: ' +
         url,
       url: url,
     };
