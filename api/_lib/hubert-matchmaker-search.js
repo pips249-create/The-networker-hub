@@ -672,6 +672,81 @@ function isUsableEventStatus(status) {
   return s !== 'cancelled' && s !== 'draft' && s !== 'rejected';
 }
 
+function toEventMatchCard(row) {
+  const ev = row.event || row;
+  return {
+    id: String(ev.id),
+    title: ev.title || 'Event',
+    startsAt: ev.starts_at || ev.startsAt || null,
+    dateLabel: formatDateLabel(ev.starts_at || ev.startsAt),
+    score: Number(row.score) || 0,
+    titleScore: Number(row.titleScore) || 0,
+  };
+}
+
+/**
+ * Only auto-load attendees when the title match is unambiguous.
+ * Otherwise return candidates for a “Which event?” confirm step —
+ * stopwords alone will never keep silent wrong picks from recurring.
+ */
+function resolveEventMatchSelection(scoredRows, opts) {
+  const rows = Array.isArray(scoredRows) ? scoredRows.map(toEventMatchCard) : [];
+  const minGap = opts && Number.isFinite(opts.minGap) ? Number(opts.minGap) : 15;
+  if (!rows.length) {
+    return { matchedEvents: [], eventCandidates: [], needsEventPick: false, confident: false };
+  }
+  if (rows.length === 1) {
+    return {
+      matchedEvents: [rows[0]],
+      eventCandidates: rows,
+      needsEventPick: false,
+      confident: true,
+    };
+  }
+  const top = rows[0];
+  const second = rows[1];
+  const clearWinner =
+    top.score >= second.score + minGap ||
+    (top.titleScore > second.titleScore && top.score > second.score);
+  if (clearWinner) {
+    return {
+      matchedEvents: [top],
+      eventCandidates: rows.slice(0, 5),
+      needsEventPick: false,
+      confident: true,
+    };
+  }
+  return {
+    matchedEvents: [],
+    eventCandidates: rows.slice(0, 5),
+    needsEventPick: true,
+    confident: false,
+  };
+}
+
+async function loadEventById(sb, eventId) {
+  const id = String(eventId || '').trim();
+  if (!id) return null;
+  try {
+    const { data, error } = await sb
+      .from('events')
+      .select('id, title, starts_at, status')
+      .eq('id', id)
+      .maybeSingle();
+    if (error || !data || !isUsableEventStatus(data.status)) return null;
+    return {
+      id: String(data.id),
+      title: data.title || 'Event',
+      startsAt: data.starts_at,
+      dateLabel: formatDateLabel(data.starts_at),
+      score: 100,
+      titleScore: 100,
+    };
+  } catch {
+    return null;
+  }
+}
+
 async function findMatchingEvents(sb, query) {
   const tokens = eventSearchTokens(query);
   if (!tokens.length) return [];
@@ -715,16 +790,7 @@ async function findMatchingEvents(sb, query) {
 
   // At least one distinctive brand token must hit the title.
   const minScore = tokens.some((t) => t.length >= 6) ? 3 : 2;
-  return scored
-    .filter((row) => row.titleScore >= minScore)
-    .slice(0, 5)
-    .map((row) => ({
-      id: String(row.event.id),
-      title: row.event.title || 'Event',
-      startsAt: row.event.starts_at,
-      dateLabel: formatDateLabel(row.event.starts_at),
-      score: row.score,
-    }));
+  return scored.filter((row) => row.titleScore >= minScore).slice(0, 8);
 }
 
 function isActiveRegistration(row) {
@@ -917,29 +983,57 @@ async function searchMatchmaker(opts) {
 
   // Existing Hub bookings: only for attendee-intent asks (“who attended Evolution…”)
   let matchedEvents = [];
+  let eventCandidates = [];
+  let needsEventPick = false;
   let eventAttendeeCount = 0;
-  const eventQuery = looksLikeEventAttendeeQuery(query);
-  if (eventQuery) {
-    matchedEvents = await findMatchingEvents(sb, query);
-    if (matchedEvents.length) {
-      const eventPeople = await loadAttendeesForEvents(sb, matchedEvents, excludeAttendeeId);
-      eventAttendeeCount = eventPeople.length;
-      eventPeople.forEach(addCandidate);
+  const lockedEventId = String(opts.eventId || opts.event_id || '').trim();
+  const eventQuery = Boolean(lockedEventId) || looksLikeEventAttendeeQuery(query);
+
+  if (lockedEventId) {
+    const locked = await loadEventById(sb, lockedEventId);
+    if (locked) {
+      matchedEvents = [locked];
+      eventCandidates = [locked];
     }
+  } else if (eventQuery) {
+    const scored = await findMatchingEvents(sb, query);
+    const selection = resolveEventMatchSelection(scored);
+    matchedEvents = selection.matchedEvents;
+    eventCandidates = selection.eventCandidates;
+    needsEventPick = selection.needsEventPick;
   }
 
-  const matches = rankCandidates(candidates, query, requesterEventIds, {
-    rotationKey: excludeAttendeeId || '',
-    query,
-  });
+  if (matchedEvents.length && !needsEventPick) {
+    const eventPeople = await loadAttendeesForEvents(sb, matchedEvents, excludeAttendeeId);
+    eventAttendeeCount = eventPeople.length;
+    eventPeople.forEach(addCandidate);
+  }
+
+  const matches = needsEventPick
+    ? []
+    : rankCandidates(candidates, query, requesterEventIds, {
+        rotationKey: excludeAttendeeId || '',
+        query,
+      });
   const meta = {
     max: MAX_SHORTLIST,
     rotationPool: SHORTLIST_ROTATION_POOL,
-    candidateCount: candidates.length,
+    candidateCount: needsEventPick ? 0 : candidates.length,
     requesterUpcomingEvents: requesterEventIds.length,
-    matchedEvents: matchedEvents.map((e) => ({ id: e.id, title: e.title, dateLabel: e.dateLabel })),
+    matchedEvents: matchedEvents.map((e) => ({
+      id: e.id,
+      title: e.title,
+      dateLabel: e.dateLabel,
+    })),
+    eventCandidates: eventCandidates.map((e) => ({
+      id: e.id,
+      title: e.title,
+      dateLabel: e.dateLabel,
+    })),
     eventAttendeeCount,
     eventQuery,
+    needsEventPick,
+    lockedEventId: lockedEventId || null,
   };
   meta.empty = emptyStateCopy(meta);
   return {
@@ -956,6 +1050,12 @@ async function searchMatchmaker(opts) {
 function emptyStateCopy(meta) {
   const m = meta || {};
   if (m.eventQuery) {
+    if (m.needsEventPick) {
+      return {
+        title: 'Which event did you mean?',
+        text: 'A few listings look possible — pick the right one and I’ll introduce people from that room only.',
+      };
+    }
     const titles = Array.isArray(m.matchedEvents) ? m.matchedEvents.map((e) => e && e.title).filter(Boolean) : [];
     if (titles.length && Number(m.eventAttendeeCount || 0) === 0) {
       return {
@@ -1002,6 +1102,7 @@ module.exports = {
   scoreAgainstQuery,
   scoreEventTitle,
   eventDateProximityBoost,
+  resolveEventMatchSelection,
   eventBoost,
   matchedEventBoost,
   hashSeed,

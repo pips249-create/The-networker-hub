@@ -4,6 +4,7 @@ const {
   tokenize,
   eventSearchTokens,
   extractQueryEventDate,
+  resolveEventMatchSelection,
   looksLikeEventAttendeeQuery,
   extractQueryIntent,
   isInternalMatchCandidate,
@@ -61,6 +62,47 @@ const hint = extractQueryEventDate(datedQ);
 assert(hint && hint.getUTCFullYear() === 2026, 'parses year');
 assert(hint && hint.getUTCMonth() === 9, 'parses October');
 assert(hint && hint.getUTCDate() === 29, 'parses 29th');
+
+const closeScores = resolveEventMatchSelection([
+  {
+    event: { id: '1', title: 'Evolution Virtual Networking', starts_at: '2026-10-29T18:00:00Z' },
+    titleScore: 3,
+    score: 43,
+  },
+  {
+    event: { id: '2', title: 'Evolution After Hours', starts_at: '2026-10-28T18:00:00Z' },
+    titleScore: 3,
+    score: 35,
+  },
+]);
+assert(closeScores.needsEventPick === true, 'close scores need confirm pick');
+assert(closeScores.matchedEvents.length === 0, 'do not auto-load ambiguous rooms');
+assert(closeScores.eventCandidates.length === 2, 'candidates offered for pick');
+
+const clearWin = resolveEventMatchSelection([
+  {
+    event: { id: '1', title: 'Evolution Virtual Networking', starts_at: '2026-10-29T18:00:00Z' },
+    titleScore: 3,
+    score: 43,
+  },
+  {
+    event: { id: '2', title: 'Evolution After Hours', starts_at: '2026-09-01T18:00:00Z' },
+    titleScore: 3,
+    score: 11,
+  },
+]);
+assert(clearWin.needsEventPick === false, 'clear winner auto-selects');
+assert(clearWin.matchedEvents[0].id === '1', 'top event selected');
+
+const pickEmpty = emptyStateCopy({
+  eventQuery: true,
+  needsEventPick: true,
+  matchedEvents: [],
+  eventCandidates: [{ title: 'Evolution Virtual Networking' }],
+  eventAttendeeCount: 0,
+  candidateCount: 0,
+});
+assert(/Which event/i.test(pickEmpty.title), 'empty copy asks which event');
 
 const person = {
   fullName: 'Alex Morgan',

@@ -204,6 +204,12 @@
   function emptyStateCopy(meta) {
     var m = meta || {};
     if (m.eventQuery) {
+      if (m.needsEventPick) {
+        return {
+          title: 'Which event did you mean?',
+          text: 'A few listings look possible — pick the right one and I’ll introduce people from that room only.',
+        };
+      }
       var titles = Array.isArray(m.matchedEvents)
         ? m.matchedEvents
             .map(function (e) {
@@ -240,6 +246,55 @@
     };
   }
 
+  function clearEventPick(mount) {
+    var pick = mount && mount.els && mount.els.eventPick;
+    if (!pick) return;
+    pick.hidden = true;
+    pick.innerHTML = '';
+  }
+
+  function renderEventPick(mount, query, meta) {
+    var pick = mount && mount.els && mount.els.eventPick;
+    if (!pick) return;
+    var candidates =
+      meta && Array.isArray(meta.eventCandidates) ? meta.eventCandidates.filter(Boolean) : [];
+    if (!(meta && meta.needsEventPick) || !candidates.length) {
+      clearEventPick(mount);
+      return;
+    }
+    pick.hidden = false;
+    pick.innerHTML =
+      '<p class="hmm-event-pick-kicker">Confirm the event</p>' +
+      '<ul class="hmm-event-pick-list">' +
+      candidates
+        .map(function (ev) {
+          var label = String(ev.title || 'Event');
+          var date = ev.dateLabel ? ' · ' + String(ev.dateLabel) : '';
+          return (
+            '<li>' +
+            '<button type="button" class="hmm-event-pick-btn" data-hmm-event-id="' +
+            esc(ev.id) +
+            '">' +
+            '<span class="hmm-event-pick-title">' +
+            esc(label) +
+            '</span>' +
+            (date
+              ? '<span class="hmm-event-pick-date">' + esc(String(ev.dateLabel)) + '</span>'
+              : '') +
+            '</button>' +
+            '</li>'
+          );
+        })
+        .join('') +
+      '</ul>';
+    pick.querySelectorAll('[data-hmm-event-id]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.getAttribute('data-hmm-event-id');
+        runSearch(mount, query, { eventId: id });
+      });
+    });
+  }
+
   function setResults(mount, people, query, meta) {
     var results = mount.els.results;
     var empty = mount.els.empty;
@@ -248,19 +303,21 @@
     if (!results) return;
 
     var list = Array.isArray(people) ? people.slice(0, MAX_SHORTLIST) : [];
-    if (shell) shell.classList.toggle('is-searched', list.length > 0 || Boolean(query));
+    if (shell) shell.classList.toggle('is-searched', list.length > 0 || Boolean(query) || Boolean(meta && meta.needsEventPick));
 
     if (!list.length) {
       results.innerHTML = '';
       results.hidden = true;
       if (empty) {
         applyEmptyCopy(empty, meta);
-        empty.hidden = !query;
+        empty.hidden = !query && !(meta && meta.needsEventPick);
       }
+      renderEventPick(mount, query, meta);
       if (preview) preview.hidden = true;
       return;
     }
 
+    clearEventPick(mount);
     if (empty) empty.hidden = true;
     if (preview) {
       preview.hidden = false;
@@ -300,12 +357,14 @@
     });
   }
 
-  function fetchMatches(query) {
+  function fetchMatches(query, opts) {
+    var payload = { action: 'search', query: query };
+    if (opts && opts.eventId) payload.eventId = opts.eventId;
     return fetch('/api/auth/hubert-matchmaker', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'search', query: query }),
+      body: JSON.stringify(payload),
     }).then(function (res) {
       return res.json().then(function (data) {
         return { status: res.status, data: data };
@@ -417,7 +476,7 @@
     });
   }
 
-  function runSearch(mount, queryOverride) {
+  function runSearch(mount, queryOverride, searchOpts) {
     var input = mount.els.input;
     var query =
       queryOverride != null ? String(queryOverride).trim() : input ? String(input.value || '').trim() : '';
@@ -449,12 +508,15 @@
     }
 
     lastQuery = query;
+    clearEventPick(mount);
     if (mount.els.previewNote) {
       mount.els.previewNote.hidden = false;
-      mount.els.previewNote.textContent = 'Hubert is matching…';
+      mount.els.previewNote.textContent = searchOpts && searchOpts.eventId
+        ? 'Hubert is loading that room…'
+        : 'Hubert is matching…';
     }
 
-    fetchMatches(query)
+    fetchMatches(query, searchOpts)
       .then(function (result) {
         var data = result.data || {};
         if (data.searchQuota) paintSearchQuota(data.searchQuota);
@@ -1262,6 +1324,7 @@
       error: root.querySelector('[data-hmm-error]'),
       results: root.querySelector('[data-hmm-results]'),
       empty: root.querySelector('[data-hmm-empty]'),
+      eventPick: root.querySelector('[data-hmm-event-pick]'),
       previewNote: root.querySelector('[data-hmm-preview]'),
       adminBadge: root.querySelector('[data-hmm-admin-badge]'),
       invitePanel: root.querySelector('[data-hmm-invite-panel]'),
