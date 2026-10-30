@@ -81,7 +81,7 @@ assert(
 assert(
   'attendees list uses a bounded timeout instead of hanging the tab',
   /ATTENDEES_TIMEOUT_MS/.test(dash) &&
-    /apiWithTimeout\(\s*['"]\/api\/organiser\/attendees\?eventId=all['"]/.test(dash)
+    /apiWithTimeout\(\s*['"]\/api\/organiser\/attendees\?' \+ query/.test(dash)
 );
 assert(
   'cancellations list uses the same bounded timeout',
@@ -89,7 +89,7 @@ assert(
 );
 assert(
   'HTML cache key bumped so browsers pick up the timeout fix',
-  /organiser-dashboard\.js\?v=20261030ticketsvat1/.test(html)
+  /organiser-dashboard\.js\?v=20261030topclubsatt1/.test(html)
 );
 assert(
   'Sentry ignores handled bootstrap timeout noise',
