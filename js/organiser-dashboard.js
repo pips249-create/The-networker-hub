@@ -18362,9 +18362,9 @@
     if (opportunityHasListingBilling(o)) {
       if (opportunityHasStripeListingSubscription(o)) {
         html +=
-          '<a class="org-btn org-btn-gold org-btn-sm" href="' +
-          esc(opportunityEditUrl(o) + '#vat-invoices') +
-          '">VAT invoices</a> ';
+          '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-opp-open-vat-invoices="' +
+          esc(o.id) +
+          '">VAT invoices</button> ';
         html +=
           '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-opp-manage-billing="' +
           esc(o.id) +
@@ -18526,6 +18526,148 @@
     return { key: 'draft', label: status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Draft' };
   }
 
+  function renderDashboardVatInvoiceRows(invoices) {
+    const rows = Array.isArray(invoices) ? invoices : [];
+    if (!rows.length) {
+      return (
+        '<p class="org-opp-billing-invoices-status" role="status">' +
+        'No paid invoices yet. After your first Stripe payment, monthly VAT invoices appear here.' +
+        '</p>'
+      );
+    }
+    return (
+      '<ul class="org-opp-billing-invoices-list">' +
+      rows
+        .map(function (inv) {
+          const dateLabel = esc(inv.periodLabel || 'Paid invoice');
+          const number = esc(inv.number || '');
+          const amounts = [inv.amountExVat, inv.amountVat, inv.amountPaid].filter(Boolean).length
+            ? esc(
+                (inv.amountExVat || '') +
+                  ' + VAT ' +
+                  (inv.amountVat || '') +
+                  ' = ' +
+                  (inv.amountPaid || '')
+              )
+            : esc(inv.amountPaid || '');
+          const pdfUrl = String(inv.invoicePdfUrl || inv.invoiceUrl || '').trim();
+          const hostedUrl = String(inv.hostedInvoiceUrl || '').trim();
+          let actions = '';
+          if (pdfUrl) {
+            actions +=
+              '<a href="' +
+              esc(pdfUrl) +
+              '" target="_blank" rel="noopener noreferrer">Download PDF</a>';
+          }
+          if (hostedUrl && hostedUrl !== pdfUrl) {
+            actions +=
+              '<a href="' +
+              esc(hostedUrl) +
+              '" target="_blank" rel="noopener noreferrer">View invoice</a>';
+          }
+          if (!actions) {
+            actions =
+              '<span class="org-opp-billing-invoices-muted">Email hi@thenetworkeruk.com for a copy</span>';
+          }
+          return (
+            '<li class="org-opp-billing-invoice-row">' +
+            '<div class="org-opp-billing-invoice-meta">' +
+            '<span class="org-opp-billing-invoice-date">' +
+            dateLabel +
+            '</span>' +
+            '<span class="org-opp-billing-invoice-detail">' +
+            (number ? 'Invoice ' + number + (amounts ? ' · ' : '') : '') +
+            amounts +
+            '</span>' +
+            '</div>' +
+            '<div class="org-opp-billing-invoice-actions">' +
+            actions +
+            '</div>' +
+            '</li>'
+          );
+        })
+        .join('') +
+      '</ul>'
+    );
+  }
+
+  async function openOpportunityVatInvoices(opportunityId, triggerBtn) {
+    const id = String(opportunityId || '').trim();
+    if (!id) return;
+    const o = (state.opportunities || []).find(function (item) {
+      return String(item.id) === id;
+    });
+    const panel =
+      document.getElementById('org-opp-vat-invoices-' + id) ||
+      (triggerBtn &&
+        triggerBtn.closest('.org-opp-billing-row') &&
+        triggerBtn.closest('.org-opp-billing-row').querySelector('.org-opp-billing-invoices'));
+
+    if (!opportunityHasStripeListingSubscription(o)) {
+      const mailto = opportunityVatInvoicesMailto(o || { title: 'opportunity listing' });
+      if (panel) {
+        panel.hidden = false;
+        panel.innerHTML =
+          '<p class="org-opp-billing-invoices-status" role="status">' +
+          'This listing was marked paid without a Stripe subscription, so invoices cannot load automatically. ' +
+          '<a href="' +
+          esc(mailto) +
+          '">Email hi@thenetworkeruk.com</a> and we will send your VAT receipts.' +
+          '</p>';
+      } else {
+        window.location.href = mailto;
+      }
+      if (triggerBtn) triggerBtn.setAttribute('aria-expanded', 'true');
+      return;
+    }
+
+    if (!panel) {
+      window.location.href = opportunityEditUrl(o || { id: id }) + '#vat-invoices';
+      return;
+    }
+
+    const expanded = triggerBtn && triggerBtn.getAttribute('aria-expanded') === 'true';
+    if (expanded && panel.dataset.loaded === id && !panel.hidden) {
+      panel.hidden = true;
+      triggerBtn.setAttribute('aria-expanded', 'false');
+      return;
+    }
+
+    panel.hidden = false;
+    if (triggerBtn) triggerBtn.setAttribute('aria-expanded', 'true');
+    const row = panel.closest('.org-opp-billing-row') || panel;
+    if (row && typeof row.scrollIntoView === 'function') {
+      requestAnimationFrame(function () {
+        row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    }
+    if (panel.dataset.loaded === id) return;
+
+    panel.innerHTML =
+      '<p class="org-opp-billing-invoices-status" role="status">Loading invoices…</p>';
+    try {
+      const res = await api(
+        '/api/organiser/opportunity-listing-invoices?opportunityId=' + encodeURIComponent(id),
+        { method: 'GET' }
+      );
+      if (!res.ok) {
+        throw new Error(
+          (res.data && (res.data.message || res.data.error)) || 'Could not load invoices.'
+        );
+      }
+      panel.dataset.loaded = id;
+      panel.innerHTML = renderDashboardVatInvoiceRows(res.data && res.data.invoices);
+    } catch (err) {
+      panel.innerHTML =
+        '<p class="org-opp-billing-invoices-status" role="alert">' +
+        esc(String((err && err.message) || 'Could not load invoices.')) +
+        ' <a href="' +
+        esc(opportunityEditUrl(o || { id: id }) + '#vat-invoices') +
+        '">Open listing billing</a> or email hi@thenetworkeruk.com.' +
+        '</p>';
+    }
+  }
+
   function renderOpportunityBillingPanel() {
     const panel = document.getElementById('org-opp-billing-panel');
     const listEl = document.getElementById('org-opp-billing-list');
@@ -18558,21 +18700,29 @@
             /* ignore */
           }
         }
-        let actions = hasSub
-          ? '<a class="org-btn org-btn-gold org-btn-sm" href="' +
-            esc(opportunityEditUrl(o) + '#vat-invoices') +
-            '">Open VAT invoices</a>'
-          : '<a class="org-btn org-btn-gold org-btn-sm" href="' +
-            esc(opportunityVatInvoicesMailto(o)) +
-            '">Email for VAT invoices</a>';
+        let actions = '';
         if (hasSub) {
+          actions +=
+            '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-opp-open-vat-invoices="' +
+            esc(o.id) +
+            '" aria-expanded="false" aria-controls="org-opp-vat-invoices-' +
+            esc(o.id) +
+            '">Open VAT invoices</button>';
           actions +=
             ' <button type="button" class="org-btn org-btn-outline org-btn-sm" data-opp-manage-billing="' +
             esc(o.id) +
             '">Manage / cancel</button>';
+        } else {
+          actions +=
+            '<a class="org-btn org-btn-gold org-btn-sm" href="' +
+            esc(opportunityVatInvoicesMailto(o)) +
+            '">Email for VAT invoices</a>';
         }
         return (
-          '<li class="org-opp-billing-row">' +
+          '<li class="org-opp-billing-row" data-opp-billing-id="' +
+          esc(o.id) +
+          '">' +
+          '<div class="org-opp-billing-row-main">' +
           '<div class="org-opp-billing-meta">' +
           '<span class="org-opp-billing-name">' +
           title +
@@ -18584,6 +18734,10 @@
           '<div class="org-opp-billing-actions">' +
           actions +
           '</div>' +
+          '</div>' +
+          '<div class="org-opp-billing-invoices" id="org-opp-vat-invoices-' +
+          esc(o.id) +
+          '" hidden></div>' +
           '</li>'
         );
       })
@@ -20193,6 +20347,16 @@
         if (openDayAddBtn) {
           e.preventDefault();
           openAddOpenDayTalkForListing(openDayAddBtn.getAttribute('data-opp-add-open-day'));
+          return;
+        }
+
+        const oppOpenVatBtn = e.target.closest('[data-opp-open-vat-invoices]');
+        if (oppOpenVatBtn) {
+          e.preventDefault();
+          openOpportunityVatInvoices(
+            oppOpenVatBtn.getAttribute('data-opp-open-vat-invoices'),
+            oppOpenVatBtn
+          );
           return;
         }
 
