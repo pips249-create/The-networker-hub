@@ -478,7 +478,8 @@ const BROWSE_OPPORTUNITY_SELECT = [
   'description',
   'meta',
   'category',
-  'categories',
+  // categories[] is derived in categoriesFromRow from category/tags — the DB
+  // column does not exist on business_opportunities and breaks /api/opportunities.
   'image_url',
   'logo_url',
   'status',

@@ -25,6 +25,11 @@ assert('browse select is defined', /const BROWSE_OPPORTUNITY_SELECT/.test(src));
 assert('browse select skips about', !/BROWSE_OPPORTUNITY_SELECT = \[[\s\S]*?'about'/.test(src));
 assert('browse select skips contact_email', !/BROWSE_OPPORTUNITY_SELECT = \[[\s\S]*?'contact_email'/.test(src));
 assert('browse select skips pending_review_payload', !/BROWSE_OPPORTUNITY_SELECT = \[[\s\S]*?'pending_review_payload'/.test(src));
+assert(
+  'browse select does not request missing categories column',
+  !/BROWSE_OPPORTUNITY_SELECT = \[[\s\S]*?'categories'/.test(src) &&
+    /'category'/.test(src)
+);
 assert('rowToBrowseCard truncates description', /BROWSE_DESCRIPTION_MAX/.test(src));
 assert('listPublishedOpportunityCards is exported', /listPublishedOpportunityCards/.test(src));
 
@@ -90,6 +95,17 @@ assert(
 );
 assert('browse card keeps title', card.title === 'Demo franchise');
 assert('browse card keeps claimable boolean', typeof card.claimable === 'boolean');
+assert('browse card derives categories from category', card.category === 'retail');
+
+const cardWithoutCategoriesCol = rowToBrowseCard(
+  Object.assign({}, row, { categories: undefined })
+);
+assert(
+  'browse card works without DB categories column',
+  cardWithoutCategoriesCol.category === 'retail' &&
+    Array.isArray(cardWithoutCategoriesCol.categories) &&
+    cardWithoutCategoriesCol.categories[0] === 'retail'
+);
 
 const full = rowToListing(row);
 assert('detail listing keeps about', Array.isArray(full.about) && full.about.length === 2);
