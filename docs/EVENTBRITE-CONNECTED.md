@@ -20,6 +20,8 @@ Checkout stays on **Eventbrite**. TNH receives **`order.placed`** webhooks, load
    - Paste the TNH URL as Payload URL.
    - Action: **`order.placed`** (“Events: All” is fine).
 4. Save the Eventbrite **private token** on Connected setup / Booking providers (Developer links). Without it, webhooks arrive but buyer email cannot be resolved.
+   - Creating a new API key: **Application URL** = `https://www.thenetworkuk.com` (homepage — not the `/w/eb/…` webhook). Leave **OAuth Redirect URI** blank. Name/description can say The Networker UK. Then copy **Private token** only.
+   - The organiser-specific webhook URL belongs only in Eventbrite → **Webhooks** (step 3 above).
 
 ## Per TNH event
 

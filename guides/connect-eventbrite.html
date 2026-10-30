@@ -156,12 +156,26 @@
           <li>Profile menu → <strong>Account Settings</strong></li>
           <li>Left menu → <strong>Developer Links</strong> → <strong>API Keys</strong></li>
           <li>
-            <strong>Create API Key</strong> if you do not have one, or open an existing app →
-            <strong>Show API key, client secret and tokens</strong>
+            If you already have an app: open it → <strong>Show API key, client secret and tokens</strong>.
+            If not: click <strong>Create API Key</strong> and use the values below.
           </li>
-          <li>Copy the <strong>Private token</strong> (not the public key / client secret)</li>
-          <li>On Connected setup, paste it under <strong>Save API token</strong> and save</li>
+          <li>Copy the <strong>Private token</strong> only (not the public key or client secret)</li>
+          <li>On Connected setup / organiser connect, paste it and save</li>
         </ol>
+        <div class="ceb-slide-note" style="margin-top:12px">
+          <strong>If you are creating a new API key</strong> — fill Eventbrite’s form like this:
+          <ul style="margin:10px 0 0; padding-left:1.2em">
+            <li><strong>Application URL</strong> —
+              <code>https://www.thenetworkuk.com</code>
+              (homepage is correct here — do <em>not</em> paste your webhook URL)</li>
+            <li><strong>OAuth Redirect URI</strong> — leave blank</li>
+            <li><strong>Application Name</strong> — e.g. <code>The Networker UK</code></li>
+            <li><strong>Description</strong> — e.g. <code>Sync Eventbrite ticket buyers to The Networker UK attendee list</code></li>
+          </ul>
+          Your personal webhook URL
+          (<code>https://www.thenetworkuk.com/w/eb/…</code>) belongs in Eventbrite
+          <strong>Webhooks</strong> (step 2) — not on this form.
+        </div>
         <div class="ceb-shot-stack">
           <figure class="ceb-shot ceb-shot--photo">
             <img
@@ -201,7 +215,7 @@
               height="561"
               loading="lazy"
             />
-            <figcaption>4. Or Create API Key, then copy the Private token</figcaption>
+            <figcaption>4. Or Create API Key — Application URL is the homepage; webhook goes under Webhooks</figcaption>
           </figure>
         </div>
         <p class="ceb-slide-note">
