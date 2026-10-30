@@ -13451,14 +13451,19 @@ body.org-more-sheet-open {
 }
 .org-opp-billing-row {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px 14px;
+  flex-direction: column;
+  gap: 10px;
   padding: 12px 14px;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid rgba(28, 32, 64, 0.1);
+}
+.org-opp-billing-row-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 14px;
 }
 .org-opp-billing-meta {
   display: flex;
@@ -13478,4 +13483,60 @@ body.org-more-sheet-open {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+.org-opp-billing-invoices {
+  width: 100%;
+  padding-top: 4px;
+  border-top: 1px solid rgba(28, 32, 64, 0.08);
+}
+.org-opp-billing-invoices-status {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: #635c5e;
+}
+.org-opp-billing-invoices-status a {
+  color: #1a7a4c;
+  font-weight: 600;
+}
+.org-opp-billing-invoices-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.org-opp-billing-invoice-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+.org-opp-billing-invoice-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.org-opp-billing-invoice-date {
+  font-weight: 600;
+  color: #1c2040;
+  font-size: 0.92rem;
+}
+.org-opp-billing-invoice-detail,
+.org-opp-billing-invoices-muted {
+  font-size: 0.85rem;
+  color: #635c5e;
+}
+.org-opp-billing-invoice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.org-opp-billing-invoice-actions a {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #1a7a4c;
 }

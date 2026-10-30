@@ -906,7 +906,22 @@
     }
     if (invoicesBtn) {
       invoicesBtn.hidden = false;
-      invoicesBtn.setAttribute('href', '#vat-invoices');
+      if (hasSub) {
+        invoicesBtn.setAttribute('href', '#vat-invoices');
+        invoicesBtn.removeAttribute('data-oe-vat-mailto');
+        invoicesBtn.textContent = 'VAT invoices';
+      } else {
+        const title =
+          String((currentOpportunity && currentOpportunity.title) || 'opportunity listing').trim() ||
+          'opportunity listing';
+        invoicesBtn.setAttribute(
+          'href',
+          'mailto:hi@thenetworkeruk.com?subject=' +
+            encodeURIComponent('VAT invoices — ' + title)
+        );
+        invoicesBtn.setAttribute('data-oe-vat-mailto', '1');
+        invoicesBtn.textContent = 'Email for VAT invoices';
+      }
     }
     loadListingVatInvoices({ force: false });
     maybeScrollToVatInvoices();
@@ -1283,15 +1298,38 @@
     if (billingBtn) billingBtn.hidden = !canManageBilling;
     if (invoicesBtn) {
       invoicesBtn.hidden = !canShowInvoices;
-      if (canShowInvoices) invoicesBtn.setAttribute('href', '#vat-invoices');
+      if (canShowInvoices) {
+        if (canManageBilling) {
+          invoicesBtn.setAttribute('href', '#vat-invoices');
+          invoicesBtn.removeAttribute('data-oe-vat-mailto');
+          invoicesBtn.textContent = 'VAT invoices';
+        } else {
+          const title =
+            String((currentOpportunity && currentOpportunity.title) || 'opportunity listing').trim() ||
+            'opportunity listing';
+          invoicesBtn.setAttribute(
+            'href',
+            'mailto:hi@thenetworkeruk.com?subject=' +
+              encodeURIComponent('VAT invoices — ' + title)
+          );
+          invoicesBtn.setAttribute('data-oe-vat-mailto', '1');
+          invoicesBtn.textContent = 'Email for VAT invoices';
+        }
+      }
     }
     if (lede) {
-      if (canShowInvoices && canUnpublish) {
+      if (canShowInvoices && canManageBilling && canUnpublish) {
         lede.textContent =
           'Download VAT invoices near the top of this page, cancel billing any time, or hide this listing from the public directory without stopping the subscription.';
-      } else if (canShowInvoices) {
+      } else if (canShowInvoices && canManageBilling) {
         lede.textContent =
           'Download VAT invoices near the top of this page, or manage your card / cancel the monthly listing subscription.';
+      } else if (canShowInvoices && canUnpublish) {
+        lede.textContent =
+          'This listing was marked paid without Stripe invoices on file — email hi@thenetworkeruk.com for VAT receipts, or hide this listing from the public directory.';
+      } else if (canShowInvoices) {
+        lede.textContent =
+          'This listing was marked paid without Stripe invoices on file — email hi@thenetworkeruk.com for VAT receipts.';
       } else if (canUnpublish) {
         lede.textContent = 'Hide this listing from the public directory.';
       } else {
@@ -3866,9 +3904,16 @@
       });
     });
     function jumpToVatInvoices(e) {
+      const link = e && e.currentTarget;
+      if (link && link.getAttribute('data-oe-vat-mailto') === '1') {
+        // Complimentary / marked-paid listings have no Stripe invoices — allow mailto.
+        return;
+      }
       if (e) e.preventDefault();
       if (window.history && window.history.replaceState) {
-        window.history.replaceState(null, '', '#vat-invoices');
+        const next = new URL(window.location.href);
+        next.hash = 'vat-invoices';
+        window.history.replaceState(null, '', next.pathname + next.search + next.hash);
       } else {
         window.location.hash = 'vat-invoices';
       }
