@@ -25,6 +25,9 @@ assert.ok(html.includes('{{meet_people_url}}'), 'Meet people link');
 assert.ok(html.includes('Include me'), 'asks for Include me');
 assert.ok(html.includes('Before I open'), 'forthcoming / launching framing');
 assert.ok(!/we have launched/i.test(html), 'not past-tense launched');
+assert.ok(html.includes('width="200"') && html.includes('max-width:200px'), 'compact header logo');
+assert.ok(html.includes('width="168"') && html.includes('max-width:168px'), 'compact footer logo');
+assert.ok(!html.includes('width="300"'), 'oversized 300px header retired');
 
 const vars = mergeEmailPreviewVariables(
   'hubert_matchmaker_launching',
@@ -42,6 +45,11 @@ assert.ok(
   'meet UTM before hash'
 );
 assert.ok(vars.hubert_icon_url, 'hubert icon');
+assert.ok(/logo-email-footer-navy\.png/.test(vars.logo_url || ''), 'header uses navy lockup');
+assert.ok(
+  /logo-email-footer-navy\.png/.test(vars.logo_footer_light_url || ''),
+  'footer uses navy lockup'
+);
 
 const admin = fs.readFileSync(path.join(__dirname, '../js/admin-app.js'), 'utf8');
 assert.ok(admin.includes('hubert_matchmaker_launching'), 'campaign picker includes template');
