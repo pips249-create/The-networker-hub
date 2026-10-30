@@ -120,12 +120,12 @@ function buildHubertSchema(origin) {
   return {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
-    name: 'Hubert',
+    name: 'Hubert Matchmaker',
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web',
     url: base + '/contact',
     description:
-      'Hubert is the business butler and concierge for The Networker UK — an AI assistant that helps users find events and business opportunities, understand ticketing and enquiries, and navigate organiser tools.',
+      'Hubert Matchmaker is the business butler and concierge for The Networker UK — an AI assistant that helps users find events and business opportunities, understand ticketing and enquiries, navigate organiser tools, and meet the right people.',
     offers: {
       '@type': 'Offer',
       price: '0',
@@ -196,7 +196,7 @@ function buildContactPageSchema(origin) {
     url: base + '/contact',
     name: 'Contact The Networker UK',
     description:
-      'Contact The Networker UK or chat with Hubert, your business butler and concierge, for help with events, tickets, and business opportunities.',
+      'Contact The Networker UK or chat with Hubert Matchmaker, your business butler and concierge, for help with events, tickets, business opportunities, and meeting people.',
     mainEntity: buildHubertSchema(base),
   };
 }
@@ -615,8 +615,8 @@ function buildLlmsTxt(origin) {
     base +
     '/opportunities/industry/cleaning\n' +
     '- Full list: see /sitemap.xml (paths under /opportunities/industry/)\n\n' +
-    '## Hubert — business butler & concierge\n' +
-    'Hubert is the on-site AI assistant. He answers questions about browsing, accounts, tickets, opportunities, and organiser tools. He can look up live published events and business opportunities when asked.\n\n' +
+    '## Hubert Matchmaker — business butler & concierge\n' +
+    'Hubert Matchmaker is the on-site AI assistant and matchmaker. He answers questions about browsing, accounts, tickets, opportunities, and organiser tools, and can introduce members to people to meet. He can look up live published events and business opportunities when asked.\n\n' +
     '## Frequently asked questions\n\n' +
     faqBlock +
     '\n'

@@ -113,7 +113,7 @@
 | **Recipients** | Internal staff (Catherine Hancher, Rosie McGilvray); Supabase admin tools |
 | **Retention** | Complaints register: 2 years after closure; support email 1 year after resolution; admin audit per internal policy |
 
-### I. Hubert help assistant (contact chat)
+### I. Hubert Matchmaker help assistant (contact chat)
 
 | Item | Detail |
 |------|--------|

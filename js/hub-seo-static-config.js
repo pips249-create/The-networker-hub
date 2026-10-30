@@ -24,7 +24,7 @@ window.HUB_SEO_STATIC = {
   "faq": {
     "path": "/faq",
     "title": "FAQ & Help – The Networker UK",
-    "description": "Frequently asked questions about The Networker UK — finding events, accounts, organisers, and bookings. Search FAQs or ask Hubert instantly.",
+    "description": "Frequently asked questions about The Networker UK — finding events, accounts, organisers, and bookings. Search FAQs or ask Hubert Matchmaker instantly.",
     "image": "/assets/logo-networker-uk-og.png?v=20260908og",
     "ogType": "website"
   },
@@ -87,7 +87,7 @@ window.HUB_SEO_STATIC = {
   "contact": {
     "path": "/contact",
     "title": "Contact us – The Networker UK",
-    "description": "Get in touch with The Networker UK — chat with Hubert, your business butler and concierge, or email the team.",
+    "description": "Get in touch with The Networker UK — chat with Hubert Matchmaker, your business butler and concierge, or email the team.",
     "image": "/assets/logo-networker-uk-og.png?v=20260908og",
     "ogType": "website"
   },

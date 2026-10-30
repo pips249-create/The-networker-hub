@@ -34,7 +34,7 @@ const STATIC_PAGES = {
     path: '/faq',
     title: 'FAQ & Help – The Networker UK',
     description:
-      'Frequently asked questions about The Networker UK — finding events, accounts, organisers, and bookings. Search FAQs or ask Hubert instantly.',
+      'Frequently asked questions about The Networker UK — finding events, accounts, organisers, and bookings. Search FAQs or ask Hubert Matchmaker instantly.',
     image: OG_SHARE_IMAGE,
     ogType: 'website',
   },
@@ -107,7 +107,7 @@ const STATIC_PAGES = {
     path: '/contact',
     title: 'Contact us – The Networker UK',
     description:
-      'Get in touch with The Networker UK — chat with Hubert, your business butler and concierge, or email the team.',
+      'Get in touch with The Networker UK — chat with Hubert Matchmaker, your business butler and concierge, or email the team.',
     image: OG_SHARE_IMAGE,
     ogType: 'website',
   },

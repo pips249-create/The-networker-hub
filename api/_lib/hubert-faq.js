@@ -76,9 +76,9 @@ const FAQ_AEO_ENTRIES = [
     icon: '🏛️',
   },
   {
-    question: 'Who is Hubert on The Networker UK?',
+    question: 'Who is Hubert Matchmaker on The Networker UK?',
     answer:
-      'Hubert is the British English gentleman and concierge on The Networker UK. He is at your service for events, business opportunities, tickets, enquiries, and organiser tools. Chat with Hubert on the contact page or ask him on the FAQ page. Signed-in members can also use Meet people in My account.',
+      'Hubert Matchmaker is the British English gentleman and concierge on The Networker UK. He is at your service for events, business opportunities, tickets, enquiries, organiser tools, and introducing you to people to meet. Chat with Hubert Matchmaker on the contact page or ask him on the FAQ page. Signed-in members can also use Meet people in My account.',
     category: 'general',
     icon: '✨',
   },
