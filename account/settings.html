@@ -16,7 +16,7 @@
     />
     <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260626" />
-    <link rel="stylesheet" href="../css/account-settings.css?v=20261030includetick1" />
+    <link rel="stylesheet" href="../css/account-settings.css?v=20261030tabs2" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20261016signin1" />
 
   </head>
@@ -68,8 +68,29 @@
 
       <div id="as-alert" class="as-alert" hidden role="status"></div>
 
+      <div class="as-tabs" role="tablist" aria-label="Settings sections">
+        <button type="button" class="as-tab" role="tab" id="as-tab-details" data-as-tab="details" aria-controls="your-details" aria-selected="true">
+          Details
+        </button>
+        <button type="button" class="as-tab" role="tab" id="as-tab-hubert" data-as-tab="hubert" aria-controls="as-hubert-matchmaker" aria-selected="false" tabindex="-1">
+          Hubert
+        </button>
+        <button type="button" class="as-tab" role="tab" id="as-tab-email" data-as-tab="email" aria-controls="email-preferences" aria-selected="false" tabindex="-1">
+          Email
+        </button>
+        <button type="button" class="as-tab" role="tab" id="as-tab-privacy" data-as-tab="privacy" aria-controls="privacy-data" aria-selected="false" tabindex="-1">
+          Privacy
+        </button>
+        <button type="button" class="as-tab" role="tab" id="as-tab-organiser" data-as-tab="organiser" aria-controls="organiser-workspace" aria-selected="false" tabindex="-1">
+          Organiser
+        </button>
+        <button type="button" class="as-tab" role="tab" id="as-tab-password" data-as-tab="password" aria-controls="password" aria-selected="false" tabindex="-1">
+          Password
+        </button>
+      </div>
+
       <form id="as-profile-form">
-        <section class="as-card">
+        <section class="as-card as-panel is-active" id="your-details" role="tabpanel" aria-labelledby="as-tab-details" data-as-panel="details">
           <h2>Your details</h2>
           <p class="as-card-sub">
             Full name, company, job title and industry appear on printable name badges and organiser attendee lists.
@@ -243,7 +264,7 @@
           </div>
         </section>
 
-        <section class="as-card" id="as-hubert-matchmaker">
+        <section class="as-card as-panel" id="as-hubert-matchmaker" role="tabpanel" aria-labelledby="as-tab-hubert" data-as-panel="hubert" hidden>
           <h2>Hubert introductions</h2>
           <p class="as-card-sub">
             Hubert finds people who can help with what you’re working on and only opens an intro when both sides say yes —
@@ -283,6 +304,9 @@
             </div>
           </div>
           <p class="as-field-hint" id="as-matchmaker-status" hidden></p>
+          <div class="as-actions as-actions--profile">
+            <button type="submit" class="as-btn as-btn-primary" id="as-save-profile-hubert">Save changes</button>
+          </div>
         </section>
       </form>
 
@@ -293,7 +317,7 @@
       </div>
 
       <form id="as-email-prefs-form">
-        <section class="as-card" id="email-preferences">
+        <section class="as-card as-panel" id="email-preferences" role="tabpanel" aria-labelledby="as-tab-email" data-as-panel="email" hidden>
           <h2>Email preferences</h2>
           <p class="as-card-sub">
             Choose which optional emails you receive. Booking confirmations, application updates, password resets and
@@ -328,7 +352,7 @@
         </section>
       </form>
 
-      <section class="as-card" id="privacy-data">
+      <section class="as-card as-panel" id="privacy-data" role="tabpanel" aria-labelledby="as-tab-privacy" data-as-panel="privacy" hidden>
         <h2>Privacy &amp; your data</h2>
         <p class="as-card-sub">
           Download a copy of the personal data we hold about your account, bookings, reviews, saved items, and
@@ -344,7 +368,7 @@
         <p class="as-field-hint" id="as-download-data-hint" hidden role="status"></p>
       </section>
 
-      <section class="as-card" id="organiser-workspace">
+      <section class="as-card as-panel" id="organiser-workspace" role="tabpanel" aria-labelledby="as-tab-organiser" data-as-panel="organiser" hidden>
         <h2>Organiser workspace</h2>
         <p class="as-card-sub" id="as-organiser-lede">
           List events, manage your organiser page, and sell tickets. Ticket buyers can ignore this section.
@@ -397,7 +421,7 @@
       </section>
 
       <form id="as-password-form">
-        <section class="as-card">
+        <section class="as-card as-panel" id="password" role="tabpanel" aria-labelledby="as-tab-password" data-as-panel="password" hidden>
           <h2>Password</h2>
           <p class="as-card-sub">Choose a strong password you do not use elsewhere.</p>
           <div class="as-field">
@@ -423,6 +447,10 @@
     <script src="../js/site-nav.js?v=20261022listacc1" data-root="../" data-page="settings"></script>
     <script src="../js/hub-profile-industries.js?v=20260902other2"></script>
     <script src="../js/profile-countries.js?v=20261015country"></script>
+<<<<<<< HEAD
     <script src="../js/account-settings.js?v=20261030profile1"></script>
+=======
+    <script src="../js/account-settings.js?v=20261030tabs2"></script>
+>>>>>>> origin/main
   </body>
 </html>

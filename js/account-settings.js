@@ -760,14 +760,135 @@
     });
   }
 
+  function profileSaveButtons() {
+    return Array.from(
+      document.querySelectorAll('#as-profile-form button[type="submit"], #as-sticky-save-btn')
+    );
+  }
+
   function setProfileDirty(dirty) {
     document.body.classList.toggle('is-profile-dirty', dirty);
     const sticky = document.getElementById('as-sticky-save');
-    const stickyBtn = document.getElementById('as-sticky-save-btn');
-    const saveBtn = document.getElementById('as-save-profile');
     if (sticky) sticky.hidden = !dirty;
-    if (stickyBtn) stickyBtn.disabled = !dirty;
-    if (saveBtn && !saveBtn.dataset.saving) saveBtn.disabled = false;
+    profileSaveButtons().forEach((btn) => {
+      if (btn.id === 'as-sticky-save-btn') {
+        btn.disabled = !dirty;
+        return;
+      }
+      if (!btn.dataset.saving) btn.disabled = false;
+    });
+  }
+
+  const AS_TAB_BY_HASH = {
+    '': 'details',
+    '#your-details': 'details',
+    '#as-hubert-matchmaker': 'hubert',
+    '#email-preferences': 'email',
+    '#privacy-data': 'privacy',
+    '#organiser-workspace': 'organiser',
+    '#password': 'password',
+  };
+
+  const AS_HASH_BY_TAB = {
+    details: '#your-details',
+    hubert: '#as-hubert-matchmaker',
+    email: '#email-preferences',
+    privacy: '#privacy-data',
+    organiser: '#organiser-workspace',
+    password: '#password',
+  };
+
+  function tabIdFromHash(hash) {
+    return AS_TAB_BY_HASH[hash || ''] || 'details';
+  }
+
+  function setActiveSettingsTab(tabId, options) {
+    const opts = options || {};
+    const next = AS_HASH_BY_TAB[tabId] ? tabId : 'details';
+    const tabs = document.querySelectorAll('.as-tab[data-as-tab]');
+    const panels = document.querySelectorAll('.as-panel[data-as-panel]');
+    if (!tabs.length || !panels.length) return;
+
+    tabs.forEach((tab) => {
+      const selected = tab.getAttribute('data-as-tab') === next;
+      tab.setAttribute('aria-selected', selected ? 'true' : 'false');
+      tab.tabIndex = selected ? 0 : -1;
+      tab.classList.toggle('is-active', selected);
+    });
+
+    panels.forEach((panel) => {
+      const active = panel.getAttribute('data-as-panel') === next;
+      panel.classList.toggle('is-active', active);
+      panel.hidden = !active;
+      if (panel.id === 'email-preferences') {
+        panel.classList.toggle('is-unsubscribe-target', Boolean(active && opts.unsubscribeTarget));
+      }
+    });
+
+    const hash = AS_HASH_BY_TAB[next] || '#your-details';
+    if (opts.updateHash !== false) {
+      const url = window.location.pathname + window.location.search + hash;
+      if (opts.replaceHash) {
+        window.history.replaceState(null, '', url);
+      } else if (window.location.hash !== hash) {
+        window.history.pushState(null, '', url);
+      }
+    }
+
+    if (opts.focusTab) {
+      document.querySelector('.as-tab[data-as-tab="' + next + '"]')?.focus();
+    } else if (opts.focusPanel) {
+      const panel = document.querySelector('.as-panel[data-as-panel="' + next + '"]');
+      const heading = panel && panel.querySelector('h2');
+      if (heading) {
+        if (!heading.hasAttribute('tabindex')) heading.tabIndex = -1;
+        heading.focus({ preventScroll: true });
+      }
+    }
+
+    if (opts.scrollTabs) {
+      document.querySelector('.as-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
+
+  function initSettingsTabs() {
+    const tablist = document.querySelector('.as-tabs[role="tablist"]');
+    if (!tablist) return;
+
+    tablist.addEventListener('click', (e) => {
+      const tab = e.target.closest('.as-tab[data-as-tab]');
+      if (!tab || !tablist.contains(tab)) return;
+      setActiveSettingsTab(tab.getAttribute('data-as-tab'), { focusPanel: true });
+    });
+
+    tablist.addEventListener('keydown', (e) => {
+      const tabs = Array.from(tablist.querySelectorAll('.as-tab[data-as-tab]'));
+      if (!tabs.length) return;
+      const current = document.activeElement;
+      const idx = tabs.indexOf(current);
+      if (idx < 0) return;
+      let nextIdx = -1;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextIdx = (idx + 1) % tabs.length;
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') nextIdx = (idx - 1 + tabs.length) % tabs.length;
+      else if (e.key === 'Home') nextIdx = 0;
+      else if (e.key === 'End') nextIdx = tabs.length - 1;
+      if (nextIdx < 0) return;
+      e.preventDefault();
+      setActiveSettingsTab(tabs[nextIdx].getAttribute('data-as-tab'), { focusTab: true, focusPanel: true });
+    });
+
+    window.addEventListener('hashchange', () => {
+      const hash = window.location.hash;
+      setActiveSettingsTab(tabIdFromHash(hash), {
+        updateHash: false,
+        unsubscribeTarget: hash === '#email-preferences',
+        scrollTabs: true,
+      });
+    });
+
+    window.addEventListener('popstate', () => {
+      setActiveSettingsTab(tabIdFromHash(window.location.hash), { updateHash: false });
+    });
   }
 
   function syncProfileDirty() {
@@ -809,23 +930,23 @@
       window.HubProfileIndustries.isBareOther(industryValue)
     ) {
       showAlert('Please enter your industry.', false);
+      setActiveSettingsTab('details', { replaceHash: true, focusPanel: true });
       scrollAlertIntoView();
       document.getElementById('as-industry-other')?.focus();
       return;
     }
     if (/^other$/i.test(roleValue)) {
       showAlert('Please enter your role.', false);
+      setActiveSettingsTab('details', { replaceHash: true, focusPanel: true });
       scrollAlertIntoView();
       document.getElementById('as-professional-role-other')?.focus();
       return;
     }
-    const btn = document.getElementById('as-save-profile');
-    const stickyBtn = document.getElementById('as-sticky-save-btn');
-    if (btn) {
+    const saveBtns = profileSaveButtons();
+    saveBtns.forEach((btn) => {
       btn.dataset.saving = '1';
       btn.disabled = true;
-    }
-    if (stickyBtn) stickyBtn.disabled = true;
+    });
     try {
       const res = await fetch('/api/auth/profile', {
         method: 'PATCH',
@@ -869,10 +990,11 @@
       scrollAlertIntoView();
       syncProfileDirty();
     } finally {
-      if (btn) {
+      saveBtns.forEach((btn) => {
         delete btn.dataset.saving;
         btn.disabled = false;
-      }
+      });
+      syncProfileDirty();
     }
   });
 
@@ -1043,18 +1165,11 @@
     if (main) main.hidden = false;
     renderOrganiserWorkspace(sessionData);
     const hash = window.location.hash;
-    if (
-      hash === '#email-preferences' ||
-      hash === '#organiser-workspace' ||
-      hash === '#privacy-data' ||
-      hash === '#as-hubert-matchmaker'
-    ) {
-      const section = document.getElementById(hash.slice(1));
-      if (section) {
-        if (hash === '#email-preferences') section.classList.add('is-unsubscribe-target');
-        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }
+    setActiveSettingsTab(tabIdFromHash(hash), {
+      replaceHash: true,
+      unsubscribeTarget: hash === '#email-preferences',
+      scrollTabs: Boolean(hash && AS_TAB_BY_HASH[hash]),
+    });
     try {
       await loadProfile();
     } catch (err) {
@@ -1065,5 +1180,6 @@
 
   fillCountrySelect('GB');
   initFieldTips();
+  initSettingsTabs();
   init();
 })();
