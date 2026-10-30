@@ -164,7 +164,7 @@ window.HUB_SEO_STATIC = {
   "guide-connect-eventbrite": {
     "path": "/guides/connect-eventbrite",
     "title": "Connect Eventbrite – How-to guides – The Networker UK",
-    "description": "Link Eventbrite to The Networker UK so ticket sales sync to your attendee list — one-time webhook setup, then link each event.",
+    "description": "Connect Eventbrite on My events, then Import each event onto your organiser page. Checkout stays on Eventbrite; ticket buyers sync to your attendee list.",
     "image": "/assets/logo-networker-uk-og.png?v=20260908og",
     "ogType": "article"
   },

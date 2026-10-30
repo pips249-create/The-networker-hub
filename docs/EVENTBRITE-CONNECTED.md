@@ -32,11 +32,14 @@ For local/preview, add the matching `SITE_URL` callback as well.
 
 ## One-time (account)
 
-### Preferred — OAuth
+### Preferred — OAuth (My events)
 
-1. **Organiser → Edit page → Where do people book? → Eventbrite** → **Connect with Eventbrite**.
+1. **Organiser → My events** → expand **Connect Eventbrite** → choose **Import onto** page → click **Connect Eventbrite** (the button inside the panel — expanding the row alone does not connect).
 2. Approve The Networker UK in Eventbrite.
-3. On return, TNH stores the access token, ensures webhooks (`order.placed`, `attendee.updated`, `event.published`), and **auto-imports** live/started organisation events onto that organiser page.
+3. On return, TNH stores the access token and ensures webhooks (`order.placed`, `attendee.updated`, `event.published`). The Eventbrite event list drops down in the panel.
+4. Click **Import** on each event you want on that organiser page (complete listings can publish; incomplete stay drafts). Backend may also auto-create some live/started events on connect — the panel still shows **Import** / **Already linked** per row.
+
+Public walkthrough: [/guides/connect-eventbrite](https://www.thenetworkeruk.com/guides/connect-eventbrite).
 
 ### Fallback — private token
 

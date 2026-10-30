@@ -97,7 +97,19 @@
     }
   });
 
+  /* Older guide deep links still land on the closest current step. */
+  var hashAliases = {
+    'enable-eventbrite': 'open-my-events',
+    'paste-webhook': 'connect-account',
+    'api-token': 'connect-account',
+    'connect-oauth': 'connect-account',
+    'approve-eventbrite': 'event-list',
+    'link-event': 'import-events',
+    'events-import': 'import-events',
+  };
+
   var startHash = (location.hash || '').replace(/^#/, '');
+  if (startHash && hashAliases[startHash]) startHash = hashAliases[startHash];
   if (startHash) {
     var match = slides.findIndex(function (slide) {
       return slide.id === startHash;
