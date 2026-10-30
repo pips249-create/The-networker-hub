@@ -19,6 +19,8 @@
   var profileReady = false;
   var lastProfile = null;
   var lastSearchQuota = null;
+  var pendingSeedQuery = '';
+  var seedQueryConsumed = false;
 
   function isMatchmakerPublic() {
     return HUBERT_MATCHMAKER_PUBLIC === true;
@@ -757,6 +759,7 @@
         if (submit) submit.disabled = !profileReady;
       }
     });
+    if (profileReady) maybeSeedQueryFromUrl();
   }
 
   function confirmStopIncludingMe() {
@@ -1542,6 +1545,42 @@
     return mount;
   }
 
+  function parseMeetQueryFromUrl() {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      var q = params.get('q') || params.get('query');
+      if (!q && window.location.hash) {
+        var raw = String(window.location.hash || '').replace(/^#/, '');
+        var queryPart = raw;
+        if (raw.indexOf('meet?') === 0) queryPart = raw.slice(5);
+        else if (raw.indexOf('meet&') === 0) queryPart = raw.slice(5);
+        else if (raw === 'meet') queryPart = '';
+        if (queryPart) {
+          var hashParams = new URLSearchParams(queryPart.charAt(0) === '?' ? queryPart.slice(1) : queryPart);
+          q = hashParams.get('q') || hashParams.get('query');
+        }
+      }
+      q = String(q || '').trim();
+      return q ? q.slice(0, 240) : '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function maybeSeedQueryFromUrl() {
+    if (seedQueryConsumed) return;
+    var q = pendingSeedQuery || parseMeetQueryFromUrl();
+    if (!q) return;
+    pendingSeedQuery = q;
+    mounts.forEach(function (m) {
+      if (m.els && m.els.input) m.els.input.value = q;
+    });
+    if (!profileReady || !mounts.length) return;
+    seedQueryConsumed = true;
+    pendingSeedQuery = '';
+    runSearch(mounts[0], q);
+  }
+
   function maybeOpenIntroFromUrl() {
     try {
       var params = new URLSearchParams(window.location.search);
@@ -1585,6 +1624,7 @@
     loadMyIntros();
     refreshSearchQuota();
     maybeOpenIntroFromUrl();
+    maybeSeedQueryFromUrl();
 
     if (lastQuery) {
       mounts.forEach(function (m) {
@@ -1620,6 +1660,7 @@
     search: search,
     openThread: openThread,
     _stubShortlist: stubShortlist,
+    _parseMeetQueryFromUrl: parseMeetQueryFromUrl,
     _parseTargetId: function (id) {
       return /^(member|seed):[0-9a-f-]{36}$/i.test(String(id || ''));
     },

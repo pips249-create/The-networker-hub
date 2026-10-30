@@ -2177,7 +2177,13 @@
     ) {
       return 'services';
     }
-    if (hash === 'meet' || hash === 'ask-hubert' || hash === 'hubert-meet') {
+    if (
+      hash === 'meet' ||
+      hash.indexOf('meet?') === 0 ||
+      hash.indexOf('meet&') === 0 ||
+      hash === 'ask-hubert' ||
+      hash === 'hubert-meet'
+    ) {
       return 'meet';
     }
     const allowed = [
