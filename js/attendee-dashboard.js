@@ -2788,11 +2788,16 @@
     if (
       nextRoute === 'meet' &&
       window.__hubAttendeeUser &&
-      window.HubHubertMatchmaker &&
-      typeof window.HubHubertMatchmaker.canUseMatchmaker === 'function' &&
-      !window.HubHubertMatchmaker.canUseMatchmaker({ user: window.__hubAttendeeUser })
+      window.HubHubertMatchmaker
     ) {
-      nextRoute = 'overview';
+      var canOpenMeet =
+        typeof window.HubHubertMatchmaker.canBuildProfile === 'function'
+          ? window.HubHubertMatchmaker.canBuildProfile({ user: window.__hubAttendeeUser })
+          : typeof window.HubHubertMatchmaker.canUseMatchmaker === 'function' &&
+            window.HubHubertMatchmaker.canUseMatchmaker({ user: window.__hubAttendeeUser });
+      if (!canOpenMeet) {
+        nextRoute = 'overview';
+      }
     }
     currentRoute = nextRoute;
     closeUtilityMenus();

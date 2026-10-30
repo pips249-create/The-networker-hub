@@ -27,7 +27,7 @@
 <link rel="stylesheet" href="css/hub.css?v=20261016signin1">
 <link rel="stylesheet" href="css/home-page.css?v=20260909advis2">
 <link rel="stylesheet" href="css/hubert-widget.css?v=20260711">
-<link rel="stylesheet" href="css/hubert-matchmaker-teaser.css?v=20261030teaser1">
+<link rel="stylesheet" href="css/hubert-matchmaker-teaser.css?v=20261030launch1">
 <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml">
 <link rel="icon" href="/assets/favicon-32.png?v=20260823uk" type="image/png" sizes="32x32">
@@ -130,16 +130,19 @@
     </div>
   </section>
 
-  <section class="hmm-teaser hmm-teaser--home" data-hmm-teaser hidden aria-label="Hubert Matchmaker">
+  <section class="hmm-teaser hmm-teaser--home hmm-teaser--profile" data-hmm-teaser hidden aria-label="Hubert Matchmaker">
     <div class="hmm-teaser-shell">
       <div class="hmm-teaser-inner">
-        <img class="hmm-teaser-icon" src="/assets/hubert-icon.png" width="48" height="48" alt="" />
-        <div class="hmm-teaser-copy">
-          <p class="hmm-teaser-kicker">Hubert</p>
-          <h2 class="hmm-teaser-title">Who do you want to meet?</h2>
-          <p class="hmm-teaser-lede">
-            Tell Hubert what you&rsquo;re working on. He shortlists relevant people on The Networker UK and can introduce you in a private Hub thread — email, phone, and LinkedIn stay private.
-          </p>
+        <p class="hmm-teaser-badge" data-hmm-teaser-badge>Launching soon</p>
+        <div class="hmm-teaser-hero">
+          <img class="hmm-teaser-icon" src="/assets/hubert-icon.png" width="64" height="64" alt="" />
+          <div class="hmm-teaser-copy">
+            <p class="hmm-teaser-kicker">Hubert</p>
+            <h2 class="hmm-teaser-title" data-hmm-teaser-title>Build your Hubert profile</h2>
+            <p class="hmm-teaser-lede" data-hmm-teaser-lede>
+              Want warm intros to the right people — without cold LinkedIn or guest-list dumps? Hubert is The Networker UK’s matchmaker: he shortlists members worth meeting (customers, investors, hires, mentors) and only opens an intro when you both say yes. Build your profile now so you’re in the pool when search opens; email, phone, and LinkedIn stay private.
+            </p>
+          </div>
         </div>
         <form class="hmm-teaser-form" data-hmm-teaser-form>
           <label class="visually-hidden" for="hmm-teaser-query-home">Who do you want to meet?</label>
@@ -152,8 +155,9 @@
             maxlength="240"
             autocomplete="off"
             placeholder="Try: commercial solicitor in Manchester, or B2B SaaS founder…"
+            hidden
           />
-          <button type="submit" class="hmm-teaser-submit">Try Hubert</button>
+          <button type="submit" class="hmm-teaser-submit" data-hmm-teaser-submit>Build your profile</button>
         </form>
         <p class="hmm-teaser-gate" data-hmm-teaser-gate hidden></p>
       </div>
@@ -493,7 +497,7 @@
 <script src="js/home-page.js?v=20260825a11y1"></script>
 <script src="js/hubert-chat.js?v=20260710"></script>
 <script src="js/hubert-widget.js?v=20260825a11y1" data-root=""></script>
-<script src="js/hubert-matchmaker-teaser.js?v=20261030teaser1" defer></script>
+<script src="js/hubert-matchmaker-teaser.js?v=20261030launch1" defer></script>
 
 </body>
 </html>

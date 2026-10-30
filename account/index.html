@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20261029dash2" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20261029dash2" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261030eventpick1" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261030profile1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20261023nextup2" />
     <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"></script>
 
@@ -115,7 +115,7 @@
               <div class="ad-overview-next" id="ad-overview-next" hidden></div>
 
               <div class="ad-overview-portals" id="ad-overview-portals">
-                <!-- Compact portal-row Meet people (admin-only); copy aligned with Meet page -->
+                <!-- Compact portal-row Meet people (search: admin / public launch) -->
                 <div class="hmm hmm--overview" id="ad-overview-hubert-meet" data-hmm-shell hidden>
                   <p class="hmm-admin-badge" data-hmm-admin-badge hidden>Admin preview</p>
                   <div class="hmm-overview-bar">
@@ -800,20 +800,21 @@
               </div>
             </section>
 
-            <!-- Meet people (Hubert Matchmaker) — admin-only until launch -->
+            <!-- Meet people — profile open to all members; search admin/public until launch -->
             <section class="ad-page" id="ad-page-meet" data-ad-page="meet">
               <div class="hmm hmm--page" data-hmm-shell>
                 <p class="hmm-admin-badge" data-hmm-admin-badge hidden>
-                  Admin preview — not visible to other members yet.
+                  Launching soon — build your profile now.
                 </p>
                 <div class="hmm-hero hmm-hero--page" data-hmm-hero>
                   <img class="hmm-hero-avatar hmm-hero-avatar--lg" src="../assets/hubert-icon.png" width="96" height="96" alt="" />
                   <div class="hmm-hero-copy">
                     <p class="hmm-hero-kicker">Hubert</p>
-                    <h2 class="hmm-hero-title" data-hmm-hero-title>Before I introduce you</h2>
+                    <h2 class="hmm-hero-title" data-hmm-hero-title>Build your Hubert profile</h2>
                     <p class="hmm-hero-sub" data-hmm-hero-sub>
-                      Tell me who you are and who you want to meet. Shortlists stay private — first name and initial only,
-                      never email, phone, or LinkedIn.
+                      I’m Hubert. I find people who can help with what you’re working on — customers, investors, hires,
+                      mentors — and introduce you only when you both say yes. No email, phone, or LinkedIn ever changes
+                      hands. Tell me who you are and who you want to meet so I can put you forward.
                     </p>
                   </div>
                 </div>
@@ -849,7 +850,7 @@
                           <strong>Include me so Hubert can put me forward</strong>
                         </label>
                         <p class="hmm-profile-hint hmm-profile-hint--block" data-hmm-discoverable-hint>
-                          Required to unlock search. Stays off until you tick it. Turning it off needs confirmation.
+                          Required to join Hubert’s pool. Stays off until you tick it. Turning it off needs confirmation.
                         </p>
                         <button
                           type="button"
@@ -863,10 +864,13 @@
                     </div>
                     <p class="hmm-profile-error" data-hmm-profile-error hidden role="alert"></p>
                     <p class="hmm-profile-status" data-hmm-profile-status hidden role="status"></p>
-                    <button type="submit" class="ad-btn ad-btn-primary" data-hmm-profile-save>Save and continue</button>
+                    <button type="submit" class="ad-btn ad-btn-primary" data-hmm-profile-save>Save profile</button>
                   </form>
                 </div>
-                <div class="hmm-ask-block hmm-ask-block--locked" data-hmm-ask-block>
+                <p class="hmm-search-soon" data-hmm-search-soon hidden role="status">
+                  You’re in the pool for warm intros. When search opens you can ask who you want to meet — and others can request an intro to you. Contact details stay private either way.
+                </p>
+                <div class="hmm-ask-block hmm-ask-block--locked" data-hmm-ask-block hidden>
                 <p class="hmm-ask-kicker">Ask Hubert</p>
                 <p class="hmm-ask-lock-note" data-hmm-ask-lock-note>
                   Save your profile above (headline, who you want to meet, and Include me) to unlock search.
@@ -1412,7 +1416,7 @@
     <script src="../js/attendee-auth-gate.js?v=20261021confirm2"></script>
     <script src="../js/organiser-image-upload.js?v=20261002offerimage1" defer></script>
     <script src="../js/attendee-member-offers.js?v=20261015offers1" defer></script>
-    <script src="../js/hubert-matchmaker.js?v=20261030emptyself1" defer></script>
-    <script src="../js/attendee-dashboard.js?v=20261030teaser1" defer></script>
+    <script src="../js/hubert-matchmaker.js?v=20261030launch1" defer></script>
+    <script src="../js/attendee-dashboard.js?v=20261030profile1" defer></script>
   </body>
 </html>
