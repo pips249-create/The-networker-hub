@@ -850,6 +850,7 @@
     }
     if (pageInput) pageInput.disabled = !canSearch;
     if (pageSubmit) pageSubmit.disabled = !canSearch;
+    // Email invite form stays search/admin-gated; share CTA lives on the profile form.
     if (invite) invite.hidden = !canSearch;
     if (heroTitle) {
       if (!searchEnabled) {
@@ -1300,6 +1301,71 @@
     if (blurb) blurb.focus();
   }
 
+  function profileInviteShareUrl() {
+    var origin = window.location && window.location.origin ? window.location.origin : '';
+    return (
+      origin +
+      '/register?intent=attendee&utm_source=hubert&utm_medium=invite&utm_campaign=matchmaker_launch&next=' +
+      encodeURIComponent('/account/#meet')
+    );
+  }
+
+  function profileInviteSharePayload() {
+    var url = profileInviteShareUrl();
+    return {
+      title: 'Hubert on The Networker UK',
+      text:
+        'Hubert is launching on The Networker UK — warm intros to people worth meeting, free to join. Build your profile before search opens: ' +
+        url,
+      url: url,
+    };
+  }
+
+  function setProfileShareStatus(message) {
+    var status = document.querySelector('[data-hmm-profile-share-status]');
+    if (!status) return;
+    if (!message) {
+      status.hidden = true;
+      status.textContent = '';
+      return;
+    }
+    status.hidden = false;
+    status.textContent = message;
+  }
+
+  function shareProfileInvite() {
+    var payload = profileInviteSharePayload();
+    setProfileShareStatus('');
+    if (navigator.share) {
+      return navigator
+        .share(payload)
+        .then(function () {
+          setProfileShareStatus('Thanks — share Hubert with anyone you’d like to meet.');
+        })
+        .catch(function (err) {
+          if (err && err.name === 'AbortError') return;
+          return copyProfileInvite(payload);
+        });
+    }
+    return copyProfileInvite(payload);
+  }
+
+  function copyProfileInvite(payload) {
+    var text = (payload && payload.text) || profileInviteSharePayload().text;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text).then(
+        function () {
+          setProfileShareStatus('Invite link copied — send it to someone you’d like in the pool.');
+        },
+        function () {
+          setProfileShareStatus('Copy this link: ' + profileInviteShareUrl());
+        }
+      );
+    }
+    setProfileShareStatus('Copy this link: ' + profileInviteShareUrl());
+    return Promise.resolve();
+  }
+
   function bindProfilePanel() {
     var looking = document.querySelector('[data-hmm-profile-looking]');
     // Ensure chips exist (HTML ships a static set; refill if the node was emptied).
@@ -1311,6 +1377,13 @@
     if (form && form.dataset.hmmBound !== '1') {
       form.dataset.hmmBound = '1';
       form.addEventListener('submit', saveMatchmakerProfile);
+    }
+    var shareBtn = document.querySelector('[data-hmm-profile-share]');
+    if (shareBtn && shareBtn.dataset.hmmBound !== '1') {
+      shareBtn.dataset.hmmBound = '1';
+      shareBtn.addEventListener('click', function () {
+        shareProfileInvite();
+      });
     }
     syncDiscoverableUi(lastProfile);
     applyProfileGate(lastProfile);
