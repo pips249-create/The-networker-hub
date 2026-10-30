@@ -3,6 +3,7 @@ const {
   shortDisplayName,
   tokenize,
   eventSearchTokens,
+  extractQueryEventDate,
   looksLikeEventAttendeeQuery,
   extractQueryIntent,
   isInternalMatchCandidate,
@@ -35,11 +36,31 @@ assert(looksLikeEventAttendeeQuery(evolutionQ) === true, 'event-intent query');
 assert(looksLikeEventAttendeeQuery('fintech founders in Manchester') === false, 'role query not event-intent');
 const evTokens = eventSearchTokens(evolutionQ);
 assert(evTokens.includes('evolution'), 'keeps evolution');
-assert(evTokens.includes('virtual'), 'keeps virtual');
-assert(evTokens.includes('networking'), 'keeps networking');
+assert(!evTokens.includes('virtual'), 'drops generic virtual');
+assert(!evTokens.includes('networking'), 'drops generic networking');
 assert(!evTokens.includes('attended'), 'drops attended stopword');
 assert(!evTokens.includes('morning'), 'drops morning stopword');
 assert(scoreEventTitle('Evolution Virtual Networking', evTokens) >= 3, 'event title scores');
+assert(
+  scoreEventTitle('Multi-Club Virtual Networking for Women in Business', evTokens) === 0,
+  'generic virtual networking must not steal Evolution asks'
+);
+
+const datedQ =
+  'people who have attended evolution virtual networking on Thursday 29th October 2026';
+const datedTokens = eventSearchTokens(datedQ);
+assert(datedTokens.includes('evolution'), 'dated ask keeps evolution');
+assert(!datedTokens.includes('thursday'), 'drops weekday');
+assert(!datedTokens.includes('october'), 'drops month');
+assert(!datedTokens.includes('2026'), 'drops year');
+assert(
+  scoreEventTitle('Multi-Club Virtual Networking for Women in Business', datedTokens) === 0,
+  'dated Evolution ask does not match Multi-Club'
+);
+const hint = extractQueryEventDate(datedQ);
+assert(hint && hint.getUTCFullYear() === 2026, 'parses year');
+assert(hint && hint.getUTCMonth() === 9, 'parses October');
+assert(hint && hint.getUTCDate() === 29, 'parses 29th');
 
 const person = {
   fullName: 'Alex Morgan',
