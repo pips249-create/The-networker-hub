@@ -12,16 +12,16 @@ Checkout stays on **Eventbrite**. TNH receives **`order.placed`** webhooks, load
 
 ## One-time (account)
 
-1. **Organiser → Connected booking → Booking providers** → **Enable Eventbrite**.
+1. **Organiser → Booking system → Eventbrite** → **Enable Eventbrite** (if needed). The account webhook URL is shown on that same panel.
 2. Copy the short webhook URL:
    - `https://www.thenetworkeruk.com/w/eb/{token}`
    - Must use **www** — apex host 308-redirects and breaks Eventbrite POSTs.
-3. In **Eventbrite → Account settings → Webhooks**:
+3. Saving the Eventbrite **private token** usually registers the webhook via API. To check or paste by hand in **Eventbrite → Account settings → Webhooks**:
    - Paste the TNH URL as Payload URL.
    - Action: **`order.placed`** (“Events: All” is fine).
-4. Save the Eventbrite **private token** on Connected setup / Booking providers (Developer links). Without it, webhooks arrive but buyer email cannot be resolved.
-   - Creating a new API key: **Application URL** = `https://www.thenetworkuk.com` (homepage — not the `/w/eb/…` webhook). Leave **OAuth Redirect URI** blank. Name/description can say The Networker UK. Then copy **Private token** only.
-   - The organiser-specific webhook URL belongs only in Eventbrite → **Webhooks** (step 3 above).
+4. Save the Eventbrite **private token** on Booking system → Eventbrite (or Connected setup). Without it, webhooks arrive but buyer email cannot be resolved.
+   - Creating a new API key: **Application URL** = `https://www.thenetworkeruk.com` (homepage — not the `/w/eb/…` webhook). Leave **OAuth Redirect URI** blank. Name/description can say The Networker UK. Then copy **Private token** only.
+   - The organiser-specific webhook URL is shown on Booking system → Eventbrite; paste into Eventbrite → **Webhooks** only if it is missing there.
 
 ## Per TNH event
 

@@ -36,7 +36,7 @@
 <script src="../js/hub-seo-static.js?v=20260612" data-page="guide-connect-eventbrite"></script>
 <script src="../js/hub-seo-data.js?v=20260612" defer></script>
 <script src="../js/hub-seo-schema.js?v=20260612" defer></script>
-  <script type="application/ld+json" data-hubert-seo="static">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","@id":"https://www.thenetworkeruk.com/guides/connect-eventbrite#webpage","url":"https://www.thenetworkeruk.com/guides/connect-eventbrite","name":"Connect Eventbrite – How-to guides – The Networker UK","description":"Link Eventbrite to The Networker UK so ticket sales sync to your attendee list — one-time webhook setup, then link each event.","isPartOf":{"@type":"WebSite","name":"The Networker UK","url":"https://www.thenetworkeruk.com"}},{"@type":"HowTo","@id":"https://www.thenetworkeruk.com/guides/connect-eventbrite#howto","url":"https://www.thenetworkeruk.com/guides/connect-eventbrite","name":"How to connect Eventbrite to The Networker UK","description":"Link Eventbrite to The Networker UK so ticket sales sync to your attendee list — one-time webhook setup, then link each event.","step":[{"@type":"HowToStep","position":1,"name":"Enable Eventbrite on Connected booking","text":"Open Connected booking in the organiser dashboard, enable Eventbrite under Booking providers, and copy the webhook URL (keep www in https://www.thenetworkeruk.com/w/eb/…).","url":"https://www.thenetworkeruk.com/guides/connect-eventbrite#enable-eventbrite"},{"@type":"HowToStep","position":2,"name":"Paste the webhook URL into Eventbrite","text":"In Eventbrite Account settings → Webhooks, paste the Networker UK URL as the Payload URL and set the action to order.placed. Do this once per Eventbrite account.","url":"https://www.thenetworkeruk.com/guides/connect-eventbrite#paste-webhook"},{"@type":"HowToStep","position":3,"name":"Save your Eventbrite private token","text":"Save the Eventbrite private API token on Connected booking so we can load buyer email and ticket holders after each order.placed ping.","url":"https://www.thenetworkeruk.com/guides/connect-eventbrite#api-token"},{"@type":"HowToStep","position":4,"name":"Link each event","text":"On Connected setup for the event, choose Eventbrite, add the display price and Eventbrite URL, confirm the numeric event id, save the link, and publish.","url":"https://www.thenetworkeruk.com/guides/connect-eventbrite#link-event"},{"@type":"HowToStep","position":5,"name":"Check it worked","text":"After a test or real Eventbrite order, Recent sync attempts should show eventbrite:accepted and the buyer should appear on the event Attendees list.","url":"https://www.thenetworkeruk.com/guides/connect-eventbrite#check-it-worked"}]},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://www.thenetworkeruk.com/"},{"@type":"ListItem","position":2,"name":"Organiser guides","item":"https://www.thenetworkeruk.com/guides"},{"@type":"ListItem","position":3,"name":"Connect Eventbrite","item":"https://www.thenetworkeruk.com/guides/connect-eventbrite"}]}]}</script>
+  <script type="application/ld+json" data-hubert-seo="static">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","@id":"https://www.thenetworkeruk.com/guides/connect-eventbrite#webpage","url":"https://www.thenetworkeruk.com/guides/connect-eventbrite","name":"Connect Eventbrite – How-to guides – The Networker UK","description":"Link Eventbrite to The Networker UK so ticket sales sync to your attendee list — one-time webhook setup, then link each event.","isPartOf":{"@type":"WebSite","name":"The Networker UK","url":"https://www.thenetworkeruk.com"}},{"@type":"HowTo","@id":"https://www.thenetworkeruk.com/guides/connect-eventbrite#howto","url":"https://www.thenetworkeruk.com/guides/connect-eventbrite","name":"How to connect Eventbrite to The Networker UK","description":"Link Eventbrite to The Networker UK so ticket sales sync to your attendee list — one-time webhook setup, then link each event.","step":[{"@type":"HowToStep","position":1,"name":"Enable Eventbrite on Booking system","text":"Open Booking system in the organiser dashboard, choose Eventbrite, enable if needed, and copy the webhook URL shown on that panel (keep www in https://www.thenetworkeruk.com/w/eb/…).","url":"https://www.thenetworkeruk.com/guides/connect-eventbrite#enable-eventbrite"},{"@type":"HowToStep","position":2,"name":"Paste the webhook URL into Eventbrite","text":"In Eventbrite Account settings → Webhooks, paste the Networker UK URL as the Payload URL and set the action to order.placed. Do this once per Eventbrite account.","url":"https://www.thenetworkeruk.com/guides/connect-eventbrite#paste-webhook"},{"@type":"HowToStep","position":3,"name":"Save your Eventbrite private token","text":"Save the Eventbrite private API token on Booking system so we can load buyer email and ticket holders after each order.placed ping.","url":"https://www.thenetworkeruk.com/guides/connect-eventbrite#api-token"},{"@type":"HowToStep","position":4,"name":"Link each event","text":"On Connected setup for the event, choose Eventbrite, add the display price and Eventbrite URL, confirm the numeric event id, save the link, and publish.","url":"https://www.thenetworkeruk.com/guides/connect-eventbrite#link-event"},{"@type":"HowToStep","position":5,"name":"Check it worked","text":"After a test or real Eventbrite order, Recent sync attempts should show eventbrite:accepted and the buyer should appear on the event Attendees list.","url":"https://www.thenetworkeruk.com/guides/connect-eventbrite#check-it-worked"}]},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://www.thenetworkeruk.com/"},{"@type":"ListItem","position":2,"name":"Organiser guides","item":"https://www.thenetworkeruk.com/guides"},{"@type":"ListItem","position":3,"name":"Connect Eventbrite","item":"https://www.thenetworkeruk.com/guides/connect-eventbrite"}]}]}</script>
 </head>
 <body class="ceb-page">
 
@@ -101,17 +101,17 @@
         <span class="ceb-slide-step">1</span>
         <h2>Enable Eventbrite once</h2>
         <p>
-          Sign in → open <strong>Connected booking</strong> → <strong>Booking providers</strong> →
-          <strong>Eventbrite</strong> → <strong>Enable</strong>.
+          Sign in → open <strong>Booking system</strong> → choose <strong>Eventbrite</strong>.
+          Press <strong>Enable Eventbrite</strong> if you do not yet see an account webhook URL.
         </p>
-        <p>Copy the webhook URL we show you. It looks like:</p>
+        <p>The webhook URL appears on that same Eventbrite connection panel. It looks like:</p>
         <p><code>https://www.thenetworkeruk.com/w/eb/…</code></p>
         <p class="ceb-slide-note">
           Keep the <strong>www</strong> in the address. Without it, Eventbrite’s messages can fail.
         </p>
         <div class="ceb-slide-actions">
           <a class="btn btn-primary" href="../login?next=/organiser/%23connected-booking&amp;intent=organiser"
-            >Open Connected booking</a
+            >Open Booking system</a
           >
         </div>
       </article>
@@ -119,11 +119,14 @@
       <article class="ceb-slide" data-ceb-slide id="paste-webhook" aria-hidden="true">
         <span class="ceb-slide-step">2</span>
         <h2>Paste that URL into Eventbrite</h2>
-        <p>In Eventbrite (do this once per Eventbrite account):</p>
+        <p>
+          Saving your <strong>private token</strong> (step 3) usually registers this webhook for you.
+          To check or paste by hand (once per Eventbrite account):
+        </p>
         <ol>
           <li>Profile menu → <strong>Account settings</strong> → <strong>Webhooks</strong></li>
           <li>Add a webhook (or edit an existing one)</li>
-          <li>Paste the Networker UK URL as the <strong>Payload URL</strong></li>
+          <li>Paste the Networker UK URL from <strong>Booking system → Eventbrite</strong> as the <strong>Payload URL</strong></li>
           <li>Set the action to <strong>order.placed</strong></li>
           <li>“Events: All” is fine</li>
         </ol>
@@ -166,14 +169,14 @@
           <strong>If you are creating a new API key</strong> — fill Eventbrite’s form like this:
           <ul style="margin:10px 0 0; padding-left:1.2em">
             <li><strong>Application URL</strong> —
-              <code>https://www.thenetworkuk.com</code>
+              <code>https://www.thenetworkeruk.com</code>
               (homepage is correct here — do <em>not</em> paste your webhook URL)</li>
             <li><strong>OAuth Redirect URI</strong> — leave blank</li>
             <li><strong>Application Name</strong> — e.g. <code>The Networker UK</code></li>
             <li><strong>Description</strong> — e.g. <code>Sync Eventbrite ticket buyers to The Networker UK attendee list</code></li>
           </ul>
           Your personal webhook URL
-          (<code>https://www.thenetworkuk.com/w/eb/…</code>) belongs in Eventbrite
+          (<code>https://www.thenetworkeruk.com/w/eb/…</code>) belongs in Eventbrite
           <strong>Webhooks</strong> (step 2) — not on this form.
         </div>
         <div class="ceb-shot-stack">
