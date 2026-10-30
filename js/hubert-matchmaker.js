@@ -856,12 +856,12 @@
     if (heroSub) {
       if (!searchEnabled) {
         heroSub.textContent = profileReady
-          ? 'Headline, who you want to meet, and Include me are saved. Search and intros open to everyone soon — email, phone, and LinkedIn stay private.'
-          : 'Tell me who you are and who you want to meet. Shortlists stay private — first name and initial only, never email, phone, or LinkedIn.';
+          ? 'You’re ready to be put forward for intros. When search opens you’ll ask who you want to meet — and others can request an intro to you. Email, phone, and LinkedIn stay private.'
+          : 'I’m Hubert — I shortlist people worth meeting and introduce you only when you both say yes. Tell me who you are and who you want to meet so I can put you forward. Shortlists show first name and initial only — never email, phone, or LinkedIn.';
       } else {
         heroSub.textContent = profileReady
           ? 'Customers, investors, hires, your next role — or someone who’s already solved your problem. Tell me what you’re working on.'
-          : 'Tell me who you are and who you want to meet. Shortlists stay private — first name and initial only, never email, phone, or LinkedIn.';
+          : 'I’m Hubert — I shortlist people worth meeting and introduce you only when you both say yes. Tell me who you are and who you want to meet. Shortlists show first name and initial only — never email, phone, or LinkedIn.';
       }
     }
     if (saveBtn) {

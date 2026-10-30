@@ -18,12 +18,12 @@
     profile: {
       title: 'Build your Hubert profile',
       ledeHome:
-        'Build your Hubert profile so he can put you forward for the right introductions. Shortlists stay private — first name and initial only; email, phone, and LinkedIn stay private.',
+        'Hubert is The Networker UK’s matchmaker — he shortlists people worth meeting (customers, investors, hires, mentors) and introduces you only when both sides say yes. Build your profile now so you’re in the pool when search opens; email, phone, and LinkedIn stay private.',
       ledeEvents:
-        'Looking for someone at an event — or the right intro after? Build your Hubert profile so he can put you forward. Contact details stay private.',
+        'Hubert finds people worth meeting at events and after — customers, investors, hires, mentors — and only introduces you when both sides opt in. Build your profile now so you’re ready; contact details stay private.',
       submit: 'Build your profile',
-      gateSignedOut: 'Create a free account to build your Hubert profile.',
-      gateSignedIn: 'Finish your headline, who you want to meet, and Include me — search opens soon.',
+      gateSignedOut: 'Create a free account to build your Hubert profile and join the intro pool.',
+      gateSignedIn: 'Add a headline, who you want to meet, and Include me — then you’re ready when search opens.',
     },
     search: {
       titleHome: 'Who do you want to meet?',
