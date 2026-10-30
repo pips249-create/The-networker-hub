@@ -18211,31 +18211,18 @@
     );
   }
 
-  function opportunityVatInvoicesMailto(o) {
-    const title = String((o && o.title) || 'opportunity listing').trim() || 'opportunity listing';
-    return (
-      'mailto:hi@thenetworkeruk.com?subject=' +
-      encodeURIComponent('VAT invoices — ' + title)
-    );
-  }
-
   function opportunityManageSecondaryActionHtml(o) {
     let html = '';
     if (opportunityHasListingBilling(o)) {
+      html +=
+        '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-opp-open-vat-invoices="' +
+        esc(o.id) +
+        '">VAT invoices</button> ';
       if (opportunityHasStripeListingSubscription(o)) {
-        html +=
-          '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-opp-open-vat-invoices="' +
-          esc(o.id) +
-          '">VAT invoices</button> ';
         html +=
           '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-opp-manage-billing="' +
           esc(o.id) +
           '">Manage / cancel billing</button> ';
-      } else {
-        html +=
-          '<a class="org-btn org-btn-gold org-btn-sm" href="' +
-          esc(opportunityVatInvoicesMailto(o)) +
-          '">Email for VAT invoices</a> ';
       }
     }
     if (opportunityCanUnpublish(o)) {
@@ -18401,17 +18388,22 @@
       '<ul class="org-opp-billing-invoices-list">' +
       rows
         .map(function (inv) {
-          const dateLabel = esc(inv.periodLabel || 'Paid invoice');
+          const isComp =
+            String(inv.kind || '').toLowerCase() === 'complimentary' ||
+            String(inv.status || '').toLowerCase() === 'complimentary';
+          const dateLabel = esc(inv.periodLabel || (isComp ? 'Complimentary listing' : 'Paid invoice'));
           const number = esc(inv.number || '');
-          const amounts = [inv.amountExVat, inv.amountVat, inv.amountPaid].filter(Boolean).length
-            ? esc(
-                (inv.amountExVat || '') +
-                  ' + VAT ' +
-                  (inv.amountVat || '') +
-                  ' = ' +
-                  (inv.amountPaid || '')
-              )
-            : esc(inv.amountPaid || '');
+          const amounts = isComp
+            ? esc('£0 · no VAT charged')
+            : [inv.amountExVat, inv.amountVat, inv.amountPaid].filter(Boolean).length
+              ? esc(
+                  (inv.amountExVat || '') +
+                    ' + VAT ' +
+                    (inv.amountVat || '') +
+                    ' = ' +
+                    (inv.amountPaid || '')
+                )
+              : esc(inv.amountPaid || '');
           const pdfUrl = String(inv.invoicePdfUrl || inv.invoiceUrl || '').trim();
           const hostedUrl = String(inv.hostedInvoiceUrl || '').trim();
           let actions = '';
@@ -18428,19 +18420,26 @@
               '" target="_blank" rel="noopener noreferrer">View invoice</a>';
           }
           if (!actions) {
-            actions =
-              '<span class="org-opp-billing-invoices-muted">Email hi@thenetworkeruk.com for a copy</span>';
+            actions = isComp
+              ? '<span class="org-opp-billing-invoices-muted">On your account · no download needed</span>'
+              : '<span class="org-opp-billing-invoices-muted">Receipt kept on your account</span>';
           }
+          const detailExtra = inv.detail
+            ? '<span class="org-opp-billing-invoice-detail">' + esc(inv.detail) + '</span>'
+            : '';
           return (
-            '<li class="org-opp-billing-invoice-row">' +
+            '<li class="org-opp-billing-invoice-row' +
+            (isComp ? ' is-complimentary' : '') +
+            '">' +
             '<div class="org-opp-billing-invoice-meta">' +
             '<span class="org-opp-billing-invoice-date">' +
             dateLabel +
             '</span>' +
             '<span class="org-opp-billing-invoice-detail">' +
-            (number ? 'Invoice ' + number + (amounts ? ' · ' : '') : '') +
+            (number ? (isComp ? 'Statement ' : 'Invoice ') + number + (amounts ? ' · ' : '') : '') +
             amounts +
             '</span>' +
+            detailExtra +
             '</div>' +
             '<div class="org-opp-billing-invoice-actions">' +
             actions +
@@ -18464,24 +18463,6 @@
       (triggerBtn &&
         triggerBtn.closest('.org-opp-billing-row') &&
         triggerBtn.closest('.org-opp-billing-row').querySelector('.org-opp-billing-invoices'));
-
-    if (!opportunityHasStripeListingSubscription(o)) {
-      const mailto = opportunityVatInvoicesMailto(o || { title: 'opportunity listing' });
-      if (panel) {
-        panel.hidden = false;
-        panel.innerHTML =
-          '<p class="org-opp-billing-invoices-status" role="status">' +
-          'This listing was marked paid without a Stripe subscription, so invoices cannot load automatically. ' +
-          '<a href="' +
-          esc(mailto) +
-          '">Email hi@thenetworkeruk.com</a> and we will send your VAT receipts.' +
-          '</p>';
-      } else {
-        window.location.href = mailto;
-      }
-      if (triggerBtn) triggerBtn.setAttribute('aria-expanded', 'true');
-      return;
-    }
 
     if (!panel) {
       window.location.href = opportunityEditUrl(o || { id: id }) + '#vat-invoices';
@@ -18519,7 +18500,7 @@
         esc(String((err && err.message) || 'Could not load invoices.')) +
         ' <a href="' +
         esc(opportunityEditUrl(o || { id: id }) + '#vat-invoices') +
-        '">Open listing billing</a> or email hi@thenetworkeruk.com.' +
+        '">Open listing billing</a>.' +
         '</p>';
     }
   }
@@ -18542,11 +18523,11 @@
         const until = o.listingExpiresAt || o.listing_expires_at;
         let note = hasSub
           ? 'Monthly subscription · VAT receipts emailed each renewal'
-          : 'Marked paid · contact support if invoices are missing';
+          : 'Complimentary · statement kept on your account (no charge)';
         if (until) {
           try {
             note +=
-              ' · paid until ' +
+              ' · covered until ' +
               new Date(until).toLocaleDateString('en-GB', {
                 day: 'numeric',
                 month: 'short',
@@ -18556,23 +18537,17 @@
             /* ignore */
           }
         }
-        let actions = '';
+        let actions =
+          '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-opp-open-vat-invoices="' +
+          esc(o.id) +
+          '" aria-expanded="false" aria-controls="org-opp-vat-invoices-' +
+          esc(o.id) +
+          '">Open VAT invoices</button>';
         if (hasSub) {
-          actions +=
-            '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-opp-open-vat-invoices="' +
-            esc(o.id) +
-            '" aria-expanded="false" aria-controls="org-opp-vat-invoices-' +
-            esc(o.id) +
-            '">Open VAT invoices</button>';
           actions +=
             ' <button type="button" class="org-btn org-btn-outline org-btn-sm" data-opp-manage-billing="' +
             esc(o.id) +
             '">Manage / cancel</button>';
-        } else {
-          actions +=
-            '<a class="org-btn org-btn-gold org-btn-sm" href="' +
-            esc(opportunityVatInvoicesMailto(o)) +
-            '">Email for VAT invoices</a>';
         }
         return (
           '<li class="org-opp-billing-row" data-opp-billing-id="' +

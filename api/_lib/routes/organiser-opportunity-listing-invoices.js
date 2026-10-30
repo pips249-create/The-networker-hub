@@ -1,6 +1,8 @@
 /**
  * GET|POST /api/organiser/opportunity-listing-invoices
- * Lists paid VAT invoices for a business opportunity listing subscription.
+ * Lists paid VAT invoices for a business opportunity listing subscription,
+ * or an automatic complimentary account statement when the listing was granted
+ * without Stripe (no support email required).
  */
 const { getOrganiserApi } = require('../organiser-provider');
 const { jsonPublicError } = require('../public-error');
@@ -8,7 +10,10 @@ const {
   isStripeCheckoutConfigured,
   getStripeClient,
 } = require('../stripe-checkout');
-const { listOpportunityListingInvoices } = require('../opportunity-listing-vat-receipt');
+const {
+  listOpportunityListingInvoices,
+  buildComplimentaryListingAccountInvoice,
+} = require('../opportunity-listing-vat-receipt');
 
 function parseBody(req) {
   let body = req.body;
@@ -36,6 +41,14 @@ function opportunityIdFromReq(req) {
   ).trim();
 }
 
+function listingLooksComplimentaryPaid(opportunity) {
+  if (!opportunity) return false;
+  if (opportunity.listingPaymentActive || opportunity.listing_payment_active) return true;
+  return Boolean(
+    String(opportunity.listingPaidAt || opportunity.listing_paid_at || '').trim()
+  );
+}
+
 module.exports = async function handler(req, res) {
   const api = getOrganiserApi();
   const {
@@ -59,10 +72,6 @@ module.exports = async function handler(req, res) {
 
   const auth = await requireOrganiserSession(req);
   if (!auth.ok) return json(res, auth.status, { error: auth.error });
-
-  if (!isStripeCheckoutConfigured()) {
-    return json(res, 503, { ok: false, error: 'stripe_not_configured' });
-  }
 
   if (!getOpportunityById) {
     return json(res, 503, { ok: false, error: 'opportunities_unavailable' });
@@ -88,13 +97,31 @@ module.exports = async function handler(req, res) {
         opportunity.listing_stripe_subscription_id ||
         ''
     ).trim();
+
     if (!subscriptionId) {
+      if (listingLooksComplimentaryPaid(opportunity)) {
+        const complimentary = buildComplimentaryListingAccountInvoice(opportunity);
+        return json(res, 200, {
+          ok: true,
+          opportunityId,
+          billingMode: 'complimentary',
+          invoices: complimentary ? [complimentary] : [],
+          message:
+            'Complimentary listing term — no charge was taken, so this account statement is shown instead of a Stripe VAT invoice.',
+        });
+      }
       return json(res, 200, {
         ok: true,
+        opportunityId,
+        billingMode: 'unpaid',
         invoices: [],
         message:
           'No Stripe subscription is linked yet. VAT invoices appear here after your first payment.',
       });
+    }
+
+    if (!isStripeCheckoutConfigured()) {
+      return json(res, 503, { ok: false, error: 'stripe_not_configured' });
     }
 
     const invoices = await listOpportunityListingInvoices(getStripeClient(), subscriptionId, {
@@ -105,6 +132,7 @@ module.exports = async function handler(req, res) {
       ok: true,
       opportunityId,
       subscriptionId,
+      billingMode: 'stripe_subscription',
       invoices,
     });
   } catch (e) {

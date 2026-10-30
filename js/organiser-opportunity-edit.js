@@ -881,7 +881,7 @@
     if (lead) {
       lead.innerHTML = hasSub
         ? 'Your listing is billed <strong>£25/month + VAT</strong> (£30) via Stripe until you cancel. VAT invoices below are private to your organiser account (not on the public listing). Use Manage or cancel for card updates or cancellation.'
-        : 'Your listing fee is marked paid. If a Stripe subscription is missing, email <a href="mailto:hi@thenetworkeruk.com">hi@thenetworkeruk.com</a> and we will help with invoices or cancellation.';
+        : 'This listing was granted as a <strong>complimentary</strong> term (no Stripe charge). Your account statement below is kept here automatically — no VAT is due because no payment was taken.';
     }
     if (expiry) {
       const until = currentOpportunity && currentOpportunity.listingExpiresAt;
@@ -906,22 +906,9 @@
     }
     if (invoicesBtn) {
       invoicesBtn.hidden = false;
-      if (hasSub) {
-        invoicesBtn.setAttribute('href', '#vat-invoices');
-        invoicesBtn.removeAttribute('data-oe-vat-mailto');
-        invoicesBtn.textContent = 'VAT invoices';
-      } else {
-        const title =
-          String((currentOpportunity && currentOpportunity.title) || 'opportunity listing').trim() ||
-          'opportunity listing';
-        invoicesBtn.setAttribute(
-          'href',
-          'mailto:hi@thenetworkeruk.com?subject=' +
-            encodeURIComponent('VAT invoices — ' + title)
-        );
-        invoicesBtn.setAttribute('data-oe-vat-mailto', '1');
-        invoicesBtn.textContent = 'Email for VAT invoices';
-      }
+      invoicesBtn.setAttribute('href', '#vat-invoices');
+      invoicesBtn.removeAttribute('data-oe-vat-mailto');
+      invoicesBtn.textContent = hasSub ? 'VAT invoices' : 'Account statement';
     }
     loadListingVatInvoices({ force: false });
     maybeScrollToVatInvoices();
@@ -958,19 +945,24 @@
     list.hidden = false;
     list.innerHTML = rows
       .map(function (inv) {
-        const dateLabel = escapeListingInvoiceText(inv.periodLabel || 'Paid invoice');
+        const isComp =
+          String(inv.kind || '').toLowerCase() === 'complimentary' ||
+          String(inv.status || '').toLowerCase() === 'complimentary';
+        const dateLabel = escapeListingInvoiceText(
+          inv.periodLabel || (isComp ? 'Complimentary listing' : 'Paid invoice')
+        );
         const number = escapeListingInvoiceText(inv.number || '');
-        const amounts = [inv.amountExVat, inv.amountVat, inv.amountPaid]
-          .filter(Boolean)
-          .length
-          ? escapeListingInvoiceText(
-              (inv.amountExVat || '') +
-                ' + VAT ' +
-                (inv.amountVat || '') +
-                ' = ' +
-                (inv.amountPaid || '')
-            )
-          : escapeListingInvoiceText(inv.amountPaid || '');
+        const amounts = isComp
+          ? '£0 · no VAT charged'
+          : [inv.amountExVat, inv.amountVat, inv.amountPaid].filter(Boolean).length
+            ? escapeListingInvoiceText(
+                (inv.amountExVat || '') +
+                  ' + VAT ' +
+                  (inv.amountVat || '') +
+                  ' = ' +
+                  (inv.amountPaid || '')
+              )
+            : escapeListingInvoiceText(inv.amountPaid || '');
         const pdfUrl = String(inv.invoicePdfUrl || inv.invoiceUrl || '').trim();
         const hostedUrl = String(inv.hostedInvoiceUrl || '').trim();
         let actions = '';
@@ -987,8 +979,15 @@
             '" target="_blank" rel="noopener noreferrer">View invoice</a>';
         }
         if (!actions) {
-          actions = '<span class="oe-listing-invoice-detail">Email hi@thenetworkeruk.com for a copy</span>';
+          actions = isComp
+            ? '<span class="oe-listing-invoice-detail">On your account · no download needed</span>'
+            : '<span class="oe-listing-invoice-detail">Receipt kept on your account</span>';
         }
+        const detailExtra = inv.detail
+          ? '<span class="oe-listing-invoice-detail">' +
+            escapeListingInvoiceText(inv.detail) +
+            '</span>'
+          : '';
         return (
           '<li class="oe-listing-invoice-row">' +
           '<div class="oe-listing-invoice-meta">' +
@@ -996,9 +995,12 @@
           dateLabel +
           '</span>' +
           '<span class="oe-listing-invoice-detail">' +
-          (number ? 'Invoice ' + number + (amounts ? ' · ' : '') : '') +
+          (number
+            ? (isComp ? 'Statement ' : 'Invoice ') + number + (amounts ? ' · ' : '')
+            : '') +
           amounts +
           '</span>' +
+          detailExtra +
           '</div>' +
           '<div class="oe-listing-invoice-actions">' +
           actions +
@@ -1016,24 +1018,14 @@
     const billing = document.getElementById('oe-listing-billing');
     if (!billing || billing.hidden) return;
     if (!editId) return;
-    if (!listingHasStripeSubscription(currentOpportunity)) {
-      if (status) {
-        status.hidden = false;
-        status.textContent =
-          'No Stripe subscription is linked on this listing yet, so invoices cannot be loaded automatically. Email hi@thenetworkeruk.com and we will send your VAT receipts.';
-      }
-      if (list) {
-        list.hidden = true;
-        list.innerHTML = '';
-      }
-      return;
-    }
     if (!opts.force && listingInvoicesLoadedFor === editId) return;
     if (listingInvoicesLoading) return;
     listingInvoicesLoading = true;
     if (status) {
       status.hidden = false;
-      status.textContent = 'Loading invoices…';
+      status.textContent = listingHasStripeSubscription(currentOpportunity)
+        ? 'Loading invoices…'
+        : 'Loading account statement…';
     }
     try {
       const res = await api(
@@ -1052,9 +1044,7 @@
     } catch (err) {
       if (status) {
         status.hidden = false;
-        status.textContent =
-          String((err && err.message) || 'Could not load invoices.') +
-          ' You can still open Manage or cancel subscription in Stripe.';
+        status.textContent = String((err && err.message) || 'Could not load invoices.');
       }
       if (list) {
         list.hidden = true;
@@ -1299,22 +1289,9 @@
     if (invoicesBtn) {
       invoicesBtn.hidden = !canShowInvoices;
       if (canShowInvoices) {
-        if (canManageBilling) {
-          invoicesBtn.setAttribute('href', '#vat-invoices');
-          invoicesBtn.removeAttribute('data-oe-vat-mailto');
-          invoicesBtn.textContent = 'VAT invoices';
-        } else {
-          const title =
-            String((currentOpportunity && currentOpportunity.title) || 'opportunity listing').trim() ||
-            'opportunity listing';
-          invoicesBtn.setAttribute(
-            'href',
-            'mailto:hi@thenetworkeruk.com?subject=' +
-              encodeURIComponent('VAT invoices — ' + title)
-          );
-          invoicesBtn.setAttribute('data-oe-vat-mailto', '1');
-          invoicesBtn.textContent = 'Email for VAT invoices';
-        }
+        invoicesBtn.setAttribute('href', '#vat-invoices');
+        invoicesBtn.removeAttribute('data-oe-vat-mailto');
+        invoicesBtn.textContent = canManageBilling ? 'VAT invoices' : 'Account statement';
       }
     }
     if (lede) {
@@ -1326,10 +1303,10 @@
           'Download VAT invoices near the top of this page, or manage your card / cancel the monthly listing subscription.';
       } else if (canShowInvoices && canUnpublish) {
         lede.textContent =
-          'This listing was marked paid without Stripe invoices on file — email hi@thenetworkeruk.com for VAT receipts, or hide this listing from the public directory.';
+          'Your complimentary account statement is near the top of this page. You can also hide this listing from the public directory.';
       } else if (canShowInvoices) {
         lede.textContent =
-          'This listing was marked paid without Stripe invoices on file — email hi@thenetworkeruk.com for VAT receipts.';
+          'Your complimentary account statement is near the top of this page — no charge was taken, so no VAT invoice is due.';
       } else if (canUnpublish) {
         lede.textContent = 'Hide this listing from the public directory.';
       } else {
@@ -3904,11 +3881,6 @@
       });
     });
     function jumpToVatInvoices(e) {
-      const link = e && e.currentTarget;
-      if (link && link.getAttribute('data-oe-vat-mailto') === '1') {
-        // Complimentary / marked-paid listings have no Stripe invoices — allow mailto.
-        return;
-      }
       if (e) e.preventDefault();
       if (window.history && window.history.replaceState) {
         const next = new URL(window.location.href);
