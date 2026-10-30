@@ -1,4 +1,4 @@
-/** Step deck for /guides/connect-eventbrite */
+/** Step deck + walkthrough video for /guides/connect-eventbrite */
 (function () {
   var root = document.getElementById('ceb-deck');
   if (!root) return;
@@ -8,7 +8,59 @@
   var counter = document.getElementById('ceb-counter');
   var prevBtn = document.getElementById('ceb-prev');
   var nextBtn = document.getElementById('ceb-next');
+  var video = document.getElementById('ceb-walkthrough-video');
+  var chapters = Array.prototype.slice.call(root.querySelectorAll('[data-ceb-chapter]'));
   var idx = 0;
+  var activeChapter = 0;
+
+  function setActiveChapter(i) {
+    activeChapter = i;
+    chapters.forEach(function (btn, n) {
+      var on = n === i;
+      btn.classList.toggle('is-active', on);
+      btn.setAttribute('aria-current', on ? 'true' : 'false');
+    });
+  }
+
+  function seekChapter(btn, play) {
+    if (!video || !btn) return;
+    var start = parseFloat(btn.getAttribute('data-start') || '0') || 0;
+    var i = chapters.indexOf(btn);
+    if (i < 0) i = 0;
+    setActiveChapter(i);
+    var go = function () {
+      try {
+        video.currentTime = start;
+      } catch (e) {
+        /* ignore */
+      }
+      if (play) {
+        var p = video.play();
+        if (p && typeof p.catch === 'function') p.catch(function () {});
+      }
+    };
+    if (video.readyState >= 1) go();
+    else video.addEventListener('loadedmetadata', go, { once: true });
+  }
+
+  if (chapters.length && video) {
+    chapters.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        seekChapter(btn, true);
+      });
+    });
+    video.addEventListener('timeupdate', function () {
+      if (!chapters.length) return;
+      var t = video.currentTime || 0;
+      var current = 0;
+      for (var i = 0; i < chapters.length; i++) {
+        var start = parseFloat(chapters[i].getAttribute('data-start') || '0') || 0;
+        if (t + 0.2 >= start) current = i;
+      }
+      if (current !== activeChapter) setActiveChapter(current);
+    });
+    setActiveChapter(0);
+  }
 
   if (!slides.length) return;
 
