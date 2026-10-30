@@ -30,6 +30,7 @@ const {
   logoEmailOnDarkUrl,
   logoFooterUrl,
   hubertIconUrl,
+  hubAccountSettingsUrl,
   supportEmail,
   unsubscribeUrl,
   oneClickUnsubscribeUrl,
@@ -409,12 +410,26 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
 
   merged.logo_url = logoEmailHeaderUrl(siteUrl);
   merged.logo_footer_url = logoFooterUrl(siteUrl);
-  if (slug === 'hubert_hub_invite') {
-    // Purple header + footer: hosted cream/white wordmark (inbox-safe HTTPS).
+  if (slug === 'hubert_hub_invite' || slug === 'hubert_matchmaker_launching') {
+    // Navy header + footer: hosted cream/white wordmark (inbox-safe HTTPS).
     const onDark = logoEmailOnDarkUrl(siteUrl);
     merged.logo_url = onDark;
     merged.logo_footer_url = onDark;
     merged.logo_footer_light_url = onDark;
+  }
+  if (slug === 'hubert_matchmaker_launching') {
+    const launchUtm =
+      'utm_source=hubert&utm_medium=email&utm_campaign=matchmaker_launching';
+    if (!String(merged.hubert_profile_url || '').trim()) {
+      merged.hubert_profile_url =
+        hubAccountSettingsUrl(siteUrl) + '?' + launchUtm + '#as-hubert-matchmaker';
+    }
+    if (!String(merged.meet_people_url || '').trim()) {
+      merged.meet_people_url = siteUrl + '/account/?' + launchUtm + '#meet';
+    }
+    if (!String(merged.user_name || '').trim()) {
+      merged.user_name = 'there';
+    }
   }
   if (
     slug === 'franchise_claim_invite' ||
