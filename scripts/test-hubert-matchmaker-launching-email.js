@@ -45,10 +45,17 @@ assert.ok(
   'meet UTM before hash'
 );
 assert.ok(vars.hubert_icon_url, 'hubert icon');
-assert.ok(/logo-email-footer-navy\.png/.test(vars.logo_url || ''), 'header uses navy lockup');
 assert.ok(
-  /logo-email-footer-navy\.png/.test(vars.logo_footer_light_url || ''),
-  'footer uses navy lockup'
+  /logo-networker-uk-email-navy\.png/.test(vars.logo_url || ''),
+  'header uses attached navy lockup'
+);
+assert.ok(
+  /logo-networker-uk-email-navy\.png/.test(vars.logo_footer_light_url || ''),
+  'footer uses attached navy lockup'
+);
+assert.ok(
+  fs.existsSync(path.join(__dirname, '../assets/logo-networker-uk-email-navy.png')),
+  'attached logo asset present'
 );
 
 const admin = fs.readFileSync(path.join(__dirname, '../js/admin-app.js'), 'utf8');

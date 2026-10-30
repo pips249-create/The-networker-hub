@@ -30,6 +30,7 @@ const {
   logoEmailOnDarkUrl,
   logoFooterUrl,
   logoFooterLightUrl,
+  logoEmailHubertLaunchUrl,
   hubertIconUrl,
   hubAccountSettingsUrl,
   supportEmail,
@@ -419,7 +420,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
     merged.logo_footer_light_url = onDark;
   }
   if (slug === 'hubert_matchmaker_launching') {
-    const navyLockup = logoFooterLightUrl(siteUrl);
+    const navyLockup = logoEmailHubertLaunchUrl(siteUrl);
     merged.logo_url = navyLockup;
     merged.logo_footer_url = navyLockup;
     merged.logo_footer_light_url = navyLockup;

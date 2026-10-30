@@ -232,6 +232,17 @@ function logoFooterLightUrl(siteUrl) {
   return toPublicAssetUrl('/assets/logo-email-footer-navy.png?v=' + LOGO_ASSET_VERSION, siteUrl);
 }
 
+/**
+ * Attached brand lockup for Hubert launching email navy bands (#1c2040).
+ * Lavender Networker + cream The/UK (source charcoal The/UK was unreadable on navy).
+ */
+function logoEmailHubertLaunchUrl(siteUrl) {
+  return toPublicAssetUrl(
+    '/assets/logo-networker-uk-email-navy.png?v=' + LOGO_ASSET_VERSION,
+    siteUrl
+  );
+}
+
 function hubertIconUrl(siteUrl) {
   return toPublicAssetUrl('/assets/hubert-icon.png?v=' + LOGO_ASSET_VERSION, siteUrl);
 }
@@ -360,6 +371,7 @@ module.exports = {
   logoEmailOnDarkUrl,
   logoFooterUrl,
   logoFooterLightUrl,
+  logoEmailHubertLaunchUrl,
   hubertIconUrl,
   rosiePhotoUrl,
   catherinePhotoUrl,

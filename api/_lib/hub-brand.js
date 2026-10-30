@@ -6,7 +6,7 @@ const DEFAULT_PUBLIC_SITE = 'https://www.thenetworkeruk.com';
 const SUPPORT_EMAIL = 'hi@thenetworkeruk.com';
 const MAIL_FROM_DOMAIN = 'mail.thenetworkeruk.com';
 const LEGACY_MAIL_FROM_DOMAINS = ['mail.thenetworkeruk.com', 'mail.thenetworkerhub.com'];
-const LOGO_ASSET_VERSION = '20260828email1';
+const LOGO_ASSET_VERSION = '20261030hubert1';
 /** Square logo — schema.org Organization.logo, favicons, UI. */
 const LOGO_ASSET = '/assets/logo.png';
 /** 1200×630 share card — og:image / twitter:image (not the square logo). */
