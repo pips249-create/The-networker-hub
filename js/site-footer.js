@@ -5,7 +5,7 @@
  * preview cookie unlocks catalogue APIs.
  */
 (function () {
-  var FOOTER_BUILD = '20260909social1';
+  var FOOTER_BUILD = '20261030hubertOff1';
   var PUBLIC_BROWSE_OPENS_AT_MS = Date.parse('2026-08-25T00:00:00+01:00');
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
@@ -349,44 +349,6 @@
     (document.head || document.body).appendChild(seoData);
   }
 
-  if (script && script.getAttribute('data-hubert') === 'off') return;
-  var pagePath = (window.location.pathname || '').toLowerCase();
-  if (/\/contact(?:\.html)?\/?$/.test(pagePath)) return;
-  // Member dashboard uses Meet people for Hubert — skip the floating launcher.
-  if (/\/account(?:\/|$)/.test(pagePath)) return;
-
-  function loadHubertWidget() {
-    if (
-      document.getElementById('hubert-widget') ||
-      window.HubertWidget ||
-      document.querySelector('script[src*="hubert-widget"]')
-    ) {
-      return;
-    }
-    var hubertCss = document.createElement('link');
-    hubertCss.rel = 'stylesheet';
-    hubertCss.href = href('css/hubert-widget.css?v=' + FOOTER_BUILD);
-    document.head.appendChild(hubertCss);
-
-    var hubertChat = document.createElement('script');
-    hubertChat.src = href('js/hubert-chat.js?v=' + FOOTER_BUILD);
-    hubertChat.onload = function () {
-      if (document.getElementById('hubert-widget') || window.HubertWidget) return;
-      if (document.querySelector('script[src*="hubert-widget.js"]')) return;
-      var hubertWidget = document.createElement('script');
-      hubertWidget.src = href('js/hubert-widget.js?v=' + FOOTER_BUILD);
-      hubertWidget.setAttribute('data-root', root);
-      document.body.appendChild(hubertWidget);
-    };
-    document.body.appendChild(hubertChat);
-  }
-
-  // Keep Hubert off while the public catalogue is gated (Email 1 / pre-launch).
-  if (window.HubCatalogueOpen === true) {
-    loadHubertWidget();
-  } else {
-    window.addEventListener('hub-catalogue-access', function (ev) {
-      if (ev && ev.detail && ev.detail.open === true) loadHubertWidget();
-    });
-  }
+  // Floating Hubert corner launcher is off site-wide. Pages that still need
+  // chat (FAQ ask panel, organiser help) load hubert-chat.js themselves.
 })();

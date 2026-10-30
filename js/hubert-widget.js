@@ -1,7 +1,13 @@
 /**
  * Hubert — floating chat widget on public site pages and organiser dashboard.
+ *
+ * Floating corner launcher is retired site-wide (Meet people / FAQ / organiser
+ * help cover Hubert). Keep this file as a no-op so leftover script tags are safe.
  */
 (function () {
+  'use strict';
+  return;
+
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
   var organiserDashMode = script && script.getAttribute('data-hubert') === 'organiser-dashboard';
