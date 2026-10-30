@@ -18276,18 +18276,38 @@
     );
   }
 
+  function opportunityHasStripeListingSubscription(o) {
+    if (!o) return false;
+    return Boolean(
+      String(o.listingStripeSubscriptionId || o.listing_stripe_subscription_id || '').trim()
+    );
+  }
+
+  function opportunityVatInvoicesMailto(o) {
+    const title = String((o && o.title) || 'opportunity listing').trim() || 'opportunity listing';
+    return (
+      'mailto:hi@thenetworkeruk.com?subject=' +
+      encodeURIComponent('VAT invoices — ' + title)
+    );
+  }
+
   function opportunityManageSecondaryActionHtml(o) {
     let html = '';
     if (opportunityHasListingBilling(o)) {
-      html +=
-        '<a class="org-btn org-btn-gold org-btn-sm" href="' +
-        esc(opportunityEditUrl(o) + '#vat-invoices') +
-        '">VAT invoices</a> ';
-      if (o.listingStripeSubscriptionId || o.listing_stripe_subscription_id) {
+      if (opportunityHasStripeListingSubscription(o)) {
+        html +=
+          '<a class="org-btn org-btn-gold org-btn-sm" href="' +
+          esc(opportunityEditUrl(o) + '#vat-invoices') +
+          '">VAT invoices</a> ';
         html +=
           '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-opp-manage-billing="' +
           esc(o.id) +
           '">Manage / cancel billing</button> ';
+      } else {
+        html +=
+          '<a class="org-btn org-btn-gold org-btn-sm" href="' +
+          esc(opportunityVatInvoicesMailto(o)) +
+          '">Email for VAT invoices</a> ';
       }
     }
     if (opportunityCanUnpublish(o)) {
@@ -18454,13 +18474,11 @@
     listEl.innerHTML = paid
       .map(function (o) {
         const title = esc(o.title || 'Untitled listing');
-        const hasSub = Boolean(
-          String(o.listingStripeSubscriptionId || o.listing_stripe_subscription_id || '').trim()
-        );
+        const hasSub = opportunityHasStripeListingSubscription(o);
         const until = o.listingExpiresAt || o.listing_expires_at;
         let note = hasSub
           ? 'Monthly subscription · VAT receipts emailed each renewal'
-          : 'Marked paid · contact support if invoices are missing';
+          : 'Marked paid · email support for VAT invoices';
         if (until) {
           try {
             note +=
@@ -18474,10 +18492,13 @@
             /* ignore */
           }
         }
-        let actions =
-          '<a class="org-btn org-btn-gold org-btn-sm" href="' +
-          esc(opportunityEditUrl(o) + '#vat-invoices') +
-          '">Open VAT invoices</a>';
+        let actions = hasSub
+          ? '<a class="org-btn org-btn-gold org-btn-sm" href="' +
+            esc(opportunityEditUrl(o) + '#vat-invoices') +
+            '">Open VAT invoices</a>'
+          : '<a class="org-btn org-btn-gold org-btn-sm" href="' +
+            esc(opportunityVatInvoicesMailto(o)) +
+            '">Email for VAT invoices</a>';
         if (hasSub) {
           actions +=
             ' <button type="button" class="org-btn org-btn-outline org-btn-sm" data-opp-manage-billing="' +
