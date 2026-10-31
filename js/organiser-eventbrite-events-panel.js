@@ -579,7 +579,10 @@
       autoImportIfReady();
     } else {
       setExpanded(true);
-      setMsg('Press Connect Eventbrite to link your account, or paste a private token below.', 'ok');
+      setMsg(
+        'Not connected — ticket buyers will not sync. Press Connect Eventbrite (or paste a private token below), then Import each event.',
+        'ok'
+      );
     }
   }
 

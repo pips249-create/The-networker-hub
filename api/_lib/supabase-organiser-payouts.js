@@ -100,6 +100,10 @@ function mapLatestCancellationsByEvent(cancellations) {
   return byEvent;
 }
 
+function isExternalBookingRegistration(registration) {
+  return String(registration?.booking_source || '').trim().toLowerCase() === 'external';
+}
+
 /**
  * Paid ticket revenue still owed back to attendees — exclude from organiser revenue totals.
  */
@@ -114,6 +118,9 @@ function isRevenueCountableRegistration(registration, context) {
   }
 
   if (registration?.cancelled_at) {
+    // Eventbrite / Ticket Tailor / own-site: cancelled buyers leave Attendees and
+    // tickets sold. Keep revenue in sync — do not show orphan Eventbrite money.
+    if (isExternalBookingRegistration(registration)) return false;
     if (!eventRow) return false;
     const { deriveRefundStatusForCancelledRegistration } = require('./cancellation-email-sections');
     const refundStatus = deriveRefundStatusForCancelledRegistration(eventRow, registration);
