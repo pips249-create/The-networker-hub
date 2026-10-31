@@ -157,9 +157,18 @@ function registrationVatTreatment(registration) {
   return normalizeVatTreatment(raw);
 }
 
+function isExternalBookingRegistration(registration) {
+  return String(registration?.booking_source || '').trim().toLowerCase() === 'external';
+}
+
 function registrationTicketRevenue(registration) {
   const paid = Number(registration?.amount_paid || 0);
   if (paid <= 0) return 0;
+  // Connected booking (Eventbrite etc.): amount_paid is already the external face
+  // amount. Do not reverse-engineer The Networker UK booking fee from it.
+  if (isExternalBookingRegistration(registration)) {
+    return roundMoney(paid);
+  }
   const qty = Math.max(1, parseInt(registration?.quantity, 10) || 1);
   const treatment = registrationVatTreatment(registration);
   const knownUnit = parseKnownTicketUnit(registration);
@@ -186,6 +195,7 @@ function registrationTicketRevenue(registration) {
 function registrationBookingFee(registration) {
   const paid = Number(registration?.amount_paid || 0);
   if (paid <= 0) return 0;
+  if (isExternalBookingRegistration(registration)) return 0;
   const ticketAndVat = registrationTicketRevenue(registration);
   return roundMoney(Math.max(0, paid - ticketAndVat));
 }

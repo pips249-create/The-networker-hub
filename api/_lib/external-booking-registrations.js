@@ -168,11 +168,12 @@ async function createRegistrationFromExternalBooking(input) {
     if (!existingRes.data?.id) {
       return { action: 'ignored', reason: 'no_registration' };
     }
+    // External checkout (Eventbrite etc.): treat cancel/refund the same for hub
+    // totals so cancelled buyers drop off Attendees, tickets sold, and revenue.
     const patch = {
-      payment_status: status === 'refunded' ? 'Refunded' : existingRes.data.payment_status,
+      payment_status: 'Refunded',
       cancelled_at: new Date().toISOString(),
     };
-    if (status === 'refunded') patch.payment_status = 'Refunded';
     const upd = await sb.from('registrations').update(patch).eq('id', existingRes.data.id).select('id').single();
     if (upd.error) throw new Error(upd.error.message);
     return { action: 'cancelled', id: existingRes.data.id };
