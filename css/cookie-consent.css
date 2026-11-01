@@ -15,6 +15,15 @@
   display: none !important;
 }
 
+/*
+ * Keep primary CTAs (e.g. Sign in) scrollable above the fixed banner.
+ * Without this, mobile users tap the banner instead of the button underneath.
+ */
+body.hub-cookie-banner-open {
+  padding-bottom: var(--hub-cookie-banner-h, 140px);
+  scroll-padding-bottom: var(--hub-cookie-banner-h, 140px);
+}
+
 .hub-cookie-banner-inner {
   max-width: 1040px;
   margin: 0 auto;

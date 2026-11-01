@@ -654,6 +654,11 @@
     grid-template-columns: 1fr;
   }
 
+  /* Form first on mobile — Sign in must be reachable without scrolling past marketing. */
+  .auth-main--split .auth-panel--form {
+    order: -1;
+  }
+
   .auth-page--organiser-mobile-compact .auth-panel--brand {
     display: none;
   }
@@ -666,6 +671,11 @@
     width: 100%;
     text-align: center;
     box-sizing: border-box;
+  }
+
+  .auth-submit,
+  .auth-register-btn {
+    scroll-margin-bottom: calc(var(--hub-cookie-banner-h, 140px) + 16px);
   }
 }
 
