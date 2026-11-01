@@ -79,9 +79,43 @@
 
   var bannerEl;
   var modalEl;
+  var bannerSpaceObserver = null;
+
+  function clearBannerSpace() {
+    document.body.classList.remove('hub-cookie-banner-open');
+    try {
+      document.documentElement.style.removeProperty('--hub-cookie-banner-h');
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function syncBannerSpace() {
+    if (!bannerEl || bannerEl.hidden || getComputedStyle(bannerEl).display === 'none') {
+      clearBannerSpace();
+      return;
+    }
+    var height = Math.ceil(bannerEl.getBoundingClientRect().height || 0);
+    document.body.classList.add('hub-cookie-banner-open');
+    document.documentElement.style.setProperty(
+      '--hub-cookie-banner-h',
+      Math.max(height, 1) + 'px'
+    );
+  }
+
+  function watchBannerSpace() {
+    syncBannerSpace();
+    if (bannerSpaceObserver || typeof ResizeObserver === 'undefined' || !bannerEl) return;
+    bannerSpaceObserver = new ResizeObserver(function () {
+      syncBannerSpace();
+    });
+    bannerSpaceObserver.observe(bannerEl);
+    window.addEventListener('resize', syncBannerSpace);
+  }
 
   function hideBanner() {
     if (bannerEl) bannerEl.hidden = true;
+    clearBannerSpace();
   }
 
   function hideModal() {
@@ -190,6 +224,7 @@
       if (existing.analytics) loadAnalytics();
     } else if (bannerEl) {
       bannerEl.hidden = false;
+      watchBannerSpace();
     }
   }
 

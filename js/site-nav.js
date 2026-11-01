@@ -135,6 +135,13 @@
   var root = (script && script.getAttribute('data-root')) || '';
   var page = (script && script.getAttribute('data-page')) || '';
 
+  /** Login/register chrome — hide redundant Sign in that just reloads the same page. */
+  function isAuthChromePage() {
+    if (page === 'auth') return true;
+    var path = String(window.location.pathname || '');
+    return /\/(login|register|forgot-password|reset-password)(?:\.html)?\/?$/.test(path);
+  }
+
   function isPublicBrowseDateOpen() {
     if (window.HubSoftLaunch && typeof window.HubSoftLaunch.isPublicBrowseOpen === 'function') {
       return window.HubSoftLaunch.isPublicBrowseOpen();
@@ -217,7 +224,7 @@
       window.HubComplianceBootstrap.load(root);
     } else {
       var complianceScript = document.createElement('script');
-      complianceScript.src = root + 'js/hub-compliance-bootstrap.js?v=20260923cmp4';
+      complianceScript.src = root + 'js/hub-compliance-bootstrap.js?v=20261101cookie1';
       complianceScript.setAttribute('data-root', root);
       complianceScript.setAttribute('data-hub-compliance-bootstrap', '1');
       document.head.appendChild(complianceScript);
@@ -856,6 +863,15 @@
     }
     if (user) {
       actions += myHubDropdownHtml(user);
+    } else if (isAuthChromePage()) {
+      /* On auth pages, only offer the alternate action — not a self Sign in link. */
+      var onRegister = /\/register(?:\.html)?\/?$/.test(String(window.location.pathname || ''));
+      actions +=
+        '<span class="nav-auth">' +
+        (onRegister
+          ? link('/login', 'Sign in', 'auth', 'nav-signin')
+          : link('/register', 'Join free', 'auth', 'nav-register')) +
+        '</span>';
     } else if (early) {
       actions +=
         '<span class="nav-auth">' +
@@ -905,6 +921,7 @@
   function mobileBarAuthHtml(user, pending) {
     if (isPeekPath()) return '';
     if (user || pending) return '';
+    if (isAuthChromePage()) return '';
     return (
       '<a class="nav-mobile-bar-signin" href="' +
       href('/login') +
@@ -928,7 +945,16 @@
         '</span>';
     } else if (!user) {
       /* Auth first — returning users should not scroll past Browse / cities to find Sign in */
-      if (early) {
+      if (isAuthChromePage()) {
+        var onRegisterPage = /\/register(?:\.html)?\/?$/.test(String(window.location.pathname || ''));
+        html += '<div class="nav-mobile-auth">';
+        if (onRegisterPage) {
+          html += link('/login', 'Sign in', 'auth', 'nav-mobile-item nav-mobile-signin');
+        } else {
+          html += link('/register', 'Join free', 'auth', 'nav-mobile-item nav-mobile-register');
+        }
+        html += '</div>';
+      } else if (early) {
         html += link('/login', 'Sign in', 'auth', 'nav-mobile-item nav-mobile-signin');
       } else {
         html += '<div class="nav-mobile-auth">';

@@ -72,6 +72,7 @@
     "test:opportunity-spotlight-slots": "node scripts/test-opportunity-spotlight-slots.js",
     "test:opportunity-listing-vat-receipt": "node scripts/test-opportunity-listing-vat-receipt.js",
     "test:member-offers": "node scripts/test-member-offers.js",
+    "test:signin-cookie-clearance": "node scripts/test-signin-cookie-clearance.js",
     "test:meeting-link": "node scripts/test-meeting-link.js",
     "test:booking-event-help-copy": "node scripts/test-booking-event-help-copy.js",
     "test:organiser-email-bcc": "node scripts/test-organiser-email-bcc.js",

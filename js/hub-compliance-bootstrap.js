@@ -3,7 +3,7 @@
  * Loaded by site-nav.js and standalone pages without the main nav.
  */
 (function () {
-  var BUILD = '20260923cmp4';
+  var BUILD = '20261101cookie1';
   var FONT_SAFE = 'js/hub-fonts-safe.js?v=20260828fonts1';
 
   function ensureFontSafety(root) {
@@ -68,7 +68,7 @@
       return;
     }
 
-    loadAsset(root, 'css/cookie-consent.css?v=20260609');
+    loadAsset(root, 'css/cookie-consent.css?v=20261101cookie1');
     loadAsset(root, 'js/hub-analytics.js?v=20260825ga4');
     loadAsset(root, 'js/cookie-consent.js?v=' + BUILD);
   }
