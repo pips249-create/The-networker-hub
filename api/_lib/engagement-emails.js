@@ -84,7 +84,7 @@ function locationTipHtml(siteUrl, location, countryCode) {
   );
 }
 
-/** Hubert digest footer — acknowledge saved location instead of always asking for it. */
+/** TINA digest footer — acknowledge saved location instead of always asking for it. */
 function hubertLocationFooterHtml(siteUrl, location, countryCode) {
   const href = accountSettingsUrl(siteUrl);
   if (!isUkCountryCode(countryCode)) {
@@ -135,7 +135,7 @@ const SIGNUP_NUDGE_MAX_AGE_DAYS = 60;
 /** Second nurture ~10 days after signup (after the day-3 nudge). */
 const SIGNUP_NUDGE_FOLLOWUP_DELAY_DAYS = 10;
 const SIGNUP_NUDGE_FOLLOWUP_MAX_AGE_DAYS = 60;
-/** Skip Hubert if a signup nurture email landed this recently (avoids same-day doubles). */
+/** Skip TINA if a signup nurture email landed this recently (avoids same-day doubles). */
 const HUBERT_AFTER_NURTURE_COOLDOWN_DAYS = 7;
 const HUBERT_CONCIERGE_BATCH_LIMIT = 80;
 const REENGAGEMENT_BATCH_LIMIT = 25;
@@ -547,7 +547,7 @@ async function sendDueSignupEventsNudgeEmails(sb) {
 
 /**
  * Accounts with organiser workspace enabled, plus emails linked to an
- * organiser profile — used to keep attendee nurture / Hubert picks off
+ * organiser profile — used to keep attendee nurture / TINA picks off
  * organiser and group-contact inboxes.
  */
 async function loadOrganiserRecipientKeys(sb, attendees) {
@@ -1863,7 +1863,7 @@ async function sendDueHubertEventConciergeEmails(sb) {
       continue;
     }
 
-    // Attendee nurture — keep Hubert's picks off organiser / group-contact inboxes.
+    // Attendee nurture — keep TINA's picks off organiser / group-contact inboxes.
     // Stamp so organisers do not keep consuming the weekly batch.
     if (isOrganiserAttendee(attendee, organiserKeys)) {
       await claimRowTimestamp(sb, {
@@ -1921,7 +1921,7 @@ async function sendDueHubertEventConciergeEmails(sb) {
               attendee.country_code
             ),
           },
-          subject: "Hubert's weekly event picks — week of " + weekLabel,
+          subject: "TINA's weekly event picks — week of " + weekLabel,
         });
       } catch (sendErr) {
         await releaseRowTimestamp(sb, {

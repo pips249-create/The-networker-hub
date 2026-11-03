@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Smoke tests for Hubert Matchmaker client helpers (no DOM).
+ * Smoke tests for TINA client helpers (no DOM).
  */
 const fs = require('fs');
 const path = require('path');

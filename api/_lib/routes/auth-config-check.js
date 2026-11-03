@@ -193,7 +193,7 @@ module.exports = async function handler(req, res) {
           : null,
       hubertEventConcierge:
         !email.hubertEventConciergeEmailsEnabled
-          ? 'Hubert weekly event picks are OFF until HUBERT_EVENT_CONCIERGE_EMAILS_ENABLED=true. This only affects that digest — not account welcome or other transactional mail. When on, sends to linked member accounts only; organisers and group contact emails are skipped.'
+          ? 'TINA weekly event picks are OFF until HUBERT_EVENT_CONCIERGE_EMAILS_ENABLED=true. This only affects that digest — not account welcome or other transactional mail. When on, sends to linked member accounts only; organisers and group contact emails are skipped.'
           : null,
       siteAccessGate:
         siteAccess.siteAccessRequired && !siteAccess.siteAccessReady

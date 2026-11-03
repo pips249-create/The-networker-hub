@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Send a test Hubert weekly popular-events digest (Meet Rosie + Meet Catherine promos).
+ * Send a test TINA weekly popular-events digest (Meet Rosie + Meet Catherine promos).
  *
  * Usage:
  *   node scripts/send-test-hubert-weekly-email.js catherine@thenetworkeruk.com
@@ -67,10 +67,10 @@ sendTemplatedEmail({
   to,
   variables: vars,
   skipEmailCheck: true,
-  subject: "[Test] Hubert's weekly event picks — week of " + weekLabel,
+  subject: "[Test] TINA's weekly event picks — week of " + weekLabel,
 })
   .then(function (result) {
-    console.log('Sent Hubert weekly digest test to', to);
+    console.log('Sent TINA weekly digest test to', to);
     console.log('Resend id:', result.id || 'n/a');
     console.log('Subject:', result.subject || 'n/a');
     console.log('Promos:', promoIds || '(none)');
