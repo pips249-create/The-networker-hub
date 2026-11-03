@@ -69,6 +69,7 @@ function mapRow(row) {
     lookingToMeet: Array.isArray(row.looking_to_meet) ? row.looking_to_meet : [],
     linkedinUrl: row.linkedin_url || '',
     blurb: row.blurb || '',
+    location: row.location || '',
     source: row.source || 'rosie',
     status: row.status || 'active',
     reminderSentAt: row.reminder_sent_at || null,
@@ -119,6 +120,9 @@ function normalizeSeedInput(body, opts) {
     const li = cleanLinkedIn(body.linkedinUrl != null ? body.linkedinUrl : body.linkedin_url);
     if (li === null) errors.linkedinUrl = 'invalid';
     else fields.linkedin_url = li || null;
+  }
+  if (!partial || body.location != null) {
+    fields.location = cleanText(body.location, 120) || null;
   }
   if (!partial || body.blurb != null) fields.blurb = cleanText(body.blurb, MAX_BLURB) || null;
   if (!partial || body.notes != null) fields.notes = cleanText(body.notes, MAX_NOTES) || null;

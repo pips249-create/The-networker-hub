@@ -1443,7 +1443,7 @@ async function searchMatchmaker(opts) {
     const seedRes = await sb
       .from('hubert_match_seed')
       .select(
-        'id, full_name, company, job_title, industry, professional_role, looking_to_meet, blurb, status'
+        'id, full_name, company, job_title, industry, professional_role, looking_to_meet, blurb, location, status'
       )
       .eq('status', 'active')
       .limit(200);

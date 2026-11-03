@@ -34497,6 +34497,7 @@
           jobTitle: String(fd.get('jobTitle') || '').trim(),
           industry: String(fd.get('industry') || '').trim(),
           professionalRole: String(fd.get('professionalRole') || '').trim(),
+          location: String(fd.get('location') || '').trim(),
           lookingToMeet: String(fd.get('lookingToMeet') || '').trim(),
           linkedinUrl: String(fd.get('linkedinUrl') || '').trim(),
           blurb: String(fd.get('blurb') || '').trim(),
@@ -34713,6 +34714,7 @@
       '<label class="text-sm font-semibold text-slate-700">Job title<input name="jobTitle" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>' +
       '<label class="text-sm font-semibold text-slate-700">Industry<input name="industry" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>' +
       '<label class="text-sm font-semibold text-slate-700">I am a<input name="professionalRole" placeholder="Founder, Investor…" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>' +
+      '<label class="text-sm font-semibold text-slate-700">Location<input name="location" placeholder="Town / city / region" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>' +
       '<label class="text-sm font-semibold text-slate-700 sm:col-span-2">Looking to meet<input name="lookingToMeet" placeholder="Clients, Investors (comma-separated)" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>' +
       '<label class="text-sm font-semibold text-slate-700 sm:col-span-2">LinkedIn URL<input name="linkedinUrl" type="url" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="https://www.linkedin.com/in/…" /></label>' +
       '<label class="text-sm font-semibold text-slate-700 sm:col-span-2">Short blurb<textarea name="blurb" rows="3" maxlength="800" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Paste/edit from LinkedIn About — do not scrape"></textarea></label>' +

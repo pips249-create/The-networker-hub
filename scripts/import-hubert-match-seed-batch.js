@@ -37,10 +37,13 @@ function loadBatch(filePath) {
 }
 
 function notesFor(contact, batch) {
+  if (contact.notes && String(contact.notes).trim()) {
+    return String(contact.notes).trim().slice(0, 1000);
+  }
   const bits = [];
   if (batch.notesPrefix) bits.push(String(batch.notesPrefix).trim());
   if (contact.phone) bits.push('Phone: ' + String(contact.phone).trim());
-  if (contact.notes) bits.push(String(contact.notes).trim());
+  if (contact.location) bits.push('Location: ' + String(contact.location).trim());
   return bits.filter(Boolean).join(' · ').slice(0, 1000);
 }
 
@@ -80,6 +83,8 @@ async function main() {
         jobTitle: contact.jobTitle || contact.job_title || '',
         professionalRole: contact.professionalRole || contact.professional_role || '',
         lookingToMeet: contact.lookingToMeet || contact.looking_to_meet || [],
+        linkedinUrl: contact.linkedinUrl || contact.linkedin_url || '',
+        location: contact.location || '',
         blurb: contact.blurb || '',
         notes: notesFor(contact, batch),
         source,
@@ -115,6 +120,9 @@ async function main() {
           industry: normalized.fields.industry,
           job_title: normalized.fields.job_title,
           professional_role: normalized.fields.professional_role,
+          linkedin_url: normalized.fields.linkedin_url,
+          location: normalized.fields.location,
+          blurb: normalized.fields.blurb,
           notes: normalized.fields.notes,
           source: normalized.fields.source,
         });
