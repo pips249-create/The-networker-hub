@@ -56,6 +56,23 @@ function cleanLinkedIn(value) {
   return s.slice(0, 500);
 }
 
+/** Company website / page URL (ops research). Accepts bare domains. */
+function cleanWebsite(value) {
+  let s = String(value == null ? '' : value).trim();
+  if (!s) return '';
+  if (/linkedin\.com/i.test(s)) return '';
+  if (!/^https?:\/\//i.test(s)) {
+    if (/^www\./i.test(s) || /^[a-z0-9.-]+\.[a-z]{2,}([/:?#].*)?$/i.test(s)) {
+      s = 'https://' + s.replace(/^\/+/, '');
+    } else {
+      return null;
+    }
+  }
+  // Drop noisy text-fragment hashes from pasted Chrome links.
+  s = s.replace(/#:~:text=.*$/i, '').replace(/#$/, '');
+  return s.slice(0, 500);
+}
+
 function mapRow(row) {
   if (!row) return null;
   return {
@@ -68,8 +85,10 @@ function mapRow(row) {
     professionalRole: row.professional_role || '',
     lookingToMeet: Array.isArray(row.looking_to_meet) ? row.looking_to_meet : [],
     linkedinUrl: row.linkedin_url || '',
+    websiteUrl: row.website_url || '',
     blurb: row.blurb || '',
     location: row.location || '',
+    country: row.country || '',
     source: row.source || 'rosie',
     status: row.status || 'active',
     reminderSentAt: row.reminder_sent_at || null,
@@ -121,8 +140,22 @@ function normalizeSeedInput(body, opts) {
     if (li === null) errors.linkedinUrl = 'invalid';
     else fields.linkedin_url = li || null;
   }
+  if (!partial || body.websiteUrl != null || body.website_url != null || body.companyPage != null) {
+    const web = cleanWebsite(
+      body.websiteUrl != null
+        ? body.websiteUrl
+        : body.website_url != null
+          ? body.website_url
+          : body.companyPage
+    );
+    if (web === null) errors.websiteUrl = 'invalid';
+    else fields.website_url = web || null;
+  }
   if (!partial || body.location != null) {
     fields.location = cleanText(body.location, 120) || null;
+  }
+  if (!partial || body.country != null) {
+    fields.country = cleanText(body.country, 80) || null;
   }
   if (!partial || body.blurb != null) fields.blurb = cleanText(body.blurb, MAX_BLURB) || null;
   if (!partial || body.notes != null) fields.notes = cleanText(body.notes, MAX_NOTES) || null;
@@ -152,27 +185,50 @@ function normalizeSeedInput(body, opts) {
 
 async function listSeedContacts(opts) {
   const { getSupabaseAdmin, isSupabaseConfigured } = supabaseApi();
-  if (!isSupabaseConfigured()) return { configured: false, contacts: [], totals: {} };
+  if (!isSupabaseConfigured()) {
+    return { configured: false, contacts: [], totals: {}, page: 1, pageSize: 50, totalMatched: 0 };
+  }
   const sb = getSupabaseAdmin();
   const status = opts && opts.status ? String(opts.status).trim().toLowerCase() : '';
   const q = opts && opts.q ? String(opts.q).trim() : '';
-  const limit = Math.min(500, Math.max(1, parseInt(opts && opts.limit, 10) || 200));
+  const pageSize = Math.min(100, Math.max(10, parseInt(opts && (opts.pageSize || opts.limit), 10) || 50));
+  const page = Math.max(1, parseInt(opts && opts.page, 10) || 1);
+  const offset = (page - 1) * pageSize;
 
-  let query = sb
-    .from('hubert_match_seed')
-    .select('*')
-    .order('updated_at', { ascending: false })
-    .limit(limit);
-
-  if (status && STATUSES.has(status)) query = query.eq('status', status);
-  if (q) {
-    const like = '%' + q.replace(/%/g, '') + '%';
-    query = query.or(
-      ['full_name.ilike.' + like, 'email.ilike.' + like, 'company.ilike.' + like, 'industry.ilike.' + like].join(
-        ','
-      )
-    );
+  function applyFilters(query) {
+    if (status && STATUSES.has(status)) query = query.eq('status', status);
+    if (q) {
+      const like = '%' + q.replace(/%/g, '') + '%';
+      query = query.or(
+        [
+          'full_name.ilike.' + like,
+          'email.ilike.' + like,
+          'company.ilike.' + like,
+          'industry.ilike.' + like,
+          'location.ilike.' + like,
+          'country.ilike.' + like,
+        ].join(',')
+      );
+    }
+    return query;
   }
+
+  let countRes = await applyFilters(
+    sb.from('hubert_match_seed').select('id', { count: 'exact', head: true })
+  );
+  if (countRes.error) {
+    if (/hubert_match_seed/i.test(countRes.error.message || '')) {
+      const err = new Error('seed_table_missing');
+      err.code = 'seed_table_missing';
+      throw err;
+    }
+    throw new Error(countRes.error.message);
+  }
+  const totalMatched = typeof countRes.count === 'number' ? countRes.count : 0;
+
+  let query = applyFilters(
+    sb.from('hubert_match_seed').select('*').order('updated_at', { ascending: false }).range(offset, offset + pageSize - 1)
+  );
 
   const { data, error } = await query;
   if (error) {
@@ -185,12 +241,31 @@ async function listSeedContacts(opts) {
   }
 
   const contacts = (data || []).map(mapRow);
-  const totals = { total: contacts.length, active: 0, paused: 0, converted: 0, do_not_contact: 0 };
-  contacts.forEach((c) => {
-    if (totals[c.status] != null) totals[c.status] += 1;
-  });
 
-  return { configured: true, contacts, totals };
+  // Status totals across the whole table (not just this page).
+  const totals = { total: 0, active: 0, paused: 0, converted: 0, do_not_contact: 0 };
+  try {
+    const { data: statusRows } = await sb.from('hubert_match_seed').select('status');
+    (statusRows || []).forEach((row) => {
+      totals.total += 1;
+      if (totals[row.status] != null) totals[row.status] += 1;
+    });
+  } catch {
+    totals.total = totalMatched;
+    contacts.forEach((c) => {
+      if (totals[c.status] != null) totals[c.status] += 1;
+    });
+  }
+
+  return {
+    configured: true,
+    contacts,
+    totals,
+    page,
+    pageSize,
+    totalMatched,
+    totalPages: Math.max(1, Math.ceil(totalMatched / pageSize)),
+  };
 }
 
 async function getSeedContact(id) {

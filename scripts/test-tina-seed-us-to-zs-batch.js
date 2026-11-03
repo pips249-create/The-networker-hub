@@ -21,7 +21,9 @@ assert(Array.isArray(batch.contacts) && batch.contacts.length === 27, '27 contac
 const emails = new Set();
 let withBlurb = 0;
 let withLinkedIn = 0;
+let withWebsite = 0;
 let withLocation = 0;
+let withCountry = 0;
 batch.contacts.forEach((c) => {
   const n = normalizeSeedInput(
     {
@@ -31,6 +33,9 @@ batch.contacts.forEach((c) => {
       jobTitle: c.jobTitle,
       professionalRole: c.professionalRole,
       linkedinUrl: c.linkedinUrl || '',
+      websiteUrl: c.websiteUrl || '',
+      location: c.location || '',
+      country: c.country || '',
       blurb: c.blurb || '',
       notes: c.notes || '',
       source: 'rosie',
@@ -44,14 +49,19 @@ batch.contacts.forEach((c) => {
   emails.add(n.fields.email);
   if (c.blurb) withBlurb += 1;
   if (c.linkedinUrl) withLinkedIn += 1;
+  if (c.websiteUrl) withWebsite += 1;
   if (c.location) withLocation += 1;
+  if (c.country) withCountry += 1;
 });
 
 assert(emails.has('usman@ansar.london'), 'Usman present');
-assert(emails.has('zoe.schoon@pink-spaghetti.co.uk'), 'Zoe Schoon present');
+assert(emails.has('tim@professionalpointer.com'), 'Tim present');
+const tim = batch.contacts.find((c) => c.email === 'tim@professionalpointer.com');
+assert(tim && tim.country === 'South Africa', 'Tim country SA');
 assert(withBlurb >= 20, 'most rows have blurbs');
-assert(withLocation >= 15, 'most rows have location for notes/geo later');
-assert(withLinkedIn >= 3, 'some LinkedIn profile URLs kept');
+assert(withLocation >= 15, 'most rows have location');
+assert(withCountry === 27, 'all rows have country');
+assert(withWebsite >= 15, 'most rows have company page');
 
 console.log(
   'ok — tina seed us-to-zs batch (' +
@@ -60,7 +70,11 @@ console.log(
     withBlurb +
     ', linkedin ' +
     withLinkedIn +
+    ', website ' +
+    withWebsite +
     ', location ' +
     withLocation +
+    ', country ' +
+    withCountry +
     ')'
 );
