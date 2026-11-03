@@ -21,6 +21,8 @@ const {
 const {
   fetchNearbyEvents,
   fetchPopularEvents,
+  fetchPartnerSpotlightEvents,
+  prependPartnerSpotlightEvents,
   nearbySectionHeading,
   nearbyLocationLabel,
 } = require('./nearby-events');
@@ -36,6 +38,11 @@ const {
   buildMeetTeamSectionHtml,
   buildMeetRosieSectionHtml,
 } = require('./hubert-event-concierge');
+const {
+  recommendationCard,
+  eventRecommendationCard,
+  eventRecommendationLogoOptions,
+} = require('./engagement-recommendation-cards');
 
 const INTERNATIONAL_HUB_URL = 'https://www.thenetworkerinternational.com/';
 
@@ -148,23 +155,6 @@ function hoursAgo(hours) {
   return new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
 }
 
-function recommendationCard(title, subtitle, url) {
-  return (
-    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#1c2040;border-radius:14px;margin:0 0 12px;">' +
-    '<tr><td style="padding:18px 20px;">' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0 0 6px;line-height:1.35;">' +
-    title +
-    '</p>' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;color:rgba(255,255,255,0.7);margin:0 0 12px;line-height:1.5;">' +
-    subtitle +
-    '</p>' +
-    '<a href="' +
-    url +
-    '" style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#4aa8f0;text-decoration:none;">View &rarr;</a>' +
-    '</td></tr></table>'
-  );
-}
-
 function sectionHeading(text) {
   return (
     '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">' +
@@ -173,57 +163,43 @@ function sectionHeading(text) {
   );
 }
 
-function eventRecommendationSubtitle(ev) {
-  const { event_date, event_time } = formatEventDateTime(ev.starts_at);
-  const loc = String(ev.location_label || ev.venue || ev.city || '').trim() || 'See event page';
-  const orgName = String(ev.organisers?.name || 'Organiser').trim();
-  return (
-    orgName +
-    ' · ' +
-    event_date +
-    (event_time ? ' · ' + event_time : '') +
-    ' · ' +
-    loc
-  );
-}
-
 async function buildSignupNudgeEventsHtml(sb, attendeeLocation, countryCode) {
   const siteUrl = siteBase();
+  const nearbyLimit = 5;
+  const popularLimit = 3;
   const nearbyResult = await fetchNearbyEvents(sb, attendeeLocation, {
-    limit: 5,
+    limit: nearbyLimit,
     countryCode: countryCode,
   });
-  const nearbyIds = nearbyResult.events.map((ev) => ev.id);
+  const partnerEvents = await fetchPartnerSpotlightEvents(sb);
+  // Keep partner shows under "nearby" only when that block is a fallback (no local geo hits).
+  // When the member has real nearby events, pin partners into Popular instead.
+  const hasRealNearby = nearbyResult.source === 'nearby' && nearbyResult.events.length > 0;
+  const nearbyEvents = hasRealNearby
+    ? nearbyResult.events
+    : prependPartnerSpotlightEvents(nearbyResult.events, partnerEvents, nearbyLimit);
+  const nearbyIds = nearbyEvents.map((ev) => ev.id);
   const popularResult = await fetchPopularEvents(sb, {
-    limit: 3,
+    limit: popularLimit,
     excludeEventIds: nearbyIds,
   });
+  const popularEvents = hasRealNearby
+    ? prependPartnerSpotlightEvents(popularResult.events, partnerEvents, popularLimit)
+    : popularResult.events;
 
   const nearbyParts = [];
-  if (nearbyResult.events.length) {
+  if (nearbyEvents.length) {
     nearbyParts.push(sectionHeading(nearbySectionHeading(nearbyResult)));
-    for (const ev of nearbyResult.events) {
-      nearbyParts.push(
-        recommendationCard(
-          String(ev.title || 'Event').trim(),
-          eventRecommendationSubtitle(ev),
-          eventPublicUrl(ev, siteUrl)
-        )
-      );
+    for (const ev of nearbyEvents) {
+      nearbyParts.push(eventRecommendationCard(ev, siteUrl));
     }
   }
 
   const popularParts = [];
-  if (popularResult.events.length) {
+  if (popularEvents.length) {
     popularParts.push(sectionHeading('Popular right now'));
-    for (const ev of popularResult.events) {
-      popularParts.push(
-        recommendationCard(
-          String(ev.title || 'Event').trim(),
-          eventRecommendationSubtitle(ev),
-          eventPublicUrl(ev, siteUrl)
-        )
-      );
+    for (const ev of popularEvents) {
+      popularParts.push(eventRecommendationCard(ev, siteUrl));
     }
   }
 
@@ -250,7 +226,7 @@ async function buildRecommendationsHtml(sb, attendeeLocation, countryCode) {
     const { data: events, error } = await sb
       .from('events')
       .select(
-        'id, title, slug, starts_at, city, venue, location_label, organiser_id, status, approval_status, published_at'
+        'id, title, slug, starts_at, city, venue, location_label, organiser_id, status, approval_status, published_at, organisers(name, slug, photo_url)'
       )
       .in('organiser_id', organiserIds)
       .eq('status', 'published')
@@ -276,49 +252,41 @@ async function buildRecommendationsHtml(sb, attendeeLocation, countryCode) {
       const upcoming = eventsByOrganiser.get(String(entry.organiserId)) || [];
       if (upcoming.length) {
         for (const ev of upcoming) {
-          const { event_date, event_time } = formatEventDateTime(ev.starts_at);
-          const loc =
-            String(ev.location_label || ev.venue || ev.city || '').trim() || 'See event page';
-          const subtitle =
-            orgName +
-            ' · ' +
-            event_date +
-            (event_time ? ' · ' + event_time : '') +
-            ' · ' +
-            loc;
-          parts.push(recommendationCard(String(ev.title || 'Event').trim(), subtitle, eventPublicUrl(ev, siteUrl)));
+          const withOrg = ev.organisers ? ev : { ...ev, organisers: org };
+          parts.push(eventRecommendationCard(withOrg, siteUrl));
         }
       } else {
         parts.push(
           recommendationCard(
             orgName,
             'Top-rated networking group on The Networker UK',
-            orgUrl
+            orgUrl,
+            eventRecommendationLogoOptions({ organisers: org }, siteUrl)
           )
         );
       }
     }
   }
 
+  const nearbyLimit = 4;
   const nearby = await fetchNearbyEvents(sb, attendeeLocation, {
-    limit: 4,
+    limit: nearbyLimit,
     countryCode: countryCode,
   });
-  if (nearby.events.length) {
+  const partnerEvents = await fetchPartnerSpotlightEvents(sb);
+  const hasRealNearby = nearby.source === 'nearby' && nearby.events.length > 0;
+  const nearbyEvents = hasRealNearby
+    ? nearby.events
+    : prependPartnerSpotlightEvents(nearby.events, partnerEvents, nearbyLimit);
+  if (nearbyEvents.length) {
     parts.push(sectionHeading(nearbySectionHeading(nearby)));
-    for (const ev of nearby.events) {
-      const { event_date, event_time } = formatEventDateTime(ev.starts_at);
-      const loc =
-        String(ev.location_label || ev.venue || ev.city || '').trim() || 'See event page';
-      const orgName = String(ev.organisers?.name || 'Organiser').trim();
-      const subtitle =
-        orgName +
-        ' · ' +
-        event_date +
-        (event_time ? ' · ' + event_time : '') +
-        ' · ' +
-        loc;
-      parts.push(recommendationCard(String(ev.title || 'Event').trim(), subtitle, eventPublicUrl(ev, siteUrl)));
+    for (const ev of nearbyEvents) {
+      parts.push(eventRecommendationCard(ev, siteUrl));
+    }
+  } else if (partnerEvents.length) {
+    parts.push(sectionHeading('Coming up on The Networker UK'));
+    for (const ev of partnerEvents.slice(0, nearbyLimit)) {
+      parts.push(eventRecommendationCard(ev, siteUrl));
     }
   }
 
@@ -1988,6 +1956,8 @@ module.exports = {
   runEngagementEmailMaintenance,
   buildRecommendationsHtml,
   buildSignupNudgeEventsHtml,
+  recommendationCard,
+  eventRecommendationCard,
   buildMeetTeamSectionHtml,
   buildMeetRosieSectionHtml,
   isDueForHubertConcierge,

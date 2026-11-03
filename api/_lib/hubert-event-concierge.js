@@ -13,8 +13,19 @@ const HUBERT_CONCIERGE_INTERVAL_DAYS = 7;
  */
 const COFOUNDER_EVENT_PROMO_UNTIL_MS = Date.UTC(2026, 10, 13, 23, 59, 59);
 
-const MARTECH_SUMMIT_EVENT_PATH = '/events/the-martech-summit-london-2026';
-const BUSINESS_SHOW_LONDON_EVENT_PATH = '/events/the-business-show-london';
+const MARTECH_SUMMIT_EVENT_SLUG = 'the-martech-summit-london-2026';
+const BUSINESS_SHOW_LONDON_EVENT_SLUG = 'the-business-show-london';
+const MARTECH_SUMMIT_EVENT_PATH = '/events/' + MARTECH_SUMMIT_EVENT_SLUG;
+const BUSINESS_SHOW_LONDON_EVENT_PATH = '/events/' + BUSINESS_SHOW_LONDON_EVENT_SLUG;
+
+/**
+ * Partner shows to pin at the top of nurture / Hubert event-pick emails
+ * (one upcoming date per slug) while the November 2026 shows are live.
+ */
+const PARTNER_EMAIL_SPOTLIGHT_SLUGS = [
+  MARTECH_SUMMIT_EVENT_SLUG,
+  BUSINESS_SHOW_LONDON_EVENT_SLUG,
+];
 
 /** @deprecated use COFOUNDER_EVENT_PROMO_UNTIL_MS */
 const MEET_ROSIE_MARTECH_PROMO_UNTIL_MS = COFOUNDER_EVENT_PROMO_UNTIL_MS;
@@ -155,8 +166,11 @@ module.exports = {
   HUBERT_CONCIERGE_INTERVAL_DAYS,
   COFOUNDER_EVENT_PROMO_UNTIL_MS,
   MEET_ROSIE_MARTECH_PROMO_UNTIL_MS,
+  MARTECH_SUMMIT_EVENT_SLUG,
+  BUSINESS_SHOW_LONDON_EVENT_SLUG,
   MARTECH_SUMMIT_EVENT_PATH,
   BUSINESS_SHOW_LONDON_EVENT_PATH,
+  PARTNER_EMAIL_SPOTLIGHT_SLUGS,
   isDueForHubertConcierge,
   hubertConciergeWeekLabel,
   utcIsoWeekNumber,

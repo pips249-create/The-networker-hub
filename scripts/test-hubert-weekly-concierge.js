@@ -9,6 +9,8 @@ const {
   listTeamEventPromos,
   utcIsoWeekNumber,
   HUBERT_CONCIERGE_INTERVAL_DAYS,
+  PARTNER_EMAIL_SPOTLIGHT_SLUGS,
+  MARTECH_SUMMIT_EVENT_SLUG,
 } = require('../api/_lib/hubert-event-concierge');
 
 function assert(cond, msg) {
@@ -59,5 +61,14 @@ const afterShows = buildMeetTeamSectionHtml(
 );
 assert(afterShows === '', 'promo hidden after both November shows');
 assert(listTeamEventPromos(new Date('2026-11-14T00:00:00Z')).length === 0, 'list empty after shows');
+
+assert(
+  PARTNER_EMAIL_SPOTLIGHT_SLUGS[0] === MARTECH_SUMMIT_EVENT_SLUG,
+  'partner email spotlight pins MarTech first'
+);
+assert(
+  PARTNER_EMAIL_SPOTLIGHT_SLUGS.includes('the-business-show-london'),
+  'partner email spotlight includes Business Show'
+);
 
 console.log('All Hubert weekly concierge checks passed');
