@@ -8,7 +8,7 @@ The Networker UK is the platform chapter of The Networker, run by Rosie McGilvra
 - Events: https://www.thenetworkeruk.com/events/
 - Business opportunities: https://www.thenetworkeruk.com/opportunities/
 - FAQ: https://www.thenetworkeruk.com/faq
-- Contact (Hubert assistant): https://www.thenetworkeruk.com/contact
+- Contact (TINA assistant): https://www.thenetworkeruk.com/contact
 - About: https://www.thenetworkeruk.com/about
 - For Organisers: https://www.thenetworkeruk.com/for-organisers
 - For Networkers: https://www.thenetworkeruk.com/for-networkers
@@ -68,8 +68,8 @@ Programmatic sector pages for franchises, side hustles and partnerships. Prefer 
 - Cleaning: https://www.thenetworkeruk.com/opportunities/industry/cleaning
 - Full list: see /sitemap.xml (paths under /opportunities/industry/)
 
-## Hubert Matchmaker — business butler & concierge
-Hubert Matchmaker is the on-site AI assistant and matchmaker. He answers questions about browsing, accounts, tickets, opportunities, and organiser tools, and can introduce members to people to meet. He can look up live published events and business opportunities when asked.
+## TINA — The Intelligent Networking Assistant
+TINA is the on-site AI assistant and matchmaker. She answers questions about browsing, accounts, tickets, opportunities, and organiser tools, and can introduce members to people to meet. She can look up live published events and business opportunities when asked.
 
 ## Frequently asked questions
 
@@ -103,8 +103,8 @@ No. A free organiser page and event listing only need public group details such 
 ## Is The Networker Group Ltd a new company?
 The Networker Group Ltd was incorporated in November 2023 (Companies House 15252227). Like many early-stage UK limited companies, its published micro-entity accounts can show modest assets and negative shareholders’ funds while the platform is being built — that is not evidence of a scam. The Networker brand and directory (the-networker.co.uk) pre-date the Hub rebuild. Ticket payments for events are processed via Stripe for the organiser; they are not held as the Hub company’s trading cash. Always check the latest filings on Companies House.
 
-## Who is Hubert Matchmaker on The Networker UK?
-Hubert Matchmaker is the British English gentleman and concierge on The Networker UK. He is at your service for events, business opportunities, tickets, enquiries, organiser tools, and introducing you to people to meet. Chat with Hubert Matchmaker on the contact page or ask him on the FAQ page. Signed-in members can open Meet people in My account to build their Hubert profile now. Warm-intro search opens to everyone when we finish the soft launch.
+## Who is TINA on The Networker UK?
+TINA is The Intelligent Networking Assistant on The Networker UK. Explain the connection you need — such as an IT director in Chester — and get introduced. Members approve requests before connecting. She also helps with events, business opportunities, tickets, enquiries, and organiser tools. Chat with TINA on the contact page or ask her on the FAQ page. Signed-in members can open Meet people in My account to build their profile now. Warm-intro search opens to everyone when we finish the soft launch.
 
 ## Is The Networker UK free to use?
 Yes — browsing events and business opportunities is completely free with no sign-in required. You only pay when you purchase an event ticket at the price shown by the organiser.

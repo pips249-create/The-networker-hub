@@ -1,5 +1,5 @@
 /**
- * Hubert Matchmaker intro requests — double opt-in, no contact share.
+ * TINA intro requests — double opt-in, no contact share.
  */
 const { createHubertIntroToken, verifyHubertIntroToken, DEFAULT_TTL_DAYS } = require('./hubert-intro-token');
 const { isUuid } = require('./uuid');
@@ -415,7 +415,7 @@ async function openThread(sb, intro, requester, target) {
     intro.topic +
     '”.' +
     eventBit +
-    ' Contact details stay private — continue here on The Networker UK’s Hubert.';
+    ' Contact details stay private — continue here on The Networker UK’s TINA.';
 
   await sb.from('hubert_intro_messages').insert({
     intro_request_id: intro.id,
@@ -726,7 +726,7 @@ async function respondToIntro(options) {
   }
 
   // Validate 2-tap tags before flipping to accepted (industry + looking to meet).
-  // Members who already completed Hubert setup can Accept without re-picking.
+  // Members who already completed TINA setup can Accept without re-picking.
   const { resolveAcceptOnboarding, applyAcceptOnboardingTags } = require('./hubert-accept-onboarding');
 
   let sessionAttendeeId = null;
@@ -990,7 +990,7 @@ async function postIntroMessage(session, introId, bodyRaw) {
   if (/@|linkedin\.com|whatsapp|\+?\d[\d\s()-]{7,}/i.test(body)) {
     const err = new Error('no_contact_details');
     err.code = 'no_contact_details';
-    err.message = 'Keep contact details off this thread — intros stay on The Networker UK’s Hubert.';
+    err.message = 'Keep contact details off this thread — intros stay on The Networker UK’s TINA.';
     throw err;
   }
 

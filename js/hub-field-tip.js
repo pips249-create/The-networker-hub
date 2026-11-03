@@ -1,5 +1,5 @@
 /**
- * Contextual (i) field tips — hover/tap popover with optional Ask Hubert link.
+ * Contextual (i) field tips — hover/tap popover with optional Ask TINA link.
  */
 (function (global) {
   var activeBtn = null;
@@ -94,7 +94,7 @@
     var hubertLink = tip.hubertPrompt
       ? '<button type="button" class="hub-field-tip-ask" data-hub-tip-ask="' +
         esc(tip.hubertPrompt) +
-        '">Ask Hubert</button>'
+        '">Ask TINA</button>'
       : '';
 
     pop.innerHTML =

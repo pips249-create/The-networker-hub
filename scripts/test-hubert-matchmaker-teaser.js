@@ -68,8 +68,9 @@ assert.ok(homeHtml.indexOf('Invite someone else') !== -1, 'home teaser has invit
 assert.ok(homeHtml.indexOf('Launching soon') !== -1, 'home teaser shows launching soon');
 assert.ok(homeHtml.indexOf('hmm-teaser-hero') !== -1, 'home teaser uses hero layout like Meet people');
 assert.ok(homeHtml.indexOf('private Hub thread') === -1, 'home teaser drops Hub wording');
-assert.ok(/shortlists members worth meeting/i.test(homeHtml), 'home teaser says what Hubert does');
-assert.ok(/both say yes|when you both say yes/i.test(homeHtml), 'home teaser explains double opt-in');
+assert.ok(/Meet TINA, The Intelligent Networking Assistant/i.test(homeHtml), 'home teaser introduces TINA');
+assert.ok(/IT director in Chester/i.test(homeHtml), 'home teaser gives connection example');
+assert.ok(/Members approve requests before connecting/i.test(homeHtml), 'home teaser explains double opt-in');
 const homeTeaser = homeHtml.slice(homeHtml.indexOf('data-hmm-teaser'), homeHtml.indexOf('</section>', homeHtml.indexOf('data-hmm-teaser')));
 assert.ok(homeTeaser.indexOf('\u2014') === -1, 'home teaser block has no em dashes');
 assert.ok(teaserSrc.indexOf('\u2014') === -1, 'teaser JS copy has no em dashes');
@@ -104,7 +105,10 @@ assert.ok(
   'Meet people placeholder guides short role asks'
 );
 assert.ok(accountHtml.indexOf('data-hmm-search-soon') !== -1, 'Meet people has search-soon note');
-assert.ok(accountHtml.indexOf('Build your Hubert profile') !== -1, 'Meet people hero is build profile');
+assert.ok(
+  accountHtml.indexOf('Meet TINA, The Intelligent Networking Assistant') !== -1,
+  'Meet people hero introduces TINA'
+);
 
 assert.ok(
   /hash\.indexOf\(['"]meet\?['"]\)\s*===\s*0/.test(dashSrc),

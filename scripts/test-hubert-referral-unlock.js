@@ -50,7 +50,7 @@ const orgEmail = fs.readFileSync(
   path.join(__dirname, '../email-templates/hubert-organiser-pre-event.html'),
   'utf8'
 );
-assert.ok(orgEmail.includes('Ask Hubert who to meet'), 'organiser CTA');
+assert.ok(orgEmail.includes('Ask TINA who to meet'), 'organiser CTA');
 
 const branded = fs.readFileSync(
   path.join(__dirname, '../api/_lib/branded-email-templates.js'),

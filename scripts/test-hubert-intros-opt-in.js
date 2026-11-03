@@ -40,7 +40,7 @@ assert.strictEqual(ready.shouldPromptHubertIntros, false, 'no prompt when ready'
 
 const registerHtml = fs.readFileSync(path.join(__dirname, '../register.html'), 'utf8');
 assert.ok(registerHtml.includes('register-hubert'), 'signup checkbox present');
-assert.ok(registerHtml.includes('Hubert'), 'checkbox mentions Hubert');
+assert.ok(registerHtml.includes('TINA'), 'checkbox mentions TINA');
 
 const authJs = fs.readFileSync(path.join(__dirname, '../js/auth.js'), 'utf8');
 assert.ok(authJs.includes('hubertOptIn'), 'register payload sends hubertOptIn');

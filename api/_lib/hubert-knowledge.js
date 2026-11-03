@@ -1,18 +1,18 @@
 /**
- * Hubert — British English gentleman & concierge knowledge and fallback replies.
+ * TINA — The Intelligent Networking Assistant knowledge and fallback replies.
  * Keep in sync with faq.html, hubert-faq.js, and legal-policies.html.
  * Run: node scripts/test-hubert-qa.js after edits.
  */
-const ASSISTANT_NAME = 'Hubert Matchmaker';
-const ASSISTANT_ROLE = 'British English gentleman and concierge';
+const ASSISTANT_NAME = 'TINA';
+const ASSISTANT_ROLE = 'The Intelligent Networking Assistant';
 
 const HUBERT_VOICE_GUIDE =
-  'VOICE: You are Hubert Matchmaker — a courteous British English gentleman in the mould of a trusted club steward or discreet hotel concierge. ' +
+  'VOICE: You are TINA — The Intelligent Networking Assistant for The Networker UK. ' +
   'Use British spelling (organise, favour, centre, enquiry). Polite and unhurried, never stiff, sarcastic, or servile. ' +
   'Natural phrasing: "Good afternoon", "Allow me to", "I\'m afraid", "Do bear in mind", "If I may suggest", "At your service", "Delighted to help", "Certainly", "Quite right". ' +
   'Address the reader as "you". Avoid Americanisms, slang, and excessive exclamation marks. ' +
-  'Be concise — a gentleman is helpful, not verbose. One light touch of warmth per reply is enough. ' +
-  'Never play a caricature (no "old sport", "top hole", or mock posh). Sound refined, calm, and genuinely helpful.';
+  'Be concise — helpful, not verbose. One light touch of warmth per reply is enough. ' +
+  'Never play a caricature. Sound refined, calm, and genuinely helpful. Refer to yourself as TINA (she/her).';
 
 const KNOWLEDGE_SECTIONS = [
   {
@@ -35,7 +35,7 @@ const KNOWLEDGE_SECTIONS = [
       'Home / · Events /events/ · Opportunities /opportunities/ · List an opportunity /opportunities/list · ' +
       'My account /account/ · For networkers /for-networkers · For organisers /for-organisers · Organiser workspace /organiser/ · Organiser guides /guides · ' +
       'Sign in /login · Register /register · FAQ /faq · Help: organiser payouts /help/organiser-payouts · ticket fees /help/pricing-fees · ' +
-      'About /about · Contact /contact (chat with Hubert) · Advertising /advertising · Legal /legal-policies · Organiser profiles /organisers/{slug}.',
+      'About /about · Contact /contact (chat with TINA) · Advertising /advertising · Legal /legal-policies · Organiser profiles /organisers/{slug}.',
   },
   {
     title: 'BROWSING & ACCOUNTS',
@@ -114,7 +114,7 @@ const KNOWLEDGE_SECTIONS = [
   {
     title: 'ORGANISER GUIDES',
     body:
-      'Organiser guides live at /guides — getting started with events (/guides/list-an-event, then open /organiser/ for the in-app checklist), claim your organiser page (/guides/claim-your-organiser-page), list a conference or exhibition (/guides/list-a-conference-or-exhibition), export attendees and track visits (/guides/export-attendees-and-visits), connect Eventbrite for Connected booking (/guides/connect-eventbrite), connect your own website booking system (/guides/connect-own-website), list a business opportunity (/guides/list-a-business-opportunity), invite team members (/guides/invite-your-team). Attendees should use the FAQ or Hubert chat instead.',
+      'Organiser guides live at /guides — getting started with events (/guides/list-an-event, then open /organiser/ for the in-app checklist), claim your organiser page (/guides/claim-your-organiser-page), list a conference or exhibition (/guides/list-a-conference-or-exhibition), export attendees and track visits (/guides/export-attendees-and-visits), connect Eventbrite for Connected booking (/guides/connect-eventbrite), connect your own website booking system (/guides/connect-own-website), list a business opportunity (/guides/list-a-business-opportunity), invite team members (/guides/invite-your-team). Attendees should use the FAQ or TINA chat instead.',
   },
   {
     title: 'ORGANISER TEAM & EDITORS',
@@ -221,9 +221,9 @@ const FALLBACK_REPLIES = [
       'With Stripe Connect (standard), paid ticket revenue goes to your connected Stripe account when attendees pay — open Stripe Express from Revenue in /organiser/ for balance, refunds, and bank payouts. Complete Connect Stripe under Revenue before publishing paid tickets. Events archive automatically after they end. If you use legacy manual payouts, a 7-day settlement applies before you can request payout from Revenue (minimum £1). Full guide: /help/organiser-payouts.',
   },
   {
-    match: /what is hubert|who is hubert|tell me about hubert/i,
+    match: /what is (hubert|tina)|who is (hubert|tina)|tell me about (hubert|tina)|who are you/i,
     reply:
-      "Good afternoon — I'm Hubert Matchmaker, your host and concierge at The Networker UK. I'm at your service for events, business opportunities, tickets, enquiries, organiser tools, and introducing you to people to meet. You'll find me on the contact page, the FAQ page, and Meet people in My account.",
+      "Good afternoon — I'm TINA, The Intelligent Networking Assistant on The Networker UK. Explain the connection you need and get introduced — members approve requests before connecting. I'm also at your service for events, business opportunities, tickets, enquiries, and organiser tools. You'll find me on the contact page, the FAQ page, and Meet people in My account.",
   },
   {
     match: /confirmation email|booking email|didn.?t receive|didn't receive|no confirmation|email.*ticket/i,

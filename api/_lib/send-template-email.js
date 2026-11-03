@@ -94,7 +94,20 @@ const {
 const PLACEHOLDER_RE = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
 
 const DEFAULT_RESEND_FROM_NAME = 'The Networker UK';
+const TINA_RESEND_FROM_NAME = 'TINA';
 const DEFAULT_RESEND_FROM_EMAIL = 'hello@mail.thenetworkeruk.com';
+
+/** Matchmaker / concierge mail — inbox From shows TINA, not Hubert. */
+const TINA_FROM_EMAIL_SLUGS = new Set([
+  'hubert_intro_request',
+  'hubert_intro_reminder',
+  'hubert_intro_accepted',
+  'hubert_hub_invite',
+  'hubert_matchmaker_launching',
+  'hubert_organiser_pre_event',
+  'attendee_hubert_event_concierge',
+  'account_welcome',
+]);
 
 /** Old Hub sending domains. Production still had RESEND_FROM on these. */
 function isLegacyHubMailAddress(email) {
@@ -111,10 +124,10 @@ function isLegacyHubMailAddress(email) {
 
 /**
  * Always send with a friendly from-name so inboxes show "The Networker UK"
- * instead of only the mail.thenetworkeruk.com address.
+ * (or "TINA" for Matchmaker/concierge mail) instead of only the mail domain.
  * Hub-domain From addresses are rewritten to the UK mail domain.
  */
-function formatResendFrom(raw) {
+function formatResendFrom(raw, displayName) {
   const configured = String(raw || '').trim();
   const angleMatch = configured.match(/^(.*)<([^>]+)>\s*$/);
   let email = '';
@@ -128,7 +141,13 @@ function formatResendFrom(raw) {
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || isLegacyHubMailAddress(email)) {
     email = DEFAULT_RESEND_FROM_EMAIL;
   }
-  return '"' + DEFAULT_RESEND_FROM_NAME + '" <' + email + '>';
+  const name = String(displayName || '').trim() || DEFAULT_RESEND_FROM_NAME;
+  return '"' + name + '" <' + email + '>';
+}
+
+function fromDisplayNameForSlug(slug) {
+  if (TINA_FROM_EMAIL_SLUGS.has(String(slug || '').trim())) return TINA_RESEND_FROM_NAME;
+  return DEFAULT_RESEND_FROM_NAME;
 }
 
 /** Business-critical emails — not blocked by hub marketing opt-out. */
@@ -609,6 +628,7 @@ async function sendViaResend({
   tags,
   replyTo,
   from,
+  fromDisplayName,
   bcc,
   skipAllowlist,
   listUnsubscribeUrl,
@@ -654,7 +674,7 @@ async function sendViaResend({
     : [];
 
   const body = {
-    from: formatResendFrom(from || process.env.RESEND_FROM),
+    from: formatResendFrom(from || process.env.RESEND_FROM, fromDisplayName),
     to: [recipient],
     subject,
     html,
@@ -965,6 +985,7 @@ async function sendTemplatedEmail({
     tags: mergedTags.length ? mergedTags : resendTags,
     replyTo,
     from,
+    fromDisplayName: fromDisplayNameForSlug(slug),
     bcc,
     skipAllowlist: shouldSkipEmailAllowlist(slug),
     listUnsubscribeUrl: shouldAttachListUnsubscribe(slug) ? oneClickUnsubscribeUrl(siteUrl, to) : '',

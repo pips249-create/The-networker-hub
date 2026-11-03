@@ -1,5 +1,5 @@
 /**
- * Hubert Matchmaker member profile fields (blurb, looking-to-meet, discoverable).
+ * TINA member profile fields (blurb, looking-to-meet, discoverable).
  */
 const LOOKING_TO_MEET_OPTIONS = [
   'Clients',
@@ -151,7 +151,7 @@ function assertMatchmakerReady(attendeeOrProfile) {
   const err = new Error('profile_incomplete');
   err.code = 'profile_incomplete';
   err.message =
-    'Finish your Hubert profile first — headline, who you want to meet, and Include me.';
+    'Finish your TINA profile first — headline, who you want to meet, and Include me.';
   err.profile = profile;
   throw err;
 }

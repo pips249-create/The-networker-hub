@@ -14,9 +14,9 @@
         'Top networking groups earn ranking badges from attendee feedback. Reviews and ratings help you compare organisers before you book.',
     },
     'fa-ask-hubert': {
-      title: 'Ask Hubert',
+      title: 'Ask TINA',
       body:
-        'Hubert is The Networker UK\'s automated concierge. Ask in plain English for events, organisers, or Business Opportunities near you — signed in from My account.',
+        'TINA is The Networker UK\'s automated concierge. Ask in plain English for events, organisers, or Business Opportunities near you — signed in from My account.',
     },
     'fa-business-opps-directory': {
       title: 'Business Opportunities directory',
