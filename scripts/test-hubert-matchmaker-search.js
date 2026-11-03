@@ -24,6 +24,8 @@ const {
   shortlistBlurb,
   weekBucket,
   emptyStateCopy,
+  mutualLookingScore,
+  inferLookingTagsFromPerson,
   MAX_SHORTLIST,
   MIN_TEXT_SCORE,
   SHORTLIST_BLURB_MAX,
@@ -810,5 +812,88 @@ assert(
   ),
   'typo managgers still matches Marketing manager'
 );
+
+// Fit labels + mutual looking-to-meet (“open to someone like you”).
+const founderRequester = {
+  lookingToMeet: ['Investors', 'Mentors'],
+  professionalRole: 'Founder',
+  jobTitle: 'Founder',
+  role: 'Founder',
+  blurb: 'Fintech founder raising seed',
+};
+assert(
+  inferLookingTagsFromPerson(founderRequester).includes('co-founders'),
+  'founder requester inferred as co-founders tag'
+);
+const investorOpenToFounders = {
+  id: 'member:angel1',
+  kind: 'member',
+  fullName: 'Alex Angel',
+  displayName: 'Alex A.',
+  role: 'Angel Investor',
+  company: 'Angel Desk',
+  jobTitle: 'Angel Investor',
+  professionalRole: 'Investor',
+  lookingToMeet: ['Co-founders'],
+  blurb: 'Angel investor backing early-stage founders',
+  location: 'Leeds',
+  nextEvent: null,
+  matchedEvent: null,
+  onHub: true,
+};
+const mutual = mutualLookingScore(investorOpenToFounders, founderRequester);
+assert(mutual.theyWantYou === true, 'investor open to co-founders wants founder requester');
+assert(mutual.youWantThem === true, 'founder looking for investors wants angel');
+assert(mutual.score >= 20, 'mutual looking score is meaningful');
+
+const mutualRanked = rankCandidates(
+  [investorOpenToFounders, salesDirector],
+  'investors in Leeds',
+  [],
+  { disableRotation: true, requester: founderRequester }
+);
+const angelCard = mutualRanked.find((m) => m.id === 'member:angel1');
+assert(angelCard, 'angel surfaces for investors ask');
+assert(
+  Array.isArray(angelCard.fitLabels) &&
+    angelCard.fitLabels.some((f) => f.key === 'mutual' || f.key === 'like_you'),
+  'fit label shows mutual / open to someone like you'
+);
+assert(
+  /Mutual fit|Open to meeting someone like you/i.test(angelCard.why || ''),
+  'why explains mutual looking-to-meet'
+);
+
+const placeRoleCard = rankCandidates(
+  [
+    {
+      id: 'member:cio-leeds',
+      kind: 'member',
+      fullName: 'Casey Ops',
+      displayName: 'Casey O.',
+      role: 'CIO',
+      jobTitle: 'Chief Information Officer',
+      professionalRole: 'CIO',
+      company: 'TechCo',
+      lookingToMeet: [],
+      blurb: 'CIO for a Yorkshire manufacturer',
+      location: 'Leeds',
+      onHub: true,
+    },
+  ],
+  'IT Director in Leeds',
+  [],
+  { disableRotation: true }
+)[0];
+assert(placeRoleCard, 'CIO in Leeds returned');
+assert(
+  placeRoleCard.fitLabels.some((f) => f.key === 'exact_place'),
+  'Exact place fit label'
+);
+assert(
+  placeRoleCard.fitLabels.some((f) => f.key === 'role_match' || f.key === 'related_role'),
+  'Role / related role fit label'
+);
+assert(placeRoleCard.placeFit === 'exact', 'placeFit exact retained');
 
 console.log('ok — hubert matchmaker search ranking + event attendees');

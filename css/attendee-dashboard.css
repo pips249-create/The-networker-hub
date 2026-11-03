@@ -5090,6 +5090,21 @@ body.ad-hubert-optin-modal-open {
   background: #fdf3df;
 }
 
+.hmm-chip--fit-exact {
+  color: #1f4d3a;
+  background: #e4f3ea;
+}
+
+.hmm-chip--fit-close {
+  color: #5a3d12;
+  background: #f7edd9;
+}
+
+.hmm-chip--fit {
+  color: #3d2a55;
+  background: #f0e8f6;
+}
+
 .hmm-match-why {
   margin: 0;
   font-size: 12.5px;

@@ -186,6 +186,23 @@
     var status = person.onHub
       ? '<span class="hmm-chip hmm-chip--member">Member</span>'
       : '<span class="hmm-chip hmm-chip--invite">TINA can invite them</span>';
+    var fitChips = '';
+    if (Array.isArray(person.fitLabels)) {
+      fitChips = person.fitLabels
+        .map(function (fit) {
+          var key = fit && fit.key ? String(fit.key) : '';
+          var label = fit && fit.label ? String(fit.label) : '';
+          if (!label) return '';
+          var mod =
+            key === 'exact_place' || key === 'role_match' || key === 'mutual' || key === 'exact_name'
+              ? ' hmm-chip--fit-exact'
+              : key === 'nearby' || key === 'related_role' || key === 'like_you'
+                ? ' hmm-chip--fit-close'
+                : ' hmm-chip--fit';
+          return '<span class="hmm-chip' + mod + '">' + esc(label) + '</span>';
+        })
+        .join('');
+    }
     var requested = Boolean(pendingByTarget[person.id]);
     var isStub = String(person.id || '').indexOf('stub-') === 0;
 
@@ -275,6 +292,7 @@
       blurbBlock +
       '<div class="hmm-match-chips">' +
       status +
+      fitChips +
       '</div>' +
       '<p class="hmm-match-why">' +
       esc(person.why || '') +

@@ -460,6 +460,100 @@ function personRoleText(person) {
     .toLowerCase();
 }
 
+/** Looking-to-meet tags ↔ who someone “is” (for mutual intent). */
+const LOOKING_TAG_ROLE_HINTS = {
+  clients: /\b(client|customer|buyer|procurement|purchas|demand[- ]gen|marketing manager)\b/i,
+  investors: /\b(investor|angel|venture|vc\b|private equity|family office)\b/i,
+  'co-founders': /\b(co[- ]?founder|founder|owner|entrepreneur|solopreneur)\b/i,
+  hires: /\b(hir(?:e|ing)|recruiter|talent acquisition|people ops|hr\b|human resources)\b/i,
+  suppliers: /\b(supplier|vendor|agency|outsourc|freelancer|consultant)\b/i,
+  mentors: /\b(mentor|coach|advisor|adviser|consultant)\b/i,
+  partners: /\b(partner|collaborat|alliance|joint venture|channel)\b/i,
+  press: /\b(press|journalist|editor|reporter|media|pr\b|public relations)\b/i,
+};
+
+function normalizeLookingTags(list) {
+  if (!Array.isArray(list)) return [];
+  const out = [];
+  const seen = new Set();
+  list.forEach((item) => {
+    const t = String(item || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
+    if (!t || seen.has(t)) return;
+    seen.add(t);
+    out.push(t);
+  });
+  return out;
+}
+
+/**
+ * Infer which looking-to-meet buckets this person belongs in from role/title/blurb.
+ * Used for “open to someone like you” (their tags ↔ who you are).
+ */
+function inferLookingTagsFromPerson(person) {
+  const hay = personRoleText(person);
+  const tags = [];
+  Object.keys(LOOKING_TAG_ROLE_HINTS).forEach((tag) => {
+    if (LOOKING_TAG_ROLE_HINTS[tag].test(hay)) tags.push(tag);
+  });
+  return tags;
+}
+
+/**
+ * Mutual looking-to-meet score.
+ * - theyWantYou: candidate tagged wanting people like the requester
+ * - youWantThem: requester tagged wanting people like the candidate
+ */
+function mutualLookingScore(person, requester) {
+  if (!requester) return { score: 0, theyWantYou: false, youWantThem: false };
+  const theirLooking = normalizeLookingTags(person && person.lookingToMeet);
+  const yourLooking = normalizeLookingTags(requester.lookingToMeet);
+  const youAre = inferLookingTagsFromPerson(requester);
+  const theyAre = inferLookingTagsFromPerson(person);
+
+  const theyWantYou = theirLooking.some((t) => youAre.includes(t));
+  const youWantThem = yourLooking.some((t) => theyAre.includes(t));
+
+  let score = 0;
+  if (theyWantYou && youWantThem) score = 28;
+  else if (theyWantYou) score = 20;
+  else if (youWantThem) score = 12;
+  return { score, theyWantYou, youWantThem };
+}
+
+/** Visible fit chips on shortlist cards (privacy-safe labels only). */
+function buildFitLabels(row) {
+  const labels = [];
+  const seen = new Set();
+  function add(key, label) {
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    labels.push({ key, label });
+  }
+
+  if (row.geoScore >= 30) add('exact_place', 'Exact place');
+  else if (row.geoScore >= 12) add('nearby', 'Nearby');
+
+  if (row.familyScore >= 20) add('role_match', 'Role match');
+  else if (row.familyScore >= 12) add('related_role', 'Related role');
+  else if (row.roleScore >= 12) add('role_fit', 'Role fit');
+
+  if (row.mutual && row.mutual.theyWantYou && row.mutual.youWantThem) {
+    add('mutual', 'Mutual fit');
+  } else if (row.mutual && row.mutual.theyWantYou) {
+    add('like_you', 'Open to someone like you');
+  } else if (row.mutual && row.mutual.youWantThem) {
+    add('your_list', 'On your looking-to-meet list');
+  }
+
+  if (row.nameScore >= 40) add('exact_name', 'Exact name');
+  else if (row.nameScore >= 14) add('name', 'Name match');
+
+  return labels.slice(0, 4);
+}
+
 function roleFitScore(person, intent) {
   if (!intent || !intent.roleSensitive) return 0;
   const role = personRoleText(person);
@@ -824,6 +918,7 @@ function shortlistBlurb(person) {
  * (names only after both Accept).
  */
 function toPublicShortlistCard(row) {
+  const fitLabels = buildFitLabels(row);
   return {
     id: row.person.id,
     kind: row.person.kind,
@@ -832,6 +927,7 @@ function toPublicShortlistCard(row) {
     company: publicCompany(row.person),
     blurb: shortlistBlurb(row.person),
     why: buildWhy(row) || row.person.why || '',
+    fitLabels,
     nextEvent: row.person.nextEvent
       ? {
           title: row.person.nextEvent.title,
@@ -856,6 +952,7 @@ function rankCandidates(candidates, query, requesterEventIds, opts) {
   const tokens = tokenize(query);
   const intent = extractQueryIntent(query);
   const intel = (opts && opts.queryIntel) || parseQueryIntel(query);
+  const requester = (opts && opts.requester) || null;
 
   const ranked = (candidates || [])
     .map((person) => {
@@ -867,6 +964,7 @@ function rankCandidates(candidates, query, requesterEventIds, opts) {
       const boost = eventBoost(person, requesterEventIds);
       const matchedBoost = matchedEventBoost(person);
       const brandScore = platformBrandMatchScore(person, query);
+      const mutual = mutualLookingScore(person, requester);
       const excluded = isExcludedPerson(person, intel);
       const matchedParts = matchedSearchTokens(person, tokens, intel);
       const total =
@@ -877,7 +975,8 @@ function rankCandidates(candidates, query, requesterEventIds, opts) {
         nameScore +
         boost +
         matchedBoost +
-        brandScore;
+        brandScore +
+        mutual.score;
       return {
         person,
         textScore,
@@ -888,6 +987,8 @@ function rankCandidates(candidates, query, requesterEventIds, opts) {
         boost,
         matchedBoost,
         brandScore,
+        mutual,
+        mutualScore: mutual.score,
         excluded,
         matchedParts,
         tokens,
@@ -935,6 +1036,7 @@ function rankCandidates(candidates, query, requesterEventIds, opts) {
         b.geoScore - a.geoScore ||
         b.familyScore - a.familyScore ||
         b.brandScore - a.brandScore ||
+        b.mutualScore - a.mutualScore ||
         b.textScore - a.textScore ||
         b.roleScore - a.roleScore ||
         b.matchedBoost - a.matchedBoost ||
@@ -957,6 +1059,14 @@ function buildWhy(row) {
     return title ? 'Booked for ' + title : 'Booked for a matching event';
   }
   if (row.brandScore >= 18) return 'Part of The Networker UK team';
+
+  const mutual = row.mutual || {};
+  if (mutual.theyWantYou && mutual.youWantThem) {
+    return 'Mutual fit — you’re each open to meeting someone like the other';
+  }
+  if (mutual.theyWantYou) {
+    return 'Open to meeting someone like you';
+  }
 
   const intel = row.intel || {};
   const placeLabel =
@@ -1007,6 +1117,9 @@ function buildWhy(row) {
     return 'Mentioned in your search: ' + mentioned[0];
   }
 
+  if (mutual.youWantThem) {
+    return 'Fits who you said you want to meet';
+  }
   if (row.geoScore >= 30 && row.familyScore >= 12) {
     return 'Role and location match your ask';
   }
@@ -1417,16 +1530,31 @@ async function searchMatchmaker(opts) {
   const requesterEventIds = await loadRequesterUpcomingEventIds(sb, excludeAttendeeId);
 
   let requesterDiscoverable = false;
+  let requester = null;
   if (excludeAttendeeId) {
     try {
       const { data: selfRow } = await sb
         .from('attendees')
-        .select('discoverable_at')
+        .select(
+          'discoverable_at, looking_to_meet, professional_role, job_title, matchmaker_blurb, company, business_sector'
+        )
         .eq('id', excludeAttendeeId)
         .maybeSingle();
       requesterDiscoverable = Boolean(selfRow && selfRow.discoverable_at);
+      if (selfRow) {
+        requester = {
+          lookingToMeet: Array.isArray(selfRow.looking_to_meet) ? selfRow.looking_to_meet : [],
+          professionalRole: selfRow.professional_role || '',
+          jobTitle: selfRow.job_title || '',
+          role: selfRow.professional_role || selfRow.job_title || '',
+          blurb: selfRow.matchmaker_blurb || '',
+          company: selfRow.company || '',
+          industry: selfRow.business_sector || '',
+        };
+      }
     } catch {
       requesterDiscoverable = false;
+      requester = null;
     }
   }
 
@@ -1577,6 +1705,7 @@ async function searchMatchmaker(opts) {
         rotationKey: excludeAttendeeId || '',
         query,
         queryIntel,
+        requester,
       });
 
   const suggestions =
@@ -1707,6 +1836,9 @@ module.exports = {
   nameMatchScore,
   matchedSearchTokens,
   buildWhy,
+  buildFitLabels,
+  mutualLookingScore,
+  inferLookingTagsFromPerson,
   scoreEventTitle,
   eventDateProximityBoost,
   resolveEventMatchSelection,
