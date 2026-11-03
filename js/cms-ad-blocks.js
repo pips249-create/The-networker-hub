@@ -417,6 +417,11 @@
         campaign: 'city_partner',
       });
     }
+    // Brand-plate uploads often ship with huge empty margins — trim so the mark fills the slot.
+    var logoImg = container.querySelector('.networking-city-partner-logo');
+    if (logoImg && window.CmsSponsorFields && window.CmsSponsorFields.fitLogoInFrame) {
+      window.CmsSponsorFields.fitLogoInFrame(logoImg);
+    }
     return true;
   }
 
