@@ -27,7 +27,7 @@ const MIN_QUERY_LEN = 3;
 /** Meaningful text hits required unless this is an event-attendee lookup. */
 const MIN_TEXT_SCORE = 6;
 /** Short privacy-safe teaser on shortlist cards (not the full Hubert blurb). */
-const SHORTLIST_BLURB_MAX = 110;
+const SHORTLIST_BLURB_MAX = 72;
 
 const EVENT_QUERY_HINT =
   /\b(attended|attendee|attendees|attending|who went|who was at|who'?s going|going to|this morning|this afternoon|yesterday|last night|today)\b/i;
@@ -610,9 +610,19 @@ function stripIdentifyingPhrases(text, person) {
   }
   if (company.length >= 3) {
     out = out.replace(new RegExp('\\b' + escapeRegExp(company) + '\\b', 'gi'), ' ');
+    // Also strip leading company tokens (“TOP Networking Clubs” → TOP / Networking).
+    company
+      .split(/\s+/)
+      .filter((p) => p.length >= 4)
+      .forEach((part) => {
+        if (/^(limited|ltd|group|clubs?|uk|the|and)$/i.test(part)) return;
+        out = out.replace(new RegExp('\\b' + escapeRegExp(part) + '\\b', 'gi'), ' ');
+      });
   }
-  // Hub brand in a blurb + first-name initial is enough to identify Rosie/Catherine.
+  // Hub / peer networking brands in a blurb + first-name initial identify people.
   out = out.replace(/\bthe\s+networker(?:\s+(?:uk|group(?:\s+ltd)?))?\b/gi, ' ');
+  out = out.replace(/\btop\s+networking(?:\s+(?:clubs?|uk|limited|ltd))?\b/gi, ' ');
+  out = out.replace(/\bbni\b/gi, ' ');
 
   const first = parts[0] || '';
   if (first.length >= 3) {
@@ -624,12 +634,46 @@ function stripIdentifyingPhrases(text, person) {
     out = out.replace(new RegExp('\\b' + escapeRegExp(last) + '\\b', 'gi'), ' ');
   }
 
-  return out
+  return tidyStrippedBlurb(out, person);
+}
+
+/**
+ * Repair grammar holes left after name/company stripping
+ * (“Director of where we are…” → drop, or “empowering SME…”).
+ */
+function tidyStrippedBlurb(text, person) {
+  let out = String(text || '');
+  const role = String((person && (person.role || person.jobTitle || person.professionalRole)) || '')
+    .trim()
+    .replace(/\s+/g, ' ');
+
+  out = out
     .replace(/\s+/g, ' ')
     .replace(/^[\s,.;:\-–—/]+/, '')
     .replace(/^(?:(?:runs?|is|was|works?|working|helps?|helping)\b[\s,]*)+/i, '')
     .replace(/\s+([,.;:])/g, '$1')
     .trim();
+
+  // Drop role echo already shown on the card (“Director of …”).
+  if (role.length >= 3) {
+    out = out.replace(new RegExp('^' + escapeRegExp(role) + '\\b[,\\s:—–-]*', 'i'), '');
+  }
+  out = out.replace(
+    /^(?:managing\s+director|director|manager|founder|ceo|cio|cto|cfo|head of [a-z ]{2,40})\b(?:\s+(?:of|at|for|with|from|in))?\s*/i,
+    ''
+  );
+
+  // Orphaned prepositions before relative clauses.
+  out = out.replace(/\b(?:of|at|for|with|from|in)\s+(?=where|who|which|what|that\b)/gi, '');
+  out = out.replace(/^(?:of|at|for|with|from|in|and|the|a|an)\b[\s,]*/i, '');
+  out = out.replace(/\s+/g, ' ').trim();
+
+  // Still broken / too thin after cleanup — caller should fall back.
+  if (!out) return '';
+  if (/\b(?:of|at|for)\s+where\b/i.test(out)) return '';
+  if (/^(?:where|who|which|that)\b/i.test(out)) return '';
+  if (out.length < 12) return '';
+  return out;
 }
 
 function softTruncateBlurb(text, maxLen) {
@@ -649,6 +693,16 @@ function softTruncateBlurb(text, maxLen) {
   return base + '…';
 }
 
+/** Industry on the card — drop values that only restate “networking”. */
+function publicIndustry(person) {
+  const ind = String((person && person.industry) || '')
+    .trim()
+    .replace(/\s+/g, ' ');
+  if (!ind) return '';
+  if (/^business\s+networking$/i.test(ind) || /^network(?:ing)?$/i.test(ind)) return '';
+  return ind;
+}
+
 /**
  * Shortlist-safe blurb — short, no name/company (LinkedIn cut-out guard).
  */
@@ -658,10 +712,7 @@ function shortlistBlurb(person) {
     .replace(/\s+/g, ' ');
   if (raw) {
     const cleaned = stripIdentifyingPhrases(raw, person);
-    // After stripping name/company/brand, drop tiny leftovers (“Building”).
-    if (cleaned && cleaned.length >= 12) {
-      return softTruncateBlurb(cleaned, SHORTLIST_BLURB_MAX);
-    }
+    if (cleaned) return softTruncateBlurb(cleaned, SHORTLIST_BLURB_MAX);
   }
   const looking = Array.isArray(person && person.lookingToMeet)
     ? person.lookingToMeet.map((x) => String(x || '').trim()).filter(Boolean)
@@ -681,7 +732,7 @@ function toPublicShortlistCard(row) {
     kind: row.person.kind,
     displayName: row.person.displayName,
     role: row.person.role || '',
-    industry: row.person.industry || '',
+    industry: publicIndustry(row.person),
     blurb: shortlistBlurb(row.person),
     // Intentionally omitted from the client payload — used only for BOH ranking.
     company: '',
