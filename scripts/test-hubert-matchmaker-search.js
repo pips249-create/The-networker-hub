@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 const {
   shortDisplayName,
+  normalizeSearchQuery,
   tokenize,
   expandTokenForms,
   eventSearchTokens,
@@ -40,6 +41,13 @@ assert(!tokenize('I am looking for people around the UK').includes('looking'), '
 assert(expandTokenForms('directors').includes('director'), 'plural → singular');
 assert(expandTokenForms('director').includes('directors'), 'singular → plural');
 assert(expandTokenForms('companies').includes('company'), 'ies → y');
+assert(normalizeSearchQuery('directers in managment') === 'directors in management', 'typo normalize');
+assert(tokenize('directers').includes('directors'), 'directers → directors token');
+assert(tokenize('fintec founders').includes('fintech'), 'fintec → fintech token');
+assert(tokenize('advertizing managers').includes('advertising'), 'advertizing → advertising');
+assert(tokenize('MD in SaaS').includes('md'), 'keeps MD acronym');
+assert(expandTokenForms('md').includes('managing director'), 'MD expands to managing director');
+assert(tokenize('HR directors').includes('hr'), 'keeps HR acronym');
 
 const evolutionQ = 'Who attended evolution virtual networking this morning';
 assert(looksLikeEventAttendeeQuery(evolutionQ) === true, 'event-intent query');
@@ -507,6 +515,26 @@ assert(
 assert(
   bareDirectors.some((m) => m.id === 'member:dir1'),
   'ordinary Sales Director still matches bare directors'
+);
+
+// Spelling / acronym resilience for common role asks.
+assert(
+  rankCandidates([salesDirector], 'directers', [], { disableRotation: true }).some(
+    (m) => m.id === 'member:dir1'
+  ),
+  'typo directers still matches Sales Director'
+);
+assert(
+  rankCandidates([salesDirector], 'MD', [], { disableRotation: true }).some(
+    (m) => m.id === 'member:dir1'
+  ),
+  'MD acronym matches director title'
+);
+assert(
+  rankCandidates([marketingManager], 'marketing managgers', [], { disableRotation: true }).some(
+    (m) => m.id === 'member:mgr1'
+  ),
+  'typo managgers still matches Marketing manager'
 );
 
 console.log('ok — hubert matchmaker search ranking + event attendees');

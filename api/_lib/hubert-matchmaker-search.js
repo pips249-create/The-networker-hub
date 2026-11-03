@@ -265,18 +265,57 @@ function shortDisplayName(fullName) {
   return parts[0] + ' ' + parts[parts.length - 1].charAt(0).toUpperCase() + '.';
 }
 
+/**
+ * Common misspellings → canonical tokens (applied before tokenize).
+ * Keep this list small and high-confidence — not a full spellchecker.
+ */
+const QUERY_TYPO_FIXES = [
+  [/\bdirecters\b/gi, 'directors'],
+  [/\bdirecter\b/gi, 'director'],
+  [/\bmanaggers\b/gi, 'managers'],
+  [/\bmanagger\b/gi, 'manager'],
+  [/\bmanagment\b/gi, 'management'],
+  [/\badvertizing\b/gi, 'advertising'],
+  [/\badvertizement\b/gi, 'advertisement'],
+  [/\bfinteck?\b/gi, 'fintech'],
+  [/\bsollicitors\b/gi, 'solicitors'],
+  [/\bsollicitor\b/gi, 'solicitor'],
+  [/\baccountents\b/gi, 'accountants'],
+  [/\benterpreneurs?\b/gi, 'entrepreneurs'],
+  [/\bentrepeneurs?\b/gi, 'entrepreneurs'],
+];
+
+/** Two-letter role tokens that are meaningful (normally length-filtered). */
+const SHORT_KEEP_TOKENS = new Set(['md', 'hr', 'pr', 'vc']);
+
+/** Extra match forms for short acronyms / aliases. */
+const TOKEN_ALIASES = {
+  md: ['managing director', 'director', 'md'],
+  hr: ['human resources', 'human resource', 'hr'],
+  pr: ['public relations', 'pr'],
+  vc: ['venture capital', 'venture capitalist', 'investor', 'vc'],
+};
+
+function normalizeSearchQuery(query) {
+  let q = String(query || '');
+  QUERY_TYPO_FIXES.forEach(([re, to]) => {
+    q = q.replace(re, to);
+  });
+  return q;
+}
+
 function tokenize(query) {
-  return String(query || '')
+  return normalizeSearchQuery(query)
     .toLowerCase()
     .replace(/[^a-z0-9+#&\s-]/gi, ' ')
     .split(/\s+/)
     .map((t) => t.trim())
-    .filter((t) => t.length >= 3 && !QUERY_STOP.has(t))
+    .filter((t) => t && !QUERY_STOP.has(t) && (t.length >= 3 || SHORT_KEEP_TOKENS.has(t)))
     .slice(0, 24);
 }
 
 /**
- * Light singular/plural variants so “directors” matches job titles like “Director”.
+ * Light singular/plural (+ typo/acronym aliases) so asks match job titles.
  * Keeps the original token; does not invent aggressive stems.
  */
 function expandTokenForms(token) {
@@ -286,6 +325,10 @@ function expandTokenForms(token) {
   const forms = new Set();
   if (!t) return [];
   forms.add(t);
+
+  const aliases = TOKEN_ALIASES[t];
+  if (aliases) aliases.forEach((a) => forms.add(a));
+
   if (t.length < 4) return Array.from(forms);
 
   if (t.endsWith('ies') && t.length >= 5) {
@@ -450,7 +493,8 @@ function scoreAgainstQuery(person, tokens) {
   let score = 0;
   tokens.forEach((t) => {
     // Longer tokens (advertising, employees) weigh more than short leftovers.
-    const weight = t.length >= 8 ? 5 : t.length >= 5 ? 4 : 3;
+    // Two-letter role acronyms (MD/HR) expand to real titles — keep them above the floor.
+    const weight = SHORT_KEEP_TOKENS.has(t) ? 4 : t.length >= 8 ? 5 : t.length >= 5 ? 4 : 3;
     const forms = expandTokenForms(t);
     let hit = false;
     let boundary = false;
@@ -1330,6 +1374,7 @@ module.exports = {
   MIN_TEXT_SCORE,
   SHORTLIST_BLURB_MAX,
   shortDisplayName,
+  normalizeSearchQuery,
   tokenize,
   expandTokenForms,
   eventSearchTokens,
