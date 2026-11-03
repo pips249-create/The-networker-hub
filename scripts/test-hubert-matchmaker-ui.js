@@ -48,6 +48,11 @@ assert(mm.shortDisplayName('  Sam Taylor-Jones ') === 'Sam T.', 'trim + initial'
 const stubs = mm._stubShortlist('fintech founders');
 assert(Array.isArray(stubs) && stubs.length === mm.MAX_SHORTLIST, 'max 5 stubs');
 assert(stubs.every((p) => p.id !== 'stub-6'), '6th stub excluded by cap');
+assert(
+  stubs.every((p) => String(p.blurb || '').trim().length > 0),
+  'stubs include blurbs so preview cards show description'
+);
+assert(src.indexOf('hmm-match-blurb') !== -1, 'shortlist card renders blurb');
 
 assert(typeof mm.emptyStateCopy === 'function', 'emptyStateCopy exported');
 const eventEmpty = mm.emptyStateCopy({
@@ -93,5 +98,6 @@ assert(
   dashCss.indexOf('.hmm-discoverable-off[hidden]') !== -1,
   'meet hide Stop when not included'
 );
+assert(dashCss.indexOf('.hmm-match-blurb') !== -1, 'shortlist blurb styles present');
 
 console.log('ok — hubert-matchmaker ui helpers');

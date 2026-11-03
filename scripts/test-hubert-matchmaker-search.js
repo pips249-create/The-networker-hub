@@ -14,6 +14,7 @@ const {
   matchedEventBoost,
   rankCandidates,
   rotateShortlistWindow,
+  shortlistBlurb,
   weekBucket,
   emptyStateCopy,
   MAX_SHORTLIST,
@@ -152,6 +153,17 @@ assert(
   'company stripped from shortlist (LinkedIn cut-out guard)'
 );
 assert(ranked.every((m) => m.industry === 'SaaS'), 'industry kept for context');
+assert(
+  ranked.every((m) => m.blurb === 'fintech founder manchester'),
+  'shortlist includes Hubert blurb for intro decisions'
+);
+assert(shortlistBlurb({ blurb: '  Hello   world  ' }) === 'Hello world', 'shortlist blurb trims');
+assert(
+  shortlistBlurb({ blurb: '', lookingToMeet: ['Clients', 'Investors'] }) ===
+    'Looking to meet Clients, Investors',
+  'shortlist blurb falls back to looking-to-meet'
+);
+assert(shortlistBlurb({ blurb: '', lookingToMeet: [] }) === '', 'empty blurb stays empty');
 assert(/Matches what you asked|same upcoming event|Founder/i.test(ranked[0].why || ''), 'why explains fit');
 
 const wide = [];

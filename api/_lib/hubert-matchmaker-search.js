@@ -478,10 +478,23 @@ function rotateShortlistWindow(rankedRows, opts) {
   return pool.slice(offset, offset + MAX_SHORTLIST);
 }
 
+/** Shortlist-safe blurb — trim + soft cap; never invent company. */
+function shortlistBlurb(person) {
+  const raw = String((person && person.blurb) || '')
+    .trim()
+    .replace(/\s+/g, ' ');
+  if (raw) return raw.slice(0, 280);
+  const looking = Array.isArray(person && person.lookingToMeet)
+    ? person.lookingToMeet.map((x) => String(x || '').trim()).filter(Boolean)
+    : [];
+  if (looking.length) return 'Looking to meet ' + looking.slice(0, 3).join(', ');
+  return '';
+}
+
 /**
  * Public shortlist card — privacy-safe.
  * Never include company (LinkedIn cut-out risk with first name + company),
- * email, phone, or LinkedIn. Role / industry only.
+ * email, phone, or LinkedIn. Role / industry + Hubert blurb only.
  */
 function toPublicShortlistCard(row) {
   return {
@@ -490,6 +503,7 @@ function toPublicShortlistCard(row) {
     displayName: row.person.displayName,
     role: row.person.role || '',
     industry: row.person.industry || '',
+    blurb: shortlistBlurb(row.person),
     // Intentionally omitted from the client payload — used only for BOH ranking.
     company: '',
     why: buildWhy(row) || row.person.why || '',
@@ -1130,6 +1144,8 @@ module.exports = {
   hashSeed,
   weekBucket,
   rotateShortlistWindow,
+  shortlistBlurb,
+  toPublicShortlistCard,
   rankCandidates,
   mapSeedRow,
   mapMemberRow,
