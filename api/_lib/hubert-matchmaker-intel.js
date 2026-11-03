@@ -309,8 +309,27 @@ function personRoleHay(person) {
   );
 }
 
+/**
+ * Known UK place(s) mentioned on a profile.
+ * Seed/admin locations are often free-text (“Cardiff / South Wales, UK, United Kingdom”) —
+ * extract the city so geo scoring does not treat the whole blob as a mismatch.
+ */
+function personPlaces(person) {
+  const raw = [person && person.location, person && person.city, person && person.town, person && person.country]
+    .filter(Boolean)
+    .join(', ');
+  if (!raw) return [];
+  const found = extractPlacesFromText(raw);
+  if (found.length) return found;
+  const c = canonicalPlace(raw);
+  // Only keep a single-token / known canonical place — never the whole free-text blob.
+  if (c && UK_PLACES.map(canonicalPlace).includes(c)) return [c];
+  return [];
+}
+
 function personPlace(person) {
-  return canonicalPlace(person && (person.location || person.city || person.town || ''));
+  const places = personPlaces(person);
+  return places[0] || '';
 }
 
 function findRoleGroupsInText(text) {
@@ -439,14 +458,18 @@ function roleFamilyScore(person, intel) {
 
 function geoScore(person, intel) {
   if (!intel || !intel.hasPlaceIntel) return 0;
-  const theirs = personPlace(person);
-  if (theirs) {
-    if (intel.places.includes(theirs)) return 36;
-    for (let i = 0; i < intel.places.length; i++) {
-      const asked = intel.places[i];
-      if (nearbyFor(asked).includes(theirs)) return 16;
-      // County ↔ town soft link already in NEARBY.
+  const theirsList = personPlaces(person);
+  if (theirsList.length) {
+    let best = null;
+    for (let t = 0; t < theirsList.length; t++) {
+      const theirs = theirsList[t];
+      if (intel.places.includes(theirs)) best = Math.max(best == null ? -Infinity : best, 36);
+      for (let i = 0; i < intel.places.length; i++) {
+        const asked = intel.places[i];
+        if (nearbyFor(asked).includes(theirs)) best = Math.max(best == null ? -Infinity : best, 16);
+      }
     }
+    if (best != null && best > 0) return best;
     // Different known place while ask was geo-specific.
     return -12;
   }
@@ -622,6 +645,7 @@ module.exports = {
   normalizeText,
   canonicalPlace,
   personPlace,
+  personPlaces,
   personRoleHay,
   findRoleGroupsInText,
   extractPlacesFromText,

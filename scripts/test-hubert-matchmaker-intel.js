@@ -10,6 +10,7 @@ const {
   canonicalPlace,
   extractPlacesFromText,
   findRoleGroupsInText,
+  personPlace,
 } = require('../api/_lib/hubert-matchmaker-intel');
 const { rankCandidates } = require('../api/_lib/hubert-matchmaker-search');
 
@@ -194,5 +195,44 @@ const empty = emptySuggestionCopy({
 });
 assert.ok(empty && /Chester/i.test(empty.title), 'smart empty title cites place');
 assert.ok(Array.isArray(empty.suggestions) && empty.suggestions.length, 'smart empty keeps chips');
+
+// Free-text seed locations (“Cardiff / South Wales, UK”) must still geo-match Cardiff asks.
+assert.strictEqual(
+  personPlace(
+    person({
+      location: 'Cardiff / South Wales, UK, United Kingdom',
+    })
+  ),
+  'cardiff',
+  'extracts Cardiff from free-text seed location'
+);
+const weddingCardiff = rankCandidates(
+  [
+    person({
+      id: 'seed:zoe',
+      kind: 'seed',
+      role: 'Wedding Venue & Business Consultant',
+      jobTitle: 'Wedding Venue & Business Consultant',
+      company: 'Zoe Binning',
+      location: 'Cardiff / South Wales, UK, United Kingdom',
+      blurb:
+        'Provides strategic venue management, eco-friendly business consulting, and commercial expansion advice across the wedding and events sector.',
+    }),
+  ],
+  'I am looking for people in the wedding industry based in or around cardiff',
+  [],
+  { disableRotation: true }
+);
+assert.ok(
+  weddingCardiff.some((m) => m.id === 'seed:zoe'),
+  'wedding + Cardiff ask returns seed with free-text Cardiff location'
+);
+assert.ok(
+  geoScore(
+    person({ location: 'Cardiff / South Wales, UK, United Kingdom' }),
+    parseQueryIntel('wedding industry in cardiff')
+  ) >= 30,
+  'Cardiff free-text location scores exact geo'
+);
 
 console.log('ok — hubert matchmaker intel (synonyms, geo, exclusions, fallbacks)');
