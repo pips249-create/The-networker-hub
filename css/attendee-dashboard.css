@@ -5097,9 +5097,18 @@ body.ad-hubert-optin-modal-open {
   color: var(--ad-text-soft);
 }
 
+.hmm-match-cta-wrap {
+  flex: 0 1 240px;
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  min-width: min(240px, 100%);
+}
+
 .hmm-match-cta {
   flex: 0 0 auto;
-  margin-left: auto;
   border: 1px solid rgba(125, 72, 150, 0.35);
   background: transparent;
   color: var(--ad-teal-dark);
@@ -5110,6 +5119,7 @@ body.ad-hubert-optin-modal-open {
   border-radius: 999px;
   cursor: pointer;
   opacity: 1;
+  align-self: flex-end;
 }
 
 .hmm-match-cta:hover:not(:disabled) {
@@ -5120,6 +5130,85 @@ body.ad-hubert-optin-modal-open {
 .hmm-match-cta.is-sent {
   cursor: not-allowed;
   opacity: 0.7;
+}
+
+.hmm-topic-form {
+  display: grid;
+  gap: 8px;
+  width: min(100%, 320px);
+  padding: 12px;
+  border: 1px solid rgba(125, 72, 150, 0.22);
+  border-radius: 14px;
+  background: rgba(125, 72, 150, 0.04);
+}
+
+.hmm-topic-form[hidden] {
+  display: none !important;
+}
+
+.hmm-topic-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ad-text);
+}
+
+.hmm-topic-input {
+  width: 100%;
+  min-height: 76px;
+  resize: vertical;
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--ad-text);
+  background: #fff;
+}
+
+.hmm-topic-input:focus {
+  outline: 2px solid rgba(125, 72, 150, 0.35);
+  outline-offset: 1px;
+}
+
+.hmm-topic-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ad-text-soft);
+}
+
+.hmm-topic-error {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: #9f1239;
+}
+
+.hmm-topic-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.hmm-topic-send {
+  align-self: auto;
+  margin-left: 0;
+}
+
+.hmm-topic-cancel {
+  border: 0;
+  background: transparent;
+  color: var(--ad-text-soft);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.hmm-topic-cancel:hover {
+  color: var(--ad-text);
 }
 
 .hmm-intros {
@@ -5931,9 +6020,15 @@ body.ad-hubert-optin-modal-open {
     grid-template-columns: 1fr;
   }
 
+  .hmm-match-cta-wrap,
+  .hmm-topic-form,
   .hmm-match-cta {
     width: 100%;
+  }
+
+  .hmm-match-cta {
     text-align: center;
+    align-self: stretch;
   }
 }
 

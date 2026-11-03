@@ -9,7 +9,18 @@
   /** Flip to true (plus deploy) when Matchmaker search is ready for all members. */
   var HUBERT_MATCHMAKER_PUBLIC = false;
   var MAX_SHORTLIST = 5;
+  /** Keep in sync with api/_lib/hubert-intro-requests.js TOPIC_MIN_LEN. */
   var TOPIC_MIN_LEN = 25;
+
+  function cssEscapeAttr(value) {
+    var s = String(value == null ? '' : value);
+    if (typeof CSS !== 'undefined' && CSS && typeof CSS.escape === 'function') return CSS.escape(s);
+    return s.replace(/[^a-zA-Z0-9_-]/g, '\\$&');
+  }
+
+  function topicFieldDomId(personId) {
+    return 'hmm-topic-' + String(personId || '').replace(/[^a-zA-Z0-9_-]/g, '-');
+  }
   var HUBERT_ICON = '/assets/hubert-icon.png';
 
   var mounts = [];
@@ -197,6 +208,25 @@
         '"' +
         (isStub ? ' disabled title="Live matches required to request an intro"' : '') +
         '>Request intro</button>';
+    var topicDomId = topicFieldDomId(person.id);
+    var topicForm =
+      '<form class="hmm-topic-form" data-hmm-topic-form="' +
+      esc(person.id) +
+      '" hidden>' +
+      '<label class="hmm-topic-label" for="' +
+      esc(topicDomId) +
+      '">What would you like to discuss?</label>' +
+      '<textarea id="' +
+      esc(topicDomId) +
+      '" class="hmm-topic-input" name="topic" rows="3" maxlength="400" placeholder="e.g. Introduce us about wedding venues in Cardiff"></textarea>' +
+      '<p class="hmm-topic-hint">At least ' +
+      TOPIC_MIN_LEN +
+      ' characters — this is what TINA sends them.</p>' +
+      '<p class="hmm-topic-error" data-hmm-topic-error hidden></p>' +
+      '<div class="hmm-topic-actions">' +
+      '<button type="submit" class="hmm-match-cta hmm-topic-send">Send intro request</button>' +
+      '<button type="button" class="hmm-topic-cancel" data-hmm-topic-cancel>Cancel</button>' +
+      '</div></form>';
 
     var heading = personLabel(person);
     // Never title the card with a personal name — even if an old API payload still sends one.
@@ -250,7 +280,10 @@
       esc(person.why || '') +
       '</p>' +
       '</div>' +
+      '<div class="hmm-match-cta-wrap">' +
       cta +
+      topicForm +
+      '</div>' +
       '</div>' +
       '</article>'
     );
@@ -503,21 +536,80 @@
     });
   }
 
-  function askForTopic(person) {
-    var topic = window.prompt(
-      'What would you like to discuss? (at least ' + TOPIC_MIN_LEN + ' characters)',
-      ''
-    );
-    if (topic == null) return null;
-    topic = String(topic).replace(/\s+/g, ' ').trim();
-    if (topic.length < TOPIC_MIN_LEN) {
-      window.alert('Add a bit more detail (at least ' + TOPIC_MIN_LEN + ' characters).');
-      return null;
-    }
-    return topic;
+  function closeAllTopicForms(mount) {
+    if (!mount || !mount.els.results) return;
+    mount.els.results.querySelectorAll('[data-hmm-topic-form]').forEach(function (form) {
+      form.hidden = true;
+      var err = form.querySelector('[data-hmm-topic-error]');
+      if (err) {
+        err.hidden = true;
+        err.textContent = '';
+      }
+    });
+    mount.els.results.querySelectorAll('[data-hmm-request]').forEach(function (btn) {
+      btn.hidden = false;
+      if (!btn.disabled || btn.classList.contains('is-sent')) return;
+      btn.disabled = false;
+      btn.textContent = 'Request intro';
+    });
   }
 
-  function requestIntro(person, mount) {
+  function openTopicForm(person, mount) {
+    if (!mount || !mount.els.results || !person) return null;
+    closeAllTopicForms(mount);
+    var form = mount.els.results.querySelector(
+      '[data-hmm-topic-form="' + cssEscapeAttr(String(person.id)) + '"]'
+    );
+    var btn = mount.els.results.querySelector(
+      '[data-hmm-request="' + cssEscapeAttr(String(person.id)) + '"]'
+    );
+    if (!form) return null;
+    if (btn) btn.hidden = true;
+    form.hidden = false;
+    var input = form.querySelector('.hmm-topic-input');
+    if (input) {
+      input.focus();
+      if (typeof input.setSelectionRange === 'function') {
+        var len = input.value.length;
+        input.setSelectionRange(len, len);
+      }
+    }
+    return form;
+  }
+
+  function readTopicFromForm(form) {
+    if (!form) return { ok: false, topic: '', message: 'Add a short note for the intro.' };
+    var input = form.querySelector('.hmm-topic-input');
+    var topic = String((input && input.value) || '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (topic.length < TOPIC_MIN_LEN) {
+      return {
+        ok: false,
+        topic: topic,
+        message:
+          'Add a bit more detail (at least ' +
+          TOPIC_MIN_LEN +
+          ' characters). The form stays open — keep typing.',
+      };
+    }
+    return { ok: true, topic: topic, message: '' };
+  }
+
+  function showTopicError(form, message) {
+    if (!form) return;
+    var err = form.querySelector('[data-hmm-topic-error]');
+    if (!err) return;
+    if (message) {
+      err.textContent = message;
+      err.hidden = false;
+    } else {
+      err.textContent = '';
+      err.hidden = true;
+    }
+  }
+
+  function requestIntro(person, mount, topic) {
     if (!searchEnabled) {
       if (mount && mount.els.error) {
         mount.els.error.textContent = 'Intro requests open to everyone soon — finish your profile for now.';
@@ -540,14 +632,31 @@
       }
       return;
     }
-    var topic = askForTopic(person);
-    if (!topic) return;
+    topic = String(topic || '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (topic.length < TOPIC_MIN_LEN) return;
 
-    var btn = mount.els.results && mount.els.results.querySelector('[data-hmm-request="' + person.id + '"]');
+    var form =
+      mount.els.results &&
+      mount.els.results.querySelector(
+        '[data-hmm-topic-form="' + cssEscapeAttr(String(person.id)) + '"]'
+      );
+    var btn =
+      mount.els.results &&
+      mount.els.results.querySelector(
+        '[data-hmm-request="' + cssEscapeAttr(String(person.id)) + '"]'
+      );
+    var sendBtn = form && form.querySelector('.hmm-topic-send');
+    if (sendBtn) {
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'Sending…';
+    }
     if (btn) {
       btn.disabled = true;
       btn.textContent = 'Sending…';
     }
+    showTopicError(form, '');
 
     fetch('/api/auth/hubert-matchmaker', {
       method: 'POST',
@@ -574,25 +683,42 @@
           paintAll(lastMatches, lastQuery, { source: 'live' });
           loadMyIntros();
           if (mount && mount.els.error) {
-            mount.els.error.hidden = true;
+            mount.els.error.hidden = false;
+            mount.els.error.textContent =
+              'Intro requested — they’ll get an email from TINA. Check Waiting to hear back below.';
           }
           return;
+        }
+        if (sendBtn) {
+          sendBtn.disabled = false;
+          sendBtn.textContent = 'Send intro request';
         }
         if (btn) {
           btn.disabled = false;
           btn.textContent = 'Request intro';
+          btn.hidden = true;
         }
+        if (form) form.hidden = false;
+        var msg =
+          (data && data.message) || 'TINA could not send that intro request just now.';
+        showTopicError(form, msg);
         if (mount && mount.els.error) {
-          mount.els.error.textContent =
-            (data && data.message) || 'TINA could not send that intro request just now.';
+          mount.els.error.textContent = msg;
           mount.els.error.hidden = false;
         }
       })
       .catch(function () {
+        if (sendBtn) {
+          sendBtn.disabled = false;
+          sendBtn.textContent = 'Send intro request';
+        }
         if (btn) {
           btn.disabled = false;
           btn.textContent = 'Request intro';
+          btn.hidden = true;
         }
+        if (form) form.hidden = false;
+        showTopicError(form, 'Connection issue — try sending again.');
         if (mount && mount.els.error) {
           mount.els.error.textContent = 'Connection issue — try requesting again.';
           mount.els.error.hidden = false;
@@ -608,8 +734,37 @@
       btn.addEventListener('click', function () {
         var id = btn.getAttribute('data-hmm-request');
         var person = findPerson(id);
-        if (person) requestIntro(person, mount);
+        if (!person) return;
+        if (!searchEnabled || !profileReady || String(person.id || '').indexOf('stub-') === 0) {
+          requestIntro(person, mount, '');
+          return;
+        }
+        openTopicForm(person, mount);
       });
+    });
+
+    mount.els.results.querySelectorAll('[data-hmm-topic-form]').forEach(function (form) {
+      if (form.dataset.hmmBound === '1') return;
+      form.dataset.hmmBound = '1';
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var id = form.getAttribute('data-hmm-topic-form');
+        var person = findPerson(id);
+        var parsed = readTopicFromForm(form);
+        if (!parsed.ok) {
+          showTopicError(form, parsed.message);
+          var input = form.querySelector('.hmm-topic-input');
+          if (input) input.focus();
+          return;
+        }
+        requestIntro(person, mount, parsed.topic);
+      });
+      var cancel = form.querySelector('[data-hmm-topic-cancel]');
+      if (cancel) {
+        cancel.addEventListener('click', function () {
+          closeAllTopicForms(mount);
+        });
+      }
     });
   }
 

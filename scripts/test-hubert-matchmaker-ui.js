@@ -51,8 +51,12 @@ assert(
 assert(src.indexOf("return 'Intro request'") !== -1, 'waiting list hides names until Accept');
 assert(
   src.indexOf('What would you like to discuss?') !== -1,
-  'intro topic prompt does not name the match'
+  'intro topic form does not name the match'
 );
+assert(src.indexOf('window.prompt') === -1, 'intro topic no longer uses window.prompt');
+assert(src.indexOf('hmm-topic-form') !== -1, 'inline topic form on match cards');
+assert(src.indexOf('data-hmm-topic-form') !== -1, 'topic form bound per match');
+assert(src.indexOf('openTopicForm') !== -1, 'Request intro opens sticky topic form');
 
 const stubs = mm._stubShortlist('fintech founders');
 assert(Array.isArray(stubs) && stubs.length === mm.MAX_SHORTLIST, 'max 5 stubs');
