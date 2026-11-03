@@ -44,6 +44,15 @@ assert(accountHtml.indexOf('hmm-profile-actions') !== -1, 'Meet people centers p
 assert(mm.shortDisplayName('Alex Morgan') === 'Alex M.', 'first + initial');
 assert(mm.shortDisplayName('Priya') === 'Priya', 'single name');
 assert(mm.shortDisplayName('  Sam Taylor-Jones ') === 'Sam T.', 'trim + initial');
+assert(
+  /Card heading — role\/industry only/.test(src),
+  'shortlist cards document no-name privacy heading'
+);
+assert(src.indexOf("return 'Intro request'") !== -1, 'waiting list hides names until Accept');
+assert(
+  src.indexOf('What would you like to discuss?') !== -1,
+  'intro topic prompt does not name the match'
+);
 
 const stubs = mm._stubShortlist('fintech founders');
 assert(Array.isArray(stubs) && stubs.length === mm.MAX_SHORTLIST, 'max 5 stubs');
@@ -57,6 +66,7 @@ assert(
   'stub blurbs stay short for card teaser'
 );
 assert(src.indexOf('hmm-match-blurb') !== -1, 'shortlist card renders blurb');
+assert(src.indexOf('hmm-match-meta') === -1, 'role meta no longer duplicated under name');
 assert(src.indexOf('data-hmm-sug-q') !== -1, 'empty-state suggestion chips');
 assert(src.indexOf('bindEmptySuggestions') !== -1, 'suggestion chips re-run search');
 

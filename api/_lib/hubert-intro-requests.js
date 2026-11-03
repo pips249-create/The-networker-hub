@@ -80,12 +80,12 @@ function requesterEmailLabel(requester) {
 }
 
 /**
- * Shortlist / pending: first name + initial.
+ * Pending intros: no name on the Hub (LinkedIn cut-out guard).
  * After both agree (accepted): first name only.
  */
 function introDisplayName(fullName, status) {
   if (String(status || '') === 'accepted') return firstName(fullName);
-  return shortDisplayName(fullName);
+  return '';
 }
 
 /** Soft member-facing status — never “declined”. */
@@ -308,14 +308,18 @@ function publicIntroCard(row, opts) {
     row.target_name ||
     '';
   const requesterName = introDisplayName(requesterRaw, status);
-  const counterpartName = row.target_display_name
-    ? String(row.target_display_name)
-    : introDisplayName(counterpartRaw, status);
-  // Name shown to the signed-in member for this row.
+  // Prefer recomputed privacy rules over any stored target_display_name snapshot.
+  const counterpartName = introDisplayName(counterpartRaw, status);
+  // Name shown to the signed-in member for this row (blank until Accept).
   const otherName =
     opts?.direction === 'inbound'
       ? requesterName
       : counterpartName || introDisplayName(counterpartRaw, status);
+  const targetId = row.target_attendee_id
+    ? 'member:' + row.target_attendee_id
+    : row.target_seed_id
+      ? 'seed:' + row.target_seed_id
+      : null;
   return {
     id: row.id,
     status,
@@ -330,6 +334,7 @@ function publicIntroCard(row, opts) {
     eventTitle: row.event_title || null,
     eventId: row.event_id || null,
     direction: opts?.direction || null,
+    targetId,
     requesterDisplayName: requesterName,
     counterpartDisplayName: counterpartName,
     displayName: otherName,

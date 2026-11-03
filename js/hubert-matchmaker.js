@@ -137,9 +137,14 @@
     ].slice(0, MAX_SHORTLIST);
   }
 
+  /** Card heading — role/industry only (no name until both Accept). */
   function personLabel(person) {
-    if (person.displayName) return person.displayName;
-    return shortDisplayName(person.fullName);
+    var role = String((person && person.role) || '').trim();
+    var industry = String((person && (person.industry || person.company)) || '').trim();
+    if (role && industry) return role + ' · ' + industry;
+    if (role) return role;
+    if (industry) return industry;
+    return 'Match';
   }
 
   function findPerson(id) {
@@ -196,9 +201,6 @@
       '<h3 class="hmm-match-name">' +
       esc(personLabel(person)) +
       '</h3>' +
-      '<p class="hmm-match-meta">' +
-      esc([person.role, person.industry || person.company].filter(Boolean).join(' · ')) +
-      '</p>' +
       blurbBlock +
       '<div class="hmm-match-chips">' +
       status +
@@ -461,9 +463,8 @@
   }
 
   function askForTopic(person) {
-    var label = personLabel(person);
     var topic = window.prompt(
-      'What would you like to discuss with ' + label + '? (at least ' + TOPIC_MIN_LEN + ' characters)',
+      'What would you like to discuss? (at least ' + TOPIC_MIN_LEN + ' characters)',
       ''
     );
     if (topic == null) return null;
@@ -684,7 +685,10 @@
   }
 
   function introWho(intro) {
-    return intro.displayName || intro.counterpartDisplayName || intro.requesterDisplayName || 'Someone';
+    if (intro && (intro.connected || intro.status === 'accepted')) {
+      return intro.displayName || intro.counterpartDisplayName || intro.requesterDisplayName || 'Someone';
+    }
+    return 'Intro request';
   }
 
   function renderConnectionRow(intro) {
@@ -1510,12 +1514,8 @@
         }
 
         requests.forEach(function (intro) {
-          if (intro.status === 'pending') {
-            lastMatches.forEach(function (p) {
-              if (intro.counterpartDisplayName && personLabel(p) === intro.counterpartDisplayName) {
-                pendingByTarget[p.id] = intro.id;
-              }
-            });
+          if (intro.status === 'pending' && intro.targetId) {
+            pendingByTarget[intro.targetId] = intro.id;
           }
         });
 
