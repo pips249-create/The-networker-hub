@@ -244,7 +244,7 @@
       subtitle: 'Manage Founding Organiser · 2026 badges, homepage showcase slots, and the group LinkedIn caption',
     },
     'hubert-matchmaker': {
-      title: 'TINA Matchmaker',
+      title: 'TINA',
       subtitle: 'Private seed list for Rosie/ops — BOH intros only (admin preview until launch)',
     },
   };
@@ -34673,7 +34673,7 @@
     main.innerHTML =
       '<div class="space-y-6">' +
       '<div class="rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-sky-50 p-5">' +
-      '<p class="text-xs font-bold uppercase tracking-wider text-violet-800">TINA Matchmaker</p>' +
+      '<p class="text-xs font-bold uppercase tracking-wider text-violet-800">TINA</p>' +
       '<h3 class="text-lg font-bold text-brand-900 mt-1">Add people from LinkedIn</h3>' +
       '<p class="text-sm text-slate-600 mt-1 max-w-3xl">Paste a LinkedIn profile into the seed list for back-of-house matching (first name + initial only). Optionally send The Networker UK invite so they can join and become discoverable. Seed invites go out as Catherine or Rosie — member invites from the dashboard still use that individual&apos;s name. Never scrape — copy fields by hand.</p>' +
       '<ol class="mt-3 text-sm text-slate-700 list-decimal list-inside space-y-1 max-w-3xl">' +
