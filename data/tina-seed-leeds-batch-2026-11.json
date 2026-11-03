@@ -1,0 +1,203 @@
+{
+  "batch": "leeds-networking-2026-11",
+  "source": "rosie",
+  "notesPrefix": "Leeds networking seed · Nov 2026",
+  "contacts": [
+    {
+      "fullName": "Adam Ogilvie",
+      "phone": "07969680024",
+      "company": "Meanwood Valley Urban Farm",
+      "email": "a.ogilvie@mvuf.org.uk",
+      "industry": "Charity"
+    },
+    {
+      "fullName": "Alan Terry",
+      "phone": "07917 539720",
+      "company": "Liquid Indulgence",
+      "email": "cheers@liquidindulgence.co.uk",
+      "industry": "Wine Club specialist"
+    },
+    {
+      "fullName": "Alex Oprea",
+      "phone": "07448895459",
+      "company": "Client Steer",
+      "email": "alex.oprea18aug@gmail.com",
+      "industry": "Marketing"
+    },
+    {
+      "fullName": "Andrew Coggin",
+      "phone": "0191 2132131",
+      "company": "Accommodations UK",
+      "email": "Andrew@accommodationsuk.co.uk",
+      "industry": "Hotel Reservation Specialists"
+    },
+    {
+      "fullName": "Andy Hadfield",
+      "phone": "0779 8812473",
+      "company": "Ich Dien Solutions",
+      "email": "andy.hadfield@ichdiensolutions.co.uk",
+      "industry": "Coaching and Training"
+    },
+    {
+      "fullName": "Anthony Rance",
+      "phone": "0758 1383759",
+      "company": "Weightmans LLP",
+      "email": "anthony.rance@weightmans.com",
+      "industry": "Legal"
+    },
+    {
+      "fullName": "Colin Tansley",
+      "phone": "07423 633394",
+      "company": "Intelect",
+      "email": "info@intelect-group.com",
+      "industry": "Investigations, Training and Technology"
+    },
+    {
+      "fullName": "Debbie Fletcher",
+      "phone": "0795 8664720",
+      "company": "DF Mortgage & Protection Specialists",
+      "email": "debbie@dfmps.co.uk",
+      "industry": "Financial Services"
+    },
+    {
+      "fullName": "Elizabeth Ward",
+      "phone": "0783 4129522",
+      "company": "Virtuoso Legal",
+      "email": "liz@virtuosolegal.com",
+      "industry": "Legal"
+    },
+    {
+      "fullName": "Faisal Ahammad",
+      "phone": "0791 2042146",
+      "company": "University of Leeds",
+      "email": "m.f.ahammad@leeds.ac.uk",
+      "industry": "Education"
+    },
+    {
+      "fullName": "Glenn Rhea",
+      "phone": "0782 5120813",
+      "company": "Complify UK Software & Technology Limited",
+      "email": "glenn.rhea@complifyglobal.com",
+      "industry": "eLearning Provider"
+    },
+    {
+      "fullName": "Helen Bateman Underwood",
+      "phone": "0797 1298265",
+      "company": "Underwood Training",
+      "email": "helen@underwood-training.co.uk",
+      "industry": "First Aid Training"
+    },
+    {
+      "fullName": "Jenny Heath",
+      "phone": "07818 044521",
+      "company": "Village Hotel Leeds North",
+      "email": "jenny.heath@village-hotels.com",
+      "industry": "Hospitality and Leisure"
+    },
+    {
+      "fullName": "Jessica Allan",
+      "phone": "0779 4364432",
+      "company": "Mapped & Managed",
+      "email": "jessica@mappedandmanaged.co.uk",
+      "industry": "VA"
+    },
+    {
+      "fullName": "Jon Charters-Reid",
+      "phone": "07900 172636",
+      "company": "Charters-Reid Surveyors Ltd",
+      "email": "jon@uksurveys.net",
+      "industry": "Surveyor"
+    },
+    {
+      "fullName": "Keith Madeley",
+      "phone": "07831 159800",
+      "company": "Madeley Enterprises Limited",
+      "email": "keith@mryorkshire.com",
+      "industry": "Consultancy"
+    },
+    {
+      "fullName": "Lee Kaznowski",
+      "phone": "07795 574604",
+      "company": "Ascentis Accountants",
+      "email": "lee.kaznowski@ascentisllp.co.uk",
+      "industry": "Accountancy and Finance"
+    },
+    {
+      "fullName": "Lisa Summerscales",
+      "phone": "07813 300627",
+      "company": "McLaren&Co.",
+      "email": "lisa@mclarenandco.com",
+      "industry": "Websites and Branding"
+    },
+    {
+      "fullName": "Louise Rawson",
+      "phone": "0786 8101052",
+      "company": "Rucklidges solicitors",
+      "email": "louise@rucklidges.co.uk",
+      "industry": "Legal"
+    },
+    {
+      "fullName": "Mark Kelly",
+      "phone": "0735 9860519",
+      "company": "Mark Kelly Consultancy ltd t/a Forthwise",
+      "email": "mark@forthwise.co.uk",
+      "industry": "IT consultancy and Business Consultancy"
+    },
+    {
+      "fullName": "Najinder Devgun",
+      "phone": "0747 5541278",
+      "company": "20:20 Financial Planning Ltd",
+      "email": "naj@2020fp.co.uk",
+      "industry": "Financial Advice and Planning"
+    },
+    {
+      "fullName": "Nanda Swain",
+      "phone": "0796 5498393",
+      "company": "Brickwell Heath",
+      "email": "nanda.swain@brickwellheath.com",
+      "industry": "Property and Development"
+    },
+    {
+      "fullName": "Nikki Wallis",
+      "phone": "0791 4626890",
+      "company": "Talespin Copy",
+      "email": "nikki@talespincopy.co.uk",
+      "industry": "Marketing and PR"
+    },
+    {
+      "fullName": "Rena Crossley",
+      "phone": "0771 3647077",
+      "company": "Elevated Ltd",
+      "email": "rena@getelevated.uk",
+      "industry": "Professional Services"
+    },
+    {
+      "fullName": "Rosie McGilvray",
+      "phone": "07814 103774",
+      "company": "Vitality",
+      "email": "Rosie.McGilvray@VA.Vitality.co.uk",
+      "industry": "Private Medical"
+    },
+    {
+      "fullName": "Philippa Goldstone",
+      "phone": "07930 407998",
+      "company": "Equals One Ltd",
+      "email": "philippa@equalsone.co.uk",
+      "industry": "Recruitment"
+    },
+    {
+      "fullName": "Poonam Kaur",
+      "phone": "07446 184 924",
+      "company": "F D S Director Services Ltd",
+      "email": "Poonam@wearefds.com",
+      "industry": "Corporate Finance"
+    },
+    {
+      "fullName": "Tom Brook",
+      "phone": "07809 256223",
+      "company": "Another Concept",
+      "email": "tom@anotherconcept.co.uk",
+      "industry": "Marketing Specialist"
+    }
+  ]
+}
