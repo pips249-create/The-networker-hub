@@ -5041,6 +5041,30 @@ body.ad-hubert-optin-modal-open {
   overflow: hidden;
 }
 
+.hmm-empty-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.hmm-empty-sug {
+  border: 1px solid rgba(125, 72, 150, 0.28);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--ad-teal-dark);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 650;
+  padding: 8px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.hmm-empty-sug:hover {
+  background: rgba(125, 72, 150, 0.08);
+}
+
 .hmm-match-chips {
   display: flex;
   flex-wrap: wrap;

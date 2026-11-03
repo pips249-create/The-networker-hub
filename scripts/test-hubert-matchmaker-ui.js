@@ -57,6 +57,8 @@ assert(
   'stub blurbs stay short for card teaser'
 );
 assert(src.indexOf('hmm-match-blurb') !== -1, 'shortlist card renders blurb');
+assert(src.indexOf('data-hmm-sug-q') !== -1, 'empty-state suggestion chips');
+assert(src.indexOf('bindEmptySuggestions') !== -1, 'suggestion chips re-run search');
 
 assert(typeof mm.emptyStateCopy === 'function', 'emptyStateCopy exported');
 const eventEmpty = mm.emptyStateCopy({
@@ -103,5 +105,6 @@ assert(
   'meet hide Stop when not included'
 );
 assert(dashCss.indexOf('.hmm-match-blurb') !== -1, 'shortlist blurb styles present');
+assert(dashCss.indexOf('.hmm-empty-sug') !== -1, 'empty suggestion chip styles present');
 
 console.log('ok — hubert-matchmaker ui helpers');

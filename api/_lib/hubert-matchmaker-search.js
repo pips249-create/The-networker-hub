@@ -9,6 +9,17 @@
  * Ranking is intentionally keyword + light intent (no LLM round-trip yet):
  * fast, but must not admit people solely for having any upcoming event.
  */
+const {
+  parseQueryIntel,
+  roleFamilyScore,
+  geoScore,
+  isExcludedPerson,
+  applyGeoShortlistPreference,
+  buildSearchSuggestions,
+  emptySuggestionCopy,
+  personPlace,
+} = require('./hubert-matchmaker-intel');
+
 const MAX_SHORTLIST = 5;
 /** Rotate the shortlist across this many top-scoring candidates. */
 const SHORTLIST_ROTATION_POOL = 12;
@@ -479,6 +490,7 @@ function haystackFor(person) {
     person.industry,
     person.professionalRole,
     person.blurb,
+    person.location,
     person.matchedEvent && person.matchedEvent.title,
     ...(Array.isArray(person.lookingToMeet) ? person.lookingToMeet : []),
   ]
@@ -689,46 +701,69 @@ function toPublicShortlistCard(row) {
         : null,
     onHub: Boolean(row.person.onHub),
     score: row.total,
+    placeFit:
+      row.geoScore >= 30 ? 'exact' : row.geoScore >= 12 ? 'nearby' : null,
   };
 }
 
 function rankCandidates(candidates, query, requesterEventIds, opts) {
   const tokens = tokenize(query);
   const intent = extractQueryIntent(query);
+  const intel = (opts && opts.queryIntel) || parseQueryIntel(query);
 
   const ranked = (candidates || [])
     .map((person) => {
       const textScore = scoreAgainstQuery(person, tokens);
       const roleScore = roleFitScore(person, intent);
+      const familyScore = roleFamilyScore(person, intel);
+      const placeScore = geoScore(person, intel);
       const boost = eventBoost(person, requesterEventIds);
       const matchedBoost = matchedEventBoost(person);
       const brandScore = platformBrandMatchScore(person, query);
-      const total = textScore + roleScore + boost + matchedBoost + brandScore;
+      const excluded = isExcludedPerson(person, intel);
+      const total =
+        textScore + roleScore + familyScore + placeScore + boost + matchedBoost + brandScore;
       return {
         person,
         textScore,
         roleScore,
+        familyScore,
+        geoScore: placeScore,
         boost,
         matchedBoost,
         brandScore,
+        excluded,
         total,
         intent,
+        intel,
       };
     })
     .filter((row) => {
+      if (row.excluded) return false;
       // “Who attended X?” — booking match is enough.
       if (row.matchedBoost > 0) return true;
       // “The Networker UK directors” → Rosie / Catherine / Hub team.
       if (row.brandScore >= 18) return true;
+      // Synonym family hit (IT Director ↔ CIO) is enough topical signal.
+      if (row.familyScore >= 12) {
+        // Geo-specific asks: drop hard mismatches (other city), keep unknown/nearby/exact.
+        if (intel.hasPlaceIntel && row.geoScore < 0) return false;
+        return true;
+      }
       // Otherwise require real topical overlap. Upcoming events alone are not a match.
       if (row.textScore < MIN_TEXT_SCORE) return false;
       // Hard role clash (e.g. founders for an employees ask) drop out.
       if (row.roleScore <= -20) return false;
+      // Manager when Director asked (same ladder) without widening.
+      if (row.familyScore < 0) return false;
+      if (intel.hasPlaceIntel && row.geoScore < 0) return false;
       return true;
     })
     .sort(
       (a, b) =>
         b.total - a.total ||
+        b.geoScore - a.geoScore ||
+        b.familyScore - a.familyScore ||
         b.brandScore - a.brandScore ||
         b.textScore - a.textScore ||
         b.roleScore - a.roleScore ||
@@ -737,10 +772,12 @@ function rankCandidates(candidates, query, requesterEventIds, opts) {
         String(a.person.displayName).localeCompare(String(b.person.displayName))
     );
 
-  return rotateShortlistWindow(ranked, {
+  const geoPreferred = applyGeoShortlistPreference(ranked, intel, SHORTLIST_ROTATION_POOL);
+  return rotateShortlistWindow(geoPreferred, {
     rotationKey: opts && opts.rotationKey,
     nowMs: opts && opts.nowMs,
     query,
+    disableRotation: opts && opts.disableRotation,
   }).map(toPublicShortlistCard);
 }
 
@@ -750,6 +787,14 @@ function buildWhy(row) {
     return title ? 'Booked for ' + title : 'Booked for a matching event';
   }
   if (row.brandScore >= 18) return 'Part of The Networker UK team';
+  if (row.geoScore >= 30 && row.familyScore >= 12) {
+    return 'Role and location match your ask';
+  }
+  if (row.geoScore >= 12 && row.geoScore < 30 && row.familyScore >= 12) {
+    return 'Role matches — nearby to where you asked';
+  }
+  if (row.familyScore >= 20) return 'Title matches who you asked to meet';
+  if (row.familyScore >= 12) return 'Close title to what you asked for';
   if (row.roleScore >= 12 && row.intent && row.intent.wantEmployees) {
     return 'Role fits who you asked to meet';
   }
@@ -823,6 +868,7 @@ function mapSeedRow(row) {
     jobTitle: row.job_title || '',
     industry: row.industry || '',
     professionalRole: row.professional_role || '',
+    location: row.location || row.city || '',
     lookingToMeet: Array.isArray(row.looking_to_meet) ? row.looking_to_meet : [],
     blurb: row.blurb || '',
     nextEvent: null,
@@ -844,6 +890,7 @@ function mapMemberRow(row, nextEvent, matchedEvent) {
     jobTitle: row.job_title || '',
     industry: row.business_sector || '',
     professionalRole: row.professional_role || '',
+    location: row.location || '',
     lookingToMeet: Array.isArray(row.looking_to_meet) ? row.looking_to_meet : [],
     blurb: row.matchmaker_blurb || '',
     nextEvent: nextEvent || null,
@@ -1033,7 +1080,7 @@ async function loadAttendeesForEvents(sb, events, excludeAttendeeId) {
   const byId = new Map(eventList.map((e) => [e.id, e]));
 
   const richSelect =
-    'attendee_id, event_id, cancelled_at, application_status, payment_status, attendees!inner(id, name, company, job_title, business_sector, professional_role, looking_to_meet, matchmaker_blurb, discoverable_at)';
+    'attendee_id, event_id, cancelled_at, application_status, payment_status, attendees!inner(id, name, company, job_title, business_sector, professional_role, looking_to_meet, matchmaker_blurb, discoverable_at, location)';
   const basicSelect =
     'attendee_id, event_id, cancelled_at, application_status, payment_status, attendees!inner(id, name, company, job_title, business_sector)';
 
@@ -1194,15 +1241,26 @@ async function searchMatchmaker(opts) {
 
   // Discoverable members
   try {
+    const memberColsRich =
+      'id, name, company, job_title, business_sector, professional_role, looking_to_meet, matchmaker_blurb, discoverable_at, location';
+    const memberColsBasic =
+      'id, name, company, job_title, business_sector, professional_role, looking_to_meet, matchmaker_blurb, discoverable_at';
     let memberQuery = sb
       .from('attendees')
-      .select(
-        'id, name, company, job_title, business_sector, professional_role, looking_to_meet, matchmaker_blurb, discoverable_at'
-      )
+      .select(memberColsRich)
       .not('discoverable_at', 'is', null)
       .limit(200);
     if (excludeAttendeeId) memberQuery = memberQuery.neq('id', excludeAttendeeId);
-    const memberRes = await memberQuery;
+    let memberRes = await memberQuery;
+    if (memberRes.error && /location/i.test(String(memberRes.error.message || ''))) {
+      let fallback = sb
+        .from('attendees')
+        .select(memberColsBasic)
+        .not('discoverable_at', 'is', null)
+        .limit(200);
+      if (excludeAttendeeId) fallback = fallback.neq('id', excludeAttendeeId);
+      memberRes = await fallback;
+    }
     if (!memberRes.error) {
       const rows = memberRes.data || [];
       const nextMap = await loadNextEventsByAttendeeIds(
@@ -1224,7 +1282,7 @@ async function searchMatchmaker(opts) {
       let opsQuery = sb
         .from('attendees')
         .select(
-          'id, name, company, job_title, business_sector, professional_role, looking_to_meet, matchmaker_blurb, discoverable_at'
+          'id, name, company, job_title, business_sector, professional_role, looking_to_meet, matchmaker_blurb, discoverable_at, location'
         )
         .or(
           [
@@ -1283,12 +1341,20 @@ async function searchMatchmaker(opts) {
     eventPeople.forEach(addCandidate);
   }
 
+  const queryIntel = parseQueryIntel(query);
   const matches = needsEventPick
     ? []
     : rankCandidates(candidates, query, requesterEventIds, {
         rotationKey: excludeAttendeeId || '',
         query,
+        queryIntel,
       });
+
+  const suggestions =
+    !needsEventPick && matches.length === 0
+      ? buildSearchSuggestions(candidates, queryIntel, { limit: 4 })
+      : [];
+
   const meta = {
     max: MAX_SHORTLIST,
     rotationPool: SHORTLIST_ROTATION_POOL,
@@ -1309,6 +1375,18 @@ async function searchMatchmaker(opts) {
     needsEventPick,
     lockedEventId: lockedEventId || null,
     requesterDiscoverable,
+    queryIntel: {
+      places: queryIntel.places,
+      roleGroupIds: queryIntel.roleGroupIds,
+      exclusions: queryIntel.exclusions,
+      widenSeniority: queryIntel.widenSeniority,
+      roleGroups: queryIntel.roleGroups.map((g) => ({
+        id: g.id,
+        tier: g.tier,
+        labels: g.labels.slice(0, 3),
+      })),
+    },
+    suggestions,
   };
   meta.empty = emptyStateCopy(meta);
   return {
@@ -1361,6 +1439,8 @@ function emptyStateCopy(meta) {
       text: 'The member pool is still thin for that ask. Try another description, or check back after more people opt in.',
     };
   }
+  const smart = emptySuggestionCopy(m);
+  if (smart) return smart;
   return {
     title: 'No close matches yet',
     text:
@@ -1401,5 +1481,7 @@ module.exports = {
   mapSeedRow,
   mapMemberRow,
   emptyStateCopy,
+  parseQueryIntel,
+  personPlace,
   searchMatchmaker,
 };
