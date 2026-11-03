@@ -660,14 +660,13 @@ function shortlistBlurb(person) {
 
 /**
  * Public shortlist card — privacy-safe.
- * Never include company (LinkedIn cut-out risk with first name + company),
- * email, phone, or LinkedIn. Role / industry + TINA blurb only.
+ * Never include name (LinkedIn cut-out), company, email, phone, or LinkedIn.
+ * Role / industry + TINA blurb only — first names appear only after both Accept.
  */
 function toPublicShortlistCard(row) {
   return {
     id: row.person.id,
     kind: row.person.kind,
-    displayName: row.person.displayName,
     role: row.person.role || '',
     industry: row.person.industry || '',
     blurb: shortlistBlurb(row.person),

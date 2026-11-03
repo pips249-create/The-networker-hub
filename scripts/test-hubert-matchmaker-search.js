@@ -168,6 +168,10 @@ assert(
   ranked.every((m) => !m.company),
   'company stripped from shortlist (LinkedIn cut-out guard)'
 );
+assert(
+  ranked.every((m) => !m.displayName && !m.fullName),
+  'name stripped from shortlist (LinkedIn cut-out guard)'
+);
 assert(ranked.every((m) => m.industry === 'SaaS'), 'industry kept for context');
 assert(
   ranked.every((m) => m.blurb === 'fintech founder manchester'),

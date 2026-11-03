@@ -18,7 +18,7 @@ Until product explicitly turns Matchmaker **search** on for everyone:
 Implementation branch: `cursor/hubert-matchmaker-8ac8` (off `main` after this spec).
 
 **Build progress**
-1. ~~Feature flag + admin gate~~ · dashboard **Meet people** + Overview Hubert ask strip (admin-only), stub shortlist (max 5, first name + initial, event-first matches)
+1. ~~Feature flag + admin gate~~ · dashboard **Meet people** + Overview Hubert ask strip (admin-only), stub shortlist (max 5, no names, event-first matches)
 2. ~~Private seed + nominate (ops)~~ · Admin → Hubert Matchmaker seed list (migration `332_hubert_match_seed.sql`) · LinkedIn paste + Hub invite from seed
 3. ~~Real BOH match API~~ · `/api/auth/hubert-matchmaker` (admin-gated; seed + discoverable members; max 5; no contacts)
 4. ~~Request intro → Hubert email → Accept/Decline · **no contact share** · Hub intro thread · persist + count~~
@@ -48,7 +48,7 @@ Hubert is the Hub’s matchmaker. Logged-in members describe who they want to me
 1. **Account required to search** — no anonymous people search; membership is the gate.  
 2. **Back-of-house matching** — A does not browse the full seed or member graph.  
 3. **Capped shortlist** — max **5** people put forward per search.  
-4. **Privacy on the shortlist** — show **first name + surname initial** only (e.g. `Jane S.`), not full legal name.  
+4. **Privacy on the shortlist** — **no names** on shortlist or waiting cards (role + blurb only). First names appear only after both Accept.  
 5. **No contact details via Hubert** — never show phone, email, or LinkedIn on shortlists **or** after Accept.  
 6. **Double opt-in** — Accept opens a Hubert-mediated intro on the Hub, not a contact dump.  
 7. **Hubert is the face** — search UX, emails, and invites use Hubert’s voice.  
@@ -104,8 +104,8 @@ Say this upfront in product copy so closing the loop later is not a surprise: *w
 
 | Element | Rule |
 |---------|------|
-| Name | **First name + surname initial only** (e.g. `Alex M.`) — full name only inside the private Hubert intro thread after Accept |
-| Role / company | Yes, if we have them |
+| Name | **Hidden** on shortlist and waiting cards — first name only after both Accept (private thread) |
+| Role / industry | Yes (no company — LinkedIn cut-out guard) |
 | Tags / why matched | Short line from matcher |
 | **Upcoming event** | **Primary feature when present** — event name + date sits with equal weight to the intro action (“You’ll both be at X” / “Alex is going to X”) |
 | Hub status | Member vs “Hubert can invite them to join” |
@@ -164,7 +164,7 @@ After Accept, B owns and edits their Hub profile text.
 
 | Field | Required for discoverable? | Notes |
 |-------|----------------------------|--------|
-| Name | Yes | Full name stored; **shortlist shows first + initial** |
+| Name | Yes | Full name stored; **shortlist shows no name** (first name after Accept) |
 | Company / job title | Encouraged | Existing |
 | **Industry** (tag) | Yes | Existing list where possible |
 | **I am a** (tag) | Yes | Founder, Recruiter, Investor, Service provider, … |
@@ -190,7 +190,7 @@ After Accept, B owns and edits their Hub profile text.
 | Intro requests (members) | **10 intro requests / week** (raised for habit-forming soft launch — see Quotas) |
 | Staff / Rosie | Higher seed nominate + reminder quotas (not bound by the member 10) |
 | Intent field | **≥ 25 characters** on “what I’d like to discuss”; soft-reject generics (“hi”, “networking”, “sales”) |
-| Shortlist identity | **First name + surname initial** only |
+| Shortlist identity | **No name** until both Accept (then first name) |
 | Contact after Accept | **None** — Hubert-mediated Hub intro / thread only |
 | Hub invite (“Introduce someone…”) | Name + email → Hubert join invite; not a contact reveal to the inviter |
 | Seed non-response | **1** Hubert reminder at day 5–7; then **pause** in BOH pool |
@@ -219,7 +219,8 @@ After Accept, B owns and edits their Hub profile text.
 ## Explicitly out of scope (Phase 1)
 
 - Public phone/email on any card  
-- Full name on shortlist before Accept  
+- Any name on shortlist / waiting cards before Accept  
+
 - Scraping LinkedIn (connections or bios)  
 - Calendar read access  
 - Unlimited browse of the seed graph  

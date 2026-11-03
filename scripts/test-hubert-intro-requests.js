@@ -41,7 +41,7 @@ assert(
   'email label with role'
 );
 assert(requesterEmailLabel({ name: 'Catherine Hill' }) === 'Catherine H.', 'email label name only');
-assert(introDisplayName('Alex Morgan', 'pending') === 'Alex M.', 'pending keeps initial');
+assert(introDisplayName('Alex Morgan', 'pending') === '', 'pending hides name');
 assert(introDisplayName('Alex Morgan', 'accepted') === 'Alex', 'accepted = first name only');
 assert(softIntroStatus('declined').label.indexOf('Didn’t come through') === 0, 'soft decline label');
 assert(softIntroStatus('pending').key === 'waiting', 'pending → waiting');
@@ -53,11 +53,17 @@ const pendingCard = publicIntroCard(
     status: 'pending',
     topic: 'Compare notes on seed raises in Manchester',
     target_full_name: 'Jordan Lee',
+    target_attendee_id: '11111111-1111-1111-1111-111111111111',
     requester: { name: 'Alex Morgan' },
   },
   { direction: 'outbound' }
 );
-assert(pendingCard.counterpartDisplayName === 'Jordan L.', 'pending card short name');
+assert(pendingCard.counterpartDisplayName === '', 'pending card hides name');
+assert(pendingCard.displayName === '', 'pending displayName blank');
+assert(
+  pendingCard.targetId === 'member:11111111-1111-1111-1111-111111111111',
+  'pending card includes targetId for UI state'
+);
 assert(pendingCard.connected === false, 'pending not connected');
 assert(pendingCard.statusLabel === 'Waiting to hear back', 'pending soft label');
 

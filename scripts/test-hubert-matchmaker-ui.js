@@ -34,7 +34,7 @@ assert(mm.canUseMatchmaker({ user: { role: 'admin' } }) === true, 'admin session
 assert(mm.canUseMatchmaker({ role: 'client' }) === false, 'client search blocked while gated');
 assert(mm.canUseMatchmaker(null) === false, 'signed-out search blocked');
 assert(src.indexOf('searchEnabled') !== -1, 'searchEnabled gate for Ask Hubert');
-assert(src.indexOf('You’re in Hubert’s pool') !== -1, 'profile-ready copy while search gated');
+assert(src.indexOf('You’re in TINA’s pool') !== -1, 'profile-ready copy while search gated');
 assert(src.indexOf('shareProfileInvite') !== -1, 'profile share invite helper');
 const accountHtml = fs.readFileSync(path.join(__dirname, '../account/index.html'), 'utf8');
 assert(accountHtml.indexOf('data-hmm-profile-share') !== -1, 'Meet people has invite share control');
@@ -44,6 +44,15 @@ assert(accountHtml.indexOf('hmm-profile-actions') !== -1, 'Meet people centers p
 assert(mm.shortDisplayName('Alex Morgan') === 'Alex M.', 'first + initial');
 assert(mm.shortDisplayName('Priya') === 'Priya', 'single name');
 assert(mm.shortDisplayName('  Sam Taylor-Jones ') === 'Sam T.', 'trim + initial');
+assert(
+  /Card heading — role\/industry only/.test(src),
+  'shortlist cards document no-name privacy heading'
+);
+assert(src.indexOf("return 'Intro request'") !== -1, 'waiting list hides names until Accept');
+assert(
+  src.indexOf('What would you like to discuss?') !== -1,
+  'intro topic prompt does not name the match'
+);
 
 const stubs = mm._stubShortlist('fintech founders');
 assert(Array.isArray(stubs) && stubs.length === mm.MAX_SHORTLIST, 'max 5 stubs');
@@ -57,6 +66,7 @@ assert(
   'stub blurbs stay short for card teaser'
 );
 assert(src.indexOf('hmm-match-blurb') !== -1, 'shortlist card renders blurb');
+assert(src.indexOf('hmm-match-meta') === -1, 'role meta no longer duplicated under name');
 
 assert(typeof mm.emptyStateCopy === 'function', 'emptyStateCopy exported');
 const eventEmpty = mm.emptyStateCopy({
