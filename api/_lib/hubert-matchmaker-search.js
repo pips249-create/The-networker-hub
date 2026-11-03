@@ -554,6 +554,8 @@ function stripIdentifyingPhrases(text, person) {
   if (company.length >= 3) {
     out = out.replace(new RegExp('\\b' + escapeRegExp(company) + '\\b', 'gi'), ' ');
   }
+  // Hub brand in a blurb + first-name initial is enough to identify Rosie/Catherine.
+  out = out.replace(/\bthe\s+networker(?:\s+(?:uk|group(?:\s+ltd)?))?\b/gi, ' ');
 
   const first = parts[0] || '';
   if (first.length >= 3) {

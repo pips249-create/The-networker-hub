@@ -488,7 +488,7 @@ assert(
   'why explains Hub team match'
 );
 assert(
-  !/Rosie|Catherine|McGilvray|Hancher|Networker Group/i.test(
+  !/Rosie|Catherine|McGilvray|Hancher|Networker (?:UK|Group)/i.test(
     networkerDirectors.map((m) => m.blurb || '').join(' ')
   ),
   'Hub team shortlist blurbs stay anonymous'
