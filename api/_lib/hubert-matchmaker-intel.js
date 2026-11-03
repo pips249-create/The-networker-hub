@@ -440,15 +440,29 @@ function roleFamilyScore(person, intel) {
 function geoScore(person, intel) {
   if (!intel || !intel.hasPlaceIntel) return 0;
   const theirs = personPlace(person);
-  if (!theirs) return 0; // unknown location — don't invent a match
-  if (intel.places.includes(theirs)) return 36;
+  if (theirs) {
+    if (intel.places.includes(theirs)) return 36;
+    for (let i = 0; i < intel.places.length; i++) {
+      const asked = intel.places[i];
+      if (nearbyFor(asked).includes(theirs)) return 16;
+      // County ↔ town soft link already in NEARBY.
+    }
+    // Different known place while ask was geo-specific.
+    return -12;
+  }
+  // No structured location — soft credit if the ask’s place appears in blurb/role text
+  // (e.g. “based in Pocklington, near York” when location field is empty).
+  const hay = personRoleHay(person);
+  if (!hay) return 0;
   for (let i = 0; i < intel.places.length; i++) {
     const asked = intel.places[i];
-    if (nearbyFor(asked).includes(theirs)) return 16;
-    // County ↔ town soft link already in NEARBY.
+    if (asked && hay.includes(asked)) return 18;
+    const near = nearbyFor(asked);
+    for (let j = 0; j < near.length; j++) {
+      if (hay.includes(near[j])) return 12;
+    }
   }
-  // Different known place while ask was geo-specific.
-  return -12;
+  return 0;
 }
 
 function isExcludedPerson(person, intel) {

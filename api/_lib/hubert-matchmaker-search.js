@@ -18,6 +18,7 @@ const {
   buildSearchSuggestions,
   emptySuggestionCopy,
   personPlace,
+  titleCase,
 } = require('./hubert-matchmaker-intel');
 
 const MAX_SHORTLIST = 5;
@@ -64,6 +65,9 @@ const QUERY_STOP = new Set([
   'meet',
   'like',
   'around',
+  'near',
+  'nearby',
+  'based',
   'might',
   'be',
   'interested',
@@ -112,6 +116,7 @@ const QUERY_STOP = new Set([
   'british',
   'networker',
   'hubert',
+  'tina',
   'introduce',
   'introduction',
   'intro',
@@ -527,6 +532,62 @@ function scoreAgainstQuery(person, tokens) {
 }
 
 /**
+ * When the ask looks like a person search (“Jamie Trickett near York”),
+ * boost people whose name parts appear in the query.
+ */
+function nameMatchScore(person, tokens) {
+  const nameParts = String(person && (person.fullName || person.displayName) || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, ' ')
+    .split(/\s+/)
+    .filter((p) => p && p.length >= 2);
+  if (!nameParts.length || !tokens || !tokens.length) return 0;
+  const hits = tokens.filter((t) =>
+    nameParts.some((p) => p === t || (t.length >= 4 && (p.startsWith(t) || t.startsWith(p))))
+  );
+  if (!hits.length) return 0;
+  // First + surname (or two distinct name tokens) = strong exact person hit.
+  if (hits.length >= 2) return 55;
+  // Single name token — useful but weaker than full name.
+  return hits[0].length >= 5 ? 22 : 14;
+}
+
+/** Tokens from the ask that also appear in this person’s profile (for why copy). */
+function matchedSearchTokens(person, tokens, intel) {
+  const hay = haystackFor(person);
+  const nameHay = String(person && (person.fullName || person.displayName) || '').toLowerCase();
+  const placeSet = new Set((intel && intel.places) || []);
+  const roleLabels = ((intel && intel.roleGroups) || [])
+    .flatMap((g) => g.labels || [])
+    .map((l) =>
+      String(l || '')
+        .toLowerCase()
+        .trim()
+    )
+    .filter(Boolean);
+  const out = [];
+  const seen = new Set();
+  (tokens || []).forEach((t) => {
+    if (!t || seen.has(t)) return;
+    const forms = expandTokenForms(t);
+    const inName = forms.some((f) => nameHay.includes(f));
+    const inPlace = placeSet.has(t) || forms.some((f) => placeSet.has(f));
+    const inRole = roleLabels.some((label) => forms.some((f) => label.includes(f) || f.includes(label)));
+    const inHay = forms.some((f) => hay.includes(f));
+    if (!inName && !inPlace && !inRole && !inHay) return;
+    seen.add(t);
+    out.push({
+      token: t,
+      label: titleCase(t),
+      inName,
+      inPlace,
+      inRole,
+    });
+  });
+  return out;
+}
+
+/**
  * Event boost tiers (spec): same event > other upcoming > none.
  * Used as a tie-breaker among relevant people — not an admission ticket.
  */
@@ -767,22 +828,34 @@ function rankCandidates(candidates, query, requesterEventIds, opts) {
       const roleScore = roleFitScore(person, intent);
       const familyScore = roleFamilyScore(person, intel);
       const placeScore = geoScore(person, intel);
+      const nameScore = nameMatchScore(person, tokens);
       const boost = eventBoost(person, requesterEventIds);
       const matchedBoost = matchedEventBoost(person);
       const brandScore = platformBrandMatchScore(person, query);
       const excluded = isExcludedPerson(person, intel);
+      const matchedParts = matchedSearchTokens(person, tokens, intel);
       const total =
-        textScore + roleScore + familyScore + placeScore + boost + matchedBoost + brandScore;
+        textScore +
+        roleScore +
+        familyScore +
+        placeScore +
+        nameScore +
+        boost +
+        matchedBoost +
+        brandScore;
       return {
         person,
         textScore,
         roleScore,
         familyScore,
         geoScore: placeScore,
+        nameScore,
         boost,
         matchedBoost,
         brandScore,
         excluded,
+        matchedParts,
+        tokens,
         total,
         intent,
         intel,
@@ -794,24 +867,32 @@ function rankCandidates(candidates, query, requesterEventIds, opts) {
       if (row.matchedBoost > 0) return true;
       // “The Networker UK directors” → Rosie / Catherine / Hub team.
       if (row.brandScore >= 18) return true;
+      // Exact / partial name search (“Jamie Trickett”).
+      if (row.nameScore >= 14) {
+        if (intel.hasPlaceIntel && row.geoScore < 0) return false;
+        return true;
+      }
       // Synonym family hit (IT Director ↔ CIO) is enough topical signal.
       if (row.familyScore >= 12) {
         // Geo-specific asks: drop hard mismatches (other city), keep unknown/nearby/exact.
         if (intel.hasPlaceIntel && row.geoScore < 0) return false;
         return true;
       }
-      // Otherwise require real topical overlap. Upcoming events alone are not a match.
-      if (row.textScore < MIN_TEXT_SCORE) return false;
       // Hard role clash (e.g. founders for an employees ask) drop out.
       if (row.roleScore <= -20) return false;
       // Manager when Director asked (same ladder) without widening.
       if (row.familyScore < 0) return false;
+      // Place from the ask (structured location or mentioned in blurb/role).
+      if (row.geoScore >= 12) return true;
+      // Otherwise require real topical overlap. Upcoming events alone are not a match.
+      if (row.textScore < MIN_TEXT_SCORE) return false;
       if (intel.hasPlaceIntel && row.geoScore < 0) return false;
       return true;
     })
     .sort(
       (a, b) =>
         b.total - a.total ||
+        b.nameScore - a.nameScore ||
         b.geoScore - a.geoScore ||
         b.familyScore - a.familyScore ||
         b.brandScore - a.brandScore ||
@@ -837,6 +918,56 @@ function buildWhy(row) {
     return title ? 'Booked for ' + title : 'Booked for a matching event';
   }
   if (row.brandScore >= 18) return 'Part of The Networker UK team';
+
+  const intel = row.intel || {};
+  const placeLabel =
+    intel.places && intel.places[0] ? titleCase(intel.places[0]) : '';
+  const roleLabel =
+    intel.roleGroups && intel.roleGroups[0] && intel.roleGroups[0].labels
+      ? titleCase(intel.roleGroups[0].labels[0])
+      : '';
+  const parts = Array.isArray(row.matchedParts) ? row.matchedParts : [];
+  const nameHit = row.nameScore >= 14 || parts.some((p) => p.inName);
+  const placeHit =
+    row.geoScore >= 12 || parts.some((p) => p.inPlace) || (placeLabel && parts.some((p) => p.token === String(intel.places[0] || '')));
+  const roleHit = row.familyScore >= 12 || row.roleScore >= 12 || parts.some((p) => p.inRole);
+
+  // Prefer concrete “mentioned in your search” chips over vague copy.
+  const mentioned = [];
+  if (nameHit) {
+    mentioned.push(row.nameScore >= 40 ? 'exact name' : 'name in your search');
+  }
+  if (placeHit && placeLabel) {
+    // 36 exact structured · 16 nearby structured · 18/12 soft blurb mentions
+    mentioned.push(
+      row.geoScore >= 30 ? placeLabel : row.geoScore === 16 ? 'near ' + placeLabel : placeLabel
+    );
+  }
+  if (roleHit && roleLabel) {
+    mentioned.push(roleLabel);
+  }
+  // Other query tokens that hit the profile (industry, niche words) — skip ones already covered.
+  parts.forEach((p) => {
+    if (p.inName || p.inPlace || p.inRole) return;
+    if (placeLabel && p.label.toLowerCase() === placeLabel.toLowerCase()) return;
+    if (roleLabel && roleLabel.toLowerCase().includes(p.token)) return;
+    if (mentioned.length >= 4) return;
+    mentioned.push(p.label);
+  });
+
+  if (mentioned.length >= 2) {
+    return 'Matches your search: ' + mentioned.slice(0, 4).join(' · ');
+  }
+  if (mentioned.length === 1) {
+    if (nameHit && row.nameScore >= 40) return 'Exact name match for your search';
+    if (nameHit) return 'Matches the name in your search';
+    if (placeHit && row.geoScore >= 30) return 'Exact match for ' + placeLabel;
+    if (placeHit && row.geoScore === 16) return 'Near ' + placeLabel + ' — close to your ask';
+    if (placeHit && placeLabel) return 'Mentions ' + placeLabel + ' from your search';
+    if (roleHit && roleLabel) return 'Title match: ' + roleLabel;
+    return 'Mentioned in your search: ' + mentioned[0];
+  }
+
   if (row.geoScore >= 30 && row.familyScore >= 12) {
     return 'Role and location match your ask';
   }
@@ -854,7 +985,7 @@ function buildWhy(row) {
   if (row.boost >= 40 && row.textScore >= MIN_TEXT_SCORE) {
     return 'You’ll both be at the same upcoming event';
   }
-  if (row.textScore >= MIN_TEXT_SCORE) return 'Matches what you asked TINA for';
+  if (row.textScore >= MIN_TEXT_SCORE) return 'Overlaps with words from your search';
   if (row.boost >= 12) return 'Has an upcoming event on The Networker UK';
   return '';
 }
@@ -1517,6 +1648,9 @@ module.exports = {
   queryMentionsNetworkerBrand,
   platformBrandMatchScore,
   scoreAgainstQuery,
+  nameMatchScore,
+  matchedSearchTokens,
+  buildWhy,
   scoreEventTitle,
   eventDateProximityBoost,
   resolveEventMatchSelection,

@@ -13,6 +13,8 @@ const {
   queryMentionsNetworkerBrand,
   platformBrandMatchScore,
   scoreAgainstQuery,
+  nameMatchScore,
+  matchedSearchTokens,
   scoreEventTitle,
   eventBoost,
   matchedEventBoost,
@@ -38,6 +40,20 @@ assert(shortDisplayName('Alex Morgan') === 'Alex M.', 'display name');
 assert(tokenize('Fintech founders in Manchester').includes('fintech'), 'tokenize');
 assert(!tokenize('I am looking for people around the UK').includes('uk'), 'drops uk stopword');
 assert(!tokenize('I am looking for people around the UK').includes('looking'), 'drops looking stopword');
+assert(!tokenize('jamie trickett near york').includes('near'), 'drops near stopword');
+assert(!tokenize('based near york').includes('based'), 'drops based stopword');
+assert(
+  nameMatchScore({ fullName: 'Jamie Trickett' }, tokenize('jamie trickett near york')) >= 40,
+  'full name search scores exact'
+);
+assert(
+  nameMatchScore({ fullName: 'Andrea Green' }, tokenize('jamie trickett near york')) === 0,
+  'unrelated name scores zero'
+);
+assert(
+  nameMatchScore({ fullName: 'Jamie Smith' }, tokenize('jamie trickett near york')) >= 14,
+  'shared first name still scores'
+);
 assert(expandTokenForms('directors').includes('director'), 'plural → singular');
 assert(expandTokenForms('director').includes('directors'), 'singular → plural');
 assert(expandTokenForms('companies').includes('company'), 'ies → y');
@@ -254,7 +270,58 @@ const richardCard = rankCandidates(
 assert(richardCard && richardCard.industry === '', 'networking industry hidden on card');
 assert(richardCard.blurb === 'Looking to meet Clients', 'Richard card uses safe teaser');
 assert(!/where we are|Top Networking|Frazer/i.test(richardCard.blurb || ''), 'Richard card blurb not LinkedInable');
-assert(/Matches what you asked|same upcoming event|Founder/i.test(ranked[0].why || ''), 'why explains fit');
+assert(
+  /Matches your search|Mentioned in your search|Exact|Founder|same upcoming event|Overlaps with words/i.test(
+    ranked[0].why || ''
+  ),
+  'why explains fit'
+);
+
+const jamieAsk = 'I am looking to meet jamie trickett who is based near york';
+const jamiePool = [
+  {
+    id: 'seed:andrea',
+    kind: 'seed',
+    fullName: 'Andrea Green',
+    displayName: 'Andrea G.',
+    role: 'Joiner Carpenter',
+    company: '',
+    industry: 'Construction',
+    professionalRole: 'Joiner',
+    location: '',
+    lookingToMeet: ['Clients'],
+    blurb: 'A joiner carpenter who is based in Pocklington, near York.',
+    nextEvent: null,
+    matchedEvent: null,
+    onHub: false,
+  },
+  {
+    id: 'member:jamie',
+    kind: 'member',
+    fullName: 'Jamie Trickett',
+    displayName: 'Jamie T.',
+    role: 'Networker',
+    company: '',
+    industry: '',
+    professionalRole: 'Networker',
+    location: 'York',
+    lookingToMeet: [],
+    blurb: '',
+    nextEvent: null,
+    matchedEvent: null,
+    onHub: true,
+  },
+];
+const jamieRanked = rankCandidates(jamiePool, jamieAsk, [], { disableRotation: true });
+assert(jamieRanked[0] && jamieRanked[0].id === 'member:jamie', 'name search ranks Jamie first');
+assert(/name/i.test(jamieRanked[0].why || ''), 'Jamie why cites name match');
+assert(
+  !/Matches what you asked TINA for/i.test(jamieRanked[0].why || ''),
+  'Jamie why is not the generic fallback'
+);
+const andrea = jamieRanked.find((m) => m.id === 'seed:andrea');
+assert(andrea, 'Andrea still surfaces on York overlap');
+assert(/York|york|search/i.test(andrea.why || ''), 'Andrea why cites York / search parts');
 
 const wide = [];
 for (let i = 0; i < 12; i++) {
@@ -385,7 +452,13 @@ assert(
   'founder with upcoming event must not match employees/advertising ask'
 );
 assert(adsRanked.length === 1 && adsRanked[0].id === 'member:marketer', 'relevant marketer ranks');
-assert(/Role fits|Matches what you asked/i.test(adsRanked[0].why || ''), 'why not raw Member');
+assert(
+  /Role fits|Matches your search|Mentioned in your search|Title match|Overlaps with words|Exact/i.test(
+    adsRanked[0].why || ''
+  ),
+  'why not raw Member'
+);
+assert(!/^Member$/i.test(adsRanked[0].why || ''), 'why is not the raw Member stub');
 
 const eventOnlyPerson = {
   id: 'member:event-only',
