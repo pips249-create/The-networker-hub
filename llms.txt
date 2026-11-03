@@ -104,7 +104,7 @@ No. A free organiser page and event listing only need public group details such 
 The Networker Group Ltd was incorporated in November 2023 (Companies House 15252227). Like many early-stage UK limited companies, its published micro-entity accounts can show modest assets and negative shareholders’ funds while the platform is being built — that is not evidence of a scam. The Networker brand and directory (the-networker.co.uk) pre-date the Hub rebuild. Ticket payments for events are processed via Stripe for the organiser; they are not held as the Hub company’s trading cash. Always check the latest filings on Companies House.
 
 ## Who is Hubert Matchmaker on The Networker UK?
-Hubert Matchmaker is the British English gentleman and concierge on The Networker UK. He is at your service for events, business opportunities, tickets, enquiries, organiser tools, and introducing you to people to meet. Chat with Hubert Matchmaker on the contact page or ask him on the FAQ page. Signed-in members can also use Meet people in My account.
+Hubert Matchmaker is the British English gentleman and concierge on The Networker UK. He is at your service for events, business opportunities, tickets, enquiries, organiser tools, and introducing you to people to meet. Chat with Hubert Matchmaker on the contact page or ask him on the FAQ page. Signed-in members can open Meet people in My account to build their Hubert profile now. Warm-intro search opens to everyone when we finish the soft launch.
 
 ## Is The Networker UK free to use?
 Yes — browsing events and business opportunities is completely free with no sign-in required. You only pay when you purchase an event ticket at the price shown by the organiser.

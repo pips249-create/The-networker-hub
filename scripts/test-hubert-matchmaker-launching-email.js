@@ -80,6 +80,15 @@ assert.ok(admin.includes("slug === 'hubert_matchmaker_launching'"), 'hides claim
 const sendSrc = fs.readFileSync(path.join(__dirname, '../api/_lib/send-template-email.js'), 'utf8');
 assert.ok(sendSrc.includes("slug === 'hubert_matchmaker_launching'"), 'send path handles launching');
 assert.ok(sendSrc.includes('matchmaker_launching'), 'send path sets launch UTM');
+const allowlistFn = sendSrc.slice(
+  sendSrc.indexOf('function shouldSkipEmailAllowlist'),
+  sendSrc.indexOf('function shouldAttachListUnsubscribe')
+);
+assert.ok(allowlistFn.includes("'hubert_matchmaker_launching'"), 'campaign skips pre-launch allowlist');
+assert.ok(
+  /MARKETING_EMAIL_SLUGS = new Set\(\[[\s\S]*hubert_matchmaker_launching/.test(sendSrc),
+  'treated as marketing campaign mail'
+);
 
 const campaignSrc = fs.readFileSync(
   path.join(__dirname, '../api/_lib/routes/admin-campaigns.js'),
