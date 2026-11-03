@@ -1,5 +1,5 @@
 /**
- * Step-by-step walkthrough for group profile and event listing — Hubert left guide.
+ * Step-by-step walkthrough for group profile and event listing — TINA left guide.
  */
 (function (global) {
   function assetRoot() {
@@ -23,16 +23,16 @@
     root.innerHTML =
       '<div class="hub-flow-tour-backdrop" data-flow-tour-skip aria-hidden="true"></div>' +
       '<div class="hub-flow-tour-spotlight" aria-hidden="true"></div>' +
-      '<aside class="hub-hubert-guide-panel" role="complementary" aria-label="Hubert listing guide">' +
+      '<aside class="hub-hubert-guide-panel" role="complementary" aria-label="TINA listing guide">' +
       '<header class="hub-hubert-guide-head">' +
       '<img class="hub-hubert-guide-avatar" src="' +
       icon +
       '" alt="" width="44" height="44">' +
       '<div class="hub-hubert-guide-brand">' +
-      '<h2 class="hub-hubert-guide-name">Hubert</h2>' +
+      '<h2 class="hub-hubert-guide-name">TINA</h2>' +
       '<p class="hub-hubert-guide-tagline">Your listing guide</p>' +
       '</div>' +
-      '<button type="button" class="hub-hubert-guide-collapse" aria-label="Close Hubert help" title="Close">×</button>' +
+      '<button type="button" class="hub-hubert-guide-collapse" aria-label="Close TINA help" title="Close">×</button>' +
       '</header>' +
       '<div class="hub-hubert-guide-step" id="hub-hubert-guide-step">' +
       '<p class="hub-flow-tour-step">1 of 1</p>' +
@@ -49,7 +49,7 @@
       '<div class="hub-hubert-guide-suggestions" id="hub-hubert-guide-suggestions" aria-label="Suggested questions"></div>' +
       '<form class="hub-hubert-guide-form hubert-form" id="hub-hubert-guide-form">' +
       '<div class="hubert-form-compose">' +
-      '<label class="visually-hidden" for="hub-hubert-guide-input">Ask Hubert</label>' +
+      '<label class="visually-hidden" for="hub-hubert-guide-input">Ask TINA</label>' +
       '<textarea id="hub-hubert-guide-input" rows="2" placeholder="Ask about this step…" maxlength="2000" required></textarea>' +
       '<button type="submit" class="ee-btn ee-btn-primary" id="hub-hubert-guide-send">Send</button>' +
       '</div></form></div></aside>';
@@ -540,7 +540,7 @@
         }
       });
     },
-    /** First listing: use full pages so Hubert can spotlight fields (drawer embed skips tours). */
+    /** First listing: use full pages so TINA can spotlight fields (drawer embed skips tours). */
     shouldGuideFirstEventListing: function () {
       if (this.isEventTourPending()) return true;
       return !this.isEventListingTourComplete();

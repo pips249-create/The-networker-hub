@@ -1,5 +1,5 @@
 /**
- * Hubert Matchmaker — "Introduce someone to The Networker UK & Hubert".
+ * TINA — "Introduce someone to The Networker UK & TINA".
  * Platform join invite (not a request to meet the inviter). Spec: 5 / week.
  * Members invite as themselves. Admin seed invites can send as Catherine or Rosie.
  */
@@ -221,7 +221,7 @@ async function sendHubInvite({
       message:
         code === 'resend_not_configured'
           ? 'Email sending isn’t configured in this environment.'
-          : 'Hubert couldn’t send that invite just now. Try again shortly.',
+          : 'TINA couldn’t send that invite just now. Try again shortly.',
     };
   }
 

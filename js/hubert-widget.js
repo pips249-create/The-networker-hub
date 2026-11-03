@@ -1,8 +1,8 @@
 /**
- * Hubert — floating chat widget on public site pages and organiser dashboard.
+ * TINA — floating chat widget on public site pages and organiser dashboard.
  *
  * Floating corner launcher is retired site-wide (Meet people / FAQ / organiser
- * help cover Hubert). Keep this file as a no-op so leftover script tags are safe.
+ * help cover TINA). Keep this file as a no-op so leftover script tags are safe.
  */
 (function () {
   'use strict';
@@ -34,7 +34,7 @@
     if (/\/faq\.html$/.test(path) || /\/faq\/?$/.test(path)) return true;
     if (/\/admin\//.test(path)) return true;
     if (/\/organiser\//.test(path)) return true;
-    // Attendee dashboard: Meet people is Hubert’s home — no floating chat corner.
+    // Attendee dashboard: Meet people is TINA’s home — no floating chat corner.
     if (/\/account(?:\/|$)/.test(path)) return true;
     return false;
   }
@@ -61,26 +61,26 @@
     ? 'Got any questions? Ask me anything.'
     : publicPageContext() === 'opportunities'
       ? 'At your service — find franchises, partnerships &amp; deals'
-      : 'Your British English gentleman &amp; concierge';
+      : 'The Intelligent Networking Assistant';
   var inputPlaceholder = organiserDashMode
     ? 'Ask about groups, events, tickets, or payouts…'
     : publicPageContext() === 'opportunities'
-      ? 'Ask Hubert to find franchises, side hustles, or partnerships…'
-      : 'Ask Hubert to find events, opportunities, or guide you…';
+      ? 'Ask TINA to find franchises, side hustles, or partnerships…'
+      : 'Ask TINA to find events, opportunities, or guide you…';
   var widgetGreeting =
     publicPageContext() === 'opportunities'
-      ? "Good afternoon. I'm Hubert Matchmaker — allow me to help you explore business opportunities on the platform. Ask about franchises, side hustles, or partnerships, or tap a suggestion below."
+      ? "Good afternoon. I'm TINA — allow me to help you explore business opportunities on the platform. Ask about franchises, side hustles, or partnerships, or tap a suggestion below."
       : greeting;
 
   var mount = document.createElement('div');
   mount.id = 'hubert-widget';
   mount.className = 'hubert-widget' + (organiserDashMode ? ' hubert-widget--organiser' : '');
   mount.innerHTML =
-    '<button type="button" class="hubert-launcher" id="hubert-launcher" aria-label="Chat with Hubert" aria-expanded="false" aria-controls="hubert-panel">' +
+    '<button type="button" class="hubert-launcher" id="hubert-launcher" aria-label="Chat with TINA" aria-expanded="false" aria-controls="hubert-panel">' +
     '<img class="hubert-launcher-icon" src="' +
     href('assets/hubert-icon.png') +
     '" alt="" width="72" height="72">' +
-    '<span class="hubert-launcher-label">Hubert</span>' +
+    '<span class="hubert-launcher-label">TINA</span>' +
     '</button>' +
     '<div class="hubert-panel" id="hubert-panel" role="dialog" aria-labelledby="hubert-panel-title" hidden>' +
     '<header class="hubert-panel-head">' +
@@ -89,7 +89,7 @@
     href('assets/hubert-icon.png') +
     '" alt="" width="40" height="40">' +
     '<div>' +
-    '<h2 class="hubert-panel-title" id="hubert-panel-title">Hubert</h2>' +
+    '<h2 class="hubert-panel-title" id="hubert-panel-title">TINA</h2>' +
     '<p class="hubert-panel-sub">' +
     panelSub +
     '</p>' +

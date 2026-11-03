@@ -244,7 +244,7 @@
       subtitle: 'Manage Founding Organiser · 2026 badges, homepage showcase slots, and the group LinkedIn caption',
     },
     'hubert-matchmaker': {
-      title: 'Hubert Matchmaker',
+      title: 'TINA Matchmaker',
       subtitle: 'Private seed list for Rosie/ops — BOH intros only (admin preview until launch)',
     },
   };
@@ -7459,7 +7459,7 @@
           (m.signupNudgeFollowups || 0) +
             ' day-10 follow-ups · ' +
             (m.hubertConciergeEmails || 0) +
-            ' Hubert concierge'
+            ' TINA concierge'
         ) +
         card(
           'Connect nudges',
@@ -8477,7 +8477,7 @@
       '<div><dt>Re-engagement</dt><dd>' +
       esc(String(m.reengagementEmails || 0)) +
       '</dd></div>' +
-      '<div><dt>Hubert concierge</dt><dd>' +
+      '<div><dt>TINA concierge</dt><dd>' +
       esc(String(m.hubertConciergeEmails || 0)) +
       '</dd></div>' +
       '<div><dt>Walkthroughs logged</dt><dd>' +
@@ -16795,7 +16795,7 @@
       attendee_reengagement:
         'Sends after 30 days without a booking (60-day cooldown), marketing opt-in only.',
       attendee_signup_events_nudge:
-        'One-off nurture 3 days after signup if no booking yet (marketing opt-in). Different from Hubert’s monthly digest.',
+        'One-off nurture 3 days after signup if no booking yet (marketing opt-in). Different from TINA’s monthly digest.',
       attendee_signup_events_nudge_followup:
         'Day-10 follow-up if still no booking after the day-3 nudge. Marketing opt-in only; skips organisers. Events directory sponsor.',
       saved_event_tickets_open:
@@ -26270,7 +26270,7 @@
       '<option value="organiser_rebrand_announcement">Email 1 — Rebrand announcement (send first)</option>' +
       '<option value="organiser_launch_invite">Email 2 — Confirm organiser page (3–5 days later)</option>' +
       '<option value="organiser_claim_invite">Short claim nudge / pre-launch rematch</option>' +
-      '<option value="hubert_matchmaker_launching">Members: We\'re launching Hubert Matchmaker (get profile ready)</option>' +
+      '<option value="hubert_matchmaker_launching">Members: We\'re launching TINA (get profile ready)</option>' +
       '</select>' +
       '<label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="campaign-recipients">Recipient emails</label>' +
       '<textarea id="campaign-recipients" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono min-h-[120px]" placeholder="organiser@example.com&#10;one per line"></textarea>' +
@@ -34673,13 +34673,13 @@
     main.innerHTML =
       '<div class="space-y-6">' +
       '<div class="rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-sky-50 p-5">' +
-      '<p class="text-xs font-bold uppercase tracking-wider text-violet-800">Hubert Matchmaker</p>' +
+      '<p class="text-xs font-bold uppercase tracking-wider text-violet-800">TINA Matchmaker</p>' +
       '<h3 class="text-lg font-bold text-brand-900 mt-1">Add people from LinkedIn</h3>' +
       '<p class="text-sm text-slate-600 mt-1 max-w-3xl">Paste a LinkedIn profile into the seed list for back-of-house matching (first name + initial only). Optionally send The Networker UK invite so they can join and become discoverable. Seed invites go out as Catherine or Rosie — member invites from the dashboard still use that individual&apos;s name. Never scrape — copy fields by hand.</p>' +
       '<ol class="mt-3 text-sm text-slate-700 list-decimal list-inside space-y-1 max-w-3xl">' +
       '<li>Open their LinkedIn → copy name, role, company, About blurb, and profile URL</li>' +
       '<li>Add their email if you have it (needed to invite)</li>' +
-      '<li>Choose <strong>Invite as Catherine or Rosie</strong>, then save — tick <strong>Also send The Networker UK invite</strong> when you want Hubert to email them</li>' +
+      '<li>Choose <strong>Invite as Catherine or Rosie</strong>, then save — tick <strong>Also send The Networker UK invite</strong> when you want TINA to email them</li>' +
       '</ol>' +
       '<label class="mt-4 inline-flex flex-col gap-1 text-sm font-semibold text-violet-950">' +
       'Send The Networker UK invite as' +
@@ -34757,7 +34757,7 @@
     params.set('limit', '200');
     if (hubertSeedState.status) params.set('status', hubertSeedState.status);
     if (hubertSeedState.q) params.set('q', hubertSeedState.q);
-    main.innerHTML = '<p class="text-sm text-slate-500">Loading Hubert seed list…</p>';
+    main.innerHTML = '<p class="text-sm text-slate-500">Loading TINA seed list…</p>';
     adminGet('/api/admin/hubert-matchmaker?' + params.toString())
       .then(function (data) {
         hubertSeedState.cache = data;

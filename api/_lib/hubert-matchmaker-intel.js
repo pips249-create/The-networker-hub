@@ -1,5 +1,5 @@
 /**
- * Hubert Matchmaker — query intelligence (synonyms, seniority, UK geo, exclusions).
+ * TINA Matchmaker — query intelligence (synonyms, seniority, UK geo, exclusions).
  * Keeps ranking keyword-fast: curated dictionaries, not embeddings.
  */
 

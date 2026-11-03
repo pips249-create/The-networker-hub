@@ -62,8 +62,8 @@ window.HUB_SEO_DATA = {
       "icon": "🏛️"
     },
     {
-      "question": "Who is Hubert Matchmaker on The Networker UK?",
-      "answer": "Hubert Matchmaker is the British English gentleman and concierge on The Networker UK. He is at your service for events, business opportunities, tickets, enquiries, organiser tools, and introducing you to people to meet. Chat with Hubert Matchmaker on the contact page or ask him on the FAQ page. Signed-in members can open Meet people in My account to build their Hubert profile now. Warm-intro search opens to everyone when we finish the soft launch.",
+      "question": "Who is TINA on The Networker UK?",
+      "answer": "TINA is The Intelligent Networking Assistant on The Networker UK. Explain the connection you need — such as an IT director in Chester — and get introduced. Members approve requests before connecting. She also helps with events, business opportunities, tickets, enquiries, and organiser tools. Chat with TINA on the contact page or ask her on the FAQ page. Signed-in members can open Meet people in My account to build their profile now. Warm-intro search opens to everyone when we finish the soft launch.",
       "category": "general",
       "icon": "✨"
     },
@@ -520,10 +520,10 @@ window.HUB_SEO_DATA = {
             },
             {
               "@type": "Question",
-              "name": "Who is Hubert Matchmaker on The Networker UK?",
+              "name": "Who is TINA on The Networker UK?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Hubert Matchmaker is the British English gentleman and concierge on The Networker UK. He is at your service for events, business opportunities, tickets, enquiries, organiser tools, and introducing you to people to meet. Chat with Hubert Matchmaker on the contact page or ask him on the FAQ page. Signed-in members can open Meet people in My account to build their Hubert profile now. Warm-intro search opens to everyone when we finish the soft launch."
+                "text": "TINA is The Intelligent Networking Assistant on The Networker UK. Explain the connection you need — such as an IT director in Chester — and get introduced. Members approve requests before connecting. She also helps with events, business opportunities, tickets, enquiries, and organiser tools. Chat with TINA on the contact page or ask her on the FAQ page. Signed-in members can open Meet people in My account to build their profile now. Warm-intro search opens to everyone when we finish the soft launch."
               }
             },
             {
@@ -805,15 +805,15 @@ window.HUB_SEO_DATA = {
           "@id": "https://www.thenetworkeruk.com/contact",
           "url": "https://www.thenetworkeruk.com/contact",
           "name": "Contact The Networker UK",
-          "description": "Contact The Networker UK or chat with Hubert Matchmaker, your business butler and concierge, for help with events, tickets, business opportunities, and meeting people.",
+          "description": "Contact The Networker UK or chat with TINA, The Intelligent Networking Assistant, for help with events, tickets, business opportunities, and meeting people.",
           "mainEntity": {
             "@context": "https://schema.org",
             "@type": "SoftwareApplication",
-            "name": "Hubert Matchmaker",
+            "name": "TINA",
             "applicationCategory": "BusinessApplication",
             "operatingSystem": "Web",
             "url": "https://www.thenetworkeruk.com/contact",
-            "description": "Hubert Matchmaker is the business butler and concierge for The Networker UK — an AI assistant that helps users find events and business opportunities, understand ticketing and enquiries, navigate organiser tools, and meet the right people.",
+            "description": "TINA is The Intelligent Networking Assistant for The Networker UK — an AI assistant that helps users find events and business opportunities, understand ticketing and enquiries, navigate organiser tools, and meet the right people.",
             "offers": {
               "@type": "Offer",
               "price": "0",
@@ -829,11 +829,11 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "SoftwareApplication",
-          "name": "Hubert Matchmaker",
+          "name": "TINA",
           "applicationCategory": "BusinessApplication",
           "operatingSystem": "Web",
           "url": "https://www.thenetworkeruk.com/contact",
-          "description": "Hubert Matchmaker is the business butler and concierge for The Networker UK — an AI assistant that helps users find events and business opportunities, understand ticketing and enquiries, navigate organiser tools, and meet the right people.",
+          "description": "TINA is The Intelligent Networking Assistant for The Networker UK — an AI assistant that helps users find events and business opportunities, understand ticketing and enquiries, navigate organiser tools, and meet the right people.",
           "offers": {
             "@type": "Offer",
             "price": "0",
@@ -2009,7 +2009,7 @@ window.HUB_SEO_DATA = {
           "@id": "https://www.thenetworkeruk.com/guides/list-an-event#webpage",
           "url": "https://www.thenetworkeruk.com/guides/list-an-event",
           "name": "List an event – How-to guides – The Networker UK",
-          "description": "Start listing events on The Networker UK — sign in to the organiser dashboard for a guided setup checklist and Hubert walkthrough.",
+          "description": "Start listing events on The Networker UK — sign in to the organiser dashboard for a guided setup checklist and TINA walkthrough.",
           "isPartOf": {
             "@type": "WebSite",
             "name": "The Networker UK",
@@ -2021,7 +2021,7 @@ window.HUB_SEO_DATA = {
           "@id": "https://www.thenetworkeruk.com/guides/list-an-event#howto",
           "url": "https://www.thenetworkeruk.com/guides/list-an-event",
           "name": "How to list an event on The Networker UK",
-          "description": "Start listing events on The Networker UK — sign in to the organiser dashboard for a guided setup checklist and Hubert walkthrough.",
+          "description": "Start listing events on The Networker UK — sign in to the organiser dashboard for a guided setup checklist and TINA walkthrough.",
           "step": [
             {
               "@type": "HowToStep",

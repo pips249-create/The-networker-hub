@@ -19,22 +19,22 @@
 
   var COPY = {
     profile: {
-      title: 'Build your Hubert profile',
+      title: 'Meet TINA, The Intelligent Networking Assistant',
       lede:
-        'Hubert shortlists members worth meeting (customers, investors, hires, mentors) and only opens an intro when you both say yes. Build your profile now so you’re ready when search opens.',
+        'Explain the connection you need, such as an IT director in Chester, and get introduced. Members approve requests before connecting.',
       submit: 'Build your profile',
       invite: 'Invite someone else for free',
       badge: 'Launching soon',
       gateSignedOut: 'Search launches soon. Build your profile now so you’re ready for warm intros.',
       gateSignedIn: 'Search launches soon. Add a headline, who you want to meet, and Include me so you’re ready.',
       inviteCopied: 'Invite link copied. Send it to someone you’d like in the pool.',
-      inviteShared: 'Thanks. Share Hubert with anyone you’d like to meet.',
+      inviteShared: 'Thanks. Share TINA with anyone you’d like to meet.',
     },
     search: {
       title: 'Who do you want to meet?',
       lede:
-        'Tell Hubert what you’re working on. He shortlists relevant people on The Networker UK and can introduce you privately. Email, phone, and LinkedIn stay private.',
-      submit: 'Try Hubert',
+        'Tell TINA what you’re working on. She shortlists relevant people on The Networker UK and can introduce you privately. Email, phone, and LinkedIn stay private.',
+      submit: 'Try TINA',
       badge: '',
       gateSignedOut: 'Create a free account to see matches and request intros.',
     },
@@ -91,9 +91,9 @@
   function inviteSharePayload() {
     var url = inviteShareUrl();
     return {
-      title: 'Hubert on The Networker UK',
+      title: 'TINA on The Networker UK',
       text:
-        'Hubert is launching on The Networker UK: warm intros to people worth meeting, free to join. Build your profile before search opens: ' +
+        'Meet TINA, The Intelligent Networking Assistant on The Networker UK: warm intros to people worth meeting, free to join. Build your profile before search opens: ' +
         url,
       url: url,
     };

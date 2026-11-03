@@ -1,5 +1,5 @@
 /**
- * Hubert Matchmaker — back-of-house shortlist (max 5).
+ * TINA — back-of-house shortlist (max 5).
  * Never returns email, phone, or LinkedIn.
  *
  * Pool: discoverable members + private seed + Hub attendees of events
@@ -26,7 +26,7 @@ const SHORTLIST_ROTATION_POOL = 12;
 const MIN_QUERY_LEN = 3;
 /** Meaningful text hits required unless this is an event-attendee lookup. */
 const MIN_TEXT_SCORE = 6;
-/** Short privacy-safe teaser on shortlist cards (not the full Hubert blurb). */
+/** Short privacy-safe teaser on shortlist cards (not the full TINA blurb). */
 const SHORTLIST_BLURB_MAX = 72;
 
 const EVENT_QUERY_HINT =
@@ -724,7 +724,7 @@ function shortlistBlurb(person) {
 /**
  * Public shortlist card — privacy-safe.
  * Never include company (LinkedIn cut-out risk with first name + company),
- * email, phone, or LinkedIn. Role / industry + Hubert blurb only.
+ * email, phone, or LinkedIn. Role / industry + TINA blurb only.
  */
 function toPublicShortlistCard(row) {
   return {
@@ -855,7 +855,7 @@ function buildWhy(row) {
   if (row.boost >= 40 && row.textScore >= MIN_TEXT_SCORE) {
     return 'You’ll both be at the same upcoming event';
   }
-  if (row.textScore >= MIN_TEXT_SCORE) return 'Matches what you asked Hubert for';
+  if (row.textScore >= MIN_TEXT_SCORE) return 'Matches what you asked TINA for';
   if (row.boost >= 12) return 'Has an upcoming event on The Networker UK';
   return '';
 }
@@ -925,7 +925,7 @@ function mapSeedRow(row) {
     nextEvent: null,
     matchedEvent: null,
     onHub: false,
-    why: 'Hubert can invite them to join',
+    why: 'TINA can invite them to join',
   };
 }
 
@@ -1231,7 +1231,7 @@ async function searchMatchmaker(opts) {
     return {
       ok: false,
       error: 'query_too_short',
-      message: 'Tell Hubert a bit more about who you want to meet.',
+      message: 'Tell TINA a bit more about who you want to meet.',
       matches: [],
     };
   }
@@ -1482,7 +1482,7 @@ function emptyStateCopy(meta) {
       return {
         title: 'Nobody else is in the pool yet',
         text:
-          'You’re included — Hubert never shows you your own profile. Add people in Admin → Hubert Matchmaker (seed list), or have another member tick Include me, then try again.',
+          'You’re included — TINA never shows you your own profile. Add people in Admin → TINA (seed list), or have another member tick Include me, then try again.',
       };
     }
     return {
@@ -1495,7 +1495,7 @@ function emptyStateCopy(meta) {
   return {
     title: 'No close matches yet',
     text:
-      'Hubert only puts people forward when the ask fits. Try a clearer role or industry (e.g. “marketing managers who buy ads”), or check back as the pool grows.',
+      'TINA only puts people forward when the ask fits. Try a clearer role or industry (e.g. “marketing managers who buy ads”), or check back as the pool grows.',
   };
 }
 

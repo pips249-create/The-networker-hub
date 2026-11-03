@@ -24,7 +24,7 @@ window.HUB_SEO_STATIC = {
   "faq": {
     "path": "/faq",
     "title": "FAQ & Help – The Networker UK",
-    "description": "Frequently asked questions about The Networker UK — finding events, accounts, organisers, and bookings. Search FAQs or ask Hubert Matchmaker instantly.",
+    "description": "Frequently asked questions about The Networker UK — finding events, accounts, organisers, and bookings. Search FAQs or ask TINA instantly.",
     "image": "/assets/logo-networker-uk-og.png?v=20260908og",
     "ogType": "website"
   },
@@ -87,7 +87,7 @@ window.HUB_SEO_STATIC = {
   "contact": {
     "path": "/contact",
     "title": "Contact us – The Networker UK",
-    "description": "Get in touch with The Networker UK — chat with Hubert Matchmaker, your business butler and concierge, or email the team.",
+    "description": "Get in touch with The Networker UK — chat with TINA, your business butler and concierge, or email the team.",
     "image": "/assets/logo-networker-uk-og.png?v=20260908og",
     "ogType": "website"
   },
@@ -122,7 +122,7 @@ window.HUB_SEO_STATIC = {
   "guide-list-an-event": {
     "path": "/guides/list-an-event",
     "title": "List an event – How-to guides – The Networker UK",
-    "description": "Start listing events on The Networker UK — sign in to the organiser dashboard for a guided setup checklist and Hubert walkthrough.",
+    "description": "Start listing events on The Networker UK — sign in to the organiser dashboard for a guided setup checklist and TINA walkthrough.",
     "image": "/assets/logo-networker-uk-og.png?v=20260908og",
     "ogType": "article"
   },

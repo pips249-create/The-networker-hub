@@ -1,5 +1,5 @@
 /**
- * Auth — Hubert Matchmaker search, intro requests, and The Networker UK invites
+ * Auth — TINA search, intro requests, and The Networker UK invites
  * (admin-only until public launch flag).
  */
 const { setCors, json, sessionFromRequest, requireAdminLive, isAdminRole } = require('../auth');
@@ -59,7 +59,7 @@ async function gateMatchmaker(session, res) {
       json(res, gate.status || 403, {
         ok: false,
         error: gate.error || 'admin_only',
-        message: 'Hubert Matchmaker is in admin preview.',
+        message: 'TINA is in admin preview.',
       });
       return false;
     }
@@ -256,7 +256,7 @@ module.exports = async function handler(req, res) {
       return json(res, 500, {
         ok: false,
         error: 'invite_failed',
-        message: 'Hubert could not send that invite just now.',
+        message: 'TINA could not send that invite just now.',
       });
     }
   }
@@ -339,7 +339,7 @@ module.exports = async function handler(req, res) {
         error: mapped.error === 'failed' ? 'search_failed' : mapped.error,
         message:
           mapped.error === 'failed'
-            ? 'Hubert could not run that search just now.'
+            ? 'TINA could not run that search just now.'
             : mapped.message,
         matches: [],
       });
