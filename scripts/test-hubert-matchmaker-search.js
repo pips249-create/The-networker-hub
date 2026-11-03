@@ -192,6 +192,30 @@ assert(
   'shortlist blurb strips name + company (LinkedIn cut-out guard)'
 );
 assert(
+  !/Director of where|Top Networking|networking/i.test(
+    shortlistBlurb({
+      fullName: 'Richard Frazer',
+      company: 'Top Networking Clubs',
+      role: 'Director',
+      lookingToMeet: ['Clients'],
+      blurb:
+        'Director of Top Networking Clubs where we are empowering SME business owners to grow through structured networking & strategic collaboration.',
+    })
+  ),
+  'mangled “Director of where…” blurbs fall back instead of leaking'
+);
+assert(
+  shortlistBlurb({
+    fullName: 'Richard Frazer',
+    company: 'Top Networking Clubs',
+    role: 'Director',
+    lookingToMeet: ['Clients'],
+    blurb:
+      'Director of Top Networking Clubs where we are empowering SME business owners to grow through structured networking & strategic collaboration.',
+  }) === 'Looking to meet Clients',
+  'broken privacy strip falls back to looking-to-meet'
+);
+assert(
   shortlistBlurb({
     fullName: 'Alex Morgan',
     company: 'Northbridge Labs',
@@ -199,6 +223,33 @@ assert(
   }).length <= SHORTLIST_BLURB_MAX + 1,
   'shortlist blurb stays short'
 );
+const richardCard = rankCandidates(
+  [
+    {
+      id: 'seed:richard-card',
+      kind: 'seed',
+      fullName: 'Richard Frazer',
+      displayName: 'Richard F.',
+      role: 'Director',
+      company: 'Top Networking Clubs',
+      jobTitle: 'Director',
+      industry: 'networking',
+      professionalRole: 'Director',
+      lookingToMeet: ['Clients'],
+      blurb:
+        'Director of Top Networking Clubs where we are empowering SME business owners to grow through structured networking & strategic collaboration.',
+      nextEvent: null,
+      matchedEvent: null,
+      onHub: false,
+    },
+  ],
+  'directors',
+  [],
+  { disableRotation: true }
+)[0];
+assert(richardCard && richardCard.industry === '', 'networking industry hidden on card');
+assert(richardCard.blurb === 'Looking to meet Clients', 'Richard card uses safe teaser');
+assert(!/where we are|Top Networking|Frazer/i.test(richardCard.blurb || ''), 'Richard card blurb not LinkedInable');
 assert(/Matches what you asked|same upcoming event|Founder/i.test(ranked[0].why || ''), 'why explains fit');
 
 const wide = [];

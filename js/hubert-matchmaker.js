@@ -225,6 +225,39 @@
     var textEl = emptyEl.querySelector('.ad-empty-state-text');
     if (titleEl) titleEl.textContent = copy.title;
     if (textEl) textEl.textContent = copy.text;
+
+    var suggestions =
+      (copy && copy.suggestions) ||
+      (meta && meta.suggestions) ||
+      [];
+    var sugHost = emptyEl.querySelector('[data-hmm-suggestions]');
+    if (!sugHost) {
+      sugHost = document.createElement('div');
+      sugHost.setAttribute('data-hmm-suggestions', '');
+      sugHost.className = 'hmm-empty-suggestions';
+      emptyEl.appendChild(sugHost);
+    }
+    if (!suggestions.length) {
+      sugHost.hidden = true;
+      sugHost.innerHTML = '';
+      return;
+    }
+    sugHost.hidden = false;
+    sugHost.innerHTML = suggestions
+      .map(function (s) {
+        var label = String((s && s.label) || '');
+        var q = String((s && s.query) || '');
+        if (!label || !q) return '';
+        return (
+          '<button type="button" class="hmm-empty-sug" data-hmm-sug-q="' +
+          esc(q) +
+          '">' +
+          esc(label) +
+          '</button>'
+        );
+      })
+      .filter(Boolean)
+      .join('');
   }
 
   /** Mirrors api/_lib/hubert-matchmaker-search emptyStateCopy for offline/stub paths. */
@@ -271,6 +304,26 @@
       return {
         title: 'No one came back yet',
         text: 'The member pool is still thin for that ask. Try another description, or check back after more people opt in.',
+      };
+    }
+    if (Array.isArray(m.suggestions) && m.suggestions.length) {
+      var bits = m.suggestions
+        .slice(0, 3)
+        .map(function (s) {
+          return s && s.label;
+        })
+        .filter(Boolean);
+      var place =
+        m.queryIntel && m.queryIntel.places && m.queryIntel.places[0]
+          ? String(m.queryIntel.places[0])
+          : '';
+      return {
+        title: place ? 'No exact match in ' + place : 'No exact match yet',
+        text:
+          'I couldn’t find an exact match right now, but I found ' +
+          bits.join(', and ') +
+          '. Pick one below — or widen the ask.',
+        suggestions: m.suggestions,
       };
     }
     return {
@@ -345,6 +398,7 @@
       if (empty) {
         applyEmptyCopy(empty, meta);
         empty.hidden = !query && !(meta && meta.needsEventPick);
+        bindEmptySuggestions(mount, empty);
       }
       renderEventPick(mount, query, meta);
       if (preview) preview.hidden = true;
@@ -513,6 +567,18 @@
         var id = btn.getAttribute('data-hmm-request');
         var person = findPerson(id);
         if (person) requestIntro(person, mount);
+      });
+    });
+  }
+
+  function bindEmptySuggestions(mount, emptyEl) {
+    if (!emptyEl) return;
+    emptyEl.querySelectorAll('[data-hmm-sug-q]').forEach(function (btn) {
+      if (btn.dataset.hmmBound === '1') return;
+      btn.dataset.hmmBound = '1';
+      btn.addEventListener('click', function () {
+        var q = btn.getAttribute('data-hmm-sug-q');
+        if (q) runSearch(mount, q);
       });
     });
   }

@@ -33,8 +33,8 @@ assert(mm.canUseMatchmaker({ role: 'admin' }) === true, 'admin can search');
 assert(mm.canUseMatchmaker({ user: { role: 'admin' } }) === true, 'admin session can search');
 assert(mm.canUseMatchmaker({ role: 'client' }) === false, 'client search blocked while gated');
 assert(mm.canUseMatchmaker(null) === false, 'signed-out search blocked');
-assert(src.indexOf('searchEnabled') !== -1, 'searchEnabled gate for Ask Hubert');
-assert(src.indexOf('You’re in Hubert’s pool') !== -1, 'profile-ready copy while search gated');
+assert(src.indexOf('searchEnabled') !== -1, 'searchEnabled gate for Ask TINA');
+assert(src.indexOf('You’re in TINA’s pool') !== -1, 'profile-ready copy while search gated');
 assert(src.indexOf('shareProfileInvite') !== -1, 'profile share invite helper');
 const accountHtml = fs.readFileSync(path.join(__dirname, '../account/index.html'), 'utf8');
 assert(accountHtml.indexOf('data-hmm-profile-share') !== -1, 'Meet people has invite share control');
@@ -57,6 +57,8 @@ assert(
   'stub blurbs stay short for card teaser'
 );
 assert(src.indexOf('hmm-match-blurb') !== -1, 'shortlist card renders blurb');
+assert(src.indexOf('data-hmm-sug-q') !== -1, 'empty-state suggestion chips');
+assert(src.indexOf('bindEmptySuggestions') !== -1, 'suggestion chips re-run search');
 
 assert(typeof mm.emptyStateCopy === 'function', 'emptyStateCopy exported');
 const eventEmpty = mm.emptyStateCopy({
@@ -103,5 +105,6 @@ assert(
   'meet hide Stop when not included'
 );
 assert(dashCss.indexOf('.hmm-match-blurb') !== -1, 'shortlist blurb styles present');
+assert(dashCss.indexOf('.hmm-empty-sug') !== -1, 'empty suggestion chip styles present');
 
 console.log('ok — hubert-matchmaker ui helpers');
