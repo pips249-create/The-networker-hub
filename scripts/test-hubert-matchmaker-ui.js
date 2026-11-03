@@ -52,6 +52,10 @@ assert(
   stubs.every((p) => String(p.blurb || '').trim().length > 0),
   'stubs include blurbs so preview cards show description'
 );
+assert(
+  stubs.every((p) => String(p.blurb || '').length <= 120),
+  'stub blurbs stay short for card teaser'
+);
 assert(src.indexOf('hmm-match-blurb') !== -1, 'shortlist card renders blurb');
 
 assert(typeof mm.emptyStateCopy === 'function', 'emptyStateCopy exported');

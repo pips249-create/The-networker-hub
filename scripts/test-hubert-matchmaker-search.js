@@ -9,6 +9,8 @@ const {
   looksLikeEventAttendeeQuery,
   extractQueryIntent,
   isInternalMatchCandidate,
+  isNetworkingOrganizerCandidate,
+  wantsNetworkingOrganizers,
   scoreAgainstQuery,
   scoreEventTitle,
   eventBoost,
@@ -20,6 +22,7 @@ const {
   emptyStateCopy,
   MAX_SHORTLIST,
   MIN_TEXT_SCORE,
+  SHORTLIST_BLURB_MAX,
   SHORTLIST_ROTATION_POOL,
 } = require('../api/_lib/hubert-matchmaker-search');
 
@@ -169,6 +172,25 @@ assert(
   'shortlist blurb falls back to looking-to-meet'
 );
 assert(shortlistBlurb({ blurb: '', lookingToMeet: [] }) === '', 'empty blurb stays empty');
+assert(
+  !/Richard|Frazer|Top Networking/i.test(
+    shortlistBlurb({
+      fullName: 'Richard Frazer',
+      company: 'Top Networking Clubs',
+      blurb:
+        'Richard Frazer runs Top Networking Clubs helping business owners meet peers across the UK and beyond with structured introductions.',
+    })
+  ),
+  'shortlist blurb strips name + company (LinkedIn cut-out guard)'
+);
+assert(
+  shortlistBlurb({
+    fullName: 'Alex Morgan',
+    company: 'Northbridge Labs',
+    blurb: 'x'.repeat(SHORTLIST_BLURB_MAX + 40),
+  }).length <= SHORTLIST_BLURB_MAX + 1,
+  'shortlist blurb stays short'
+);
 assert(/Matches what you asked|same upcoming event|Founder/i.test(ranked[0].why || ''), 'why explains fit');
 
 const wide = [];
@@ -412,5 +434,63 @@ const foundersPlural = rankCandidates(
   { disableRotation: true }
 );
 assert(foundersPlural.length === 1, 'plural founders matches Founder title');
+
+// Jamie: “The networker UK directors” must not surface rival networking organisers.
+const richardFrazer = {
+  id: 'seed:richard',
+  kind: 'seed',
+  fullName: 'Richard Frazer',
+  displayName: 'Richard F.',
+  role: 'Director',
+  company: 'Top Networking Clubs',
+  jobTitle: 'Director',
+  industry: 'Networking',
+  professionalRole: 'Director',
+  lookingToMeet: ['Clients'],
+  blurb: 'Richard Frazer runs Top Networking Clubs helping business owners meet peers.',
+  nextEvent: null,
+  matchedEvent: null,
+  onHub: false,
+};
+assert(
+  isNetworkingOrganizerCandidate(richardFrazer) === true,
+  'TOP Networking Clubs flagged as networking organiser'
+);
+assert(
+  wantsNetworkingOrganizers('The networker UK directors') === false,
+  'Networker UK brand ask is not a networking-organiser ask'
+);
+assert(
+  wantsNetworkingOrganizers('directors who run networking clubs') === true,
+  'explicit networking-club ask is allowed'
+);
+const networkerDirectors = rankCandidates(
+  [richardFrazer, salesDirector],
+  'The networker UK directors',
+  [],
+  { disableRotation: true }
+);
+assert(
+  !networkerDirectors.some((m) => m.id === 'seed:richard'),
+  'rival networking organiser dropped from Networker UK directors ask'
+);
+assert(
+  networkerDirectors.some((m) => m.id === 'member:dir1'),
+  'ordinary Sales Director still matches directors ask'
+);
+assert(
+  !/Richard|Frazer|Top Networking|DirCo/i.test(networkerDirectors[0].blurb || ''),
+  'directors shortlist blurb stays anonymous'
+);
+const explicitNetworking = rankCandidates(
+  [richardFrazer],
+  'directors who run networking clubs',
+  [],
+  { disableRotation: true }
+);
+assert(
+  explicitNetworking.some((m) => m.id === 'seed:richard'),
+  'explicit networking-club ask can still surface organisers'
+);
 
 console.log('ok — hubert matchmaker search ranking + event attendees');

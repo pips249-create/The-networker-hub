@@ -5032,12 +5032,12 @@ body.ad-hubert-optin-modal-open {
 
 .hmm-match-blurb {
   margin: 0 0 10px;
-  font-size: 14px;
-  line-height: 1.45;
+  font-size: 13.5px;
+  line-height: 1.4;
   color: var(--hmm-ink);
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   overflow: hidden;
 }
 

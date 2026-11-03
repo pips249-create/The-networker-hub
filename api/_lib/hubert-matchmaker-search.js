@@ -15,6 +15,17 @@ const SHORTLIST_ROTATION_POOL = 12;
 const MIN_QUERY_LEN = 3;
 /** Meaningful text hits required unless this is an event-attendee lookup. */
 const MIN_TEXT_SCORE = 6;
+/** Short privacy-safe teaser on shortlist cards (not the full Hubert blurb). */
+const SHORTLIST_BLURB_MAX = 110;
+
+/**
+ * Rival / peer networking organisers — not useful intros for a normal ask,
+ * and easy to confuse with The Networker UK itself.
+ */
+const NETWORKING_ORG_HINT =
+  /\b(?:networking (?:groups?|clubs?|organisations?|organizations?)|business networking|\bbni\b|top networking|referral groups?|networking (?:chapters?|franchises?)|chamber of commerce)\b/i;
+const WANTS_NETWORKING_ORG_HINT =
+  /\b(?:networking (?:groups?|clubs?|organisers?|organizers?|organisations?|organizations?)|business networking|\bbni\b|top networking|referral groups?|chamber of commerce)\b/i;
 
 const EVENT_QUERY_HINT =
   /\b(attended|attendee|attendees|attending|who went|who was at|who'?s going|going to|this morning|this afternoon|yesterday|last night|today)\b/i;
@@ -527,17 +538,102 @@ function rotateShortlistWindow(rankedRows, opts) {
   return pool.slice(offset, offset + MAX_SHORTLIST);
 }
 
-/** Shortlist-safe blurb — trim + soft cap; never invent company. */
+function escapeRegExp(value) {
+  return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** Role words that can also appear as surnames — do not strip from blurbs. */
+const NAME_STRIP_ROLE_BLOCK =
+  /^(director|manager|founder|partner|officer|consultant|executive|president|secretary|owner|chair|lead)$/i;
+
+/**
+ * Strip name + company from shortlist copy so a card cannot be LinkedIn’d.
+ * Avoids nuking common verbs (will/mark) by only stripping full name, company,
+ * a leading first-name opener, and distinctive surnames.
+ */
+function stripIdentifyingPhrases(text, person) {
+  let out = String(text || '');
+  const full = String((person && person.fullName) || '').trim();
+  const parts = full.split(/\s+/).filter(Boolean);
+  const company = String((person && person.company) || '').trim();
+
+  if (full) {
+    out = out.replace(new RegExp('\\b' + escapeRegExp(full) + '\\b', 'gi'), ' ');
+  }
+  if (company.length >= 3) {
+    out = out.replace(new RegExp('\\b' + escapeRegExp(company) + '\\b', 'gi'), ' ');
+  }
+
+  const first = parts[0] || '';
+  if (first.length >= 3) {
+    out = out.replace(new RegExp('^' + escapeRegExp(first) + '\\b[,\\s:—–-]*', 'i'), '');
+  }
+
+  const last = parts.length > 1 ? parts[parts.length - 1] : '';
+  if (last.length >= 5 && !NAME_STRIP_ROLE_BLOCK.test(last)) {
+    out = out.replace(new RegExp('\\b' + escapeRegExp(last) + '\\b', 'gi'), ' ');
+  }
+
+  return out
+    .replace(/\s+/g, ' ')
+    .replace(/^[\s,.;:\-–—/]+/, '')
+    .replace(/^(?:(?:runs?|is|was|works?|working|helps?|helping)\b[\s,]*)+/i, '')
+    .replace(/\s+([,.;:])/g, '$1')
+    .trim();
+}
+
+function softTruncateBlurb(text, maxLen) {
+  const max = Number.isFinite(maxLen) ? maxLen : SHORTLIST_BLURB_MAX;
+  const s = String(text || '').trim();
+  if (s.length <= max) return s;
+  const cut = s.slice(0, max);
+  const at = Math.max(
+    cut.lastIndexOf('. '),
+    cut.lastIndexOf('; '),
+    cut.lastIndexOf(', '),
+    cut.lastIndexOf(' ')
+  );
+  const base = (at >= Math.floor(max * 0.55) ? cut.slice(0, at) : cut)
+    .trim()
+    .replace(/[,:;.\-–—]+$/, '');
+  return base + '…';
+}
+
+/**
+ * Shortlist-safe blurb — short, no name/company (LinkedIn cut-out guard).
+ */
 function shortlistBlurb(person) {
   const raw = String((person && person.blurb) || '')
     .trim()
     .replace(/\s+/g, ' ');
-  if (raw) return raw.slice(0, 280);
+  if (raw) {
+    const cleaned = stripIdentifyingPhrases(raw, person);
+    if (cleaned) return softTruncateBlurb(cleaned, SHORTLIST_BLURB_MAX);
+  }
   const looking = Array.isArray(person && person.lookingToMeet)
     ? person.lookingToMeet.map((x) => String(x || '').trim()).filter(Boolean)
     : [];
   if (looking.length) return 'Looking to meet ' + looking.slice(0, 3).join(', ');
   return '';
+}
+
+function isNetworkingOrganizerCandidate(person) {
+  if (!person) return false;
+  const hay = [
+    person.company,
+    person.blurb,
+    person.jobTitle,
+    person.role,
+    person.professionalRole,
+    person.industry,
+  ]
+    .filter(Boolean)
+    .join(' ');
+  return NETWORKING_ORG_HINT.test(hay);
+}
+
+function wantsNetworkingOrganizers(query) {
+  return WANTS_NETWORKING_ORG_HINT.test(String(query || ''));
 }
 
 /**
@@ -590,6 +686,13 @@ function rankCandidates(candidates, query, requesterEventIds, opts) {
     .filter((row) => {
       // “Who attended X?” — booking match is enough.
       if (row.matchedBoost > 0) return true;
+      // Rival networking organisers only when the ask is about that world.
+      if (
+        isNetworkingOrganizerCandidate(row.person) &&
+        !wantsNetworkingOrganizers(query)
+      ) {
+        return false;
+      }
       // Otherwise require real topical overlap. Upcoming events alone are not a match.
       if (row.textScore < MIN_TEXT_SCORE) return false;
       // Hard role clash (e.g. founders for an employees ask) drop out.
@@ -1176,6 +1279,7 @@ module.exports = {
   SHORTLIST_ROTATION_POOL,
   MIN_QUERY_LEN,
   MIN_TEXT_SCORE,
+  SHORTLIST_BLURB_MAX,
   shortDisplayName,
   tokenize,
   expandTokenForms,
@@ -1185,6 +1289,8 @@ module.exports = {
   extractQueryIntent,
   roleFitScore,
   isInternalMatchCandidate,
+  isNetworkingOrganizerCandidate,
+  wantsNetworkingOrganizers,
   scoreAgainstQuery,
   scoreEventTitle,
   eventDateProximityBoost,
