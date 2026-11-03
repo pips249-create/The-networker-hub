@@ -290,7 +290,8 @@ const SHORT_KEEP_TOKENS = new Set(['md', 'hr', 'pr', 'vc']);
 
 /** Extra match forms for short acronyms / aliases. */
 const TOKEN_ALIASES = {
-  md: ['managing director', 'director', 'md'],
+  // MD = managing director — do not broaden to every “Director” title.
+  md: ['managing director', 'md'],
   hr: ['human resources', 'human resource', 'hr'],
   pr: ['public relations', 'pr'],
   vc: ['venture capital', 'venture capitalist', 'investor', 'vc'],

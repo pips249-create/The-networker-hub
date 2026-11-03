@@ -524,11 +524,33 @@ assert(
   ),
   'typo directers still matches Sales Director'
 );
+const managingDirector = {
+  id: 'member:md1',
+  kind: 'member',
+  fullName: 'Morgan Lead',
+  displayName: 'Morgan L.',
+  role: 'Managing Director',
+  company: 'LeadCo',
+  jobTitle: 'Managing Director',
+  industry: 'SaaS',
+  professionalRole: 'Managing Director',
+  lookingToMeet: [],
+  blurb: 'Managing Director of a B2B SaaS firm',
+  nextEvent: null,
+  matchedEvent: null,
+  onHub: true,
+};
 assert(
-  rankCandidates([salesDirector], 'MD', [], { disableRotation: true }).some(
+  rankCandidates([managingDirector, salesDirector], 'MD', [], { disableRotation: true }).some(
+    (m) => m.id === 'member:md1'
+  ),
+  'MD acronym matches Managing Director'
+);
+assert(
+  !rankCandidates([managingDirector, salesDirector], 'MD', [], { disableRotation: true }).some(
     (m) => m.id === 'member:dir1'
   ),
-  'MD acronym matches director title'
+  'MD acronym does not match every Director title'
 );
 assert(
   rankCandidates([marketingManager], 'marketing managgers', [], { disableRotation: true }).some(
