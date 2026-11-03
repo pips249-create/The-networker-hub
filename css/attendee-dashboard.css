@@ -5868,8 +5868,8 @@ body.ad-hubert-optin-modal-open {
 .hmm-profile-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 4px;
+  gap: 10px;
+  margin-top: 6px;
   min-height: 40px;
 }
 
@@ -5892,24 +5892,31 @@ body.ad-hubert-optin-modal-open {
 
 .hmm-profile-chip span {
   display: inline-block;
-  padding: 8px 12px;
+  padding: 9px 14px;
   border-radius: 999px;
-  border: 1px solid rgba(125, 72, 150, 0.32);
+  border: 1px solid rgba(125, 72, 150, 0.28);
   background: #fff;
   font-size: 13px;
   font-weight: 600;
   color: var(--hmm-ink, #241536);
   line-height: 1.2;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
 }
 
+.hmm-profile-chip:hover span {
+  border-color: rgba(125, 72, 150, 0.5);
+}
+
+/* Selected must read instantly — pale tint alone was too close to unselected. */
 .hmm-profile-chip input:checked + span {
-  background: rgba(125, 72, 150, 0.14);
-  border-color: rgba(125, 72, 150, 0.6);
-  color: #452d5c;
+  background: #5b2d7a;
+  border-color: #5b2d7a;
+  color: #fff;
+  box-shadow: 0 1px 0 rgba(36, 21, 54, 0.12);
 }
 
 .hmm-profile-chip input:focus-visible + span {
-  outline: 2px solid rgba(125, 72, 150, 0.45);
+  outline: 2px solid rgba(125, 72, 150, 0.55);
   outline-offset: 2px;
 }
 

@@ -121,6 +121,10 @@ assert(
   'meet hide Stop when not included'
 );
 assert(dashCss.indexOf('.hmm-match-blurb') !== -1, 'shortlist blurb styles present');
+assert(
+  /hmm-profile-chip input:checked \+ span[\s\S]*?background:\s*#5b2d7a/.test(dashCss),
+  'looking-to-meet selected chips use solid filled state'
+);
 assert(dashCss.indexOf('.hmm-empty-sug') !== -1, 'empty suggestion chip styles present');
 
 console.log('ok — hubert-matchmaker ui helpers');
