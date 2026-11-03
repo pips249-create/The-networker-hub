@@ -148,7 +148,7 @@
   }
 
   const UK_LOCATION_TIP =
-    'Powers the Near Me filter on our Events page when you\u2019re signed in. It is also used for nearby recommendations in marketing emails and the monthly Hubert events round-up. It is not shown to organisers or on your name badge.';
+    'Powers the Near Me filter on our Events page when you\u2019re signed in. It is also used for nearby recommendations in marketing emails and the monthly TINA events round-up. It is not shown to organisers or on your name badge.';
   const OUTSIDE_LOCATION_TIP =
     'We save your city for when listings open in your country. Near Me and nearby emails on this hub use a UK city or postcode, so we will not match UK events to this location. Online events still appear on the Events page.';
   const INTERNATIONAL_HUB_URL = 'https://www.thenetworkerinternational.com/';
@@ -357,7 +357,7 @@
       offBtn.addEventListener('click', function () {
         if (!disc.checked) return;
         const ok = window.confirm(
-          'Stop putting you forward for Hubert intros?\n\nYou can turn this back on later. Meet people search stays locked while you’re opted out.'
+          'Stop putting you forward for TINA intros?\n\nYou can turn this back on later. Meet people search stays locked while you’re opted out.'
         );
         if (!ok) return;
         disc.checked = false;
@@ -367,7 +367,7 @@
         if (status) {
           status.hidden = false;
           status.textContent =
-            'Inclusion turned off — save your profile to confirm. Tick Include me again later if you want Hubert to put you forward.';
+            'Inclusion turned off — save your profile to confirm. Tick Include me again later if you want TINA to put you forward.';
         }
       });
     }
@@ -389,7 +389,7 @@
     if (status) {
       if (profile.matchmakerReady) {
         status.hidden = false;
-        status.textContent = 'You’re ready for Hubert to put you forward.';
+        status.textContent = 'You’re ready for TINA to put you forward.';
       } else {
         status.hidden = false;
         status.textContent =

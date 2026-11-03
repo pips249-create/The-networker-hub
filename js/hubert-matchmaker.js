@@ -153,7 +153,7 @@
     var hasEvent = Boolean(person.nextEvent && person.nextEvent.title);
     var status = person.onHub
       ? '<span class="hmm-chip hmm-chip--member">Member</span>'
-      : '<span class="hmm-chip hmm-chip--invite">Hubert can invite them</span>';
+      : '<span class="hmm-chip hmm-chip--invite">TINA can invite them</span>';
     var requested = Boolean(pendingByTarget[person.id]);
     var isStub = String(person.id || '').indexOf('stub-') === 0;
 
@@ -265,7 +265,7 @@
         return {
           title: 'Nobody else is in the pool yet',
           text:
-            'You’re included — Hubert never shows you your own profile. Add people in Admin → Hubert Matchmaker (seed list), or have another member tick Include me, then try again.',
+            'You’re included — TINA never shows you your own profile. Add people in Admin → Matchmaker (seed list), or have another member tick Include me, then try again.',
         };
       }
       return {
@@ -276,7 +276,7 @@
     return {
       title: 'No close matches yet',
       text:
-        'Hubert only puts people forward when the ask fits. Try a clearer role or industry (e.g. “marketing managers who buy ads”), or check back as the pool grows.',
+        'TINA only puts people forward when the ask fits. Try a clearer role or industry (e.g. “marketing managers who buy ads”), or check back as the pool grows.',
     };
   }
 
@@ -376,7 +376,7 @@
         esc(String(query || '').trim()) +
         '”.' +
         eventNote +
-        ' No contact details are shown. Request intro emails them via Hubert.';
+        ' No contact details are shown. Request intro emails them via TINA.';
     }
     results.innerHTML = list.map(renderCard).join('');
     results.hidden = false;
@@ -439,7 +439,7 @@
     if (!profileReady) {
       focusProfileGate();
       if (mount && mount.els.error) {
-        mount.els.error.textContent = 'Finish your Hubert profile before requesting an intro.';
+        mount.els.error.textContent = 'Finish your TINA profile before requesting an intro.';
         mount.els.error.hidden = false;
       }
       return;
@@ -488,7 +488,7 @@
         }
         if (mount && mount.els.error) {
           mount.els.error.textContent =
-            (data && data.message) || 'Hubert could not send that intro request just now.';
+            (data && data.message) || 'TINA could not send that intro request just now.';
           mount.els.error.hidden = false;
         }
       })
@@ -533,7 +533,7 @@
         mount.onExpand(query || '');
       }
       focusProfileGate(
-        'Search opens to everyone soon — save your Hubert profile (headline, who you want to meet, Include me) so you’re ready.'
+        'Search opens to everyone soon — save your TINA profile (headline, who you want to meet, Include me) so you’re ready.'
       );
       if (err) {
         err.textContent = 'Search isn’t open to everyone yet — build your profile above.';
@@ -547,14 +547,14 @@
       }
       focusProfileGate();
       if (err) {
-        err.textContent = 'Finish your Hubert profile before searching.';
+        err.textContent = 'Finish your TINA profile before searching.';
         err.hidden = false;
       }
       return;
     }
     if (!query) {
       if (err) {
-        err.textContent = 'Tell Hubert who you would like to meet.';
+        err.textContent = 'Tell TINA who you would like to meet.';
         err.hidden = false;
       }
       paintAll([], '', null);
@@ -566,8 +566,8 @@
     if (mount.els.previewNote) {
       mount.els.previewNote.hidden = false;
       mount.els.previewNote.textContent = searchOpts && searchOpts.eventId
-        ? 'Hubert is loading that room…'
-        : 'Hubert is matching…';
+        ? 'TINA is loading that room…'
+        : 'TINA is matching…';
     }
 
     fetchMatches(query, searchOpts)
@@ -582,7 +582,7 @@
           focusProfileGate(data.message);
           paintAll([], query, null);
           if (err) {
-            err.textContent = data.message || 'Finish your Hubert profile before searching.';
+            err.textContent = data.message || 'Finish your TINA profile before searching.';
             err.hidden = false;
           }
         } else if (data && data.error === 'search_quota_exceeded') {
@@ -598,7 +598,7 @@
           }
         } else if (result.status === 401 || result.status === 403) {
           if (err) {
-            err.textContent = (data && data.message) || 'Sign in as an admin to use Hubert Matchmaker.';
+            err.textContent = (data && data.message) || 'Sign in as an admin to use TINA.';
             err.hidden = false;
           }
           paintAll([], query, null);
@@ -673,7 +673,7 @@
     panel.innerHTML =
       '<div class="hmm-thread">' +
       '<div class="hmm-thread-head">' +
-      '<p class="hmm-thread-kicker">Hubert intro</p>' +
+      '<p class="hmm-thread-kicker">TINA intro</p>' +
       '<h3 class="hmm-thread-title">' +
       esc(introWho(intro) || 'Introduction') +
       '</h3>' +
@@ -868,7 +868,9 @@
     if (invite) invite.hidden = !canSearch;
     if (heroTitle) {
       if (!searchEnabled) {
-        heroTitle.textContent = profileReady ? 'You’re in Hubert’s pool' : 'Build your Hubert profile';
+        heroTitle.textContent = profileReady
+          ? 'You’re in TINA’s pool'
+          : 'Meet TINA, The Intelligent Networking Assistant';
       } else {
         heroTitle.textContent = profileReady
           ? 'I can introduce you to the people you need'
@@ -879,11 +881,11 @@
       if (!searchEnabled) {
         heroSub.textContent = profileReady
           ? 'You’re ready for warm intros. When search opens you’ll ask who you want to meet — and others can request an intro to you. Email, phone, and LinkedIn stay private.'
-          : 'I’m Hubert. I find people who can help with what you’re working on — customers, investors, hires, mentors — and introduce you only when you both say yes. No email, phone, or LinkedIn ever changes hands. Tell me who you are and who you want to meet so I can put you forward.';
+          : 'Explain the connection you need, such as an IT director in Chester, and get introduced. Members approve requests before connecting. No email, phone, or LinkedIn ever changes hands — tell me who you are and who you want to meet so I can put you forward.';
       } else {
         heroSub.textContent = profileReady
           ? 'Customers, investors, hires, your next role — or someone who’s already solved your problem. Tell me what you’re working on.'
-          : 'I’m Hubert. I find people who can help with what you’re working on — customers, investors, hires, mentors — and introduce you only when you both say yes. No email, phone, or LinkedIn ever changes hands. Tell me who you are and who you want to meet so I can put you forward.';
+          : 'Explain the connection you need, such as an IT director in Chester, and get introduced. Members approve requests before connecting. No email, phone, or LinkedIn ever changes hands — tell me who you are and who you want to meet so I can put you forward.';
       }
     }
     if (saveBtn) {
@@ -907,7 +909,7 @@
 
   function confirmStopIncludingMe() {
     return window.confirm(
-      'Stop putting you forward for Hubert intros?\n\nSearch will lock until you include yourself again. Contact details still stay private either way.'
+      'Stop putting you forward for TINA intros?\n\nSearch will lock until you include yourself again. Contact details still stay private either way.'
     );
   }
 
@@ -928,7 +930,7 @@
           'Required to unlock search. Stays off until you tick it. Turning it off needs confirmation.';
       } else {
         hint.textContent =
-          'Required to join Hubert’s pool. Stays off until you tick it. Turning it off needs confirmation.';
+          'Required to join TINA’s pool. Stays off until you tick it. Turning it off needs confirmation.';
       }
     }
     void disc;
@@ -995,7 +997,7 @@
             fillProfileForm(data.profile || { discoverable: false });
             setProfileStatus(
               false,
-              'You’re opted out. Tick Include me and save when you want Hubert to put you forward again.'
+              'You’re opted out. Tick Include me and save when you want TINA to put you forward again.'
             );
           })
           .catch(function () {
@@ -1049,9 +1051,9 @@
     syncDiscoverableUi(profile || {});
     applyProfileGate(profile || {});
     if (profile && profile.matchmakerReady) {
-      setProfileStatus(true, 'You’re ready — ask Hubert who you need.');
+      setProfileStatus(true, 'You’re ready — ask TINA who you need.');
     } else if (profile && profile.hubertIntrosInterested) {
-      setProfileStatus(true, 'Finish your Hubert profile so introductions can start.');
+      setProfileStatus(true, 'Finish your TINA profile so introductions can start.');
     } else {
       setProfileStatus(true, '');
     }
@@ -1223,7 +1225,7 @@
       return;
     }
     if (!payload.discoverable) {
-      setProfileStatus(false, 'Tick “Include me so Hubert can put me forward” to continue.');
+      setProfileStatus(false, 'Tick “Include me so TINA can put me forward” to continue.');
       return;
     }
     if (saveBtn) saveBtn.disabled = true;
@@ -1260,7 +1262,7 @@
             false,
             (data && data.message) ||
               (result.status === 401
-                ? 'Sign in again, then save your Hubert profile.'
+                ? 'Sign in again, then save your TINA profile.'
                 : 'Could not save your profile.')
           );
           return;
@@ -1275,7 +1277,7 @@
           } else {
             setProfileStatus(
               true,
-              'Profile saved — you’re in Hubert’s pool. Search opens to everyone soon.'
+              'Profile saved — you’re in TINA’s pool. Search opens to everyone soon.'
             );
             var soon = document.querySelector('[data-hmm-search-soon]');
             if (soon && soon.scrollIntoView) soon.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -1287,8 +1289,8 @@
             needed.length
               ? 'Saved, but still need ' +
                   needed.join(', ') +
-                  (searchEnabled ? ' before search unlocks.' : ' to finish your Hubert profile.')
-              : 'Saved, but Hubert couldn’t confirm your profile yet. Pick who you want to meet, tick Include me, and save again.'
+                  (searchEnabled ? ' before search unlocks.' : ' to finish your TINA profile.')
+              : 'Saved, but TINA couldn’t confirm your profile yet. Pick who you want to meet, tick Include me, and save again.'
           );
         }
       })
@@ -1309,7 +1311,7 @@
     if (panel && panel.scrollIntoView) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
     setProfileStatus(
       false,
-      message || 'Finish your Hubert profile first — headline, who you want to meet, and Include me.'
+      message || 'Finish your TINA profile first — headline, who you want to meet, and Include me.'
     );
     var blurb = document.querySelector('[data-hmm-profile-blurb]');
     if (blurb) blurb.focus();
@@ -1327,9 +1329,9 @@
   function profileInviteSharePayload() {
     var url = profileInviteShareUrl();
     return {
-      title: 'Hubert on The Networker UK',
+      title: 'TINA on The Networker UK',
       text:
-        'Hubert is launching on The Networker UK — warm intros to people worth meeting, free to join. Build your profile before search opens: ' +
+        'TINA is launching on The Networker UK — warm intros to people worth meeting, free to join. Build your profile before search opens: ' +
         url,
       url: url,
     };
@@ -1354,7 +1356,7 @@
       return navigator
         .share(payload)
         .then(function () {
-          setProfileShareStatus('Thanks — share Hubert with anyone you’d like to meet.');
+          setProfileShareStatus('Thanks — share TINA with anyone you’d like to meet.');
         })
         .catch(function (err) {
           if (err && err.name === 'AbortError') return;
@@ -1697,7 +1699,7 @@
           submitBtn.textContent = 'Send invite';
         }
         if (!data.ok) {
-          setInviteError(mount, (data && data.message) || 'Hubert couldn’t send that invite just now.');
+          setInviteError(mount, (data && data.message) || 'TINA couldn’t send that invite just now.');
           if (data.error === 'quota_exceeded') refreshInviteQuota(mount);
           return;
         }
@@ -1711,7 +1713,7 @@
           mount.els.inviteDone.textContent =
             'Invite sent to ' +
             (data.inviteeName || name) +
-            '. They’ll get an email from Hubert to join The Networker UK.';
+            '. They’ll get an email from TINA to join The Networker UK.';
         }
         refreshInviteQuota(mount);
       })
@@ -1720,7 +1722,7 @@
           submitBtn.disabled = false;
           submitBtn.textContent = 'Send invite';
         }
-        setInviteError(mount, 'Hubert couldn’t send that invite just now. Try again shortly.');
+        setInviteError(mount, 'TINA couldn’t send that invite just now. Try again shortly.');
       });
   }
 

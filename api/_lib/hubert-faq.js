@@ -76,9 +76,9 @@ const FAQ_AEO_ENTRIES = [
     icon: '🏛️',
   },
   {
-    question: 'Who is Hubert Matchmaker on The Networker UK?',
+    question: 'Who is TINA on The Networker UK?',
     answer:
-      'Hubert Matchmaker is the British English gentleman and concierge on The Networker UK. He is at your service for events, business opportunities, tickets, enquiries, organiser tools, and introducing you to people to meet. Chat with Hubert Matchmaker on the contact page or ask him on the FAQ page. Signed-in members can open Meet people in My account to build their Hubert profile now. Warm-intro search opens to everyone when we finish the soft launch.',
+      'TINA is The Intelligent Networking Assistant on The Networker UK. Explain the connection you need — such as an IT director in Chester — and get introduced. Members approve requests before connecting. She also helps with events, business opportunities, tickets, enquiries, and organiser tools. Chat with TINA on the contact page or ask her on the FAQ page. Signed-in members can open Meet people in My account to build their profile now. Warm-intro search opens to everyone when we finish the soft launch.',
     category: 'general',
     icon: '✨',
   },
@@ -275,7 +275,7 @@ const FAQ_CATEGORIES = {
   general: {
     id: 'general',
     label: 'General & Accounts',
-    lede: 'Hubert, passwords, browsing, and what The Networker UK is.',
+    lede: 'TINA, passwords, browsing, and what The Networker UK is.',
   },
   buyers: {
     id: 'buyers',

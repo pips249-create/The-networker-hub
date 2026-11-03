@@ -158,12 +158,12 @@
       label: 'G · Recommended',
       layout: 'rich-choice',
       strategy: 'Best UX balance',
-      note: 'Find your next\u2026 with one short context line, two clean choice cards, and Ask Hubert underneath instead of event search.',
+      note: 'Find your next\u2026 with one short context line, two clean choice cards, and Ask TINA underneath instead of event search.',
       titleLine: 'Find your next\u2026',
       lede: 'Networking events and business opportunities, in one place.',
-      hubertLabel: 'Ask Hubert',
-      hubertPlaceholder: 'Ask Hubert to find an event, opportunity, or group\u2026',
-      hubertBtn: 'Ask Hubert',
+      hubertLabel: 'Ask TINA',
+      hubertPlaceholder: 'Ask TINA to find an event, opportunity, or group\u2026',
+      hubertBtn: 'Ask TINA',
       cards: [
         {
           href: '/events/',
@@ -184,12 +184,12 @@
       label: 'H · Motion',
       layout: 'video-rotate',
       strategy: 'Find your next + moving words',
-      note: 'Find your next with rotating words (Event, Connection, Opportunity, Community), then Event / Business Opportunity choices and Ask Hubert.',
+      note: 'Find your next with rotating words (Event, Connection, Opportunity, Community), then Event / Business Opportunity choices and Ask TINA.',
       titleLine: 'Find your next\u2026',
       rotateWords: ['Event', 'Connection', 'Opportunity', 'Community'],
-      hubertLabel: 'Ask Hubert',
-      hubertPlaceholder: 'Ask Hubert to find an event, opportunity, or group\u2026',
-      hubertBtn: 'Ask Hubert',
+      hubertLabel: 'Ask TINA',
+      hubertPlaceholder: 'Ask TINA to find an event, opportunity, or group\u2026',
+      hubertBtn: 'Ask TINA',
       cards: [
         {
           href: '/events/',
@@ -360,16 +360,16 @@
       '<div class="home-hero-rich-cards" role="group" aria-label="Choose where to start">' +
       cardsHtml +
       '</div>' +
-      '<form class="home-hero-rich-search home-hero-rich-search--hubert" id="home-hero-hubert-form" role="search" aria-label="Ask Hubert">' +
+      '<form class="home-hero-rich-search home-hero-rich-search--hubert" id="home-hero-hubert-form" role="search" aria-label="Ask TINA">' +
       '<img class="home-hero-rich-hubert-icon" src="assets/hubert-icon.png" alt="" width="28" height="28">' +
       '<label class="visually-hidden" for="home-hero-hubert-input">' +
-      esc(variant.hubertLabel || 'Ask Hubert') +
+      esc(variant.hubertLabel || 'Ask TINA') +
       '</label>' +
       '<input type="search" id="home-hero-hubert-input" name="q" placeholder="' +
-      esc(variant.hubertPlaceholder || 'Ask Hubert…') +
+      esc(variant.hubertPlaceholder || 'Ask TINA…') +
       '" autocomplete="off" enterkeyhint="send">' +
       '<button type="submit" class="home-hero-rich-search-btn">' +
-      esc(variant.hubertBtn || 'Ask Hubert') +
+      esc(variant.hubertBtn || 'Ask TINA') +
       '</button>' +
       '</form>' +
       '<p class="home-hero-rich-secondary">' +
@@ -415,16 +415,16 @@
       '<div class="home-hero-rich-cards home-hero-rich-cards--motion" role="group" aria-label="Choose where to start">' +
       cardsHtml +
       '</div>' +
-      '<form class="home-hero-rich-search home-hero-rich-search--hubert" id="home-hero-hubert-form" role="search" aria-label="Ask Hubert">' +
+      '<form class="home-hero-rich-search home-hero-rich-search--hubert" id="home-hero-hubert-form" role="search" aria-label="Ask TINA">' +
       '<img class="home-hero-rich-hubert-icon" src="assets/hubert-icon.png" alt="" width="28" height="28">' +
       '<label class="visually-hidden" for="home-hero-hubert-input">' +
-      esc(variant.hubertLabel || 'Ask Hubert') +
+      esc(variant.hubertLabel || 'Ask TINA') +
       '</label>' +
       '<input type="search" id="home-hero-hubert-input" name="q" placeholder="' +
-      esc(variant.hubertPlaceholder || 'Ask Hubert…') +
+      esc(variant.hubertPlaceholder || 'Ask TINA…') +
       '" autocomplete="off" enterkeyhint="send">' +
       '<button type="submit" class="home-hero-rich-search-btn">' +
-      esc(variant.hubertBtn || 'Ask Hubert') +
+      esc(variant.hubertBtn || 'Ask TINA') +
       '</button>' +
       '</form>' +
       '</div>'

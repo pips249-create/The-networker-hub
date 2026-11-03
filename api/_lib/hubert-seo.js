@@ -1,5 +1,5 @@
 /**
- * JSON-LD schema builders — sourced from Hubert knowledge for SEO & AEO.
+ * JSON-LD schema builders — sourced from TINA knowledge for SEO & AEO.
  */
 const { FAQ_AEO_ENTRIES } = require('./hubert-faq');
 const { HELP_PAGES } = require('./help-pages');
@@ -120,12 +120,12 @@ function buildHubertSchema(origin) {
   return {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
-    name: 'Hubert Matchmaker',
+    name: 'TINA',
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web',
     url: base + '/contact',
     description:
-      'Hubert Matchmaker is the business butler and concierge for The Networker UK — an AI assistant that helps users find events and business opportunities, understand ticketing and enquiries, navigate organiser tools, and meet the right people.',
+      'TINA is The Intelligent Networking Assistant for The Networker UK — an AI assistant that helps users find events and business opportunities, understand ticketing and enquiries, navigate organiser tools, and meet the right people.',
     offers: {
       '@type': 'Offer',
       price: '0',
@@ -196,7 +196,7 @@ function buildContactPageSchema(origin) {
     url: base + '/contact',
     name: 'Contact The Networker UK',
     description:
-      'Contact The Networker UK or chat with Hubert Matchmaker, your business butler and concierge, for help with events, tickets, business opportunities, and meeting people.',
+      'Contact The Networker UK or chat with TINA, The Intelligent Networking Assistant, for help with events, tickets, business opportunities, and meeting people.',
     mainEntity: buildHubertSchema(base),
   };
 }
@@ -503,7 +503,7 @@ function buildLlmsTxt(origin) {
     '- FAQ: ' +
     base +
     '/faq\n' +
-    '- Contact (Hubert assistant): ' +
+    '- Contact (TINA assistant): ' +
     base +
     '/contact\n' +
     '- About: ' +
@@ -615,8 +615,8 @@ function buildLlmsTxt(origin) {
     base +
     '/opportunities/industry/cleaning\n' +
     '- Full list: see /sitemap.xml (paths under /opportunities/industry/)\n\n' +
-    '## Hubert Matchmaker — business butler & concierge\n' +
-    'Hubert Matchmaker is the on-site AI assistant and matchmaker. He answers questions about browsing, accounts, tickets, opportunities, and organiser tools, and can introduce members to people to meet. He can look up live published events and business opportunities when asked.\n\n' +
+    '## TINA — The Intelligent Networking Assistant\n' +
+    'TINA is the on-site AI assistant and matchmaker. She answers questions about browsing, accounts, tickets, opportunities, and organiser tools, and can introduce members to people to meet. She can look up live published events and business opportunities when asked.\n\n' +
     '## Frequently asked questions\n\n' +
     faqBlock +
     '\n'

@@ -28,9 +28,9 @@ const inviteHtml = fs.readFileSync(
   path.join(__dirname, '../email-templates/hubert-hub-invite.html'),
   'utf8'
 );
-assert.ok(inviteHtml.includes('I introduce you to people worth meeting'), 'Hubert-led headline');
-assert.ok(inviteHtml.includes('What Hubert does for you'), 'Hubert value block');
-assert.ok(inviteHtml.includes('Meet people with Hubert'), 'CTA centres Hubert');
+assert.ok(inviteHtml.includes('I introduce you to people worth meeting'), 'TINA-led headline');
+assert.ok(inviteHtml.includes('What TINA does for you'), 'TINA value block');
+assert.ok(inviteHtml.includes('Meet people with TINA'), 'CTA centres TINA');
 assert.ok(inviteHtml.includes('UK networking events') || inviteHtml.includes('networking events'), 'events still mentioned');
 assert.ok(inviteHtml.includes('logo_footer_light_url'), 'high-contrast footer logo');
 assert.ok(inviteHtml.includes('background:#1c2040'), 'navy header/footer for on-dark logo');

@@ -259,18 +259,18 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   hubert_intro_request: {
     file: 'hubert-intro-request.html',
-    marker: 'hub-email-layout-v3-purple-hubert-intro',
-    subject: 'Introduction via Hubert: {{requester_label}} would like to be introduced',
+    marker: 'hub-email-layout-v3-purple-tina-intro',
+    subject: 'Introduction via TINA: {{requester_label}} would like to be introduced',
   },
   hubert_intro_reminder: {
     file: 'hubert-intro-reminder.html',
-    marker: 'hub-email-layout-v3-purple-hubert-intro',
-    subject: 'Hubert: gentle reminder about {{requester_name}}',
+    marker: 'hub-email-layout-v3-purple-tina-intro',
+    subject: 'TINA: gentle reminder about {{requester_name}}',
   },
   hubert_intro_accepted: {
     file: 'hubert-intro-accepted.html',
-    marker: 'hub-email-layout-v3-purple-hubert-intro',
-    subject: 'Hubert intro accepted: {{counterpart_name}} said yes',
+    marker: 'hub-email-layout-v3-purple-tina-intro',
+    subject: 'TINA intro accepted: {{counterpart_name}} said yes',
   },
   account_welcome: {
     file: 'account-welcome.html',
@@ -375,21 +375,21 @@ const BRANDED_EMAIL_TEMPLATES = {
   attendee_hubert_event_concierge: {
     file: 'attendee-hubert-event-concierge.html',
     marker: 'hub-email-layout-v3-purple',
-    subject: "Hubert's weekly event picks — week of {{week_label}}",
+    subject: "TINA's weekly event picks — week of {{week_label}}",
   },
   hubert_hub_invite: {
     file: 'hubert-hub-invite.html',
-    marker: 'hub-email-layout-v3-navy-logo-hubert-led',
-    subject: '{{inviter_first_name}} asked Hubert to introduce you',
+    marker: 'hub-email-layout-v3-navy-logo-tina-led',
+    subject: '{{inviter_first_name}} asked TINA to introduce you',
   },
   hubert_matchmaker_launching: {
     file: 'hubert-matchmaker-launching.html',
-    marker: 'hub-email-layout-v3-navy-logo-hubert-led',
-    subject: "We're launching Hubert Matchmaker: get your profile ready",
+    marker: 'hub-email-layout-v3-navy-logo-tina-led',
+    subject: "We're launching TINA: get your profile ready",
   },
   hubert_organiser_pre_event: {
     file: 'hubert-organiser-pre-event.html',
-    marker: 'hub-email-layout-v3-purple-hubert-organiser',
+    marker: 'hub-email-layout-v3-purple-tina-organiser',
     subject: 'Who do you want to meet at {{event_name}}?',
   },
   organiser_low_upcoming_events: {

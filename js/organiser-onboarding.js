@@ -25,7 +25,7 @@
   var steps = [
     {
       title: 'Welcome to your organiser workspace',
-      body: 'A quick walk through the main areas — where your pages, events, memberships, team, and payouts live. Hubert (bottom right) can answer questions anytime.',
+      body: 'A quick walk through the main areas — where your pages, events, memberships, team, and payouts live. TINA (bottom right) can answer questions anytime.',
       target: null,
       beforeShow: goDashboard,
     },
@@ -90,7 +90,7 @@
     },
     {
       title: 'You’re ready — start with My events',
-      body: 'Check any listings we prepared, set tickets if needed, then publish. Polish your organiser page under Organiser pages anytime. Ask Hubert if you get stuck.',
+      body: 'Check any listings we prepared, set tickets if needed, then publish. Polish your organiser page under Organiser pages anytime. Ask TINA if you get stuck.',
       target: '#org-page-events .org-page-head',
       beforeShow: function () {
         if (window.orgDashSetRoute) window.orgDashSetRoute('events-list', { skipEventsGuard: true });

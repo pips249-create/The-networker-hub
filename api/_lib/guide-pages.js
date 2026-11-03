@@ -6,14 +6,14 @@ const GUIDE_PAGES = {
     path: '/guides/list-an-event',
     title: 'List an event – How-to guides – The Networker UK',
     description:
-      'Start listing events on The Networker UK — sign in to the organiser dashboard for a guided setup checklist and Hubert walkthrough.',
+      'Start listing events on The Networker UK — sign in to the organiser dashboard for a guided setup checklist and TINA walkthrough.',
     name: 'List an event',
     howToName: 'How to list an event on The Networker UK',
     steps: [
       { id: 'sign-in', name: 'Sign in to the organiser dashboard', text: 'Sign in and open the organiser dashboard at /organiser/. If your networking group is already listed, search the organiser directory and claim your page when prompted.' },
       { id: 'organiser-page', name: 'Create or claim your organiser page', text: 'Follow the setup checklist on Overview — add your public group profile or confirm the claim prompt for an existing page.' },
       { id: 'membership', name: 'Optional: set up membership', text: 'Upload your member register if you sell members-only tickets or track renewals. Skip this step if you only need open booking.' },
-      { id: 'list-event', name: 'List your event in the dashboard', text: 'Choose List event from My events. Hubert walks you through format, details, tickets, and publish. For paid tickets, connect Stripe under the Revenue tab before publishing.' },
+      { id: 'list-event', name: 'List your event in the dashboard', text: 'Choose List event from My events. TINA walks you through format, details, tickets, and publish. For paid tickets, connect Stripe under the Revenue tab before publishing.' },
     ],
   },
   'list-a-conference-or-exhibition': {
