@@ -182,9 +182,17 @@
         (isStub ? ' disabled title="Live matches required to request an intro"' : '') +
         '>Request intro</button>';
 
+    var heading = personLabel(person);
+    // Never title the card with a personal name — even if an old API payload still sends one.
+    if (person.displayName && heading === person.displayName) {
+      heading = personLabel({ role: person.role, industry: person.industry });
+    }
     var blurbText = String(person.blurb || '')
       .trim()
       .replace(/\s+/g, ' ');
+    if (!blurbText && person.role) {
+      blurbText = String(person.role).trim() + ' — open to intros';
+    }
     var blurbBlock = blurbText
       ? '<p class="hmm-match-blurb">' + esc(blurbText) + '</p>'
       : '';
@@ -199,7 +207,7 @@
       '<div class="hmm-match-body">' +
       '<div class="hmm-match-who">' +
       '<h3 class="hmm-match-name">' +
-      esc(personLabel(person)) +
+      esc(heading) +
       '</h3>' +
       blurbBlock +
       '<div class="hmm-match-chips">' +

@@ -657,8 +657,8 @@ const NAME_STRIP_ROLE_BLOCK =
 
 /**
  * Strip name + company from shortlist copy so a card cannot be LinkedIn’d.
- * Avoids nuking common verbs (will/mark) by only stripping full name, company,
- * a leading first-name opener, and distinctive surnames.
+ * Only removes full-name / full-company phrases (not every company word —
+ * that left wreckage like “I founded The to help…”).
  */
 function stripIdentifyingPhrases(text, person) {
   let out = String(text || '');
@@ -671,14 +671,10 @@ function stripIdentifyingPhrases(text, person) {
   }
   if (company.length >= 3) {
     out = out.replace(new RegExp('\\b' + escapeRegExp(company) + '\\b', 'gi'), ' ');
-    // Also strip leading company tokens (“TOP Networking Clubs” → TOP / Networking).
-    company
-      .split(/\s+/)
-      .filter((p) => p.length >= 4)
-      .forEach((part) => {
-        if (/^(limited|ltd|group|clubs?|uk|the|and)$/i.test(part)) return;
-        out = out.replace(new RegExp('\\b' + escapeRegExp(part) + '\\b', 'gi'), ' ');
-      });
+    const withoutThe = company.replace(/^the\s+/i, '').trim();
+    if (withoutThe && withoutThe.toLowerCase() !== company.toLowerCase()) {
+      out = out.replace(new RegExp('\\b' + escapeRegExp(withoutThe) + '\\b', 'gi'), ' ');
+    }
   }
   // Hub / peer networking brands in a blurb + first-name initial identify people.
   out = out.replace(/\bthe\s+networker(?:\s+(?:uk|group(?:\s+ltd)?))?\b/gi, ' ');
@@ -700,7 +696,7 @@ function stripIdentifyingPhrases(text, person) {
 
 /**
  * Repair grammar holes left after name/company stripping
- * (“Director of where we are…” → drop, or “empowering SME…”).
+ * (“Director of where we are…” → drop; “I founded to help…” → “I help…”).
  */
 function tidyStrippedBlurb(text, person) {
   let out = String(text || '');
@@ -711,8 +707,18 @@ function tidyStrippedBlurb(text, person) {
   out = out
     .replace(/\s+/g, ' ')
     .replace(/^[\s,.;:\-–—/]+/, '')
-    .replace(/^(?:(?:runs?|is|was|works?|working|helps?|helping)\b[\s,]*)+/i, '')
     .replace(/\s+([,.;:])/g, '$1')
+    .trim();
+
+  // “I founded [Company] to help…” → company gone → “I founded to help…” → “I help…”
+  out = out.replace(
+    /\bI\s+(?:founded|started|launched|built|run|runs)\s+(?:the\s+)?to\s+/gi,
+    'I '
+  );
+  out = out.replace(/\b(?:founded|started|launched|built|runs?)\s+(?:the\s+)?(?=to\b)/gi, '');
+
+  out = out
+    .replace(/^(?:(?:runs?|is|was|works?|working|helps?|helping)\b[\s,]*)+/i, '')
     .trim();
 
   // Drop role echo already shown on the card (“Director of …”).
@@ -733,6 +739,8 @@ function tidyStrippedBlurb(text, person) {
   if (!out) return '';
   if (/\b(?:of|at|for)\s+where\b/i.test(out)) return '';
   if (/^(?:where|who|which|that)\b/i.test(out)) return '';
+  if (/\bfounded\s+(?:the\s+)?to\b/i.test(out)) return '';
+  if (/\bthe\s+to\s+help\b/i.test(out)) return '';
   if (out.length < 12) return '';
   return out;
 }
@@ -766,6 +774,7 @@ function publicIndustry(person) {
 
 /**
  * Shortlist-safe blurb — short, no name/company (LinkedIn cut-out guard).
+ * Always prefer a real description over a blank card.
  */
 function shortlistBlurb(person) {
   const raw = String((person && person.blurb) || '')
@@ -779,6 +788,12 @@ function shortlistBlurb(person) {
     ? person.lookingToMeet.map((x) => String(x || '').trim()).filter(Boolean)
     : [];
   if (looking.length) return 'Looking to meet ' + looking.slice(0, 3).join(', ');
+  const role = String(
+    (person && (person.role || person.jobTitle || person.professionalRole)) || ''
+  )
+    .trim()
+    .replace(/\s+/g, ' ');
+  if (role) return role + ' — open to intros';
   return '';
 }
 

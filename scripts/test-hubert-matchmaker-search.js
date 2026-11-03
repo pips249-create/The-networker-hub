@@ -236,6 +236,54 @@ assert(
   'broken privacy strip falls back to looking-to-meet'
 );
 assert(
+  !/Senn Studio|Muna/i.test(
+    shortlistBlurb({
+      fullName: 'Muna Hassan',
+      company: 'The Senn Studio',
+      role: 'Director',
+      lookingToMeet: ['Clients'],
+      blurb:
+        'I founded The Senn Studio to help business owners be known before they are needed, and to build the systems that make growth feel calm.',
+    })
+  ),
+  'Muna company/name stripped from shortlist blurb'
+);
+assert(
+  /help business owners/i.test(
+    shortlistBlurb({
+      fullName: 'Muna Hassan',
+      company: 'The Senn Studio',
+      role: 'Director',
+      lookingToMeet: ['Clients'],
+      blurb:
+        'I founded The Senn Studio to help business owners be known before they are needed, and to build the systems that make growth feel calm.',
+    })
+  ),
+  'Muna blurb keeps the real description after company strip'
+);
+assert(
+  !/\bfounded\s+(?:the\s+)?to\b|\bthe\s+to\s+help\b/i.test(
+    shortlistBlurb({
+      fullName: 'Muna Hassan',
+      company: 'The Senn Studio',
+      role: 'Director',
+      blurb: 'I founded The Senn Studio to help business owners be known before they are needed.',
+    })
+  ),
+  'Muna blurb is not mangled to “founded The to help”'
+);
+assert(
+  shortlistBlurb({
+    fullName: 'Richard Frazer',
+    company: 'Top Networking Clubs',
+    role: 'Director',
+    lookingToMeet: [],
+    blurb:
+      'Director of Top Networking Clubs where we are empowering SME business owners to grow.',
+  }) === 'Director — open to intros',
+  'empty looking-to-meet falls back to role description'
+);
+assert(
   shortlistBlurb({
     fullName: 'Alex Morgan',
     company: 'Northbridge Labs',
