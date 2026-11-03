@@ -129,5 +129,7 @@ assert(
   'looking-to-meet selected chips use solid filled state'
 );
 assert(dashCss.indexOf('.hmm-empty-sug') !== -1, 'empty suggestion chip styles present');
+assert(dashCss.indexOf('.hmm-chip--fit-exact') !== -1, 'exact fit chip styles present');
+assert(dashCss.indexOf('.hmm-chip--fit-close') !== -1, 'close fit chip styles present');
 
 console.log('ok — hubert-matchmaker ui helpers');
