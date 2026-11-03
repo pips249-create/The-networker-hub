@@ -34398,7 +34398,14 @@
     });
   }
 
-  var hubertSeedState = { status: 'active', q: '', cache: null, inviteAs: 'rosie' };
+  var hubertSeedState = {
+    status: 'active',
+    q: '',
+    page: 1,
+    pageSize: 50,
+    cache: null,
+    inviteAs: 'rosie',
+  };
 
   function hubertSeedStatusLabel(status) {
     if (status === 'active') return 'Active';
@@ -34411,19 +34418,30 @@
   function renderHubertSeedRows(contacts) {
     if (!contacts || !contacts.length) {
       return (
-        '<tr><td colspan="6" class="px-3 py-8 text-sm text-slate-500 text-center">' +
+        '<tr><td colspan="7" class="px-3 py-8 text-sm text-slate-500 text-center">' +
         'No seed contacts yet. Paste people from LinkedIn below — they are never a public directory.' +
         '</td></tr>'
       );
     }
     return contacts
       .map(function (c) {
-        var li =
-          c.linkedinUrl
-            ? '<a class="text-xs font-semibold text-sky-800 hover:underline" href="' +
+        var links = [];
+        if (c.linkedinUrl) {
+          links.push(
+            '<a class="text-xs font-semibold text-sky-800 hover:underline" href="' +
               esc(c.linkedinUrl) +
               '" target="_blank" rel="noopener noreferrer">LinkedIn</a>'
-            : '<span class="text-xs text-slate-400">No LinkedIn</span>';
+          );
+        }
+        if (c.websiteUrl) {
+          links.push(
+            '<a class="text-xs font-semibold text-emerald-800 hover:underline" href="' +
+              esc(c.websiteUrl) +
+              '" target="_blank" rel="noopener noreferrer">Page</a>'
+          );
+        }
+        if (!links.length) links.push('<span class="text-xs text-slate-400">No links</span>');
+        var place = [c.location, c.country].filter(Boolean).join(', ') || '—';
         var inviteAsLabel =
           hubertSeedState.inviteAs === 'catherine' ? 'Catherine' : 'Rosie';
         var inviteBtn = c.email
@@ -34439,14 +34457,17 @@
           esc(c.fullName || '') +
           '</div><div class="text-xs text-slate-500 mt-0.5">' +
           esc(c.email || 'No email') +
-          '</div><div class="mt-1">' +
-          li +
+          '</div><div class="mt-1 flex flex-wrap gap-2">' +
+          links.join(' ') +
           '</div></td>' +
           '<td class="px-3 py-3 text-sm text-slate-700">' +
           esc([c.jobTitle, c.company].filter(Boolean).join(' · ') || '—') +
           '<div class="text-xs text-slate-500 mt-1">' +
           esc(c.industry || '') +
           '</div></td>' +
+          '<td class="px-3 py-3 text-sm text-slate-700 whitespace-nowrap">' +
+          esc(place) +
+          '</td>' +
           '<td class="px-3 py-3 text-sm text-slate-600 max-w-[220px]">' +
           esc((c.blurb || '').slice(0, 140)) +
           (c.blurb && c.blurb.length > 140 ? '…' : '') +
@@ -34497,8 +34518,11 @@
           jobTitle: String(fd.get('jobTitle') || '').trim(),
           industry: String(fd.get('industry') || '').trim(),
           professionalRole: String(fd.get('professionalRole') || '').trim(),
+          location: String(fd.get('location') || '').trim(),
+          country: String(fd.get('country') || '').trim(),
           lookingToMeet: String(fd.get('lookingToMeet') || '').trim(),
           linkedinUrl: String(fd.get('linkedinUrl') || '').trim(),
+          websiteUrl: String(fd.get('websiteUrl') || '').trim(),
           blurb: String(fd.get('blurb') || '').trim(),
           notes: String(fd.get('notes') || '').trim(),
           source: 'linkedin',
@@ -34631,6 +34655,7 @@
       statusSel.value = hubertSeedState.status || 'active';
       statusSel.addEventListener('change', function () {
         hubertSeedState.status = statusSel.value;
+        hubertSeedState.page = 1;
         loadHubertMatchmakerSeed();
       });
     }
@@ -34641,6 +34666,7 @@
         if (e.key === 'Enter') {
           e.preventDefault();
           hubertSeedState.q = searchInput.value.trim();
+          hubertSeedState.page = 1;
           loadHubertMatchmakerSeed();
         }
       });
@@ -34650,6 +34676,24 @@
       refreshBtn.addEventListener('click', function () {
         var qEl = root.querySelector('#hmm-seed-search');
         hubertSeedState.q = qEl ? qEl.value.trim() : '';
+        loadHubertMatchmakerSeed();
+      });
+    }
+
+    var prevBtn = root.querySelector('#hmm-seed-page-prev');
+    var nextBtn = root.querySelector('#hmm-seed-page-next');
+    if (prevBtn && !prevBtn.dataset.bound) {
+      prevBtn.dataset.bound = '1';
+      prevBtn.addEventListener('click', function () {
+        if (hubertSeedState.page <= 1) return;
+        hubertSeedState.page -= 1;
+        loadHubertMatchmakerSeed();
+      });
+    }
+    if (nextBtn && !nextBtn.dataset.bound) {
+      nextBtn.dataset.bound = '1';
+      nextBtn.addEventListener('click', function () {
+        hubertSeedState.page += 1;
         loadHubertMatchmakerSeed();
       });
     }
@@ -34713,8 +34757,16 @@
       '<label class="text-sm font-semibold text-slate-700">Job title<input name="jobTitle" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>' +
       '<label class="text-sm font-semibold text-slate-700">Industry<input name="industry" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>' +
       '<label class="text-sm font-semibold text-slate-700">I am a<input name="professionalRole" placeholder="Founder, Investor…" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>' +
+      '<label class="text-sm font-semibold text-slate-700">Location<input name="location" placeholder="Town / city / region" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>' +
+      '<label class="text-sm font-semibold text-slate-700">Country<input name="country" list="hmm-seed-countries" placeholder="United Kingdom" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>' +
+      '<datalist id="hmm-seed-countries">' +
+      '<option value="United Kingdom"></option><option value="Ireland"></option><option value="South Africa"></option>' +
+      '<option value="United States"></option><option value="Canada"></option><option value="Australia"></option>' +
+      '<option value="France"></option><option value="Germany"></option><option value="Spain"></option>' +
+      '</datalist>' +
       '<label class="text-sm font-semibold text-slate-700 sm:col-span-2">Looking to meet<input name="lookingToMeet" placeholder="Clients, Investors (comma-separated)" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>' +
-      '<label class="text-sm font-semibold text-slate-700 sm:col-span-2">LinkedIn URL<input name="linkedinUrl" type="url" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="https://www.linkedin.com/in/…" /></label>' +
+      '<label class="text-sm font-semibold text-slate-700">LinkedIn URL<input name="linkedinUrl" type="url" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="https://www.linkedin.com/in/…" /></label>' +
+      '<label class="text-sm font-semibold text-slate-700">Company page / website<input name="websiteUrl" type="url" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="https://example.com" /></label>' +
       '<label class="text-sm font-semibold text-slate-700 sm:col-span-2">Short blurb<textarea name="blurb" rows="3" maxlength="800" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Paste/edit from LinkedIn About — do not scrape"></textarea></label>' +
       '<label class="text-sm font-semibold text-slate-700 sm:col-span-2">Internal notes<textarea name="notes" rows="2" maxlength="1000" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Why you’re adding them, event context, etc."></textarea></label>' +
       '<label class="sm:col-span-2 flex items-start gap-2 text-sm text-slate-700">' +
@@ -34744,17 +34796,60 @@
       '</div></div>' +
       '<div class="overflow-x-auto"><table class="min-w-full text-left text-sm">' +
       '<thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr>' +
-      '<th class="px-3 py-2 font-semibold">Person</th><th class="px-3 py-2 font-semibold">Role</th><th class="px-3 py-2 font-semibold">Blurb</th><th class="px-3 py-2 font-semibold">Status</th><th class="px-3 py-2 font-semibold">Updated</th><th class="px-3 py-2 font-semibold text-right">Actions</th>' +
+      '<th class="px-3 py-2 font-semibold">Person</th><th class="px-3 py-2 font-semibold">Role</th><th class="px-3 py-2 font-semibold">Location</th><th class="px-3 py-2 font-semibold">Blurb</th><th class="px-3 py-2 font-semibold">Status</th><th class="px-3 py-2 font-semibold">Updated</th><th class="px-3 py-2 font-semibold text-right">Actions</th>' +
       '</tr></thead><tbody id="hmm-seed-tbody">' +
       renderHubertSeedRows(data.contacts || []) +
-      '</tbody></table></div></section></div>';
+      '</tbody></table></div>' +
+      renderHubertSeedPager(data) +
+      '</section></div>';
     bindHubertSeedActions(main);
+  }
+
+  function renderHubertSeedPager(data) {
+    var page = Math.max(1, parseInt(data && data.page, 10) || hubertSeedState.page || 1);
+    var pageSize = Math.max(10, parseInt(data && data.pageSize, 10) || hubertSeedState.pageSize || 50);
+    var totalMatched = Math.max(0, parseInt(data && data.totalMatched, 10) || 0);
+    var totalPages = Math.max(1, parseInt(data && data.totalPages, 10) || Math.ceil(totalMatched / pageSize) || 1);
+    hubertSeedState.page = page;
+    hubertSeedState.pageSize = pageSize;
+    if (totalMatched <= pageSize && page === 1) {
+      return (
+        '<div class="px-4 py-3 border-t border-slate-100 text-xs text-slate-500">' +
+        esc(String(totalMatched)) +
+        ' contact' +
+        (totalMatched === 1 ? '' : 's') +
+        '</div>'
+      );
+    }
+    var from = totalMatched ? (page - 1) * pageSize + 1 : 0;
+    var to = Math.min(page * pageSize, totalMatched);
+    return (
+      '<div class="px-4 py-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">' +
+      '<p class="text-xs text-slate-500">' +
+      (totalMatched
+        ? 'Showing ' + esc(String(from)) + '–' + esc(String(to)) + ' of ' + esc(String(totalMatched))
+        : 'No matches') +
+      ' · Page ' +
+      esc(String(page)) +
+      ' of ' +
+      esc(String(totalPages)) +
+      '</p>' +
+      '<div class="flex flex-wrap gap-2">' +
+      '<button type="button" id="hmm-seed-page-prev" class="rounded-lg border border-slate-300 text-sm font-semibold px-3 py-1.5 hover:bg-slate-50 disabled:opacity-40" ' +
+      (page <= 1 ? 'disabled' : '') +
+      '>Previous</button>' +
+      '<button type="button" id="hmm-seed-page-next" class="rounded-lg border border-slate-300 text-sm font-semibold px-3 py-1.5 hover:bg-slate-50 disabled:opacity-40" ' +
+      (page >= totalPages ? 'disabled' : '') +
+      '>Next</button>' +
+      '</div></div>'
+    );
   }
 
   function loadHubertMatchmakerSeed() {
     if (!main) return;
     var params = new URLSearchParams();
-    params.set('limit', '200');
+    params.set('page', String(hubertSeedState.page || 1));
+    params.set('pageSize', String(hubertSeedState.pageSize || 50));
     if (hubertSeedState.status) params.set('status', hubertSeedState.status);
     if (hubertSeedState.q) params.set('q', hubertSeedState.q);
     main.innerHTML = '<p class="text-sm text-slate-500">Loading TINA seed list…</p>';

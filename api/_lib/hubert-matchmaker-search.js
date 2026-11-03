@@ -1083,7 +1083,8 @@ function mapSeedRow(row) {
     jobTitle: row.job_title || '',
     industry: row.industry || '',
     professionalRole: row.professional_role || '',
-    location: row.location || row.city || '',
+    location: [row.location || row.city || '', row.country || ''].filter(Boolean).join(', '),
+    country: row.country || '',
     lookingToMeet: Array.isArray(row.looking_to_meet) ? row.looking_to_meet : [],
     blurb: row.blurb || '',
     nextEvent: null,
@@ -1443,7 +1444,7 @@ async function searchMatchmaker(opts) {
     const seedRes = await sb
       .from('hubert_match_seed')
       .select(
-        'id, full_name, company, job_title, industry, professional_role, looking_to_meet, blurb, status'
+        'id, full_name, company, job_title, industry, professional_role, looking_to_meet, blurb, location, country, status'
       )
       .eq('status', 'active')
       .limit(200);
