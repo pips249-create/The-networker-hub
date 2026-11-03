@@ -1,5 +1,5 @@
 /**
- * Public Matchmaker teaser: Home + Events browse.
+ * Public Matchmaker teaser: Home.
  *
  * While HUBERT_MATCHMAKER_PUBLIC is false:
  *   - Teaser is visible to everyone in "build your profile" mode (no live search).
@@ -8,6 +8,8 @@
  *
  * When the launch flag flips true:
  *   - Search lookalike returns; real search still requires sign-in.
+ *
+ * Not shown on Events / Organisers browse - keep discovery focused on listings.
  */
 (function () {
   'use strict';
@@ -18,10 +20,8 @@
   var COPY = {
     profile: {
       title: 'Build your Hubert profile',
-      ledeHome:
+      lede:
         'Hubert shortlists members worth meeting (customers, investors, hires, mentors) and only opens an intro when you both say yes. Build your profile now so you’re ready when search opens.',
-      ledeEvents:
-        'Hubert shortlists people worth meeting at events and after (customers, investors, hires, mentors) and only introduces you when both sides opt in. Build your profile now so you’re ready when search opens.',
       submit: 'Build your profile',
       invite: 'Invite someone else for free',
       badge: 'Launching soon',
@@ -31,12 +31,9 @@
       inviteShared: 'Thanks. Share Hubert with anyone you’d like to meet.',
     },
     search: {
-      titleHome: 'Who do you want to meet?',
-      titleEvents: 'Meet people beyond the room',
-      ledeHome:
+      title: 'Who do you want to meet?',
+      lede:
         'Tell Hubert what you’re working on. He shortlists relevant people on The Networker UK and can introduce you privately. Email, phone, and LinkedIn stay private.',
-      ledeEvents:
-        'Looking for someone at an event, or the right intro after? Hubert shortlists relevant members and can introduce you privately. Contact details stay private.',
       submit: 'Try Hubert',
       badge: '',
       gateSignedOut: 'Create a free account to see matches and request intros.',
@@ -166,11 +163,10 @@
     var invite = root.querySelector('[data-hmm-teaser-invite]');
     var input = root.querySelector('[data-hmm-teaser-query]');
     var badge = root.querySelector('[data-hmm-teaser-badge]');
-    var isEvents = root.classList.contains('hmm-teaser--events');
 
     if (searchMode) {
-      if (title) title.textContent = isEvents ? COPY.search.titleEvents : COPY.search.titleHome;
-      if (lede) lede.textContent = isEvents ? COPY.search.ledeEvents : COPY.search.ledeHome;
+      if (title) title.textContent = COPY.search.title;
+      if (lede) lede.textContent = COPY.search.lede;
       if (submit) submit.textContent = COPY.search.submit;
       if (invite) invite.hidden = true;
       if (badge) {
@@ -187,7 +183,7 @@
       root.classList.add('hmm-teaser--search');
     } else {
       if (title) title.textContent = COPY.profile.title;
-      if (lede) lede.textContent = isEvents ? COPY.profile.ledeEvents : COPY.profile.ledeHome;
+      if (lede) lede.textContent = COPY.profile.lede;
       if (submit) submit.textContent = COPY.profile.submit;
       if (invite) {
         invite.hidden = false;
