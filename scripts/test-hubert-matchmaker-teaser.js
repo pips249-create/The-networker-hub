@@ -71,15 +71,7 @@ assert.ok(homeHtml.indexOf('private Hub thread') === -1, 'home teaser drops Hub 
 assert.ok(/shortlists members worth meeting/i.test(homeHtml), 'home teaser says what Hubert does');
 assert.ok(/both say yes|when you both say yes/i.test(homeHtml), 'home teaser explains double opt-in');
 const homeTeaser = homeHtml.slice(homeHtml.indexOf('data-hmm-teaser'), homeHtml.indexOf('</section>', homeHtml.indexOf('data-hmm-teaser')));
-const eventsTeaser = eventsHtml.slice(
-  eventsHtml.indexOf('data-hmm-teaser'),
-  eventsHtml.indexOf('</section>', eventsHtml.indexOf('data-hmm-teaser'))
-);
 assert.ok(homeTeaser.indexOf('\u2014') === -1, 'home teaser block has no em dashes');
-assert.ok(eventsHtml.indexOf('Launching soon') !== -1, 'events teaser shows launching soon');
-assert.ok(eventsHtml.indexOf('Invite someone else') !== -1, 'events teaser has invite CTA');
-assert.ok(/shortlists people worth meeting/i.test(eventsHtml), 'events teaser says what Hubert does');
-assert.ok(eventsTeaser.indexOf('\u2014') === -1, 'events teaser block has no em dashes');
 assert.ok(teaserSrc.indexOf('\u2014') === -1, 'teaser JS copy has no em dashes');
 assert.ok(teaserSrc.indexOf('Launching soon') !== -1, 'teaser JS has launching soon badge copy');
 assert.ok(teaserSrc.indexOf('inviteShareUrl') !== -1, 'teaser exports invite share url');
@@ -99,15 +91,12 @@ assert.ok(
   /Try:.*solicitor|Try:.*SaaS founder/i.test(homeHtml),
   'home teaser placeholder guides role/industry asks'
 );
-assert.ok(eventsHtml.indexOf('data-hmm-teaser') !== -1, 'events mounts teaser');
-assert.ok(eventsHtml.indexOf('hubert-matchmaker-teaser.css') !== -1, 'events loads teaser css');
-assert.ok(eventsHtml.indexOf('hubert-matchmaker-teaser.js') !== -1, 'events loads teaser js');
-assert.ok(eventsHtml.indexOf('Build your profile') !== -1, 'events teaser CTA is build profile');
-assert.ok(eventsHtml.indexOf('private Hub thread') === -1, 'events teaser drops Hub wording');
-assert.ok(
-  /Try:.*solicitor|Try:.*SaaS founder/i.test(eventsHtml),
-  'events teaser placeholder guides role/industry asks'
-);
+assert.ok(eventsHtml.indexOf('data-hmm-teaser') === -1, 'events/organisers browse has no teaser');
+assert.ok(eventsHtml.indexOf('hubert-matchmaker-teaser.css') === -1, 'events does not load teaser css');
+assert.ok(eventsHtml.indexOf('hubert-matchmaker-teaser.js') === -1, 'events does not load teaser js');
+assert.ok(eventsHtml.indexOf('Build your Hubert profile') === -1, 'events has no Hubert profile CTA');
+assert.ok(teaserSrc.indexOf('ledeEvents') === -1, 'teaser JS drops events-only copy');
+assert.ok(teaserSrc.indexOf('hmm-teaser--events') === -1, 'teaser JS drops events surface class');
 
 const accountHtml = fs.readFileSync(path.join(__dirname, '../account/index.html'), 'utf8');
 assert.ok(
