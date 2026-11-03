@@ -18,15 +18,6 @@ const MIN_TEXT_SCORE = 6;
 /** Short privacy-safe teaser on shortlist cards (not the full Hubert blurb). */
 const SHORTLIST_BLURB_MAX = 110;
 
-/**
- * Rival / peer networking organisers — not useful intros for a normal ask,
- * and easy to confuse with The Networker UK itself.
- */
-const NETWORKING_ORG_HINT =
-  /\b(?:networking (?:groups?|clubs?|organisations?|organizations?)|business networking|\bbni\b|top networking|referral groups?|networking (?:chapters?|franchises?)|chamber of commerce)\b/i;
-const WANTS_NETWORKING_ORG_HINT =
-  /\b(?:networking (?:groups?|clubs?|organisers?|organizers?|organisations?|organizations?)|business networking|\bbni\b|top networking|referral groups?|chamber of commerce)\b/i;
-
 const EVENT_QUERY_HINT =
   /\b(attended|attendee|attendees|attending|who went|who was at|who'?s going|going to|this morning|this afternoon|yesterday|last night|today)\b/i;
 
@@ -563,6 +554,8 @@ function stripIdentifyingPhrases(text, person) {
   if (company.length >= 3) {
     out = out.replace(new RegExp('\\b' + escapeRegExp(company) + '\\b', 'gi'), ' ');
   }
+  // Hub brand in a blurb + first-name initial is enough to identify Rosie/Catherine.
+  out = out.replace(/\bthe\s+networker(?:\s+(?:uk|group(?:\s+ltd)?))?\b/gi, ' ');
 
   const first = parts[0] || '';
   if (first.length >= 3) {
@@ -608,32 +601,16 @@ function shortlistBlurb(person) {
     .replace(/\s+/g, ' ');
   if (raw) {
     const cleaned = stripIdentifyingPhrases(raw, person);
-    if (cleaned) return softTruncateBlurb(cleaned, SHORTLIST_BLURB_MAX);
+    // After stripping name/company/brand, drop tiny leftovers (“Building”).
+    if (cleaned && cleaned.length >= 12) {
+      return softTruncateBlurb(cleaned, SHORTLIST_BLURB_MAX);
+    }
   }
   const looking = Array.isArray(person && person.lookingToMeet)
     ? person.lookingToMeet.map((x) => String(x || '').trim()).filter(Boolean)
     : [];
   if (looking.length) return 'Looking to meet ' + looking.slice(0, 3).join(', ');
   return '';
-}
-
-function isNetworkingOrganizerCandidate(person) {
-  if (!person) return false;
-  const hay = [
-    person.company,
-    person.blurb,
-    person.jobTitle,
-    person.role,
-    person.professionalRole,
-    person.industry,
-  ]
-    .filter(Boolean)
-    .join(' ');
-  return NETWORKING_ORG_HINT.test(hay);
-}
-
-function wantsNetworkingOrganizers(query) {
-  return WANTS_NETWORKING_ORG_HINT.test(String(query || ''));
 }
 
 /**
@@ -680,19 +657,24 @@ function rankCandidates(candidates, query, requesterEventIds, opts) {
       const roleScore = roleFitScore(person, intent);
       const boost = eventBoost(person, requesterEventIds);
       const matchedBoost = matchedEventBoost(person);
-      const total = textScore + roleScore + boost + matchedBoost;
-      return { person, textScore, roleScore, boost, matchedBoost, total, intent };
+      const brandScore = platformBrandMatchScore(person, query);
+      const total = textScore + roleScore + boost + matchedBoost + brandScore;
+      return {
+        person,
+        textScore,
+        roleScore,
+        boost,
+        matchedBoost,
+        brandScore,
+        total,
+        intent,
+      };
     })
     .filter((row) => {
       // “Who attended X?” — booking match is enough.
       if (row.matchedBoost > 0) return true;
-      // Rival networking organisers only when the ask is about that world.
-      if (
-        isNetworkingOrganizerCandidate(row.person) &&
-        !wantsNetworkingOrganizers(query)
-      ) {
-        return false;
-      }
+      // “The Networker UK directors” → Rosie / Catherine / Hub team.
+      if (row.brandScore >= 18) return true;
       // Otherwise require real topical overlap. Upcoming events alone are not a match.
       if (row.textScore < MIN_TEXT_SCORE) return false;
       // Hard role clash (e.g. founders for an employees ask) drop out.
@@ -702,6 +684,7 @@ function rankCandidates(candidates, query, requesterEventIds, opts) {
     .sort(
       (a, b) =>
         b.total - a.total ||
+        b.brandScore - a.brandScore ||
         b.textScore - a.textScore ||
         b.roleScore - a.roleScore ||
         b.matchedBoost - a.matchedBoost ||
@@ -721,6 +704,7 @@ function buildWhy(row) {
     const title = row.person.matchedEvent && row.person.matchedEvent.title;
     return title ? 'Booked for ' + title : 'Booked for a matching event';
   }
+  if (row.brandScore >= 18) return 'Part of The Networker UK team';
   if (row.roleScore >= 12 && row.intent && row.intent.wantEmployees) {
     return 'Role fits who you asked to meet';
   }
@@ -742,7 +726,11 @@ function formatDateLabel(iso) {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-/** Platform ops must never appear as intro supply (Catherine / Rosie / Networker Group). */
+/**
+ * Platform ops (Catherine / Rosie / Jamie / Networker Group).
+ * Kept out of general intro supply so they do not dominate every ask —
+ * but they SHOULD surface when someone asks for The Networker UK team/directors.
+ */
 const INTERNAL_NAME_HINT =
   /\b(rosie\s+mcgilvray|catherine\s+hancher|jamie\s+hancher)\b/i;
 const INTERNAL_COMPANY_HINT =
@@ -755,6 +743,28 @@ function isInternalMatchCandidate(person) {
   if (INTERNAL_NAME_HINT.test(name)) return true;
   if (INTERNAL_COMPANY_HINT.test(company)) return true;
   return false;
+}
+
+/** True when the ask is about The Networker UK / Group itself. */
+function queryMentionsNetworkerBrand(query) {
+  return /\b(?:the\s+)?networker(?:\s+(?:uk|group))?\b/i.test(String(query || ''));
+}
+
+/**
+ * Boost Hub team into results for Networker UK brand asks
+ * (e.g. “The networker UK directors” → Rosie & Catherine).
+ */
+function platformBrandMatchScore(person, query) {
+  if (!queryMentionsNetworkerBrand(query) || !isInternalMatchCandidate(person)) return 0;
+  let score = 18;
+  const q = String(query || '').toLowerCase();
+  if (
+    /\bdirectors?\b/.test(q) ||
+    /\b(founders?|owners?|ceos?|team|ops|organisers?|organizers?)\b/.test(q)
+  ) {
+    score += 12;
+  }
+  return score;
 }
 
 function mapSeedRow(row) {
@@ -1103,10 +1113,12 @@ async function searchMatchmaker(opts) {
 
   const candidates = [];
   const byId = new Map();
+  const allowInternal = queryMentionsNetworkerBrand(query);
 
   function addCandidate(person) {
     if (!person || !person.id) return;
-    if (isInternalMatchCandidate(person)) return;
+    // Hub team stays out of general supply; allowed for Networker UK brand asks.
+    if (isInternalMatchCandidate(person) && !allowInternal) return;
     const existing = byId.get(person.id);
     if (!existing) {
       byId.set(person.id, person);
@@ -1159,6 +1171,43 @@ async function searchMatchmaker(opts) {
     }
   } catch {
     /* discoverable columns may be missing pre-migration */
+  }
+
+  // Networker UK brand asks: include Hub team even if they have not opted into Include me.
+  if (allowInternal) {
+    try {
+      let opsQuery = sb
+        .from('attendees')
+        .select(
+          'id, name, company, job_title, business_sector, professional_role, looking_to_meet, matchmaker_blurb, discoverable_at'
+        )
+        .or(
+          [
+            'name.ilike.%McGilvray%',
+            'name.ilike.%Hancher%',
+            'company.ilike.%Networker Group%',
+            'company.ilike.%Networker UK%',
+          ].join(',')
+        )
+        .limit(30);
+      if (excludeAttendeeId) opsQuery = opsQuery.neq('id', excludeAttendeeId);
+      const opsRes = await opsQuery;
+      if (!opsRes.error) {
+        const rows = opsRes.data || [];
+        const nextMap = await loadNextEventsByAttendeeIds(
+          sb,
+          rows.map((r) => r.id)
+        );
+        rows.forEach((row) => {
+          if (!row.name) return;
+          const person = mapMemberRow(row, nextMap.get(row.id) || null, null);
+          if (!isInternalMatchCandidate(person)) return;
+          addCandidate(person);
+        });
+      }
+    } catch {
+      /* attendees query may fail on older schemas */
+    }
   }
 
   // Existing Hub bookings: only for attendee-intent asks (“who attended Evolution…”)
@@ -1289,8 +1338,8 @@ module.exports = {
   extractQueryIntent,
   roleFitScore,
   isInternalMatchCandidate,
-  isNetworkingOrganizerCandidate,
-  wantsNetworkingOrganizers,
+  queryMentionsNetworkerBrand,
+  platformBrandMatchScore,
   scoreAgainstQuery,
   scoreEventTitle,
   eventDateProximityBoost,
