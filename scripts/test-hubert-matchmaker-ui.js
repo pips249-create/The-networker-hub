@@ -45,7 +45,7 @@ assert(mm.shortDisplayName('Alex Morgan') === 'Alex M.', 'first + initial');
 assert(mm.shortDisplayName('Priya') === 'Priya', 'single name');
 assert(mm.shortDisplayName('  Sam Taylor-Jones ') === 'Sam T.', 'trim + initial');
 assert(
-  /Card heading — role\/industry only/.test(src),
+  /Card heading — role \/ company \/ industry/.test(src),
   'shortlist cards document no-name privacy heading'
 );
 assert(src.indexOf("return 'Intro request'") !== -1, 'waiting list hides names until Accept');
@@ -66,7 +66,9 @@ assert(
   'stub blurbs stay short for card teaser'
 );
 assert(src.indexOf('hmm-match-blurb') !== -1, 'shortlist card renders blurb');
-assert(src.indexOf('hmm-match-meta') === -1, 'role meta no longer duplicated under name');
+assert(src.indexOf('hmm-match-meta') !== -1, 'card shows secondary role/industry meta');
+assert(src.indexOf('function personMeta') !== -1, 'personMeta helper for card context');
+assert(/role \/ company \/ industry/.test(src), 'card heading uses company context');
 assert(src.indexOf('data-hmm-sug-q') !== -1, 'empty-state suggestion chips');
 assert(src.indexOf('bindEmptySuggestions') !== -1, 'suggestion chips re-run search');
 

@@ -181,12 +181,16 @@ assert(ranked.length === MAX_SHORTLIST, 'caps at 5');
 assert(ranked[0].id === 'member:0', 'same-event ranks first without rotation');
 assert(!ranked.some((m) => m.email || m.linkedinUrl || m.phone), 'no contact fields');
 assert(
-  ranked.every((m) => !m.company),
-  'company stripped from shortlist (LinkedIn cut-out guard)'
-);
-assert(
   ranked.every((m) => !m.displayName && !m.fullName),
   'name stripped from shortlist (LinkedIn cut-out guard)'
+);
+assert(
+  ranked.every((m) => typeof m.company === 'string'),
+  'company field returned on shortlist (names are hidden)'
+);
+assert(
+  ranked.some((m) => m.company && /Secret Co/.test(m.company)),
+  'company visible on shortlist cards without names'
 );
 assert(ranked.every((m) => m.industry === 'SaaS'), 'industry kept for context');
 assert(
@@ -280,8 +284,36 @@ assert(
     lookingToMeet: [],
     blurb:
       'Director of Top Networking Clubs where we are empowering SME business owners to grow.',
-  }) === 'Director — open to intros',
-  'empty looking-to-meet falls back to role description'
+  }) === 'Director at Top Networking Clubs',
+  'empty looking-to-meet falls back to role at company'
+);
+assert(
+  shortlistBlurb({
+    fullName: 'Lee Kaznowski',
+    company: 'Ascentis Accountants',
+    industry: 'Accountancy and Finance',
+    lookingToMeet: [],
+    blurb: '',
+  }) === 'Accountancy and Finance — open to intros',
+  'seed with company+industry gets a useful blurb'
+);
+assert(
+  require('../api/_lib/hubert-matchmaker-search').toPublicShortlistCard({
+    person: {
+      id: 'seed:lee',
+      kind: 'seed',
+      fullName: 'Lee Kaznowski',
+      company: 'Ascentis Accountants',
+      industry: 'Accountancy and Finance',
+      role: '',
+      lookingToMeet: [],
+      blurb: '',
+      onHub: false,
+    },
+    total: 10,
+    geoScore: 0,
+  }).company === 'Ascentis Accountants',
+  'public card includes company'
 );
 assert(
   shortlistBlurb({

@@ -137,14 +137,30 @@
     ].slice(0, MAX_SHORTLIST);
   }
 
-  /** Card heading — role/industry only (no name until both Accept). */
+  /** Card heading — role / company / industry (no personal name until both Accept). */
   function personLabel(person) {
     var role = String((person && person.role) || '').trim();
-    var industry = String((person && (person.industry || person.company)) || '').trim();
+    var company = String((person && person.company) || '').trim();
+    var industry = String((person && person.industry) || '').trim();
+    if (role && company) return role + ' · ' + company;
+    if (company) return company;
     if (role && industry) return role + ' · ' + industry;
     if (role) return role;
     if (industry) return industry;
     return 'Match';
+  }
+
+  /** Secondary line under the heading — leftover role/industry not already in the title. */
+  function personMeta(person) {
+    var role = String((person && person.role) || '').trim();
+    var company = String((person && person.company) || '').trim();
+    var industry = String((person && person.industry) || '').trim();
+    var heading = personLabel(person);
+    var bits = [];
+    if (role && heading.indexOf(role) === -1) bits.push(role);
+    if (industry && heading.indexOf(industry) === -1) bits.push(industry);
+    if (company && heading.indexOf(company) === -1) bits.push(company);
+    return bits.join(' · ');
   }
 
   function findPerson(id) {
@@ -185,13 +201,29 @@
     var heading = personLabel(person);
     // Never title the card with a personal name — even if an old API payload still sends one.
     if (person.displayName && heading === person.displayName) {
-      heading = personLabel({ role: person.role, industry: person.industry });
+      heading = personLabel({
+        role: person.role,
+        company: person.company,
+        industry: person.industry,
+      });
     }
+    var metaText = personMeta(person);
+    var metaBlock = metaText
+      ? '<p class="hmm-match-meta">' + esc(metaText) + '</p>'
+      : '';
     var blurbText = String(person.blurb || '')
       .trim()
       .replace(/\s+/g, ' ');
-    if (!blurbText && person.role) {
-      blurbText = String(person.role).trim() + ' — open to intros';
+    if (!blurbText) {
+      if (person.industry) {
+        blurbText = String(person.industry).trim() + ' — open to intros';
+      } else if (person.role && person.company) {
+        blurbText = String(person.role).trim() + ' at ' + String(person.company).trim();
+      } else if (person.role) {
+        blurbText = String(person.role).trim() + ' — open to intros';
+      } else if (person.company) {
+        blurbText = 'Works at ' + String(person.company).trim();
+      }
     }
     var blurbBlock = blurbText
       ? '<p class="hmm-match-blurb">' + esc(blurbText) + '</p>'
@@ -209,6 +241,7 @@
       '<h3 class="hmm-match-name">' +
       esc(heading) +
       '</h3>' +
+      metaBlock +
       blurbBlock +
       '<div class="hmm-match-chips">' +
       status +
