@@ -2,6 +2,7 @@
 const {
   shortDisplayName,
   tokenize,
+  expandTokenForms,
   eventSearchTokens,
   extractQueryEventDate,
   resolveEventMatchSelection,
@@ -17,6 +18,7 @@ const {
   weekBucket,
   emptyStateCopy,
   MAX_SHORTLIST,
+  MIN_TEXT_SCORE,
   SHORTLIST_ROTATION_POOL,
 } = require('../api/_lib/hubert-matchmaker-search');
 
@@ -31,6 +33,9 @@ assert(shortDisplayName('Alex Morgan') === 'Alex M.', 'display name');
 assert(tokenize('Fintech founders in Manchester').includes('fintech'), 'tokenize');
 assert(!tokenize('I am looking for people around the UK').includes('uk'), 'drops uk stopword');
 assert(!tokenize('I am looking for people around the UK').includes('looking'), 'drops looking stopword');
+assert(expandTokenForms('directors').includes('director'), 'plural → singular');
+assert(expandTokenForms('director').includes('directors'), 'singular → plural');
+assert(expandTokenForms('companies').includes('company'), 'ies → y');
 
 const evolutionQ = 'Who attended evolution virtual networking this morning';
 assert(looksLikeEventAttendeeQuery(evolutionQ) === true, 'event-intent query');
@@ -285,7 +290,27 @@ assert(
 assert(adsRanked.length === 1 && adsRanked[0].id === 'member:marketer', 'relevant marketer ranks');
 assert(/Role fits|Matches what you asked/i.test(adsRanked[0].why || ''), 'why not raw Member');
 
-const eventOnly = rankCandidates([rosie], 'fintech founders manchester', []);
+const eventOnlyPerson = {
+  id: 'member:event-only',
+  kind: 'member',
+  fullName: 'Eve Only',
+  displayName: 'Eve O.',
+  role: 'Consultant',
+  company: 'OtherCo',
+  jobTitle: 'Consultant',
+  industry: 'Legal',
+  professionalRole: 'Consultant',
+  lookingToMeet: [],
+  blurb: 'General consulting',
+  nextEvent: {
+    title: 'Random Breakfast Club',
+    dateLabel: '11 Nov 2026',
+    eventId: 'e-random',
+  },
+  matchedEvent: null,
+  onHub: true,
+};
+const eventOnly = rankCandidates([eventOnlyPerson], 'fintech founders manchester', []);
 assert(eventOnly.length === 0, 'upcoming event alone does not admit a candidate');
 
 assert(
@@ -299,5 +324,81 @@ assert(
   isInternalMatchCandidate({ fullName: 'Alex Advert', company: 'AdCo' }) === false,
   'external member not excluded'
 );
+
+// Plural role asks must match singular job titles (Jamie: “directors” → Director).
+const salesDirector = {
+  id: 'member:dir1',
+  kind: 'member',
+  fullName: 'Sam Director',
+  displayName: 'Sam D.',
+  role: 'Sales Director',
+  company: 'DirCo',
+  jobTitle: 'Sales Director',
+  industry: 'SaaS',
+  professionalRole: 'Director',
+  lookingToMeet: ['Clients'],
+  blurb: 'B2B sales director helping SaaS teams',
+  nextEvent: null,
+  matchedEvent: null,
+  onHub: true,
+};
+const marketingManager = {
+  id: 'member:mgr1',
+  kind: 'member',
+  fullName: 'Mo Manager',
+  displayName: 'Mo M.',
+  role: 'Marketing manager',
+  company: 'MgrCo',
+  jobTitle: 'Marketing manager',
+  industry: 'Media',
+  professionalRole: 'Manager',
+  lookingToMeet: ['Partners'],
+  blurb: 'Brand and demand gen',
+  nextEvent: null,
+  matchedEvent: null,
+  onHub: true,
+};
+assert(
+  scoreAgainstQuery(salesDirector, tokenize('directors')) >= MIN_TEXT_SCORE,
+  'directors scores against Director title'
+);
+const directorsRanked = rankCandidates(
+  [salesDirector, marketingManager, rosie],
+  'directors',
+  [],
+  { disableRotation: true }
+);
+assert(
+  directorsRanked.some((m) => m.id === 'member:dir1'),
+  'plural directors returns Sales Director'
+);
+assert(
+  !directorsRanked.some((m) => m.id === 'member:mgr1'),
+  'managers do not match bare directors ask'
+);
+const foundersPlural = rankCandidates(
+  [
+    {
+      id: 'member:f1',
+      kind: 'member',
+      fullName: 'Fran Founder',
+      displayName: 'Fran F.',
+      role: 'Founder',
+      company: 'StartCo',
+      jobTitle: 'Founder',
+      industry: 'Fintech',
+      professionalRole: 'Founder',
+      lookingToMeet: [],
+      blurb: 'fintech founder',
+      nextEvent: null,
+      matchedEvent: null,
+      onHub: true,
+    },
+  ],
+  'founders',
+  [],
+  { disableRotation: true }
+);
+assert(foundersPlural.length === 1, 'plural founders matches Founder title');
 
 console.log('ok — hubert matchmaker search ranking + event attendees');
