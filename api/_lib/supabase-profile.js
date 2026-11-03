@@ -402,7 +402,7 @@ async function updateProfile(session, body) {
         if (msg.includes('job_title')) delete fallback.job_title;
         if (msg.includes('professional_role')) delete fallback.professional_role;
         if (msg.includes('public_review_name')) delete fallback.public_review_name;
-        // If any Hubert column is missing / schema cache stale, drop Hubert fields together.
+        // If any TINA column is missing / schema cache stale, drop TINA fields together.
         const matchmakerMissing =
           msg.includes('matchmaker_blurb') ||
           msg.includes('looking_to_meet') ||
@@ -429,7 +429,7 @@ async function updateProfile(session, body) {
         );
         if (matchmakerMissing && matchmakerOnlyPatch) {
           const e = new Error(
-            'Hubert profile columns aren’t visible to the API yet (schema cache). Run migration 337_reload_postgrest_schema_matchmaker.sql, wait ~30s, then try again.'
+            'TINA profile columns aren’t visible to the API yet (schema cache). Run migration 337_reload_postgrest_schema_matchmaker.sql, wait ~30s, then try again.'
           );
           e.status = 503;
           e.code = 'matchmaker_schema_cache';
