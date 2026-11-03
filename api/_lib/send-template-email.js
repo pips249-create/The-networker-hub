@@ -755,6 +755,7 @@ const MARKETING_EMAIL_SLUGS = new Set([
   'attendee_signup_events_nudge',
   'attendee_signup_events_nudge_followup',
   'attendee_hubert_event_concierge',
+  'hubert_matchmaker_launching',
   'saved_event_tickets_open',
   'saved_opportunity_closing_soon',
   'opportunity_saved_search_match',
@@ -814,6 +815,7 @@ function shouldSkipEmailAllowlist(slug) {
     slug === 'hubert_intro_request' ||
     slug === 'hubert_intro_reminder' ||
     slug === 'hubert_intro_accepted' ||
+    slug === 'hubert_matchmaker_launching' ||
     slug === 'partner_programme_invite' ||
     slug === 'city_partner_payment_welcome' ||
     slug === 'county_partner_payment_welcome' ||
@@ -836,6 +838,7 @@ function shouldAttachListUnsubscribe(slug) {
   if (
     s === 'organiser_rebrand_announcement' ||
     s === 'organiser_launch_invite' ||
+    s === 'hubert_matchmaker_launching' ||
     s === 'organiser_directory_invite' ||
     s === 'organiser_directory_invite_nudge' ||
     s === 'organiser_directory_invite_day7' ||

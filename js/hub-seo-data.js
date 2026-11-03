@@ -63,7 +63,7 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "Who is Hubert Matchmaker on The Networker UK?",
-      "answer": "Hubert Matchmaker is the British English gentleman and concierge on The Networker UK. He is at your service for events, business opportunities, tickets, enquiries, organiser tools, and introducing you to people to meet. Chat with Hubert Matchmaker on the contact page or ask him on the FAQ page. Signed-in members can also use Meet people in My account.",
+      "answer": "Hubert Matchmaker is the British English gentleman and concierge on The Networker UK. He is at your service for events, business opportunities, tickets, enquiries, organiser tools, and introducing you to people to meet. Chat with Hubert Matchmaker on the contact page or ask him on the FAQ page. Signed-in members can open Meet people in My account to build their Hubert profile now. Warm-intro search opens to everyone when we finish the soft launch.",
       "category": "general",
       "icon": "✨"
     },
@@ -523,7 +523,7 @@ window.HUB_SEO_DATA = {
               "name": "Who is Hubert Matchmaker on The Networker UK?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Hubert Matchmaker is the British English gentleman and concierge on The Networker UK. He is at your service for events, business opportunities, tickets, enquiries, organiser tools, and introducing you to people to meet. Chat with Hubert Matchmaker on the contact page or ask him on the FAQ page. Signed-in members can also use Meet people in My account."
+                "text": "Hubert Matchmaker is the British English gentleman and concierge on The Networker UK. He is at your service for events, business opportunities, tickets, enquiries, organiser tools, and introducing you to people to meet. Chat with Hubert Matchmaker on the contact page or ask him on the FAQ page. Signed-in members can open Meet people in My account to build their Hubert profile now. Warm-intro search opens to everyone when we finish the soft launch."
               }
             },
             {
