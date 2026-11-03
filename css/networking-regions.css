@@ -237,8 +237,8 @@
 .networking-city-partner-ad .sponsor-logo--full {
   display: block;
   width: auto;
-  max-width: 232px;
-  max-height: 56px;
+  max-width: 100%;
+  max-height: 72px;
   height: auto;
   object-fit: contain;
 }
@@ -248,7 +248,7 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: 56px;
+  min-height: 72px;
   height: auto;
   max-width: none;
   padding: 8px 10px;

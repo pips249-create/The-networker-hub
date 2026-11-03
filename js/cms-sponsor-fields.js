@@ -466,6 +466,185 @@
     return !!(band && band.dark && !band.darkSurface);
   }
 
+  /**
+   * Find the content bounding box of a logo, trimming uniform edge padding
+   * (solid brand plates or transparent PNG margins). Returns null when the
+   * artwork already fills the frame or sampling fails.
+   */
+  function logoContentBox(img, opts) {
+    if (!img || !img.naturalWidth || !img.naturalHeight) return null;
+    try {
+      var srcW = img.naturalWidth;
+      var srcH = img.naturalHeight;
+      var maxProbe = (opts && opts.maxProbe) || 360;
+      var scale = Math.min(1, maxProbe / Math.max(srcW, srcH));
+      var w = Math.max(1, Math.round(srcW * scale));
+      var h = Math.max(1, Math.round(srcH * scale));
+      var canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      var ctx = canvas.getContext('2d', { willReadFrequently: true });
+      if (!ctx) return null;
+      ctx.drawImage(img, 0, 0, w, h);
+      var data = ctx.getImageData(0, 0, w, h).data;
+
+      function sample(x, y) {
+        var i = (y * w + x) * 4;
+        return [data[i], data[i + 1], data[i + 2], data[i + 3]];
+      }
+
+      var corners = [
+        sample(0, 0),
+        sample(w - 1, 0),
+        sample(0, h - 1),
+        sample(w - 1, h - 1),
+      ];
+      var opaqueCorners = 0;
+      var bgR = 0;
+      var bgG = 0;
+      var bgB = 0;
+      var transparentEdges = 0;
+      for (var c = 0; c < corners.length; c++) {
+        if (corners[c][3] < 40) {
+          transparentEdges++;
+          continue;
+        }
+        opaqueCorners++;
+        bgR += corners[c][0];
+        bgG += corners[c][1];
+        bgB += corners[c][2];
+      }
+      var alphaTrimOnly = transparentEdges >= 3 || opaqueCorners === 0;
+      if (opaqueCorners) {
+        bgR /= opaqueCorners;
+        bgG /= opaqueCorners;
+        bgB /= opaqueCorners;
+      }
+
+      // Reject inconsistent corner colours (gradients / photos) — unsafe to trim.
+      if (!alphaTrimOnly && opaqueCorners >= 2) {
+        var cornerSpread = 0;
+        for (var s = 0; s < corners.length; s++) {
+          if (corners[s][3] < 40) continue;
+          cornerSpread = Math.max(
+            cornerSpread,
+            Math.abs(corners[s][0] - bgR) +
+              Math.abs(corners[s][1] - bgG) +
+              Math.abs(corners[s][2] - bgB)
+          );
+        }
+        if (cornerSpread > 48) return null;
+      }
+
+      var colorThreshold = (opts && opts.colorThreshold) || 36;
+      var minX = w;
+      var minY = h;
+      var maxX = -1;
+      var maxY = -1;
+      for (var y = 0; y < h; y++) {
+        for (var x = 0; x < w; x++) {
+          var i = (y * w + x) * 4;
+          var a = data[i + 3];
+          if (a < 40) continue;
+          if (!alphaTrimOnly) {
+            var diff =
+              Math.abs(data[i] - bgR) +
+              Math.abs(data[i + 1] - bgG) +
+              Math.abs(data[i + 2] - bgB);
+            if (diff < colorThreshold) continue;
+          }
+          if (x < minX) minX = x;
+          if (y < minY) minY = y;
+          if (x > maxX) maxX = x;
+          if (y > maxY) maxY = y;
+        }
+      }
+      if (maxX < minX || maxY < minY) return null;
+
+      var contentW = maxX - minX + 1;
+      var contentH = maxY - minY + 1;
+      var areaRatio = (contentW * contentH) / (w * h);
+      // Already fills most of the frame — leave alone.
+      if (areaRatio > 0.82) return null;
+      // Tiny speck / noise — ignore.
+      if (areaRatio < 0.004) return null;
+
+      var padRatio = (opts && opts.padRatio) || 0.22;
+      var padX = Math.max(2, Math.round(contentW * padRatio));
+      var padY = Math.max(2, Math.round(contentH * padRatio));
+      minX = Math.max(0, minX - padX);
+      minY = Math.max(0, minY - padY);
+      maxX = Math.min(w - 1, maxX + padX);
+      maxY = Math.min(h - 1, maxY + padY);
+
+      var sx = Math.floor(minX / scale);
+      var sy = Math.floor(minY / scale);
+      var sw = Math.min(srcW - sx, Math.ceil((maxX - minX + 1) / scale));
+      var sh = Math.min(srcH - sy, Math.ceil((maxY - minY + 1) / scale));
+      if (sw < 8 || sh < 8) return null;
+      if (sw * sh > srcW * srcH * 0.92) return null;
+      return { sx: sx, sy: sy, sw: sw, sh: sh };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /**
+   * Crop uniform logo padding onto a canvas data URL. Returns '' when no trim
+   * is needed or canvas sampling is blocked.
+   */
+  function trimmedLogoDataUrl(img, opts) {
+    var box = logoContentBox(img, opts);
+    if (!box) return '';
+    try {
+      var canvas = document.createElement('canvas');
+      canvas.width = box.sw;
+      canvas.height = box.sh;
+      var ctx = canvas.getContext('2d');
+      if (!ctx) return '';
+      ctx.drawImage(img, box.sx, box.sy, box.sw, box.sh, 0, 0, box.sw, box.sh);
+      return canvas.toDataURL('image/png');
+    } catch (e) {
+      return '';
+    }
+  }
+
+  /**
+   * Replace a displayed logo with a padding-trimmed version when the source
+   * has large empty margins (common on sponsor brand plates).
+   */
+  function fitLogoInFrame(imgEl, opts) {
+    if (!imgEl || imgEl.getAttribute('data-logo-fit') === '1') return;
+    var src = String(imgEl.currentSrc || imgEl.src || '').trim();
+    if (!src || /^data:/i.test(src)) return;
+
+    function applyFrom(probe) {
+      var dataUrl = trimmedLogoDataUrl(probe, opts);
+      imgEl.setAttribute('data-logo-fit', '1');
+      if (!dataUrl) return;
+      imgEl.src = dataUrl;
+    }
+
+    var useCors = true;
+    try {
+      useCors = new URL(src, window.location.href).origin !== window.location.origin;
+    } catch (e) {
+      useCors = true;
+    }
+
+    var probe = new Image();
+    // Cross-origin CDN logos (Supabase) need CORS to sample; same-origin must omit it
+    // or hosts without ACAO headers taint the canvas.
+    if (useCors) probe.crossOrigin = 'anonymous';
+    probe.onload = function () {
+      applyFrom(probe);
+    };
+    probe.onerror = function () {
+      imgEl.setAttribute('data-logo-fit', '1');
+    };
+    probe.src = src;
+  }
+
   /** Filename / path cues when canvas sampling is blocked by CORS (e.g. *-white.png). */
   function logoUrlSuggestsDarkBand(url) {
     var path = String(url || '')
@@ -625,6 +804,9 @@
     sampleLogoColorHex: sampleLogoColorHex,
     sampleLogoBandColor: sampleLogoBandColor,
     prefersDarkLogoBand: prefersDarkLogoBand,
+    logoContentBox: logoContentBox,
+    trimmedLogoDataUrl: trimmedLogoDataUrl,
+    fitLogoInFrame: fitLogoInFrame,
     logoUrlSuggestsDarkBand: logoUrlSuggestsDarkBand,
     applyLogoSurfaceContrast: applyLogoSurfaceContrast,
     LOGO_BAND_DARK: LOGO_BAND_DARK,
