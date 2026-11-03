@@ -897,9 +897,13 @@ function rankCandidates(candidates, query, requesterEventIds, opts) {
     })
     .filter((row) => {
       if (row.excluded) return false;
+      // “Director of The Networker UK” → Hub team only (not every Director title).
+      if (isNetworkerBrandTeamAsk(query)) {
+        return row.brandScore >= 18;
+      }
       // “Who attended X?” — booking match is enough.
       if (row.matchedBoost > 0) return true;
-      // “The Networker UK directors” → Rosie / Catherine / Hub team.
+      // Broader Networker UK brand mentions → Rosie / Catherine / Hub team.
       if (row.brandScore >= 18) return true;
       // Exact / partial name search (“Jamie Trickett”).
       if (row.nameScore >= 14) {
@@ -1038,8 +1042,9 @@ function formatDateLabel(iso) {
  */
 const INTERNAL_NAME_HINT =
   /\b(rosie\s+mcgilvray|catherine\s+hancher|jamie\s+hancher)\b/i;
+/** Company labels used on Hub profiles — include short forms like “Networker Group”. */
 const INTERNAL_COMPANY_HINT =
-  /\b(the\s+networker\s+group|networker\s+group\s+ltd|the\s+networker\s+uk)\b/i;
+  /\b(?:the\s+)?networker(?:\s+(?:uk|group)(?:\s+ltd)?)?\b/i;
 
 function isInternalMatchCandidate(person) {
   if (!person) return false;
@@ -1056,19 +1061,24 @@ function queryMentionsNetworkerBrand(query) {
 }
 
 /**
+ * “Director / founder / team of The Networker UK” — Hub team only,
+ * not every seed whose job title happens to say Director.
+ */
+function isNetworkerBrandTeamAsk(query) {
+  if (!queryMentionsNetworkerBrand(query)) return false;
+  return /\b(directors?|founders?|owners?|ceos?|team|ops|organisers?|organizers?|staff|leadership)\b/i.test(
+    String(query || '')
+  );
+}
+
+/**
  * Boost Hub team into results for Networker UK brand asks
- * (e.g. “The networker UK directors” → Rosie & Catherine).
+ * (e.g. “director of The networker UK” → Rosie & Catherine).
  */
 function platformBrandMatchScore(person, query) {
   if (!queryMentionsNetworkerBrand(query) || !isInternalMatchCandidate(person)) return 0;
-  let score = 18;
-  const q = String(query || '').toLowerCase();
-  if (
-    /\bdirectors?\b/.test(q) ||
-    /\b(founders?|owners?|ceos?|team|ops|organisers?|organizers?)\b/.test(q)
-  ) {
-    score += 12;
-  }
+  let score = 22;
+  if (isNetworkerBrandTeamAsk(query)) score += 40;
   return score;
 }
 
@@ -1506,6 +1516,8 @@ async function searchMatchmaker(opts) {
             'name.ilike.%Hancher%',
             'company.ilike.%Networker Group%',
             'company.ilike.%Networker UK%',
+            'company.ilike.%The Networker%',
+            'company.ilike.%thenetworker%',
           ].join(',')
         )
         .limit(30);
@@ -1618,6 +1630,13 @@ async function searchMatchmaker(opts) {
  */
 function emptyStateCopy(meta) {
   const m = meta || {};
+  if (m.query && isNetworkerBrandTeamAsk(m.query)) {
+    return {
+      title: 'Hub team not in the pool yet',
+      text:
+        'That ask is for The Networker UK directors / team. Make sure Rosie and Catherine have Hub profiles (company Networker Group or The Networker UK), then try again.',
+    };
+  }
   if (m.eventQuery) {
     if (m.needsEventPick) {
       return {
@@ -1681,6 +1700,7 @@ module.exports = {
   roleFitScore,
   isInternalMatchCandidate,
   queryMentionsNetworkerBrand,
+  isNetworkerBrandTeamAsk,
   platformBrandMatchScore,
   scoreAgainstQuery,
   nameMatchScore,

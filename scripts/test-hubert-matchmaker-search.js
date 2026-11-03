@@ -11,6 +11,7 @@ const {
   extractQueryIntent,
   isInternalMatchCandidate,
   queryMentionsNetworkerBrand,
+  isNetworkerBrandTeamAsk,
   platformBrandMatchScore,
   scoreAgainstQuery,
   nameMatchScore,
@@ -723,6 +724,49 @@ assert(
 assert(
   bareDirectors.some((m) => m.id === 'member:dir1'),
   'ordinary Sales Director still matches bare directors'
+);
+
+// “director of The networker UK” must not return random Director seeds.
+const connect98 = {
+  id: 'seed:connect98',
+  kind: 'seed',
+  fullName: 'Pat Example',
+  displayName: 'Pat E.',
+  role: 'Director / Owner',
+  jobTitle: 'Director / Owner',
+  company: 'Connect 98',
+  industry: '',
+  professionalRole: 'Director',
+  lookingToMeet: [],
+  blurb: 'We help businesses communicate',
+  nextEvent: null,
+  matchedEvent: null,
+  onHub: false,
+};
+const ofNetworkerAsk = 'looking for the director of The networker UK';
+assert(queryMentionsNetworkerBrand(ofNetworkerAsk) === true, 'of Networker UK is brand ask');
+assert(isNetworkerBrandTeamAsk(ofNetworkerAsk) === true, 'director of Networker UK is team ask');
+assert(
+  isInternalMatchCandidate({ fullName: 'Alex Ops', company: 'Networker Group' }) === true,
+  'Networker Group short company form counts as Hub team'
+);
+const ofNetworkerRanked = rankCandidates(
+  [rosie, catherine, connect98, salesDirector],
+  ofNetworkerAsk,
+  [],
+  { disableRotation: true }
+);
+assert(
+  ofNetworkerRanked.some((m) => m.id === 'member:rosie'),
+  'Rosie surfaces for director of The networker UK'
+);
+assert(
+  ofNetworkerRanked.some((m) => m.id === 'member:catherine'),
+  'Catherine surfaces for director of The networker UK'
+);
+assert(
+  !ofNetworkerRanked.some((m) => m.id === 'seed:connect98' || m.id === 'member:dir1'),
+  'external Directors excluded from Networker UK team ask'
 );
 
 // Spelling / acronym resilience for common role asks.
