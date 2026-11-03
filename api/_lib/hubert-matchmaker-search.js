@@ -273,6 +273,45 @@ function tokenize(query) {
     .slice(0, 24);
 }
 
+/**
+ * Light singular/plural variants so “directors” matches job titles like “Director”.
+ * Keeps the original token; does not invent aggressive stems.
+ */
+function expandTokenForms(token) {
+  const t = String(token || '')
+    .trim()
+    .toLowerCase();
+  const forms = new Set();
+  if (!t) return [];
+  forms.add(t);
+  if (t.length < 4) return Array.from(forms);
+
+  if (t.endsWith('ies') && t.length >= 5) {
+    forms.add(t.slice(0, -3) + 'y'); // companies → company
+  } else if (
+    t.endsWith('sses') ||
+    t.endsWith('xes') ||
+    t.endsWith('zes') ||
+    t.endsWith('ches') ||
+    t.endsWith('shes')
+  ) {
+    forms.add(t.slice(0, -2)); // businesses → business (via sses handled above for ss)
+  } else if (t.endsWith('s') && !t.endsWith('ss') && !t.endsWith('us') && !t.endsWith('is')) {
+    forms.add(t.slice(0, -1)); // directors → director
+  }
+
+  // Singular query → plural haystack (“director” vs “Directors network”)
+  if (!t.endsWith('s')) {
+    if (t.endsWith('y') && t.length >= 4 && !/[aeiou]y$/.test(t)) {
+      forms.add(t.slice(0, -1) + 'ies');
+    } else {
+      forms.add(t + 's');
+    }
+  }
+
+  return Array.from(forms);
+}
+
 function isDateNoiseToken(t) {
   const s = String(t || '');
   if (/^\d{4}$/.test(s)) return true; // year
@@ -410,10 +449,20 @@ function scoreAgainstQuery(person, tokens) {
   tokens.forEach((t) => {
     // Longer tokens (advertising, employees) weigh more than short leftovers.
     const weight = t.length >= 8 ? 5 : t.length >= 5 ? 4 : 3;
-    if (hay.includes(t)) score += weight;
-    if (new RegExp('(?:^|\\s)' + t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(hay)) {
-      score += 2;
-    }
+    const forms = expandTokenForms(t);
+    let hit = false;
+    let boundary = false;
+    forms.forEach((f) => {
+      if (hay.includes(f)) hit = true;
+      if (
+        new RegExp('(?:^|\\s)' + f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(hay)
+      ) {
+        boundary = true;
+      }
+    });
+    // Score once per original token even when plural/singular both match.
+    if (hit) score += weight;
+    if (boundary) score += 2;
   });
   return score;
 }
@@ -1129,6 +1178,7 @@ module.exports = {
   MIN_TEXT_SCORE,
   shortDisplayName,
   tokenize,
+  expandTokenForms,
   eventSearchTokens,
   extractQueryEventDate,
   looksLikeEventAttendeeQuery,
