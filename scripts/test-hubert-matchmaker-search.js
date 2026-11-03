@@ -165,7 +165,7 @@ assert(
   ranked.every((m) => m.blurb === 'fintech founder manchester'),
   'shortlist includes Hubert blurb for intro decisions'
 );
-assert(shortlistBlurb({ blurb: '  Hello   world  ' }) === 'Hello world', 'shortlist blurb trims');
+assert(shortlistBlurb({ blurb: '  Hello   world again  ' }) === 'Hello world again', 'shortlist blurb trims');
 assert(
   shortlistBlurb({ blurb: '', lookingToMeet: ['Clients', 'Investors'] }) ===
     'Looking to meet Clients, Investors',

@@ -601,7 +601,10 @@ function shortlistBlurb(person) {
     .replace(/\s+/g, ' ');
   if (raw) {
     const cleaned = stripIdentifyingPhrases(raw, person);
-    if (cleaned) return softTruncateBlurb(cleaned, SHORTLIST_BLURB_MAX);
+    // After stripping name/company/brand, drop tiny leftovers (“Building”).
+    if (cleaned && cleaned.length >= 12) {
+      return softTruncateBlurb(cleaned, SHORTLIST_BLURB_MAX);
+    }
   }
   const looking = Array.isArray(person && person.lookingToMeet)
     ? person.lookingToMeet.map((x) => String(x || '').trim()).filter(Boolean)
