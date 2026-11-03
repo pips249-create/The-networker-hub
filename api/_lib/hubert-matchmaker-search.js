@@ -773,8 +773,22 @@ function publicIndustry(person) {
 }
 
 /**
- * Shortlist-safe blurb — short, no name/company (LinkedIn cut-out guard).
- * Always prefer a real description over a blank card.
+ * Company on the card — safe now that names are hidden (no first-name + company LinkedIn cut-out).
+ * Never pass through emails mistaken for a company field.
+ */
+function publicCompany(person) {
+  const company = String((person && person.company) || '')
+    .trim()
+    .replace(/\s+/g, ' ');
+  if (!company) return '';
+  if (/@/.test(company)) return '';
+  if (/^https?:\/\//i.test(company)) return '';
+  return company.slice(0, 120);
+}
+
+/**
+ * Shortlist-safe blurb — short, no personal name in free text.
+ * Always prefer a real description over a blank card; include company/industry context.
  */
 function shortlistBlurb(person) {
   const raw = String((person && person.blurb) || '')
@@ -793,24 +807,29 @@ function shortlistBlurb(person) {
   )
     .trim()
     .replace(/\s+/g, ' ');
+  const company = publicCompany(person);
+  const industry = publicIndustry(person);
+  // Company is already the card title when present — prefer industry/role as the blurb.
+  if (industry) return industry + ' — open to intros';
+  if (role && company) return role + ' at ' + company;
   if (role) return role + ' — open to intros';
+  if (company) return 'Works at ' + company;
   return '';
 }
 
 /**
  * Public shortlist card — privacy-safe.
- * Never include name (LinkedIn cut-out), company, email, phone, or LinkedIn.
- * Role / industry + TINA blurb only — first names appear only after both Accept.
+ * No personal name, email, phone, or LinkedIn. Company + role/industry + blurb are OK
+ * (names only after both Accept).
  */
 function toPublicShortlistCard(row) {
   return {
     id: row.person.id,
     kind: row.person.kind,
-    role: row.person.role || '',
+    role: row.person.role || row.person.jobTitle || row.person.professionalRole || '',
     industry: publicIndustry(row.person),
+    company: publicCompany(row.person),
     blurb: shortlistBlurb(row.person),
-    // Intentionally omitted from the client payload — used only for BOH ranking.
-    company: '',
     why: buildWhy(row) || row.person.why || '',
     nextEvent: row.person.nextEvent
       ? {
@@ -1675,6 +1694,8 @@ module.exports = {
   weekBucket,
   rotateShortlistWindow,
   shortlistBlurb,
+  publicCompany,
+  publicIndustry,
   toPublicShortlistCard,
   rankCandidates,
   mapSeedRow,
