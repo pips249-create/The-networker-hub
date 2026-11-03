@@ -28,7 +28,8 @@ const MIN_QUERY_LEN = 3;
 /** Meaningful text hits required unless this is an event-attendee lookup. */
 const MIN_TEXT_SCORE = 6;
 /** Short privacy-safe teaser on shortlist cards (not the full TINA blurb). */
-const SHORTLIST_BLURB_MAX = 72;
+/** Card teaser — enough for 1–2 short sentences without dumping a full bio. */
+const SHORTLIST_BLURB_MAX = 160;
 
 const EVENT_QUERY_HINT =
   /\b(attended|attendee|attendees|attending|who went|who was at|who'?s going|going to|this morning|this afternoon|yesterday|last night|today)\b/i;
@@ -787,7 +788,7 @@ function publicCompany(person) {
 }
 
 /**
- * Shortlist-safe blurb — short, no personal name in free text.
+ * Shortlist-safe blurb — readable teaser, no personal name in free text.
  * Always prefer a real description over a blank card; include company/industry context.
  */
 function shortlistBlurb(person) {

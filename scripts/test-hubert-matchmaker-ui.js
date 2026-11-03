@@ -66,8 +66,8 @@ assert(
   'stubs include blurbs so preview cards show description'
 );
 assert(
-  stubs.every((p) => String(p.blurb || '').length <= 120),
-  'stub blurbs stay short for card teaser'
+  stubs.every((p) => String(p.blurb || '').length <= 160),
+  'stub blurbs stay within card teaser length'
 );
 assert(src.indexOf('hmm-match-blurb') !== -1, 'shortlist card renders blurb');
 assert(src.indexOf('hmm-match-meta') !== -1, 'card shows secondary role/industry meta');
