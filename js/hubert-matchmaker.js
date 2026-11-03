@@ -71,6 +71,7 @@
         role: 'Founder',
         industry: 'SaaS',
         company: '',
+        blurb: 'B2B SaaS founder building tools for UK SMEs — open to peer swaps and warm intros.',
         why: 'Founder · SaaS — close to “' + q.slice(0, 48) + '”',
         nextEvent: { title: 'Manchester Founders Breakfast', dateLabel: '12 Nov 2026' },
         onHub: true,
@@ -81,6 +82,7 @@
         role: 'Investor',
         industry: 'Venture capital',
         company: '',
+        blurb: 'Early-stage investor focused on founder-led B2B — happy to meet operators raising or hiring.',
         why: 'Investor looking to meet founders',
         nextEvent: {
           title: 'Women In Business Network · King’s Cross',
@@ -94,6 +96,7 @@
         role: 'Service provider',
         industry: 'Professional services',
         company: '',
+        blurb: 'Independent consultant helping professional services firms win and keep clients.',
         why: 'Service provider in professional services',
         nextEvent: null,
         onHub: false,
@@ -104,6 +107,7 @@
         role: 'Recruiter',
         industry: 'HR',
         company: '',
+        blurb: 'Recruiter placing marketing and commercial talent across UK growth companies.',
         why: 'Recruiter · HR',
         nextEvent: { title: 'The Business Show London', dateLabel: '11 Nov 2026' },
         onHub: true,
@@ -114,6 +118,7 @@
         role: 'Founder',
         industry: 'Professional services',
         company: '',
+        blurb: 'Founder looking for reliable suppliers and peers who’ve scaled a services firm.',
         why: 'Founder looking for suppliers',
         nextEvent: null,
         onHub: false,
@@ -124,6 +129,7 @@
         role: 'Should not show',
         industry: 'Cap test',
         company: '',
+        blurb: '',
         why: 'Over the max-5 cap',
         nextEvent: null,
         onHub: true,
@@ -171,6 +177,13 @@
         (isStub ? ' disabled title="Live matches required to request an intro"' : '') +
         '>Request intro</button>';
 
+    var blurbText = String(person.blurb || '')
+      .trim()
+      .replace(/\s+/g, ' ');
+    var blurbBlock = blurbText
+      ? '<p class="hmm-match-blurb">' + esc(blurbText) + '</p>'
+      : '';
+
     return (
       '<article class="hmm-match' +
       (hasEvent ? ' hmm-match--has-event' : '') +
@@ -186,6 +199,7 @@
       '<p class="hmm-match-meta">' +
       esc([person.role, person.industry || person.company].filter(Boolean).join(' · ')) +
       '</p>' +
+      blurbBlock +
       '<div class="hmm-match-chips">' +
       status +
       '</div>' +

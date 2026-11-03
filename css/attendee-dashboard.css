@@ -5024,6 +5024,23 @@ body.ad-hubert-optin-modal-open {
   color: var(--ad-text-mid);
 }
 
+.hmm-match-who {
+  flex: 1 1 14rem;
+  min-width: 0;
+  max-width: 36rem;
+}
+
+.hmm-match-blurb {
+  margin: 0 0 10px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--hmm-ink);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
 .hmm-match-chips {
   display: flex;
   flex-wrap: wrap;
