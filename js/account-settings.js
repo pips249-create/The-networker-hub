@@ -309,8 +309,8 @@
     if (offBtn) offBtn.hidden = !included;
     if (hint) {
       hint.textContent = included
-        ? 'You’re included. Use “Stop including me” if you want to opt out — it won’t untick from a casual click.'
-        : 'Opt in to appear in Matchmaker shortlists. Turning it off needs confirmation.';
+        ? 'You’re included. Untick the box (or use Stop including me) to opt out — we’ll ask you to confirm.'
+        : 'Opt in to appear in TINA shortlists. Tick the box, then save your profile.';
     }
   }
 
@@ -320,55 +320,45 @@
     if (!disc || disc.dataset.asGuard === '1') return;
     disc.dataset.asGuard = '1';
 
-    // Checkbox click fires after the browser toggles `checked`. Opt-in must be
-    // allowed; only block a post-toggle untick (route opt-out through Stop).
-    disc.addEventListener('click', function (e) {
+    function confirmStop() {
+      return window.confirm(
+        'Stop putting you forward for TINA intros?\n\nYou can turn this back on later. Meet people search stays locked while you’re opted out.'
+      );
+    }
+
+    function markOptedOut() {
+      syncDiscoverableUi();
+      syncProfileDirty();
+      const status = document.getElementById('as-matchmaker-status');
+      if (status) {
+        status.hidden = false;
+        status.textContent =
+          'Inclusion turned off — save your profile to confirm. Tick Include me again later if you want TINA to put you forward.';
+      }
+    }
+
+    // Normal checkbox: free to tick on. Unticking asks for confirmation.
+    disc.addEventListener('change', function () {
       if (disc.checked) {
+        syncDiscoverableUi();
+        syncProfileDirty();
+        return;
+      }
+      if (!confirmStop()) {
+        disc.checked = true;
         syncDiscoverableUi();
         return;
       }
-      e.preventDefault();
-      disc.checked = true;
-      if (offBtn) offBtn.focus();
+      markOptedOut();
     });
-    // keydown runs before the toggle — block Space/Enter only while already included.
-    disc.addEventListener('keydown', function (e) {
-      if (!disc.checked) return;
-      if (e.key === ' ' || e.key === 'Enter') {
-        e.preventDefault();
-        if (offBtn) offBtn.focus();
-      }
-    });
-    disc.addEventListener('change', syncDiscoverableUi);
-
-    const label = document.querySelector('label[for="as-discoverable"]');
-    if (label && label.dataset.asBound !== '1') {
-      label.dataset.asBound = '1';
-      // Label click runs before the associated checkbox toggles.
-      label.addEventListener('click', function (e) {
-        if (!disc.checked) return;
-        e.preventDefault();
-        if (offBtn) offBtn.focus();
-      });
-    }
 
     if (offBtn && offBtn.dataset.asBound !== '1') {
       offBtn.dataset.asBound = '1';
       offBtn.addEventListener('click', function () {
         if (!disc.checked) return;
-        const ok = window.confirm(
-          'Stop putting you forward for TINA intros?\n\nYou can turn this back on later. Meet people search stays locked while you’re opted out.'
-        );
-        if (!ok) return;
+        if (!confirmStop()) return;
         disc.checked = false;
-        syncDiscoverableUi();
-        syncProfileDirty();
-        const status = document.getElementById('as-matchmaker-status');
-        if (status) {
-          status.hidden = false;
-          status.textContent =
-            'Inclusion turned off — save your profile to confirm. Tick Include me again later if you want TINA to put you forward.';
-        }
+        markOptedOut();
       });
     }
   }
