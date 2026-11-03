@@ -2880,25 +2880,34 @@ html:has(.home-page) {
 
 }
 
-/* Founding organisers — partners-style marquee under the hero */
+/* Founding organisers — logo badges only (no cream panel / heading / CTA) */
 .home-founding {
-  padding-top: 8px;
+  padding-top: 4px;
+  padding-bottom: 8px;
 }
 
 .home-founding[hidden] {
   display: none !important;
 }
 
-.home-founding-panel {
-  background: linear-gradient(165deg, rgba(245, 236, 220, 0.55) 0%, var(--cream) 100%);
-  border-color: rgba(184, 149, 106, 0.28);
+.home-founding-logos-only {
+  --home-partners-panel-x: clamp(12px, 3vw, 20px);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
 }
 
-.home-founding-sub {
-  margin: 6px 0 0;
-  font-size: 0.92rem;
-  color: var(--home-muted, #625f73);
-  line-height: 1.45;
+.home-founding-logos-only::before {
+  content: none;
+}
+
+.home-founding .home-partners-marquee {
+  margin-left: calc(-1 * var(--home-partners-panel-x));
+  margin-right: calc(-1 * var(--home-partners-panel-x));
+  width: calc(100% + 2 * var(--home-partners-panel-x));
 }
 
 .home-founding-marquees {
@@ -2914,10 +2923,6 @@ html:has(.home-page) {
 .home-founding-marquees--dual .home-founding-marquee-row .home-partners-track {
   padding-top: 6px;
   padding-bottom: 6px;
-}
-
-.home-founding-cta {
-  margin-top: 14px;
 }
 
 .home-founding-item--fallback {
