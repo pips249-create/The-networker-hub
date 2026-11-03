@@ -9,8 +9,8 @@ const {
   looksLikeEventAttendeeQuery,
   extractQueryIntent,
   isInternalMatchCandidate,
-  isNetworkingOrganizerCandidate,
-  wantsNetworkingOrganizers,
+  queryMentionsNetworkerBrand,
+  platformBrandMatchScore,
   scoreAgainstQuery,
   scoreEventTitle,
   eventBoost,
@@ -352,12 +352,17 @@ assert(
     fullName: 'Rosie McGilvray',
     company: 'The Networker Group Ltd',
   }) === true,
-  'Rosie / Networker Group excluded from supply'
+  'Rosie / Networker Group recognised as Hub team'
 );
 assert(
   isInternalMatchCandidate({ fullName: 'Alex Advert', company: 'AdCo' }) === false,
-  'external member not excluded'
+  'external member not treated as Hub team'
 );
+assert(
+  queryMentionsNetworkerBrand('The networker UK directors') === true,
+  'detects Networker UK brand ask'
+);
+assert(queryMentionsNetworkerBrand('fintech directors') === false, 'plain directors is not brand ask');
 
 // Plural role asks must match singular job titles (Jamie: “directors” → Director).
 const salesDirector = {
@@ -435,62 +440,73 @@ const foundersPlural = rankCandidates(
 );
 assert(foundersPlural.length === 1, 'plural founders matches Founder title');
 
-// Jamie: “The networker UK directors” must not surface rival networking organisers.
-const richardFrazer = {
-  id: 'seed:richard',
-  kind: 'seed',
-  fullName: 'Richard Frazer',
-  displayName: 'Richard F.',
+// Jamie: “The networker UK directors” should surface Rosie & Catherine (Hub team).
+const catherine = {
+  id: 'member:catherine',
+  kind: 'member',
+  fullName: 'Catherine Hancher',
+  displayName: 'Catherine H.',
   role: 'Director',
-  company: 'Top Networking Clubs',
+  company: 'The Networker Group Ltd',
   jobTitle: 'Director',
-  industry: 'Networking',
+  industry: '',
   professionalRole: 'Director',
-  lookingToMeet: ['Clients'],
-  blurb: 'Richard Frazer runs Top Networking Clubs helping business owners meet peers.',
+  lookingToMeet: ['Partners'],
+  blurb: 'Operations director for The Networker UK',
   nextEvent: null,
   matchedEvent: null,
-  onHub: false,
+  onHub: true,
 };
 assert(
-  isNetworkingOrganizerCandidate(richardFrazer) === true,
-  'TOP Networking Clubs flagged as networking organiser'
+  platformBrandMatchScore(rosie, 'The networker UK directors') >= 18,
+  'Rosie scores on Networker UK directors ask'
 );
 assert(
-  wantsNetworkingOrganizers('The networker UK directors') === false,
-  'Networker UK brand ask is not a networking-organiser ask'
+  platformBrandMatchScore(catherine, 'The networker UK directors') >= 18,
+  'Catherine scores on Networker UK directors ask'
 );
 assert(
-  wantsNetworkingOrganizers('directors who run networking clubs') === true,
-  'explicit networking-club ask is allowed'
+  platformBrandMatchScore(salesDirector, 'The networker UK directors') === 0,
+  'external director gets no Hub-team brand boost'
 );
 const networkerDirectors = rankCandidates(
-  [richardFrazer, salesDirector],
+  [rosie, catherine, salesDirector],
   'The networker UK directors',
   [],
   { disableRotation: true }
 );
 assert(
-  !networkerDirectors.some((m) => m.id === 'seed:richard'),
-  'rival networking organiser dropped from Networker UK directors ask'
+  networkerDirectors.some((m) => m.id === 'member:rosie'),
+  'Rosie surfaces for The networker UK directors'
 );
 assert(
-  networkerDirectors.some((m) => m.id === 'member:dir1'),
-  'ordinary Sales Director still matches directors ask'
+  networkerDirectors.some((m) => m.id === 'member:catherine'),
+  'Catherine surfaces for The networker UK directors'
 );
 assert(
-  !/Richard|Frazer|Top Networking|DirCo/i.test(networkerDirectors[0].blurb || ''),
-  'directors shortlist blurb stays anonymous'
-);
-const explicitNetworking = rankCandidates(
-  [richardFrazer],
-  'directors who run networking clubs',
-  [],
-  { disableRotation: true }
+  networkerDirectors.some((m) => /Networker UK team/i.test(m.why || '')),
+  'why explains Hub team match'
 );
 assert(
-  explicitNetworking.some((m) => m.id === 'seed:richard'),
-  'explicit networking-club ask can still surface organisers'
+  !/Rosie|Catherine|McGilvray|Hancher|Networker Group/i.test(
+    networkerDirectors.map((m) => m.blurb || '').join(' ')
+  ),
+  'Hub team shortlist blurbs stay anonymous'
+);
+const bareDirectors = rankCandidates([rosie, salesDirector], 'directors', [], {
+  disableRotation: true,
+});
+assert(
+  platformBrandMatchScore(rosie, 'directors') === 0,
+  'bare directors ask gives Hub team no brand boost'
+);
+assert(
+  !bareDirectors.some((m) => m.id === 'member:rosie'),
+  'Rosie founder does not match bare directors without Networker UK brand'
+);
+assert(
+  bareDirectors.some((m) => m.id === 'member:dir1'),
+  'ordinary Sales Director still matches bare directors'
 );
 
 console.log('ok — hubert matchmaker search ranking + event attendees');
