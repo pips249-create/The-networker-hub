@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Hubert introduction – The Networker UK</title>
+  <title>TINA introduction – The Networker UK</title>
   <meta name="robots" content="noindex,nofollow">
   <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any" />
   <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml" />
@@ -208,9 +208,9 @@
           src="../assets/hubert-icon.png?v=20261029intro1"
           width="72"
           height="72"
-          alt="Hubert"
+          alt="TINA"
         />
-        <p class="hi-kicker">Hubert · matchmaker</p>
+        <p class="hi-kicker">TINA · matchmaker</p>
       </div>
       <p class="hi-status" id="hi-status" role="status">Introduction</p>
       <h1 id="hi-title">Loading…</h1>
@@ -227,7 +227,7 @@
 
       <div class="hi-onboard" id="hi-onboard" hidden>
         <p class="auth-lede" style="margin:0 0 14px;">
-          Two quick picks so Hubert can put you forward for useful intros later. Contact details stay private.
+          Two quick picks so TINA can put you forward for useful intros later. Contact details stay private.
         </p>
         <div class="hi-onboard-field">
           <label class="hi-onboard-label" for="hi-industry">Your industry</label>
@@ -251,7 +251,7 @@
         <a class="hi-btn--ghost" href="/account/">Back to your dashboard</a>
       </div>
 
-      <p class="hi-brand-foot">Contact details are never shared via Hubert — intros stay on The Networker UK’s Hubert.</p>
+      <p class="hi-brand-foot">Contact details are never shared via TINA — intros stay on The Networker UK.</p>
     </div>
   </main>
 
@@ -429,7 +429,7 @@
         setStatus('', 'Almost there');
         titleEl.textContent = 'Two quick picks';
         bodyEl.textContent =
-          'Tell Hubert your industry and who you want to meet. Then he’ll open the intro thread — still no email, phone, or LinkedIn shared.';
+          'Tell TINA your industry and who you want to meet. Then she’ll open the intro thread — still no email, phone, or LinkedIn shared.';
         if (industryEl) industryEl.focus();
       }
 
@@ -450,7 +450,7 @@
           setStatus('', 'From your email');
           titleEl.textContent = 'Accept introduction from ' + who + '?';
           bodyEl.textContent =
-            'Hubert is our matchmaker. If you Accept, he opens an intro thread in Meet people — email, phone, and LinkedIn stay private.';
+            'TINA is our matchmaker. If you Accept, she opens an intro thread in Meet people — email, phone, and LinkedIn stay private.';
           acceptBtn.hidden = false;
           declineBtn.hidden = true;
           return;
@@ -459,7 +459,7 @@
           setStatus('', 'From your email');
           titleEl.textContent = 'Decline this introduction?';
           bodyEl.textContent =
-            'Hubert is our matchmaker. Declining means no thread is opened, and contact details stay private.';
+            'TINA is our matchmaker. Declining means no thread is opened, and contact details stay private.';
           acceptBtn.hidden = true;
           declineBtn.hidden = false;
           return;
@@ -467,7 +467,7 @@
         setStatus('', 'Choose an answer');
         titleEl.textContent = who + ' would like to be introduced';
         bodyEl.textContent =
-          'Hubert is The Networker UK’s matchmaker. Accept to open an intro thread in Meet people, or Decline — contact details stay private either way.';
+          'TINA is The Networker UK’s matchmaker. Accept to open an intro thread in Meet people, or Decline — contact details stay private either way.';
         acceptBtn.hidden = false;
         declineBtn.hidden = false;
       }
@@ -549,7 +549,7 @@
               data.message ||
                 (accepted
                   ? 'Open Meet people to continue the intro thread.'
-                  : 'Hubert will not open an introduction.'),
+                  : 'TINA will not open an introduction.'),
               accepted ? introId : null
             );
           })
@@ -638,7 +638,7 @@
           showDone(
             false,
             'Taking too long',
-            'Hubert couldn’t load this introduction quickly. Open the email link again, or use Accept / Decline in the email.'
+            'TINA couldn’t load this introduction quickly. Open the email link again, or use Accept / Decline in the email.'
           );
         });
     })();

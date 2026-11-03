@@ -1,5 +1,5 @@
 /**
- * FAQ page — instant search, category tabs, inline Hubert.
+ * FAQ page — instant search, category tabs, inline TINA.
  */
 (function () {
   var searchInput = document.getElementById('faq-search');
@@ -139,7 +139,7 @@
       suggestionsEl: suggestionsEl,
       bubblePrefix: 'faq-hubert-bubble',
       greeting:
-        "Hello — I'm Hubert Matchmaker. Ask me about accounts, tickets, refunds, organiser tools, or meeting people and I'll point you in the right direction.",
+        "Hello — I'm TINA. Ask me about accounts, tickets, refunds, organiser tools, or meeting people and I'll point you in the right direction.",
     });
 
     function markChatActive() {

@@ -1,5 +1,5 @@
 /**
- * Public email-link endpoint: Accept / Decline a Hubert intro via signed token.
+ * Public email-link endpoint: Accept / Decline a TINA intro via signed token.
  * Also supports GET preview of the request context (no contact details).
  */
 const { setCors, json, sessionFromRequest } = require('../auth');
@@ -114,7 +114,7 @@ module.exports = async function handler(req, res) {
           : 'You already declined this introduction.'
         : accepted
           ? 'You’re introduced — open Meet people to continue (no contact details shared).'
-          : 'Declined. Hubert won’t open an introduction.',
+          : 'Declined. TINA won’t open an introduction.',
     });
   } catch (e) {
     const code = e && e.code ? e.code : 'respond_failed';

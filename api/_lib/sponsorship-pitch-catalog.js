@@ -27,7 +27,7 @@ const HEADLINE_EMAIL_INVENTORIES = {
       'Attendee re-engagement',
       'Sign-up events nudge',
       'Sign-up events nudge (follow-up)',
-      'Hubert event concierge',
+      'TINA event concierge',
       'Booking cancelled',
       'Event cancelled',
       'Refund processed',

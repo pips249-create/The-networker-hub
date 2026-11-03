@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Smoke tests for Hubert Matchmaker client helpers (no DOM).
+ * Smoke tests for TINA client helpers (no DOM).
  */
 const fs = require('fs');
 const path = require('path');
@@ -33,8 +33,8 @@ assert(mm.canUseMatchmaker({ role: 'admin' }) === true, 'admin can search');
 assert(mm.canUseMatchmaker({ user: { role: 'admin' } }) === true, 'admin session can search');
 assert(mm.canUseMatchmaker({ role: 'client' }) === false, 'client search blocked while gated');
 assert(mm.canUseMatchmaker(null) === false, 'signed-out search blocked');
-assert(src.indexOf('searchEnabled') !== -1, 'searchEnabled gate for Ask Hubert');
-assert(src.indexOf('You’re in Hubert’s pool') !== -1, 'profile-ready copy while search gated');
+assert(src.indexOf('searchEnabled') !== -1, 'searchEnabled gate for Ask TINA');
+assert(src.indexOf('You’re in TINA’s pool') !== -1, 'profile-ready copy while search gated');
 assert(src.indexOf('shareProfileInvite') !== -1, 'profile share invite helper');
 const accountHtml = fs.readFileSync(path.join(__dirname, '../account/index.html'), 'utf8');
 assert(accountHtml.indexOf('data-hmm-profile-share') !== -1, 'Meet people has invite share control');

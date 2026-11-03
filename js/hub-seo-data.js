@@ -2048,7 +2048,7 @@ window.HUB_SEO_DATA = {
               "@type": "HowToStep",
               "position": 4,
               "name": "List your event in the dashboard",
-              "text": "Choose List event from My events. Hubert walks you through format, details, tickets, and publish. For paid tickets, connect Stripe under the Revenue tab before publishing.",
+              "text": "Choose List event from My events. TINA walks you through format, details, tickets, and publish. For paid tickets, connect Stripe under the Revenue tab before publishing.",
               "url": "https://www.thenetworkeruk.com/guides/list-an-event#list-event"
             }
           ]
