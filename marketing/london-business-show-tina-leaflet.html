@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<meta name="description" content="Printable A5 leave-behind for The Business Show London — The Networker UK, TINA, Events, and Opportunities.">
+<meta name="description" content="Printable A5 leave-behind for The Business Show London, The Networker UK, TINA, Events, and Opportunities.">
 <title>Meet TINA · The Business Show London leaflet · The Networker UK</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -472,16 +472,16 @@
   .example {
     width: 100%;
     max-width: 92mm;
-    padding: 2.8mm 3mm;
+    padding: 2.4mm 2.8mm;
     border-radius: 9px;
-    background: rgba(255, 255, 255, 0.78);
+    background: rgba(255, 255, 255, 0.88);
     border: 1px solid rgba(58, 52, 56, 0.1);
     box-shadow: 0 4px 14px rgba(58, 52, 56, 0.08);
     position: relative;
     overflow: hidden;
   }
   .cell-opps .example {
-    background: rgba(255, 255, 255, 0.72);
+    background: rgba(255, 255, 255, 0.88);
     border-color: rgba(13, 31, 60, 0.12);
     box-shadow: 0 4px 14px rgba(13, 31, 60, 0.1);
   }
@@ -503,44 +503,66 @@
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--plum);
-    margin-bottom: 0.8mm;
+    margin-bottom: 1mm;
     padding-left: 1.5mm;
   }
   .cell-events .example-kicker { color: var(--events-ink); }
   .cell-opps .example-kicker { color: var(--opp-navy); }
+  .example-row {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2.4mm;
+    align-items: center;
+    padding-left: 1.5mm;
+  }
+  .example-logo {
+    width: 12mm;
+    height: 12mm;
+    object-fit: contain;
+    border-radius: 5px;
+    background: #fff;
+    border: 1px solid rgba(58, 52, 56, 0.1);
+    display: block;
+  }
+  .cell-events .example-logo {
+    width: 16mm;
+    height: 11mm;
+    padding: 0.6mm;
+    object-fit: contain;
+  }
+  .example-copy { min-width: 0; }
   .example strong {
     display: block;
-    font-size: 12.5px;
+    font-size: 12px;
     font-weight: 750;
     color: var(--ink);
-    margin-bottom: 0.5mm;
-    padding-left: 1.5mm;
+    margin-bottom: 0.4mm;
     letter-spacing: -0.01em;
+    line-height: 1.15;
   }
   .cell-events .example strong { color: #3d2f4a; }
   .cell-opps .example strong { color: var(--opp-navy); }
   .example span {
     display: block;
-    font-size: 9.5px;
+    font-size: 9px;
     color: var(--muted);
-    line-height: 1.3;
-    padding-left: 1.5mm;
+    line-height: 1.25;
   }
   .cell-events .example span { color: rgba(61, 47, 74, 0.72); }
   .cell-opps .example span { color: rgba(13, 31, 60, 0.72); }
   .example-meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 1.4mm;
-    margin-top: 1.6mm;
+    gap: 1.2mm;
+    margin-top: 1.4mm;
     padding-left: 1.5mm;
   }
   .example-meta i {
     font-style: normal;
-    font-size: 8.5px;
+    font-size: 8px;
     font-weight: 700;
     border-radius: 4px;
-    padding: 1.8px 5.5px;
+    padding: 1.6px 5px;
   }
   .cell-events .example-meta i {
     color: var(--events-ink);
@@ -642,7 +664,7 @@
 </head>
 <body>
   <div class="screen-bar">
-    <div><strong>The Business Show London</strong> — A5 landscape leave-behind (grid)</div>
+    <div><strong>The Business Show London</strong> · A5 landscape leave-behind (grid)</div>
     <div class="screen-actions">
       <button type="button" class="print" id="leaflet-print">Print / Save as PDF</button>
       <a href="../assets/marketing/london-business-show-tina-leaflet.pdf" download>Download PDF</a>
@@ -661,7 +683,7 @@
           height="99"
         >
         <p class="masthead-copy">
-          The home for <strong>UK business networking</strong> — find groups and events,
+          The home for <strong>UK business networking</strong>: find groups and events,
           list opportunities, and meet the right people through TINA.
         </p>
         <div class="masthead-free" aria-label="Join for free">
@@ -682,7 +704,7 @@
             </h1>
           </div>
           <p class="tina-lede">
-            Ask who you want to meet — members approve before you connect.
+            Ask who you want to meet. Members approve before you connect.
           </p>
 
           <div class="demo" aria-label="TINA product example">
@@ -695,7 +717,7 @@
               <div class="demo-avatar" aria-hidden="true">AJ</div>
               <div>
                 <strong>Match → private intro</strong>
-                <span>Approve first — contacts stay private.</span>
+                <span>Approve first. Contacts stay private.</span>
               </div>
             </div>
           </div>
@@ -710,7 +732,7 @@
             <div class="qr-frame">
               <img
                 src="../assets/marketing/qr-tina-lbs.png"
-                alt="QR code — scan to join The Networker UK and set up TINA"
+                alt="QR code to join The Networker UK and set up TINA"
                 width="200"
                 height="200"
               >
@@ -731,19 +753,30 @@
             </div>
             <p class="panel-stat">UK-wide<span>directory</span></p>
           </div>
-          <p class="cell-lede">Browse networking meetings across the UK — free to explore</p>
+          <p class="cell-lede">Browse networking meetings across the UK, free to explore</p>
           <div class="panel-chips" aria-hidden="true">
-            <i>Breakfast</i>
-            <i>Founders</i>
+            <i>Networking</i>
+            <i>Masterclasses</i>
             <i>Exhibitions</i>
           </div>
-          <div class="example" aria-label="Example event">
-            <p class="example-kicker">This week</p>
-            <strong>Manchester founders breakfast</strong>
-            <span>Weekly in-person networking · city centre</span>
+          <div class="example" aria-label="Example event: The Business Show London">
+            <p class="example-kicker">On now</p>
+            <div class="example-row">
+              <img
+                class="example-logo"
+                src="../assets/marketing/the-business-show-london-logo-navy.png"
+                alt=""
+                width="120"
+                height="80"
+              >
+              <div class="example-copy">
+                <strong>The Business Show London</strong>
+                <span>UK’s leading business exhibition at ExCeL</span>
+              </div>
+            </div>
             <div class="example-meta">
-              <i>Manchester</i>
-              <i>Thu 7.30am</i>
+              <i>ExCeL London</i>
+              <i>11 &amp; 12 Nov</i>
             </div>
           </div>
         </section>
@@ -756,19 +789,30 @@
             </div>
             <p class="panel-stat">Live<span>listings</span></p>
           </div>
-          <p class="cell-lede">Partnerships, sponsorships, and growth listings — browse free</p>
+          <p class="cell-lede">Partnerships, side hustles and growth listings. Browse free</p>
           <div class="panel-chips" aria-hidden="true">
-            <i>Sponsorship</i>
+            <i>Side hustles</i>
             <i>Franchise</i>
             <i>Partners</i>
           </div>
-          <div class="example" aria-label="Example opportunity">
+          <div class="example" aria-label="Example opportunity: Get Ahead Virtual Agency">
             <p class="example-kicker">Open now</p>
-            <strong>Seeking regional brand partner</strong>
-            <span>Sponsor a 40-group networking calendar across the North West</span>
+            <div class="example-row">
+              <img
+                class="example-logo"
+                src="../assets/marketing/get-ahead-virtual-agency-logo.png"
+                alt=""
+                width="96"
+                height="96"
+              >
+              <div class="example-copy">
+                <strong>Get Ahead Virtual Agency</strong>
+                <span>Franchise opportunity · run your own VA agency</span>
+              </div>
+            </div>
             <div class="example-meta">
-              <i>Sponsorship</i>
-              <i>North West</i>
+              <i>Franchise</i>
+              <i>Manchester</i>
             </div>
           </div>
         </section>
