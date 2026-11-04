@@ -17,7 +17,7 @@ Invite-only referral partners who introduce paying customers for:
 2. **Advertising & sponsorship** packages (all paid sponsor / placement slots on `/advertising`)
 
 Public enquire page: [`/partners`](https://www.thenetworkeruk.com/partners) (applications reviewed — not self-serve signup).  
-Referral Partner Terms: [`/partners/terms`](https://www.thenetworkeruk.com/partners/terms) — applicants tick acceptance on apply; invited partners accept at [`/partners/accept-terms`](https://www.thenetworkeruk.com/partners/accept-terms) (code + invite email). Run migration `296_affiliate_partner_terms.sql`.  
+Referral Partner Terms: [`/partners/terms`](https://www.thenetworkeruk.com/partners/terms) — applicants tick acceptance on apply; invited partners accept at [`/partners/accept-terms`](https://www.thenetworkeruk.com/partners/accept-terms) (code + invite email). **Creating a partner in Command Centre emails the invite automatically** (T&Cs link + accept CTA + hub); use **Email invite** to resend. Run migration `296_affiliate_partner_terms.sql`.  
 Not in scope (for now): event ticket booking fees or organiser acquisition bounties.
 
 ---
