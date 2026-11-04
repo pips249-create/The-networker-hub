@@ -19,8 +19,16 @@ function accountHasLinkOutGrant(account) {
   return Boolean(account && String(account.link_out_granted_at || '').trim());
 }
 
+/**
+ * Booking system is on for all organisers by default.
+ * Set CONNECTED_BOOKING_ENABLED=false (or 0/no/off) to kill-switch.
+ * Note: CONNECTED_BOOKING_PREVIEW_EMAILS still restricts to that allowlist when set —
+ * clear it on Production to open Booking system to everyone.
+ */
 function connectedBookingFeatureEnabled() {
   const v = String(process.env.CONNECTED_BOOKING_ENABLED || '').trim().toLowerCase();
+  if (!v) return true;
+  if (v === '0' || v === 'false' || v === 'no' || v === 'off') return false;
   return v === '1' || v === 'true' || v === 'yes';
 }
 

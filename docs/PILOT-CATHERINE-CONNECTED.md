@@ -21,7 +21,7 @@ CONNECTED_BOOKING_PREVIEW_EMAILS=catherine@thenetworkeruk.com
 
 **Symptom:** signed in as Catherine but alert *“preview is limited to approved organiser accounts”* → her email is **not** on the Production env vars above, or Vercel was not redeployed after changing them.
 
-If Connected is open to everyone, set `CONNECTED_BOOKING_ENABLED=true` and clear `CONNECTED_BOOKING_PREVIEW_EMAILS`.
+**Open Booking system to all organisers (preferred):** on Vercel Production **delete** `CONNECTED_BOOKING_PREVIEW_EMAILS`, set `CONNECTED_BOOKING_ENABLED=true` (or leave unset after the default-on deploy), leave `CONNECTED_BOOKING_REQUIRE_SUBSCRIPTION` unset, then redeploy. Pilot grant emails are optional once free connect is open to everyone.
 
 **Redeploy** after env changes.
 
@@ -62,7 +62,7 @@ Use [ORGANISER-CONNECTED-LINK-EB-OR-TT.md](./ORGANISER-CONNECTED-LINK-EB-OR-TT.m
 
 | Symptom | Fix |
 |---------|-----|
-| `preview_restricted` | Add Catherine’s email to `CONNECTED_BOOKING_PREVIEW_EMAILS` and redeploy |
+| `preview_restricted` | Delete Production `CONNECTED_BOOKING_PREVIEW_EMAILS` (or add Catherine’s email) and redeploy |
 | No pilot / still asked to Subscribe | Add to `CONNECTED_BOOKING_PILOT_GRANT_EMAILS`, reload Connected booking page |
 | `connected_booking_slot_not_assigned` | Assign organiser page on **Organiser pages** |
 | `event_not_linked` | Save correct Eventbrite id or Ticket Tailor **`ev_…`** on Connected setup |

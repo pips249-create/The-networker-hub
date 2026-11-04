@@ -11,9 +11,18 @@ npm run test-external-booking-webhook
 npm run test-connected-booking-providers
 ```
 
-## Free Starter plan for pilot organisers (no Stripe)
+## Open to all organisers (Production)
 
-On **Vercel → Environment variables** (Production), set:
+Booking system is on by default. On Vercel Production:
+
+1. **Delete** `CONNECTED_BOOKING_PREVIEW_EMAILS` (required — otherwise only allowlisted emails see it).
+2. Set `CONNECTED_BOOKING_ENABLED=true` (or leave unset after the default-on deploy).
+3. Leave `CONNECTED_BOOKING_REQUIRE_SUBSCRIPTION` unset.
+4. Redeploy.
+
+## Free plan for named pilot organisers (optional / soft launch)
+
+For a private preview only, set:
 
 ```text
 CONNECTED_BOOKING_PREVIEW_EMAILS=catherine@thenetworkeruk.com
@@ -21,7 +30,7 @@ CONNECTED_BOOKING_PILOT_GRANT_EMAILS=catherine@thenetworkeruk.com
 CONNECTED_BOOKING_PILOT_GRANT_PLAN=starter
 ```
 
-Redeploy. Then sign in as that email and open `/organiser/connected-booking`. The first load **activates Starter (1 group) at no charge** and creates a webhook secret if missing. You do **not** need to click Subscribe for pilot grant.
+Redeploy. Then sign in as that email and open `/organiser/connected-booking`. The first load **activates free Connected** and creates a webhook secret if missing. You do **not** need to click Subscribe for pilot grant. Clear `CONNECTED_BOOKING_PREVIEW_EMAILS` when launching to everyone.
 
 **Catherine pilot:** step-by-step for `catherine@thenetworkeruk.com` → [PILOT-CATHERINE-CONNECTED.md](./PILOT-CATHERINE-CONNECTED.md). Organiser linking guide → [ORGANISER-CONNECTED-LINK-EB-OR-TT.md](./ORGANISER-CONNECTED-LINK-EB-OR-TT.md).
 
@@ -119,7 +128,7 @@ Full step-by-step: **[TICKET-TAILOR-CONNECTED.md](./TICKET-TAILOR-CONNECTED.md)*
 
 | Symptom | Fix |
 |--------|-----|
-| `preview_restricted` | Add email to `CONNECTED_BOOKING_PREVIEW_EMAILS` |
+| `preview_restricted` | Delete Production `CONNECTED_BOOKING_PREVIEW_EMAILS`, or add the email to the allowlist |
 | `connected_booking_inactive` | Open Connected booking page once (pilot grant) or subscribe |
 | `invalid_signature` | Regenerate secret; sign **raw JSON body** exactly |
 | `event_not_on_account` | `eventId` must be a TNH event on your organiser account |
