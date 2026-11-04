@@ -1,6 +1,6 @@
 /**
- * London Business Show stand join: free account for TINA + mark the show as attended
- * (stand check-in — not a ticket purchase).
+ * London Business Show stand join: inline quick signup for TINA + mark the show
+ * as attended (stand check-in — not a ticket purchase).
  */
 (function () {
   'use strict';
@@ -11,6 +11,12 @@
 
   var statusEl = document.getElementById('lbs-join-status');
   var actionEl = document.getElementById('lbs-join-action');
+  var formEl = document.getElementById('lbs-signup-form');
+  var submitBtn = document.getElementById('lbs-submit');
+  var signInLink = document.getElementById('lbs-signin-link');
+  var getTurnstileToken = function () {
+    return Promise.resolve('');
+  };
 
   function setStatus(text, kind) {
     if (!statusEl) return;
@@ -20,14 +26,24 @@
 
   function setAction(html) {
     if (!actionEl) return;
+    actionEl.hidden = !html;
     actionEl.innerHTML = html || '';
   }
 
-  function registerHref() {
-    return (
-      '/register?intent=attendee&utm_source=the_business_show_london&utm_medium=leaflet&utm_campaign=tina_lbs&next=' +
-      encodeURIComponent(JOIN_PATH)
-    );
+  function showForm(show) {
+    if (!formEl) return;
+    formEl.hidden = !show;
+  }
+
+  function withoutEmailVerifySecret(url) {
+    try {
+      var u = new URL(url, window.location.origin);
+      u.searchParams.delete('secret');
+      u.searchParams.delete('code');
+      return u.pathname + u.search + u.hash;
+    } catch (e) {
+      return url;
+    }
   }
 
   function fetchSession() {
@@ -67,20 +83,16 @@
   }
 
   function showSignedOut() {
-    setStatus(
-      'Takes a minute on the show floor: name, email, company, location and a password. We’ll create your account, start TINA, and mark that you visited The Business Show London.'
-    );
-    setAction(
-      '<a class="lbs-btn lbs-btn-primary" href="' +
-        registerHref() +
-        '">Quick free signup</a>' +
-        '<a class="lbs-btn lbs-btn-secondary" href="/login?next=' +
-        encodeURIComponent(JOIN_PATH) +
-        '">Sign in</a>'
-    );
+    showForm(true);
+    setAction('');
+    setStatus('Fill in the boxes below — takes about a minute on the show floor.');
+    if (signInLink) {
+      signInLink.href = '/login?next=' + encodeURIComponent(JOIN_PATH);
+    }
   }
 
   function showSuccess(already) {
+    showForm(false);
     setStatus(
       already
         ? 'You’re already recorded for The Business Show London. Next, finish your TINA profile.'
@@ -108,9 +120,131 @@
     return 'We couldn’t record attendance automatically. Create or open your profile — you can add the show from Events I’ve attended later.';
   }
 
+  function val(id) {
+    var el = document.getElementById(id);
+    return el ? String(el.value || '').trim() : '';
+  }
+
+  function bindSignupForm() {
+    if (!formEl) return;
+
+    if (window.HUB_turnstile && typeof window.HUB_turnstile.bindForm === 'function') {
+      window.HUB_turnstile.bindForm(formEl).then(function (fn) {
+        if (typeof fn === 'function') getTurnstileToken = fn;
+      });
+    }
+
+    formEl.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      var name = val('lbs-name');
+      var email = val('lbs-email');
+      var company = val('lbs-company');
+      var location = val('lbs-location');
+      var password = document.getElementById('lbs-password')
+        ? document.getElementById('lbs-password').value
+        : '';
+      var password2 = document.getElementById('lbs-password2')
+        ? document.getElementById('lbs-password2').value
+        : '';
+      var termsEl = document.getElementById('lbs-terms');
+
+      if (!name) {
+        setStatus('Please enter your full name.', 'error');
+        return;
+      }
+      if (!email) {
+        setStatus('Please enter your email.', 'error');
+        return;
+      }
+      if (!company) {
+        setStatus('Please enter your company.', 'error');
+        return;
+      }
+      if (!location) {
+        setStatus('Please enter your location (city or town).', 'error');
+        return;
+      }
+      if (password !== password2) {
+        setStatus('Passwords do not match.', 'error');
+        return;
+      }
+      if (password.length < 10) {
+        setStatus('Password must be at least 10 characters.', 'error');
+        return;
+      }
+      if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+        setStatus('Password must include at least one letter and one number.', 'error');
+        return;
+      }
+      if (termsEl && !termsEl.checked) {
+        setStatus('Please agree to the Terms & conditions and Privacy policy.', 'error');
+        return;
+      }
+
+      if (submitBtn) submitBtn.disabled = true;
+      setStatus('Creating your account…');
+
+      getTurnstileToken()
+        .then(function (token) {
+          var payload = {
+            email: email,
+            password: password,
+            name: name,
+            company: company,
+            location: location,
+            next: JOIN_PATH,
+            intent: 'attendee',
+            marketingOptIn: false,
+            hubertOptIn: true,
+            termsAccepted: true,
+            utmCampaign: 'tina_lbs',
+            utmSource: 'the_business_show_london',
+            signupSource: 'tina_lbs',
+          };
+          if (token) payload.turnstileToken = token;
+          return fetch('/api/auth/register', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify(payload),
+          });
+        })
+        .then(function (res) {
+          return res.json().then(function (data) {
+            return { ok: res.ok, data: data };
+          });
+        })
+        .then(function (result) {
+          if (!result.ok) {
+            setStatus((result.data && result.data.message) || 'Could not create account.', 'error');
+            if (submitBtn) submitBtn.disabled = false;
+            return;
+          }
+          setStatus(
+            (result.data && result.data.message) ||
+              'Account created — confirm your email to finish show check-in.',
+            'ok'
+          );
+          var go = function () {
+            window.location.href = withoutEmailVerifySecret(
+              (result.data && result.data.redirect) || JOIN_PATH
+            );
+          };
+          setTimeout(go, 350);
+        })
+        .catch(function () {
+          setStatus('Could not reach the server. Try again shortly.', 'error');
+          if (submitBtn) submitBtn.disabled = false;
+        });
+    });
+  }
+
   function run() {
     setStatus('Checking your account…');
     setAction('');
+    showForm(false);
+    bindSignupForm();
 
     fetchSession()
       .then(function (user) {
@@ -119,6 +253,7 @@
           return null;
         }
 
+        showForm(false);
         setStatus('Recording that you attended The Business Show London…');
         return markAttended()
           .then(function (data) {
@@ -146,17 +281,10 @@
           });
       })
       .catch(function () {
+        showSignedOut();
         setStatus(
-          'Something went wrong checking your session. You can still create your free profile for TINA.',
+          'Something went wrong checking your session. You can still create your free profile below.',
           'warn'
-        );
-        setAction(
-          '<a class="lbs-btn lbs-btn-primary" href="' +
-            registerHref() +
-            '">Create free profile</a>' +
-            '<a class="lbs-btn lbs-btn-secondary" href="/events/' +
-            EVENT_SLUG +
-            '">View event</a>'
         );
       });
   }

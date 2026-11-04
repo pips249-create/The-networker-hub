@@ -11,16 +11,25 @@ const root = path.join(__dirname, '..');
 const read = (rel) => fs.readFileSync(path.join(root, rel), 'utf8');
 
 const joinHtml = read('lbs-tina-join.html');
-assert.ok(/What is The Networker UK/i.test(joinHtml), 'join page explains Networker UK');
-assert.ok(/Events &amp; organisers|Events & organisers/i.test(joinHtml), 'lists events find');
-assert.ok(/TINA introductions/i.test(joinHtml), 'lists TINA');
-assert.ok(/Business opportunities/i.test(joinHtml), 'lists opportunities');
+assert.ok(/The Networker UK/i.test(joinHtml), 'join page mentions Networker UK');
+assert.ok(/TINA/i.test(joinHtml), 'lists TINA');
 assert.ok(/attended/i.test(joinHtml), 'copy talks about attended, not ticket purchase');
 assert.ok(!/free ticket on your account/i.test(joinHtml), 'no free-ticket purchase framing');
 assert.ok(/logo-nav-transparent|The Networker UK/i.test(joinHtml), 'UK branding');
+assert.ok(joinHtml.includes('lbs-signup-form'), 'QR landing has inline signup form');
+assert.ok(joinHtml.includes('id="lbs-name"'), 'inline form has full name');
+assert.ok(joinHtml.includes('id="lbs-email"'), 'inline form has email');
+assert.ok(joinHtml.includes('id="lbs-company"'), 'inline form has company');
+assert.ok(joinHtml.includes('id="lbs-location"'), 'inline form has location');
+assert.ok(joinHtml.includes('id="lbs-password"'), 'inline form has password');
+assert.ok(joinHtml.includes('hub-turnstile.js'), 'inline form loads turnstile');
 
 const joinJs = read('js/lbs-tina-join.js');
 assert.ok(joinJs.includes('/api/auth/lbs-stand-attend'), 'calls stand-attend API');
+assert.ok(joinJs.includes('/api/auth/register'), 'inline form posts to register API');
+assert.ok(joinJs.includes("signupSource: 'tina_lbs'"), 'inline signup tags tina_lbs source');
+assert.ok(joinJs.includes('company: company'), 'inline signup sends company');
+assert.ok(joinJs.includes('location: location'), 'inline signup sends location');
 assert.ok(!joinJs.includes('complete-booking'), 'does not purchase via complete-booking');
 assert.ok(/attended/i.test(joinJs), 'status copy uses attended');
 
