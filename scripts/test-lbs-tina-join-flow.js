@@ -133,6 +133,64 @@ assert.ok(registerRoute.includes('tinaLbsJoin'), 'server recognises TINA leaflet
 assert.ok(registerRoute.includes("utmCampaign === 'tina_lbs'"), 'server maps tina_lbs to intros');
 
 assert.ok(registerHtml.includes('register-hubert-lbs-note'), 'register has leaflet TINA disclosure');
+assert.ok(registerHtml.includes('register-lbs-extra-fields'), 'register has LBS company/location block');
+assert.ok(/id="company"/.test(registerHtml), 'register has company field');
+assert.ok(/id="location"/.test(registerHtml), 'register has location field');
+
+assert.ok(authJs.includes('register-lbs-extra-fields'), 'LBS path reveals company/location fields');
+assert.ok(authJs.includes("payload.company = company"), 'LBS path sends company');
+assert.ok(authJs.includes("payload.location = location"), 'LBS path sends location');
+assert.ok(authJs.includes("signupSource = 'tina_lbs'"), 'LBS path tags signupSource');
+
+assert.ok(registerRoute.includes('missing_company'), 'server requires company on LBS join');
+assert.ok(registerRoute.includes('missing_location'), 'server requires location on LBS join');
+assert.ok(registerRoute.includes('signupSource'), 'server accepts signupSource');
+
+const registerUserSrc = read('api/_lib/supabase-auth.js');
+assert.ok(registerUserSrc.includes('signup_source'), 'registerUser persists signup_source');
+assert.ok(registerUserSrc.includes('matchmaker_blurb'), 'registerUser can seed basic TINA blurb');
+
+const migration = read('supabase/migrations/360_lbs_tina_quick_signup.sql');
+assert.ok(migration.includes('signup_source'), 'migration adds signup_source');
+assert.ok(migration.includes('lbs_finish_profile_email_sent_at'), 'migration adds finish-profile claim');
+
+const finishTpl = read('email-templates/attendee-lbs-finish-tina-profile.html');
+assert.ok(/Thanks for joining The Networker UK/i.test(finishTpl), 'finish-profile email thanks them');
+assert.ok(/signup_count_sentence/.test(finishTpl), 'finish-profile email includes show signup count');
+assert.ok(/Finish your TINA profile/i.test(finishTpl), 'finish-profile email CTAs to TINA');
+
+const engagement = read('api/_lib/engagement-emails.js');
+assert.ok(engagement.includes('sendDueLbsFinishTinaProfileEmails'), 'engagement has LBS finish-profile sender');
+assert.ok(engagement.includes("signup_source', LBS_SIGNUP_SOURCE"), 'targets tina_lbs signups');
+
+const bookingCron = read('api/_lib/routes/cron-booking-reminders.js');
+assert.ok(bookingCron.includes('sendDueLbsFinishTinaProfileEmails'), 'hourly cron runs LBS finish-profile');
+
+const branded = read('api/_lib/branded-email-templates.js');
+assert.ok(branded.includes('attendee_lbs_finish_tina_profile'), 'branded templates register LBS email');
+
+const {
+  formatLbsSignupCountSentence,
+  tinaProfileIncomplete,
+} = require('../api/_lib/engagement-emails');
+assert.ok(
+  /128 people have signed up from The Business Show London/.test(formatLbsSignupCountSentence(128)),
+  'signup count sentence formats plural'
+);
+assert.strictEqual(
+  tinaProfileIncomplete({ matchmaker_blurb: 'Works at Acme', looking_to_meet: [], discoverable_at: null }),
+  true,
+  'incomplete without looking-to-meet / discoverable'
+);
+assert.strictEqual(
+  tinaProfileIncomplete({
+    matchmaker_blurb: 'Works at Acme',
+    looking_to_meet: ['Clients'],
+    discoverable_at: '2026-11-04T12:00:00.000Z',
+  }),
+  false,
+  'complete when discoverable + blurb + looking-to-meet'
+);
 
 const enableCss = read('css/organiser-enable.css');
 assert.ok(/\.org-enable-panel\s*\{\s*order:\s*-1/m.test(enableCss), 'confirm panel first on mobile');

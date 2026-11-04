@@ -68,12 +68,12 @@
 
   function showSignedOut() {
     setStatus(
-      'Create your free Networker UK profile for TINA. We’ll also record that you visited The Business Show London.'
+      'Takes a minute on the show floor: name, email, company, location and a password. We’ll create your account, start TINA, and mark that you visited The Business Show London.'
     );
     setAction(
       '<a class="lbs-btn lbs-btn-primary" href="' +
         registerHref() +
-        '">Create free profile</a>' +
+        '">Quick free signup</a>' +
         '<a class="lbs-btn lbs-btn-secondary" href="/login?next=' +
         encodeURIComponent(JOIN_PATH) +
         '">Sign in</a>'

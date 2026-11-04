@@ -319,12 +319,25 @@
       var btn = document.getElementById('register-submit');
       var name = document.getElementById('name').value.trim();
       var email = document.getElementById('email').value.trim();
+      var companyEl = document.getElementById('company');
+      var locationEl = document.getElementById('location');
+      var company = companyEl ? companyEl.value.trim() : '';
+      var location = locationEl ? locationEl.value.trim() : '';
       var password = document.getElementById('password').value;
       var password2 = document.getElementById('password2').value;
       var next = getNextParam();
+      var lbsTinaJoin = isTinaLbsJoinEntry();
 
       if (!name) {
         showMessage(msg, 'Please enter your full name.', 'error');
+        return;
+      }
+      if (lbsTinaJoin && !company) {
+        showMessage(msg, 'Please enter your company.', 'error');
+        return;
+      }
+      if (lbsTinaJoin && !location) {
+        showMessage(msg, 'Please enter your location (city or town).', 'error');
         return;
       }
       if (password !== password2) {
@@ -351,7 +364,6 @@
 
       var marketingEl = document.getElementById('register-marketing');
       var hubertEl = document.getElementById('register-hubert');
-      var lbsTinaJoin = isTinaLbsJoinEntry();
 
       getRegisterTurnstileToken()
         .then(function (token) {
@@ -370,6 +382,9 @@
           if (lbsTinaJoin) {
             payload.utmCampaign = 'tina_lbs';
             payload.utmSource = 'the_business_show_london';
+            payload.signupSource = 'tina_lbs';
+            payload.company = company;
+            payload.location = location;
           }
           if (token) payload.turnstileToken = token;
           return fetch('/api/auth/register', {
@@ -600,6 +615,13 @@
     }
     if (hubertNote) hubertNote.hidden = false;
 
+    var lbsExtra = document.getElementById('register-lbs-extra-fields');
+    var companyEl = document.getElementById('company');
+    var locationEl = document.getElementById('location');
+    if (lbsExtra) lbsExtra.hidden = false;
+    if (companyEl) companyEl.required = true;
+    if (locationEl) locationEl.required = true;
+
     var registerTitle = document.getElementById('register-form-title');
     if (registerTitle) {
       registerTitle.textContent = 'Create your free Networker UK profile';
@@ -608,7 +630,7 @@
     var registerLede = document.getElementById('register-form-lede');
     if (registerLede) {
       registerLede.textContent =
-        'Join The Networker UK for TINA introductions. After you confirm your email we’ll mark The Business Show London as attended and take you to your TINA profile.';
+        'Quick show-floor signup for TINA. Add your name, email, company, location and a password — we’ll start your account and email you to finish your profile.';
     }
 
     var registerProof = document.getElementById('auth-platform-proof');

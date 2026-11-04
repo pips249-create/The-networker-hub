@@ -5,6 +5,7 @@ const { sendDueOrganiserPostEventChecklistEmails } = require('../organiser-post-
 const {
   sendDuePostEventReviewEmails,
   sendDuePostEventReviewReminderEmails,
+  sendDueLbsFinishTinaProfileEmails,
 } = require('../engagement-emails');
 const { authorizeCron } = require('../cron-auth');
 
@@ -25,12 +26,14 @@ module.exports = async function handler(req, res) {
     const postEventChecklist = await sendDueOrganiserPostEventChecklistEmails(sb);
     const postReview = await sendDuePostEventReviewEmails(sb);
     const postReviewReminder = await sendDuePostEventReviewReminderEmails(sb);
+    const lbsFinishTinaProfile = await sendDueLbsFinishTinaProfileEmails(sb);
     return json(res, 200, {
       ok: true,
       ...reminders,
       postEventChecklist,
       postReview,
       postReviewReminder,
+      lbsFinishTinaProfile,
     });
   } catch (e) {
     return json(res, 500, {

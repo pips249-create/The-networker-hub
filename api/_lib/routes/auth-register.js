@@ -58,6 +58,8 @@ module.exports = async function handler(req, res) {
     .toLowerCase();
   const password = String(body.password || '');
   const name = String(body.name || '').trim();
+  const company = String(body.company || '').trim();
+  const location = String(body.location || '').trim();
   const marketingOptIn = Boolean(body.marketingOptIn ?? body.marketing_opt_in);
   const nextRaw = String(body.next || '');
   const utmCampaign = String(body.utmCampaign || body.utm_campaign || '')
@@ -66,12 +68,17 @@ module.exports = async function handler(req, res) {
   const utmSource = String(body.utmSource || body.utm_source || '')
     .trim()
     .toLowerCase();
+  const signupSourceRaw = String(body.signupSource || body.signup_source || '')
+    .trim()
+    .toLowerCase();
   // TINA leaflet QR: intros are part of this join path (disclosed on /register).
   // Do not rely on a pre-ticked checkbox (GDPR Recital 32).
   const tinaLbsJoin =
     utmCampaign === 'tina_lbs' ||
     utmSource === 'the_business_show_london' ||
+    signupSourceRaw === 'tina_lbs' ||
     /tina_lbs|lbs-tina-join/i.test(nextRaw);
+  const signupSource = tinaLbsJoin ? 'tina_lbs' : signupSourceRaw || null;
   const hubertOptIn =
     tinaLbsJoin ||
     Boolean(body.hubertOptIn ?? body.hubert_opt_in ?? body.hubertIntros ?? body.hubert_intros);
@@ -85,6 +92,18 @@ module.exports = async function handler(req, res) {
     return json(res, 400, {
       error: 'missing_name',
       message: 'Please enter your full name.',
+    });
+  }
+  if (tinaLbsJoin && !company) {
+    return json(res, 400, {
+      error: 'missing_company',
+      message: 'Please enter your company.',
+    });
+  }
+  if (tinaLbsJoin && !location) {
+    return json(res, 400, {
+      error: 'missing_location',
+      message: 'Please enter your location (city or town).',
     });
   }
   if (!email || !password) {
@@ -131,7 +150,16 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const user = await sbAuth.registerUser({ email, password, name, marketingOptIn, hubertOptIn });
+    const user = await sbAuth.registerUser({
+      email,
+      password,
+      name,
+      company: company || null,
+      location: location || null,
+      signupSource,
+      marketingOptIn,
+      hubertOptIn,
+    });
 
     const sessionUser = {
       sub: user.id,
