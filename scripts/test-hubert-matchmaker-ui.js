@@ -70,6 +70,9 @@ assert(
   'stub blurbs stay within card teaser length'
 );
 assert(src.indexOf('hmm-match-blurb') !== -1, 'shortlist card renders blurb');
+assert(src.indexOf('fitLabels') !== -1, 'shortlist cards render fit labels');
+assert(src.indexOf('hmm-chip--fit-exact') !== -1, 'exact fit chip class');
+assert(src.indexOf('Open to someone like you') !== -1 || src.indexOf('like_you') !== -1, 'like-you fit chip support');
 assert(src.indexOf('hmm-match-meta') !== -1, 'card shows secondary role/industry meta');
 assert(src.indexOf('function personMeta') !== -1, 'personMeta helper for card context');
 assert(/role \/ company \/ industry/.test(src), 'card heading uses company context');
@@ -130,5 +133,7 @@ assert(
   'looking-to-meet selected chips use solid filled state'
 );
 assert(dashCss.indexOf('.hmm-empty-sug') !== -1, 'empty suggestion chip styles present');
+assert(dashCss.indexOf('.hmm-chip--fit-exact') !== -1, 'exact fit chip styles present');
+assert(dashCss.indexOf('.hmm-chip--fit-close') !== -1, 'close fit chip styles present');
 
 console.log('ok — hubert-matchmaker ui helpers');
