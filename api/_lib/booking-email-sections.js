@@ -25,6 +25,7 @@ const {
   supportEmail,
 } = require('./hub-email-urls');
 const { normalizeMeetingLink, meetingLinkHref } = require('./meeting-link');
+const { buildMeetTeamSectionHtml } = require('./hubert-event-concierge');
 
 const META_CELL =
   'padding:0 0 10px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;color:rgba(255,255,255,0.75);line-height:1.5;';
@@ -209,12 +210,37 @@ function enrichBookingReminderVars(vars, sponsorSection) {
   };
 }
 
-const ACCOUNT_WELCOME_SECTION_PLACEHOLDERS = ['sponsor_row', 'sponsor_section', 'mini_sponsors_row'];
+const ACCOUNT_WELCOME_SECTION_PLACEHOLDERS = [
+  'sponsor_row',
+  'sponsor_section',
+  'mini_sponsors_row',
+  'meet_team_section',
+];
+
+function wrapMeetTeamSectionForWelcome(innerHtml) {
+  const inner = String(innerHtml || '').trim();
+  if (!inner) return '';
+  return (
+    '<tr>' +
+    '<td class="mobile-pad" style="padding:0 48px 20px;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Meet the team this month</p>' +
+    inner +
+    '</td>' +
+    '</tr>'
+  );
+}
 
 function enrichAccountWelcomeVars(vars, sponsorSection) {
   const input = vars && typeof vars === 'object' ? vars : {};
   const site = siteBase(input.site_url);
   const sponsorRow = String(sponsorSection || input.sponsor_row || input.sponsor_section || '').trim();
+  const hasMeetTeamOverride = Object.prototype.hasOwnProperty.call(input, 'meet_team_section');
+  const meetTeamRaw = hasMeetTeamOverride
+    ? String(input.meet_team_section || '')
+    : buildMeetTeamSectionHtml(site);
+  const meetTeamSection = /Meet the team this month/.test(meetTeamRaw)
+    ? meetTeamRaw
+    : wrapMeetTeamSectionForWelcome(meetTeamRaw);
 
   return {
     ...input,
@@ -232,6 +258,7 @@ function enrichAccountWelcomeVars(vars, sponsorSection) {
     terms_url: String(input.terms_url || '').trim() || legalPolicyUrl(site, 'terms'),
     refunds_url: String(input.refunds_url || '').trim() || legalPolicyUrl(site, 'refunds'),
     support_email: String(input.support_email || '').trim() || supportEmail(),
+    meet_team_section: meetTeamSection,
     sponsor_row: sponsorRow,
     sponsor_section: sponsorRow,
     mini_sponsors_row: String(input.mini_sponsors_row || '').trim(),
