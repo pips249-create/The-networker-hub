@@ -140,11 +140,21 @@
     padding: 10mm 14mm;
     max-width: 170mm;
   }
+  .back-logo-plate {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4.5mm 8mm;
+    border-radius: 14px;
+    background: linear-gradient(165deg, #fffefb 0%, #f7f2fb 55%, #fff8ec 100%);
+    box-shadow:
+      0 12px 30px rgba(45, 35, 50, 0.22),
+      0 0 0 1px rgba(255, 255, 255, 0.55);
+  }
   .back-logo {
-    width: 78mm;
+    width: 72mm;
     height: auto;
     display: block;
-    filter: drop-shadow(0 8px 24px rgba(45, 35, 50, 0.28));
   }
   .back-slogan {
     font-family: 'DM Serif Display', Georgia, serif;
@@ -894,13 +904,15 @@
 
     <article class="page page-back" aria-label="The Networker UK leaflet reverse">
       <div class="back-inner">
-        <img
-          class="back-logo"
-          src="../assets/logo-networker-uk-email-navy-source.png?v=20261104lbs"
-          alt="The Networker UK"
-          width="480"
-          height="160"
-        >
+        <div class="back-logo-plate">
+          <img
+            class="back-logo"
+            src="../assets/logo-networker-uk-email-navy-source.png?v=20261104lbs"
+            alt="The Networker UK"
+            width="480"
+            height="160"
+          >
+        </div>
         <p class="back-slogan">Find your next&hellip;</p>
         <p class="back-support">
           The home for UK business networking: events, opportunities, and TINA introductions.
