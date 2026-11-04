@@ -30,6 +30,10 @@ const {
   MIN_TEXT_SCORE,
   SHORTLIST_BLURB_MAX,
   SHORTLIST_ROTATION_POOL,
+  CANDIDATE_FETCH_PAGE,
+  SEED_POOL_MAX,
+  MEMBER_POOL_MAX,
+  fetchPagedRows,
 } = require('../api/_lib/hubert-matchmaker-search');
 
 function assert(cond, msg) {
@@ -896,4 +900,49 @@ assert(
 );
 assert(placeRoleCard.placeFit === 'exact', 'placeFit exact retained');
 
-console.log('ok — hubert matchmaker search ranking + event attendees');
+// Candidate pool must cover the Rosie letter-batch seed volume (was a silent .limit(200)).
+assert(SEED_POOL_MAX >= 1000, 'seed pool max covers letter batches');
+assert(MEMBER_POOL_MAX >= 1000, 'member pool max above old 200 cap');
+assert(CANDIDATE_FETCH_PAGE >= 100 && CANDIDATE_FETCH_PAGE <= SEED_POOL_MAX, 'page size sane');
+
+(async function testFetchPagedRows() {
+  const pages = {
+    '0-2': [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
+    '3-5': [{ id: 'd' }, { id: 'e' }],
+  };
+  const ranges = [];
+  const fakeBuild = () => ({
+    range(from, to) {
+      ranges.push([from, to]);
+      const key = from + '-' + to;
+      return Promise.resolve({ data: pages[key] || [], error: null });
+    },
+  });
+  const all = await fetchPagedRows(fakeBuild, { pageSize: 3, maxRows: 10 });
+  assert(!all.error, 'paged fetch ok');
+  assert(all.data.map((r) => r.id).join(',') === 'a,b,c,d,e', 'paged fetch concatenates pages');
+  assert(ranges.length === 2, 'paged fetch stops when short page');
+
+  const cappedPages = {
+    '0-1': [{ id: '1' }, { id: '2' }],
+    '2-3': [{ id: '3' }, { id: '4' }],
+    '4-5': [{ id: '5' }, { id: '6' }],
+  };
+  const cappedRanges = [];
+  const capped = await fetchPagedRows(
+    () => ({
+      range(from, to) {
+        cappedRanges.push([from, to]);
+        return Promise.resolve({ data: cappedPages[from + '-' + to] || [], error: null });
+      },
+    }),
+    { pageSize: 2, maxRows: 4 }
+  );
+  assert(capped.data.length === 4, 'paged fetch respects maxRows');
+  assert(cappedRanges.length === 2, 'paged fetch does not read past maxRows');
+
+  console.log('ok — hubert matchmaker search ranking + event attendees + paged pools');
+})().catch((err) => {
+  console.error('FAIL:', err && err.message ? err.message : err);
+  process.exit(1);
+});
