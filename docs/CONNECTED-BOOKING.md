@@ -21,7 +21,18 @@ alter table public.organiser_accounts
 
 Also run **`292_external_connected_booking.sql`** if Connected booking columns/tables were never applied. Until 298 is applied, **Manage billing** may not work after subscribe; the page and checkout should still load once app deploys **#66+**.
 
-### Private preview (only you)
+### Open to all organisers (default)
+
+Booking system is **on by default** for every signed-in organiser (`CONNECTED_BOOKING_ENABLED` unset or `true`). Connect stays free unless `CONNECTED_BOOKING_REQUIRE_SUBSCRIPTION=true`.
+
+**Production launch checklist (Vercel → Project → Settings → Environment Variables → Production):**
+
+1. **Delete** `CONNECTED_BOOKING_PREVIEW_EMAILS` (or clear its value). While this is set, **only** those emails (plus `CONNECTED_BOOKING_PILOT_GRANT_EMAILS`) see Booking system — everyone else gets **403 preview_restricted**.
+2. Set `CONNECTED_BOOKING_ENABLED=true` (optional once the default-on deploy is live; required on older builds that defaulted off).
+3. Leave `CONNECTED_BOOKING_REQUIRE_SUBSCRIPTION` **unset** (keeps free connect; no pricing cards).
+4. Redeploy Production after env changes.
+
+### Private preview (dev / soft launch only)
 
 Set on Vercel:
 
@@ -29,15 +40,13 @@ Set on Vercel:
 CONNECTED_BOOKING_PREVIEW_EMAILS=pips249@gmail.com
 ```
 
-While this is set, **only that signed-in email** sees `/organiser/connected-booking`, the tickets-page Connected card (when plan active), and can use the APIs/webhooks for their organiser account. Everyone else gets no UI and **403 preview_restricted** / hidden behaviour. You do **not** need `CONNECTED_BOOKING_ENABLED=true` for preview users when the preview list is set.
-
-When ready to launch for all organisers: **remove** `CONNECTED_BOOKING_PREVIEW_EMAILS` and set `CONNECTED_BOOKING_ENABLED=true`.
+While this is set, **only that signed-in email** sees `/organiser/#connected-booking`, the tickets-page Connected card (when plan active), and can use the APIs/webhooks for their organiser account. Everyone else gets no UI and **403 preview_restricted** / hidden behaviour. Kill-switch the whole feature with `CONNECTED_BOOKING_ENABLED=false`.
 
 1. Run migrations `292_external_connected_booking.sql`, `298_connected_booking_stripe_customer.sql`, `297_connected_booking_organiser_slots.sql`, `299_connected_booking_provider_links.sql`, and `300_connected_booking_own_site_provider.sql` (provider webhooks + own booking links).
-2. Set `CONNECTED_BOOKING_ENABLED=true` on Vercel (or use preview emails above until launch).
+2. Ensure Production has **no** `CONNECTED_BOOKING_PREVIEW_EMAILS` and `CONNECTED_BOOKING_ENABLED` is unset or `true` (see checklist above).
 3. Ensure `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` are set (same webhook endpoint as Hub checkout).
 4. After changing intro prices in `api/_lib/connected-booking-pricing.js`, run `npm run sync-stripe` and update Vercel **`STRIPE_CONNECTED_BOOKING_*_PRICE_ID`** env vars (checkout also works with dynamic line items if price IDs are missing).
-5. Organiser signs in → `/organiser/#connected-booking`. They see an explainer for what Connected is, then click **Enable Connected — free** (POST `activate_free`). That sets `connected_booking_status=active`, plan `enterprise` (or `CONNECTED_BOOKING_FREE_PLAN`), and creates a webhook secret if missing. Opening the page alone does **not** activate.
+5. Organiser signs in → `/organiser/#connected-booking`. Free connect auto-activates on GET when eligible (or POST `activate_free`). That sets `connected_booking_status=active`, plan `enterprise` (or `CONNECTED_BOOKING_FREE_PLAN`), and creates a webhook secret if missing.
 6. To restore paid Stripe plans, set `CONNECTED_BOOKING_REQUIRE_SUBSCRIPTION=true` on Vercel. To restore Link Out payment/grants, set `LINK_OUT_REQUIRE_PAYMENT=true`.
 7. Organiser enables a booking provider and links events on Connected setup.
 8. Event: **Set up tickets** → the Connected booking card appears **only when** the organiser account plan is **active** (or the event was already on Connected). Otherwise the ticket page is unchanged.
