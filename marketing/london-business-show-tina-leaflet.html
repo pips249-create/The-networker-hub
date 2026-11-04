@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<meta name="description" content="Printable A5 leave-behind for The Business Show London, The Networker UK, TINA, Events, and Opportunities.">
+<meta name="description" content="Printable A5 double-sided leave-behind for The Business Show London, The Networker UK, TINA, Events, and Opportunities.">
 <title>Meet TINA · The Business Show London leaflet · The Networker UK</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -84,7 +84,9 @@
   .wrap {
     padding: 24px 16px 48px;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
   }
 
   .page {
@@ -99,14 +101,75 @@
     overflow: hidden;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
+    page-break-after: always;
+    break-after: page;
   }
-  .page::before {
+  .page-front::before {
     content: '';
     position: absolute;
     left: 0; top: 0; bottom: 0;
     width: 2.8mm;
     background: linear-gradient(180deg, var(--live) 0%, var(--gold) 100%);
     z-index: 2;
+  }
+
+  /* Reverse — purple brand side */
+  .page-back {
+    page-break-after: auto;
+    break-after: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #fff8ec;
+    border-color: rgba(125, 101, 133, 0.5);
+    background-color: #a67fad;
+    background-image:
+      radial-gradient(ellipse 90% 55% at 12% 92%, rgba(74, 58, 82, 0.42) 0%, transparent 58%),
+      radial-gradient(ellipse 70% 50% at 88% 8%, rgba(255, 255, 255, 0.22) 0%, transparent 52%),
+      linear-gradient(to top right, #7d6585 0%, #9a7aa8 32%, #bc98c1 62%, #d4b0d8 100%);
+  }
+  .page-back::before { display: none; }
+  .back-inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5mm;
+    padding: 10mm 14mm;
+    max-width: 170mm;
+  }
+  .back-logo {
+    width: 78mm;
+    height: auto;
+    display: block;
+    filter: drop-shadow(0 8px 24px rgba(45, 35, 50, 0.28));
+  }
+  .back-slogan {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-weight: 400;
+    font-size: 42px;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: #fff;
+    text-shadow:
+      0 1px 2px rgba(45, 35, 50, 0.45),
+      0 4px 28px rgba(45, 35, 50, 0.28);
+  }
+  .back-support {
+    font-size: 14px;
+    font-weight: 550;
+    line-height: 1.4;
+    color: rgba(255, 248, 236, 0.92);
+    max-width: 120mm;
+  }
+  .back-url {
+    margin-top: 2mm;
+    font-size: 13px;
+    font-weight: 750;
+    letter-spacing: 0.04em;
+    color: #fff8ec;
   }
 
   .masthead {
@@ -627,12 +690,16 @@
   @media print {
     body { background: #fff; }
     .screen-bar { display: none !important; }
-    .wrap { padding: 0; }
+    .wrap {
+      padding: 0;
+      gap: 0;
+    }
     .page {
       width: 210mm;
       height: 148mm;
       border-radius: 0;
       box-shadow: none;
+      border: 0;
     }
   }
 
@@ -643,6 +710,11 @@
       min-height: 148mm;
       max-height: none;
     }
+    .page-back {
+      min-height: 148mm;
+    }
+    .back-slogan { font-size: 32px; }
+    .back-logo { width: min(78mm, 70%); }
     .grid {
       grid-template-columns: 1fr;
       grid-template-rows: auto;
@@ -664,7 +736,7 @@
 </head>
 <body>
   <div class="screen-bar">
-    <div><strong>The Business Show London</strong> · A5 landscape leave-behind (grid)</div>
+    <div><strong>The Business Show London</strong> · A5 landscape leave-behind (front + reverse)</div>
     <div class="screen-actions">
       <button type="button" class="print" id="leaflet-print">Print / Save as PDF</button>
       <a href="../assets/marketing/london-business-show-tina-leaflet.pdf" download>Download PDF</a>
@@ -673,7 +745,7 @@
   </div>
 
   <div class="wrap">
-    <article class="page" aria-label="The Networker UK leaflet for The Business Show London">
+    <article class="page page-front" aria-label="The Networker UK leaflet front for The Business Show London">
       <header class="masthead">
         <img
           class="brand-logo"
@@ -817,6 +889,23 @@
             </div>
           </div>
         </section>
+      </div>
+    </article>
+
+    <article class="page page-back" aria-label="The Networker UK leaflet reverse">
+      <div class="back-inner">
+        <img
+          class="back-logo"
+          src="../assets/logo-networker-uk-email-navy-source.png?v=20261104lbs"
+          alt="The Networker UK"
+          width="480"
+          height="160"
+        >
+        <p class="back-slogan">Find your next&hellip;</p>
+        <p class="back-support">
+          The home for UK business networking: events, opportunities, and TINA introductions.
+        </p>
+        <p class="back-url">thenetworkeruk.com</p>
       </div>
     </article>
   </div>
