@@ -1,6 +1,6 @@
 /**
  * Pip's activity for Command Centre. Visible only to Catherine.
- * Same window as Jamie's targets: 1 October–2 November 2026.
+ * Same window as Jamie's targets: 1–30 November 2026.
  */
 const { shownByFromEmail } = require('./organiser-sales-outreach');
 const {
@@ -232,7 +232,7 @@ function buildPipActivityReport(input) {
 
   return {
     period: {
-      label: '1 October – 2 November 2026',
+      label: '1 – 30 November 2026',
       start: PERIOD_START,
       end: PERIOD_END,
     },
