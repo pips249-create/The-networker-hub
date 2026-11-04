@@ -30,6 +30,45 @@ const MIN_TEXT_SCORE = 6;
 /** Short privacy-safe teaser on shortlist cards (not the full TINA blurb). */
 /** Card teaser — enough for 1–2 short sentences without dumping a full bio. */
 const SHORTLIST_BLURB_MAX = 160;
+/**
+ * Candidate pool fetch — page through active seeds / discoverable members.
+ * The old unordered .limit(200) silently dropped most of the Rosie seed list
+ * once letter batches pushed the table past ~200 rows.
+ */
+const CANDIDATE_FETCH_PAGE = 1000;
+const SEED_POOL_MAX = 5000;
+const MEMBER_POOL_MAX = 3000;
+
+/**
+ * Page a Supabase/PostgREST query with stable ordering until exhausted or maxRows.
+ * `buildQuery` must return a fresh query builder each call (range is applied here).
+ */
+async function fetchPagedRows(buildQuery, opts) {
+  const pageSize = Math.max(
+    1,
+    Number(opts && opts.pageSize) || CANDIDATE_FETCH_PAGE
+  );
+  const maxRows = Math.max(pageSize, Number(opts && opts.maxRows) || pageSize);
+  const out = [];
+  let from = 0;
+  while (from < maxRows) {
+    const to = Math.min(from + pageSize - 1, maxRows - 1);
+    let res;
+    try {
+      res = await buildQuery().range(from, to);
+    } catch (err) {
+      return { data: out, error: err };
+    }
+    if (res && res.error) {
+      return { data: out, error: res.error };
+    }
+    const batch = (res && res.data) || [];
+    out.push(...batch);
+    if (batch.length < pageSize) break;
+    from += pageSize;
+  }
+  return { data: out, error: null };
+}
 
 const EVENT_QUERY_HINT =
   /\b(attended|attendee|attendees|attending|who went|who was at|who'?s going|going to|this morning|this afternoon|yesterday|last night|today)\b/i;
@@ -1578,15 +1617,19 @@ async function searchMatchmaker(opts) {
     if (!existing.blurb && person.blurb) existing.blurb = person.blurb;
   }
 
-  // Active seed contacts
+  // Active seed contacts — page the full active list (not an arbitrary 200).
   try {
-    const seedRes = await sb
-      .from('hubert_match_seed')
-      .select(
-        'id, full_name, company, job_title, industry, professional_role, looking_to_meet, blurb, location, country, status'
-      )
-      .eq('status', 'active')
-      .limit(200);
+    const seedRes = await fetchPagedRows(
+      () =>
+        sb
+          .from('hubert_match_seed')
+          .select(
+            'id, full_name, company, job_title, industry, professional_role, looking_to_meet, blurb, location, country, status'
+          )
+          .eq('status', 'active')
+          .order('id', { ascending: true }),
+      { pageSize: CANDIDATE_FETCH_PAGE, maxRows: SEED_POOL_MAX }
+    );
     if (!seedRes.error) {
       (seedRes.data || []).forEach((row) => addCandidate(mapSeedRow(row)));
     }
@@ -1594,27 +1637,37 @@ async function searchMatchmaker(opts) {
     /* seed table may be missing pre-migration */
   }
 
-  // Discoverable members
+  // Discoverable members — page Include-me attendees (not an arbitrary 200).
   try {
     const memberColsRich =
       'id, name, company, job_title, business_sector, professional_role, looking_to_meet, matchmaker_blurb, discoverable_at, location';
     const memberColsBasic =
       'id, name, company, job_title, business_sector, professional_role, looking_to_meet, matchmaker_blurb, discoverable_at';
-    let memberQuery = sb
-      .from('attendees')
-      .select(memberColsRich)
-      .not('discoverable_at', 'is', null)
-      .limit(200);
-    if (excludeAttendeeId) memberQuery = memberQuery.neq('id', excludeAttendeeId);
-    let memberRes = await memberQuery;
+    let memberRes = await fetchPagedRows(
+      () => {
+        let q = sb
+          .from('attendees')
+          .select(memberColsRich)
+          .not('discoverable_at', 'is', null)
+          .order('id', { ascending: true });
+        if (excludeAttendeeId) q = q.neq('id', excludeAttendeeId);
+        return q;
+      },
+      { pageSize: CANDIDATE_FETCH_PAGE, maxRows: MEMBER_POOL_MAX }
+    );
     if (memberRes.error && /location/i.test(String(memberRes.error.message || ''))) {
-      let fallback = sb
-        .from('attendees')
-        .select(memberColsBasic)
-        .not('discoverable_at', 'is', null)
-        .limit(200);
-      if (excludeAttendeeId) fallback = fallback.neq('id', excludeAttendeeId);
-      memberRes = await fallback;
+      memberRes = await fetchPagedRows(
+        () => {
+          let q = sb
+            .from('attendees')
+            .select(memberColsBasic)
+            .not('discoverable_at', 'is', null)
+            .order('id', { ascending: true });
+          if (excludeAttendeeId) q = q.neq('id', excludeAttendeeId);
+          return q;
+        },
+        { pageSize: CANDIDATE_FETCH_PAGE, maxRows: MEMBER_POOL_MAX }
+      );
     }
     if (!memberRes.error) {
       const rows = memberRes.data || [];
@@ -1819,6 +1872,10 @@ module.exports = {
   MIN_QUERY_LEN,
   MIN_TEXT_SCORE,
   SHORTLIST_BLURB_MAX,
+  CANDIDATE_FETCH_PAGE,
+  SEED_POOL_MAX,
+  MEMBER_POOL_MAX,
+  fetchPagedRows,
   shortDisplayName,
   normalizeSearchQuery,
   tokenize,
