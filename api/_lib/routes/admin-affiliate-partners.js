@@ -340,7 +340,7 @@ module.exports = async function handler(req, res) {
       const partnerRow = loaded.row;
       const partner = mapPartnerRow(partnerRow);
 
-      // Default: email invite (T&Cs link + accept CTA + hub) as soon as the partner is created.
+      // Default: email invite (T&Cs link + accept CTA + partner workspace) as soon as created.
       // Pass sendInvite: false to create the record without emailing (e.g. staged setup).
       const sendInviteFlag = body.sendInvite != null ? body.sendInvite : body.send_invite;
       const sendInvite =

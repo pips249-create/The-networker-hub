@@ -17,7 +17,7 @@ Invite-only referral partners who introduce paying customers for:
 2. **Advertising & sponsorship** packages (all paid sponsor / placement slots on `/advertising`)
 
 Public enquire page: [`/partners`](https://www.thenetworkeruk.com/partners) (applications reviewed — not self-serve signup).  
-Referral Partner Terms: [`/partners/terms`](https://www.thenetworkeruk.com/partners/terms) — applicants tick acceptance on apply; invited partners accept at [`/partners/accept-terms`](https://www.thenetworkeruk.com/partners/accept-terms) (code + invite email). **Creating a partner in Command Centre emails the invite automatically** (T&Cs link + accept CTA + hub); use **Email invite** to resend. Run migration `296_affiliate_partner_terms.sql`.  
+Referral Partner Terms: [`/partners/terms`](https://www.thenetworkeruk.com/partners/terms) — applicants tick acceptance on apply; invited partners accept at [`/partners/accept-terms`](https://www.thenetworkeruk.com/partners/accept-terms) (code + invite email). **Creating a partner in Command Centre emails the invite automatically** (T&Cs link + accept CTA + partner workspace); use **Email invite** to resend. Run migration `296_affiliate_partner_terms.sql`.  
 Not in scope (for now): event ticket booking fees or organiser acquisition bounties.
 
 ---
@@ -82,7 +82,7 @@ Earn **20%** when you introduce brands and opportunity providers who pay to list
 
 **What you get**
 - Unique link + code
-- Partner hub: earnings platform + share links + creatives + brand kit (`/partners/kit?ref=CODE` or `/partners/earnings?ref=CODE`)
+- Partner workspace: earnings + share links + creatives + brand kit (`/partners/kit?ref=CODE` or `/partners/earnings?ref=CODE`)
 - Branded invite email from Command Centre
 - Visibility of referrals and earnings on `/partners/earnings` (live ledger API next; monthly statement from Phase 4)
 - A named inbox: partnerships@thenetworkeruk.com
