@@ -291,6 +291,8 @@
     grid-column: 2;
     padding: 3.8mm 5mm;
     color: var(--opp-navy);
+    justify-content: center;
+    gap: 2mm;
     background:
       radial-gradient(ellipse 80% 70% at 100% 100%, rgba(232, 184, 75, 0.45), transparent 55%),
       linear-gradient(165deg, #fdf6e3 0%, #f5e6c4 42%, #ecd29a 100%);
@@ -317,7 +319,11 @@
     margin-bottom: 0.8mm;
   }
   .cell-events .cell-title { color: #3d2f4a; }
-  .cell-opps .cell-title { color: var(--opp-navy); }
+  .cell-opps .cell-title {
+    color: var(--opp-navy);
+    font-size: 22px;
+    letter-spacing: -0.025em;
+  }
 
   .cell-lede {
     font-size: 11px;
@@ -328,7 +334,14 @@
     margin-bottom: 2.2mm;
   }
   .cell-events .cell-lede { color: rgba(61, 47, 74, 0.78); }
-  .cell-opps .cell-lede { color: rgba(13, 31, 60, 0.78); }
+  .cell-opps .cell-lede {
+    color: rgba(13, 31, 60, 0.82);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.38;
+    max-width: 92mm;
+    margin-bottom: 0;
+  }
 
   .tina-head {
     display: grid;
@@ -340,41 +353,43 @@
 
   .tina-mark {
     position: relative;
-    width: 22mm;
-    height: 22mm;
+    width: 26mm;
+    height: 26mm;
   }
   .tina-mark img {
-    width: 22mm;
-    height: 22mm;
+    width: 26mm;
+    height: 26mm;
     border-radius: 50%;
     object-fit: cover;
     background: #0d0d12;
     box-shadow:
-      0 0 0 2.2px #fff,
-      0 0 0 3.8px rgba(154, 122, 168, 0.5),
-      0 6px 16px rgba(122, 61, 138, 0.2);
+      0 0 0 2.4px #fff,
+      0 0 0 4.2px rgba(154, 122, 168, 0.55),
+      0 8px 18px rgba(122, 61, 138, 0.28);
   }
 
   .tina-title {
     font-family: 'DM Serif Display', Georgia, serif;
     font-weight: 400;
-    font-size: 24px;
-    line-height: 1.05;
-    letter-spacing: -0.01em;
+    font-size: 38px;
+    line-height: 0.95;
+    letter-spacing: -0.025em;
     color: var(--ink);
   }
   .tina-title em {
     font-style: normal;
     color: var(--tina);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
   }
   .tina-title span {
     display: block;
     font-family: 'DM Sans', system-ui, sans-serif;
-    font-size: 10px;
-    font-weight: 650;
-    margin-top: 0.8mm;
-    color: var(--plum-deep);
+    font-size: 12.5px;
+    font-weight: 750;
+    margin-top: 1.6mm;
+    color: var(--tina);
     letter-spacing: 0.01em;
+    line-height: 1.2;
   }
 
   .tina-lede {
@@ -876,36 +891,11 @@
           <div class="panel-row">
             <div>
               <p class="cell-kicker">Grow</p>
-              <h2 class="cell-title" id="opps-heading">Opportunities</h2>
+              <h2 class="cell-title" id="opps-heading">Business Opportunities</h2>
             </div>
             <p class="panel-stat">Live<span>listings</span></p>
           </div>
-          <p class="cell-lede">Partnerships, side hustles and growth listings. Browse free</p>
-          <div class="panel-chips" aria-hidden="true">
-            <i>Side hustles</i>
-            <i>Franchise</i>
-            <i>Partners</i>
-          </div>
-          <div class="example" aria-label="Example opportunity: Get Ahead Virtual Agency">
-            <p class="example-kicker">Open now</p>
-            <div class="example-row">
-              <img
-                class="example-logo"
-                src="../assets/marketing/get-ahead-virtual-agency-logo.png"
-                alt=""
-                width="96"
-                height="96"
-              >
-              <div class="example-copy">
-                <strong>Get Ahead Virtual Agency</strong>
-                <span>Franchise opportunity · run your own VA agency</span>
-              </div>
-            </div>
-            <div class="example-meta">
-              <i>Franchise</i>
-              <i>Manchester</i>
-            </div>
-          </div>
+          <p class="cell-lede">Browse UK franchises, side hustles, partnerships and affiliate opportunities, filter by sector and location, and connect directly with providers.</p>
         </section>
       </div>
     </article>
