@@ -454,9 +454,14 @@
     grid-template-columns: 1fr;
   }
 
+  /* Confirm / enable form first — previews must not push the action below the fold. */
+  .org-enable-panel {
+    order: -1;
+  }
+
   .org-enable-previews {
     position: static;
-    order: -1;
+    order: 1;
   }
 
   .org-enable-preview-stack {

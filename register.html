@@ -55,10 +55,10 @@
             <p class="auth-early-kicker">For organisers</p>
             <h1 id="register-early-title">Nothing to set up today</h1>
             <p class="auth-lede">
-              Your next email will include a personal link to confirm your organiser page. Public browsing is open;
-              tickets and enquiries from 1&nbsp;September.
+              Your next email will include a personal link to confirm your organiser page. Nothing to set up here
+              until that arrives.
             </p>
-            <p class="auth-platform-proof">Same team as the-networker.co.uk · Browsing is open · Tickets from 9am on 1 September</p>
+            <p class="auth-platform-proof">Same team as the-networker.co.uk</p>
             <div class="auth-early-actions">
               <a class="auth-submit auth-early-cta" href="mailto:catherine@thenetworkeruk.com"
                 >Questions? Email Catherine</a
@@ -93,15 +93,15 @@
               organiser tools after sign-up.
             </p>
             <p class="auth-platform-proof" id="auth-platform-proof">
-              Same team as the-networker.co.uk · Browsing is open · Tickets from 9am on 1 September
+              Same team as the-networker.co.uk · Free to join
             </p>
 
             <div id="auth-message" class="auth-message" role="alert"></div>
 
             <form id="register-form" novalidate>
               <div class="auth-field">
-                <label for="name">Full name <span class="auth-optional">(optional)</span></label>
-                <input type="text" id="name" name="name" autocomplete="name" placeholder="Your name" />
+                <label for="name">Full name</label>
+                <input type="text" id="name" name="name" autocomplete="name" required placeholder="Your name" />
               </div>
               <div class="auth-field">
                 <label for="email">Email</label>
@@ -169,13 +169,17 @@
                   sent.</span
                 >
               </label>
-              <label class="auth-terms-check auth-terms-check--optional" for="register-hubert">
+              <label class="auth-terms-check auth-terms-check--optional" for="register-hubert" id="register-hubert-label">
                 <input type="checkbox" id="register-hubert" name="hubertIntros" />
                 <span
                   >Include me in TINA&apos;s AI networking introductions. Receive tailored intro suggestions with fellow
                   members (you can turn this off anytime).</span
                 >
               </label>
+              <p class="auth-terms-check auth-terms-check--optional" id="register-hubert-lbs-note" hidden>
+                Joining from the TINA leaflet includes you in TINA&apos;s AI networking introductions. You can turn this
+                off anytime in account settings.
+              </p>
               <div class="auth-actions">
                 <button type="submit" class="auth-submit" id="register-submit">Continue</button>
               </div>
@@ -193,6 +197,6 @@
 
     <script src="js/hub-turnstile.js?v=20260827sec3"></script>
     <script src="js/register-offer-preview.js?v=20261002offers1"></script>
-    <script src="js/auth.js?v=20261029hubert1"></script>
+    <script src="js/auth.js?v=20261104lbsjoin2"></script>
   </body>
 </html>

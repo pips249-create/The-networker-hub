@@ -26,6 +26,7 @@ const routes = {
   'reset-password': require('./_lib/routes/auth-reset-password'),
   'attendee-dashboard': require('./_lib/routes/auth-attendee-dashboard'),
   'complete-booking': require('./_lib/routes/auth-complete-booking'),
+  'lbs-stand-attend': require('./_lib/routes/auth-lbs-stand-attend'),
   'submit-application': require('./_lib/routes/auth-submit-application'),
   'event-application': require('./_lib/routes/auth-event-application'),
   'create-checkout': require('./_lib/routes/auth-create-checkout'),
