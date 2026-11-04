@@ -34,13 +34,13 @@
   .wrap {
     width: min(560px, calc(100% - 32px));
     margin: 0 auto;
-    padding: 36px 0 56px;
+    padding: 28px 0 48px;
   }
   .card {
     background: rgba(255, 255, 255, 0.92);
     border: 1px solid var(--line);
     border-radius: 16px;
-    padding: 28px 24px 24px;
+    padding: 24px 22px 22px;
     box-shadow: 0 12px 32px rgba(58, 52, 56, 0.08);
   }
   .brands {
@@ -48,7 +48,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    margin-bottom: 22px;
+    margin-bottom: 18px;
   }
   .brands img { display: block; height: auto; }
   .brand-uk { width: min(168px, 46%); }
@@ -64,82 +64,135 @@
   h1 {
     font-family: 'DM Serif Display', Georgia, serif;
     font-weight: 400;
-    font-size: clamp(1.55rem, 4vw, 1.9rem);
+    font-size: clamp(1.45rem, 4vw, 1.8rem);
     line-height: 1.15;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }
   h1 em { font-style: normal; color: var(--tina); }
   .lede {
     color: var(--muted);
-    font-size: 0.98rem;
+    font-size: 0.95rem;
     margin-bottom: 16px;
   }
   .about {
-    margin: 0 0 18px;
-    padding: 14px 14px 12px;
+    margin: 0 0 16px;
+    padding: 12px 14px 10px;
     border: 1px solid rgba(228, 216, 200, 0.95);
     border-radius: 12px;
     background: rgba(255, 253, 249, 0.9);
   }
   .about h2 {
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--plum);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
   .about p {
-    font-size: 0.92rem;
+    font-size: 0.88rem;
     color: var(--muted);
-    margin-bottom: 10px;
+    margin: 0;
   }
-  .find-list {
-    list-style: none;
-    display: grid;
-    gap: 8px;
-  }
-  .find-list li {
-    display: grid;
-    grid-template-columns: 18px 1fr;
-    gap: 8px;
-    align-items: start;
-    font-size: 0.9rem;
-    color: var(--ink);
-    line-height: 1.35;
-  }
-  .find-list li::before {
-    content: '';
-    width: 8px;
-    height: 8px;
-    margin-top: 5px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--tina-soft), var(--gold));
-  }
-  .find-list strong { font-weight: 700; }
   #lbs-join-status {
-    min-height: 1.4em;
-    font-size: 0.95rem;
+    min-height: 1.3em;
+    font-size: 0.92rem;
     color: var(--ink);
-    margin-bottom: 14px;
+    margin-bottom: 12px;
   }
   #lbs-join-status[data-kind='ok'] { color: #2f6b4f; }
   #lbs-join-status[data-kind='warn'] { color: #8a4b16; }
+  #lbs-join-status[data-kind='error'] { color: #8b2e2e; }
   #lbs-join-action {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
   }
+  .lbs-signup[hidden],
+  #lbs-join-action[hidden] {
+    display: none !important;
+  }
+  .lbs-signup {
+    display: grid;
+    gap: 12px;
+    margin-top: 2px;
+  }
+  .lbs-field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 5px;
+  }
+  .lbs-field input[type='text'],
+  .lbs-field input[type='email'],
+  .lbs-field input[type='password'] {
+    width: 100%;
+    font: inherit;
+    font-size: 15px;
+    padding: 11px 12px;
+    border: 1px solid rgba(122, 95, 136, 0.28);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--ink);
+  }
+  .lbs-field input:focus {
+    outline: 2px solid rgba(157, 96, 167, 0.35);
+    border-color: var(--tina-soft);
+  }
+  .lbs-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  @media (max-width: 520px) {
+    .lbs-row { grid-template-columns: 1fr; }
+  }
+  .lbs-terms {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--muted);
+  }
+  .lbs-terms input {
+    margin-top: 3px;
+    flex: 0 0 auto;
+  }
+  .lbs-terms a {
+    color: var(--tina);
+    font-weight: 700;
+    text-decoration: underline;
+  }
+  .lbs-note {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+  .lbs-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
   .lbs-btn {
+    appearance: none;
+    border: 0;
+    cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 11px 16px;
+    padding: 12px 18px;
     border-radius: 999px;
     font: inherit;
     font-size: 14px;
     font-weight: 700;
     text-decoration: none;
+  }
+  .lbs-btn:disabled {
+    opacity: 0.65;
+    cursor: wait;
   }
   .lbs-btn-primary {
     background: var(--tina-soft);
@@ -150,6 +203,9 @@
     background: transparent;
     color: var(--plum);
     border: 1px solid rgba(122, 95, 136, 0.35);
+  }
+  .hub-turnstile-wrap {
+    margin-top: 2px;
   }
   .note {
     margin-top: 18px;
@@ -170,30 +226,88 @@
       <p class="kicker">From the show floor</p>
       <h1>Meet <em>TINA</em>, The Intelligent Networking Assistant</h1>
       <p class="lede">
-        Quick signup on the show floor: full name, email, company, location and a password.
-        We’ll create your account, start a basic TINA profile, and record that you attended
-        The Business Show London. You can finish the rest later.
+        Fill this in now — we’ll create your free Networker UK account, start a basic TINA profile,
+        and record that you attended The Business Show London. Finish the rest later.
       </p>
       <section class="about" aria-labelledby="lbs-about-heading">
-        <h2 id="lbs-about-heading">What is The Networker UK?</h2>
+        <h2 id="lbs-about-heading">The Networker UK</h2>
         <p>
-          The home for UK business networking — find groups and events, list opportunities, and meet the
-          right people through TINA.
+          Find events and opportunities, and get warm intros through TINA — without cold LinkedIn outreach.
         </p>
-        <ul class="find-list">
-          <li><span><strong>Events &amp; organisers</strong> — browse networking meetings across the UK</span></li>
-          <li><span><strong>TINA introductions</strong> — ask who you want to meet; members approve before you connect</span></li>
-          <li><span><strong>Business opportunities</strong> — partnerships, sponsorships, and growth listings</span></li>
-        </ul>
       </section>
+
       <p id="lbs-join-status" role="status">Preparing…</p>
-      <div id="lbs-join-action"></div>
+      <div id="lbs-join-action" hidden></div>
+
+      <form id="lbs-signup-form" class="lbs-signup" novalidate>
+        <div class="lbs-field">
+          <label for="lbs-name">Full name</label>
+          <input type="text" id="lbs-name" name="name" autocomplete="name" required placeholder="Your full name">
+        </div>
+        <div class="lbs-field">
+          <label for="lbs-email">Email</label>
+          <input type="email" id="lbs-email" name="email" autocomplete="email" required placeholder="you@company.com">
+        </div>
+        <div class="lbs-row">
+          <div class="lbs-field">
+            <label for="lbs-company">Company</label>
+            <input type="text" id="lbs-company" name="company" autocomplete="organization" required placeholder="Your company">
+          </div>
+          <div class="lbs-field">
+            <label for="lbs-location">Location</label>
+            <input type="text" id="lbs-location" name="location" autocomplete="address-level2" required placeholder="City or town">
+          </div>
+        </div>
+        <div class="lbs-field">
+          <label for="lbs-password">Password</label>
+          <input
+            type="password"
+            id="lbs-password"
+            name="password"
+            autocomplete="new-password"
+            required
+            minlength="10"
+            placeholder="At least 10 characters, with a letter and number"
+          >
+        </div>
+        <div class="lbs-field">
+          <label for="lbs-password2">Confirm password</label>
+          <input
+            type="password"
+            id="lbs-password2"
+            name="password2"
+            autocomplete="new-password"
+            required
+            minlength="10"
+            placeholder="Repeat your password"
+          >
+        </div>
+        <label class="lbs-terms" for="lbs-terms">
+          <input type="checkbox" id="lbs-terms" name="terms" required>
+          <span>
+            I agree to the
+            <a href="/legal-policies#terms" target="_blank" rel="noopener noreferrer">Terms &amp; conditions</a>
+            and
+            <a href="/legal-policies#privacy" target="_blank" rel="noopener noreferrer">Privacy policy</a>.
+          </span>
+        </label>
+        <p class="lbs-note">
+          Joining from this leaflet includes you in TINA&apos;s AI networking introductions.
+          You can turn this off anytime in account settings. Marketing emails stay off unless you opt in later.
+        </p>
+        <div class="lbs-actions">
+          <button type="submit" class="lbs-btn lbs-btn-primary" id="lbs-submit">Create free account</button>
+          <a class="lbs-btn lbs-btn-secondary" id="lbs-signin-link" href="/login">Sign in</a>
+        </div>
+      </form>
+
       <p class="note">
         Leaflet QR destination · <a href="/events/the-business-show-london">Event page</a>
         · <a href="/">thenetworkeruk.com</a>
       </p>
     </article>
   </main>
-  <script src="js/lbs-tina-join.js?v=20261104lbs5"></script>
+  <script src="js/hub-turnstile.js?v=20260827sec3"></script>
+  <script src="js/lbs-tina-join.js?v=20261104lbs6"></script>
 </body>
 </html>
