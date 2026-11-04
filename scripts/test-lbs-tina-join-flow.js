@@ -42,12 +42,18 @@ assert.ok(/id="name"[^>]*required/.test(registerHtml), 'full name input required
 const authJs = read('js/auth.js');
 assert.ok(authJs.includes('isTinaLbsJoinEntry'), 'detects LBS QR entry');
 assert.ok(authJs.includes('applyTinaLbsRegisterDefaults'), 'applies LBS register defaults');
-assert.ok(/hubertEl\.checked = true/.test(authJs), 'pre-ticks TINA intros from LBS QR');
+assert.ok(!/hubertEl\.checked = true/.test(authJs), 'does not pre-tick TINA checkbox (Recital 32)');
+assert.ok(/hubertOptIn: lbsTinaJoin \? true/.test(authJs), 'leaflet path sets hubertOptIn in payload');
+assert.ok(authJs.includes('register-hubert-lbs-note'), 'shows TINA leaflet disclosure note');
 assert.ok(authJs.includes('isAttendeeSignupEntry'), 'forces full form for attendee join');
 assert.ok(authJs.includes('Please enter your full name.'), 'client requires full name');
 
 const registerRoute = read('api/_lib/routes/auth-register.js');
 assert.ok(registerRoute.includes('missing_name'), 'server requires full name');
+assert.ok(registerRoute.includes('tinaLbsJoin'), 'server recognises TINA leaflet campaign');
+assert.ok(registerRoute.includes("utmCampaign === 'tina_lbs'"), 'server maps tina_lbs to intros');
+
+assert.ok(registerHtml.includes('register-hubert-lbs-note'), 'register has leaflet TINA disclosure');
 
 const enableCss = read('css/organiser-enable.css');
 assert.ok(/\.org-enable-panel\s*\{\s*order:\s*-1/m.test(enableCss), 'confirm panel first on mobile');

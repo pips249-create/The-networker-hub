@@ -351,6 +351,7 @@
 
       var marketingEl = document.getElementById('register-marketing');
       var hubertEl = document.getElementById('register-hubert');
+      var lbsTinaJoin = isTinaLbsJoinEntry();
 
       getRegisterTurnstileToken()
         .then(function (token) {
@@ -361,9 +362,15 @@
             next: next,
             intent: getIntentParam(),
             marketingOptIn: marketingEl ? marketingEl.checked : false,
-            hubertOptIn: hubertEl ? hubertEl.checked : false,
+            // Leaflet QR: TINA intros are part of this join path (disclosed on the form).
+            // Do not use a pre-ticked checkbox (GDPR Recital 32).
+            hubertOptIn: lbsTinaJoin ? true : hubertEl ? hubertEl.checked : false,
             termsAccepted: true,
           };
+          if (lbsTinaJoin) {
+            payload.utmCampaign = 'tina_lbs';
+            payload.utmSource = 'the_business_show_london';
+          }
           if (token) payload.turnstileToken = token;
           return fetch('/api/auth/register', {
             method: 'POST',
@@ -574,17 +581,24 @@
   }
 
   /**
-   * Leaflet QR join: TINA intros are the reason they scanned.
-   * Pre-check the visible opt-in (they can untick). Marketing stays off.
-   * GDPR: Recital 32 bars pre-ticked boxes for consent-based marketing;
-   * this path is a product feature they requested via a TINA-specific QR,
-   * with clear labelling and an easy opt-out — not silent marketing consent.
+   * Leaflet QR join: TINA intros are why they scanned.
+   * GDPR Recital 32 — do not pre-tick the opt-in checkbox. Disclose that
+   * this path includes TINA intros, set interest via the register payload /
+   * server when campaign is tina_lbs, and leave opt-out in account settings.
+   * Marketing stays off.
    */
   function applyTinaLbsRegisterDefaults() {
     if (!registerForm || !isTinaLbsJoinEntry()) return;
 
+    var hubertLabel = document.getElementById('register-hubert-label');
     var hubertEl = document.getElementById('register-hubert');
-    if (hubertEl) hubertEl.checked = true;
+    var hubertNote = document.getElementById('register-hubert-lbs-note');
+    if (hubertLabel) hubertLabel.hidden = true;
+    if (hubertEl) {
+      hubertEl.checked = false;
+      hubertEl.disabled = true;
+    }
+    if (hubertNote) hubertNote.hidden = false;
 
     var registerTitle = document.getElementById('register-form-title');
     if (registerTitle) {
