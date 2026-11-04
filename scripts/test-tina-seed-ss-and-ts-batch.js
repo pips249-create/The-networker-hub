@@ -6,7 +6,7 @@ const { normalizeSeedInput } = require('../api/_lib/hubert-match-seed');
 const file = path.join(__dirname, '../data/tina-seed-ss-and-ts-batch-2026-11.json');
 const batch = JSON.parse(fs.readFileSync(file, 'utf8'));
 const sql = fs.readFileSync(
-  path.join(__dirname, '../supabase/migrations/352_tina_seed_ss_and_ts_batch.sql'),
+  path.join(__dirname, '../supabase/migrations/354_tina_seed_ss_and_ts_batch.sql'),
   'utf8'
 );
 
