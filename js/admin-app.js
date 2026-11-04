@@ -34398,11 +34398,12 @@
     });
   }
 
+  var HUBERT_SEED_PAGE_SIZE = 25;
   var hubertSeedState = {
     status: 'active',
     q: '',
     page: 1,
-    pageSize: 50,
+    pageSize: HUBERT_SEED_PAGE_SIZE,
     cache: null,
     inviteAs: 'rosie',
   };
@@ -34680,23 +34681,19 @@
       });
     }
 
-    var prevBtn = root.querySelector('#hmm-seed-page-prev');
-    var nextBtn = root.querySelector('#hmm-seed-page-next');
-    if (prevBtn && !prevBtn.dataset.bound) {
-      prevBtn.dataset.bound = '1';
-      prevBtn.addEventListener('click', function () {
-        if (hubertSeedState.page <= 1) return;
-        hubertSeedState.page -= 1;
+    var pager = root.querySelector('#hmm-seed-pager');
+    if (pager && !pager.dataset.bound) {
+      pager.dataset.bound = '1';
+      pager.addEventListener('click', function (e) {
+        var btn = e.target && e.target.closest ? e.target.closest('[data-hmm-seed-page]') : null;
+        if (!btn || !pager.contains(btn)) return;
+        var nextPage0 = parseInt(btn.getAttribute('data-hmm-seed-page'), 10);
+        if (!Number.isFinite(nextPage0) || nextPage0 < 0) return;
+        hubertSeedState.page = nextPage0 + 1;
         loadHubertMatchmakerSeed();
       });
     }
-    if (nextBtn && !nextBtn.dataset.bound) {
-      nextBtn.dataset.bound = '1';
-      nextBtn.addEventListener('click', function () {
-        hubertSeedState.page += 1;
-        loadHubertMatchmakerSeed();
-      });
-    }
+    bindAdminPaginationGoto();
   }
 
   function paintHubertMatchmakerSeed(data) {
@@ -34807,41 +34804,42 @@
 
   function renderHubertSeedPager(data) {
     var page = Math.max(1, parseInt(data && data.page, 10) || hubertSeedState.page || 1);
-    var pageSize = Math.max(10, parseInt(data && data.pageSize, 10) || hubertSeedState.pageSize || 50);
+    var pageSize = Math.max(
+      10,
+      parseInt(data && data.pageSize, 10) || hubertSeedState.pageSize || HUBERT_SEED_PAGE_SIZE
+    );
     var totalMatched = Math.max(0, parseInt(data && data.totalMatched, 10) || 0);
-    var totalPages = Math.max(1, parseInt(data && data.totalPages, 10) || Math.ceil(totalMatched / pageSize) || 1);
+    var totalPages = Math.max(
+      1,
+      parseInt(data && data.totalPages, 10) || Math.ceil(totalMatched / pageSize) || 1
+    );
+    if (page > totalPages) page = totalPages;
     hubertSeedState.page = page;
     hubertSeedState.pageSize = pageSize;
-    if (totalMatched <= pageSize && page === 1) {
-      return (
-        '<div class="px-4 py-3 border-t border-slate-100 text-xs text-slate-500">' +
-        esc(String(totalMatched)) +
-        ' contact' +
-        (totalMatched === 1 ? '' : 's') +
-        '</div>'
-      );
-    }
     var from = totalMatched ? (page - 1) * pageSize + 1 : 0;
     var to = Math.min(page * pageSize, totalMatched);
-    return (
-      '<div class="px-4 py-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">' +
+    var summary =
       '<p class="text-xs text-slate-500">' +
       (totalMatched
-        ? 'Showing ' + esc(String(from)) + '–' + esc(String(to)) + ' of ' + esc(String(totalMatched))
+        ? 'Showing ' +
+          esc(String(from)) +
+          '–' +
+          esc(String(to)) +
+          ' of ' +
+          esc(String(totalMatched)) +
+          ' contact' +
+          (totalMatched === 1 ? '' : 's')
         : 'No matches') +
-      ' · Page ' +
-      esc(String(page)) +
-      ' of ' +
-      esc(String(totalPages)) +
-      '</p>' +
-      '<div class="flex flex-wrap gap-2">' +
-      '<button type="button" id="hmm-seed-page-prev" class="rounded-lg border border-slate-300 text-sm font-semibold px-3 py-1.5 hover:bg-slate-50 disabled:opacity-40" ' +
-      (page <= 1 ? 'disabled' : '') +
-      '>Previous</button>' +
-      '<button type="button" id="hmm-seed-page-next" class="rounded-lg border border-slate-300 text-sm font-semibold px-3 py-1.5 hover:bg-slate-50 disabled:opacity-40" ' +
-      (page >= totalPages ? 'disabled' : '') +
-      '>Next</button>' +
-      '</div></div>'
+      '</p>';
+    var pagerHtml = adminPaginationHtml(page - 1, totalMatched, pageSize, 'data-hmm-seed-page');
+    if (!pagerHtml && totalMatched <= pageSize) {
+      return '<div class="px-4 py-3 border-t border-slate-100">' + summary + '</div>';
+    }
+    return (
+      '<div id="hmm-seed-pager" class="px-4 py-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">' +
+      summary +
+      (pagerHtml || '') +
+      '</div>'
     );
   }
 
@@ -34849,13 +34847,24 @@
     if (!main) return;
     var params = new URLSearchParams();
     params.set('page', String(hubertSeedState.page || 1));
-    params.set('pageSize', String(hubertSeedState.pageSize || 50));
+    params.set('pageSize', String(hubertSeedState.pageSize || HUBERT_SEED_PAGE_SIZE));
     if (hubertSeedState.status) params.set('status', hubertSeedState.status);
     if (hubertSeedState.q) params.set('q', hubertSeedState.q);
     main.innerHTML = '<p class="text-sm text-slate-500">Loading TINA seed list…</p>';
     adminGet('/api/admin/hubert-matchmaker?' + params.toString())
       .then(function (data) {
         hubertSeedState.cache = data;
+        var totalMatched = Math.max(0, parseInt(data && data.totalMatched, 10) || 0);
+        var pageSize = Math.max(
+          10,
+          parseInt(data && data.pageSize, 10) || hubertSeedState.pageSize || HUBERT_SEED_PAGE_SIZE
+        );
+        var maxPage = Math.max(1, Math.ceil(totalMatched / pageSize) || 1);
+        if (hubertSeedState.page > maxPage) {
+          hubertSeedState.page = maxPage;
+          loadHubertMatchmakerSeed();
+          return;
+        }
         paintHubertMatchmakerSeed(data);
       })
       .catch(function (err) {

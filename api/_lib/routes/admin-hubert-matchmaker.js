@@ -53,7 +53,7 @@ module.exports = async function handler(req, res) {
         status: queryParam(req, 'status'),
         q: queryParam(req, 'q'),
         page: queryParam(req, 'page') || 1,
-        pageSize: queryParam(req, 'pageSize') || queryParam(req, 'limit') || 50,
+        pageSize: queryParam(req, 'pageSize') || queryParam(req, 'limit') || 25,
       });
       return json(res, 200, { ok: true, ...data });
     }
