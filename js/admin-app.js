@@ -2037,7 +2037,7 @@
       return 'Choose an ad placement to edit creatives and booking windows.';
     }
     if (route === 'referral-partners') {
-      return 'Invite-only partner programme — creating a partner emails the invite (T&Cs + accept link). Codes, links, and 20% commission tracking.';
+      return 'Invite-only partner programme — create a partner, then press Email invite when you want to send T&Cs + workspace links.';
     }
     return null;
   }
@@ -12084,7 +12084,7 @@
       '<div class="space-y-6">' +
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">' +
       '<div><h3 class="font-bold text-brand-900">Referral partners</h3>' +
-          '<p class="text-xs text-slate-500 mt-1">Invite-only partner programme — 20% on opportunity listings and sponsorship. Public enquire: <a class="text-brand-700 hover:underline" href="/partners" target="_blank" rel="noopener">/partners</a>. <strong>Create partner</strong> emails the invite (Referral Partner Terms + accept link + partner workspace). Use <strong>Email invite</strong> to resend. Terms stay <strong>Pending</strong> until they accept (or you <strong>Mark accepted</strong>). <strong>Clicks</strong> = anonymous link landings with <code>?ref=CODE</code> (deduped ~30 mins per browser) — they do <em>not</em> show names. <strong>Known people</strong> appear when they submit an advertising enquiry, start checkout, or pay (see <strong>Activity</strong> per partner and the commissions ledger below). Inbox: partnerships@thenetworkeruk.com · Partner workspace: <a class="text-brand-700 hover:underline" href="/partners/kit" target="_blank" rel="noopener">/partners/kit</a> (same page as <code>/partners/earnings</code>)</p></div>' +
+          '<p class="text-xs text-slate-500 mt-1">Invite-only partner programme — 20% on opportunity listings and sponsorship. Public enquire: <a class="text-brand-700 hover:underline" href="/partners" target="_blank" rel="noopener">/partners</a>. <strong>Create partner</strong> saves the code only — nothing is emailed until you press <strong>Email invite</strong> (Referral Partner Terms + accept link + partner workspace). Terms stay <strong>Pending</strong> until they accept (or you <strong>Mark accepted</strong>). <strong>Clicks</strong> = anonymous link landings with <code>?ref=CODE</code> (deduped ~30 mins per browser) — they do <em>not</em> show names. <strong>Known people</strong> appear when they submit an advertising enquiry, start checkout, or pay (see <strong>Activity</strong> per partner and the commissions ledger below). Inbox: partnerships@thenetworkeruk.com · Partner workspace: <a class="text-brand-700 hover:underline" href="/partners/kit" target="_blank" rel="noopener">/partners/kit</a> (same page as <code>/partners/earnings</code>)</p></div>' +
       '<form id="affiliate-partner-form" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 items-end">' +
       '<label class="text-xs font-semibold text-slate-600">Code<input id="aff-code" name="code" required maxlength="32" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono uppercase" placeholder="JOE" /></label>' +
       '<label class="text-xs font-semibold text-slate-600">Display name<input id="aff-name" name="displayName" required class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Joe Bloggs" /></label>' +
@@ -12587,26 +12587,13 @@
           .then(function (res) {
             if (!res || !res.ok) throw new Error((res && res.message) || res.error || 'create_failed');
             form.reset();
-            var code = (res.partner && res.partner.code) || '';
-            var to = (res.sent && res.sent.to) || (res.partner && res.partner.email) || '';
-            if (res.inviteSent) {
-              setStatus(
-                statusEl,
-                'Partner ' + code + ' created — invite + T&Cs emailed to ' + (to || 'partner') + '.',
-                'ok'
-              );
-            } else if (res.inviteError || res.message) {
-              var failMsg =
-                'Partner ' +
-                code +
-                ' created, but the invite email failed' +
-                (res.inviteError ? ' (' + res.inviteError + ')' : '') +
-                '. Click Email invite to resend.';
-              setStatus(statusEl, failMsg, 'error');
-              window.alert(failMsg);
-            } else {
-              setStatus(statusEl, 'Partner ' + code + ' created (invite not sent).', 'error');
-            }
+            setStatus(
+              statusEl,
+              'Partner ' +
+                ((res.partner && res.partner.code) || '') +
+                ' created. Press Email invite when you want to send T&Cs.',
+              'ok'
+            );
             return loadPartners();
           })
           .catch(function (err) {
