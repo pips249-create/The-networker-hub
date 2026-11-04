@@ -16654,7 +16654,7 @@
           '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr>' +
           '<td style="width:72px;vertical-align:top;padding:0 14px 0 0;"><img src="' +
           previewOrigin +
-          '/assets/about-rosie.png?v=20260828email1" alt="Rosie, co-founder of The Networker UK" width="72" height="72" style="width:72px;height:72px;border-radius:50%;display:block;border:0;object-fit:cover;"></td>' +
+          '/assets/about-rosie.png?v=20261104rosie1" alt="Rosie, co-founder of The Networker UK" width="72" height="72" style="width:72px;height:72px;border-radius:50%;display:block;border:0;object-fit:cover;"></td>' +
           '<td style="vertical-align:top;">' +
           '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:0.6px;margin:0 0 6px;">Meet the team</p>' +
           '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:18px;font-weight:700;color:#1c2040;margin:0 0 8px;line-height:1.3;">Meet Rosie (the co-founder) at The MarTech Summit</p>' +
