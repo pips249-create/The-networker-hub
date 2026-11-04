@@ -323,6 +323,10 @@
       var password2 = document.getElementById('password2').value;
       var next = getNextParam();
 
+      if (!name) {
+        showMessage(msg, 'Please enter your full name.', 'error');
+        return;
+      }
       if (password !== password2) {
         showMessage(msg, 'Passwords do not match.', 'error');
         return;
@@ -347,6 +351,7 @@
 
       var marketingEl = document.getElementById('register-marketing');
       var hubertEl = document.getElementById('register-hubert');
+      var lbsTinaJoin = isTinaLbsJoinEntry();
 
       getRegisterTurnstileToken()
         .then(function (token) {
@@ -357,9 +362,15 @@
             next: next,
             intent: getIntentParam(),
             marketingOptIn: marketingEl ? marketingEl.checked : false,
-            hubertOptIn: hubertEl ? hubertEl.checked : false,
+            // Leaflet QR: TINA intros are part of this join path (disclosed on the form).
+            // Do not use a pre-ticked checkbox (GDPR Recital 32).
+            hubertOptIn: lbsTinaJoin ? true : hubertEl ? hubertEl.checked : false,
             termsAccepted: true,
           };
+          if (lbsTinaJoin) {
+            payload.utmCampaign = 'tina_lbs';
+            payload.utmSource = 'the_business_show_london';
+          }
           if (token) payload.turnstileToken = token;
           return fetch('/api/auth/register', {
             method: 'POST',
@@ -555,6 +566,62 @@
           btn.disabled = false;
         });
     });
+  }
+
+  function isTinaLbsJoinEntry() {
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('utm_campaign') === 'tina_lbs') return true;
+    if (params.get('utm_source') === 'the_business_show_london') return true;
+    var next = getNextParam();
+    return Boolean(next && /tina_lbs|lbs-tina-join/i.test(next));
+  }
+
+  function isAttendeeSignupEntry() {
+    return getIntentParam() === 'attendee' || isTinaLbsJoinEntry();
+  }
+
+  /**
+   * Leaflet QR join: TINA intros are why they scanned.
+   * GDPR Recital 32 — do not pre-tick the opt-in checkbox. Disclose that
+   * this path includes TINA intros, set interest via the register payload /
+   * server when campaign is tina_lbs, and leave opt-out in account settings.
+   * Marketing stays off.
+   */
+  function applyTinaLbsRegisterDefaults() {
+    if (!registerForm || !isTinaLbsJoinEntry()) return;
+
+    var hubertLabel = document.getElementById('register-hubert-label');
+    var hubertEl = document.getElementById('register-hubert');
+    var hubertNote = document.getElementById('register-hubert-lbs-note');
+    if (hubertLabel) hubertLabel.hidden = true;
+    if (hubertEl) {
+      hubertEl.checked = false;
+      hubertEl.disabled = true;
+    }
+    if (hubertNote) hubertNote.hidden = false;
+
+    var registerTitle = document.getElementById('register-form-title');
+    if (registerTitle) {
+      registerTitle.textContent = 'Create your free Networker UK profile';
+    }
+
+    var registerLede = document.getElementById('register-form-lede');
+    if (registerLede) {
+      registerLede.textContent =
+        'Join The Networker UK for TINA introductions. After you confirm your email we’ll mark The Business Show London as attended and take you to your TINA profile.';
+    }
+
+    var registerProof = document.getElementById('auth-platform-proof');
+    if (registerProof) {
+      registerProof.textContent = 'From The Business Show London · Free to join · TINA intros';
+      registerProof.hidden = false;
+    }
+
+    var backLink = document.getElementById('register-back-link');
+    if (backLink) {
+      backLink.href = '/lbs-tina-join';
+      backLink.textContent = '← Back to show join';
+    }
   }
 
   function applyCheckoutContext() {
@@ -1202,11 +1269,13 @@
     var forceFull =
       isOrganiserClaimEntry() ||
       isOrganiserAuthIntentFromPage() ||
+      isAttendeeSignupEntry() ||
       params.get('signup') === '1' ||
       params.get('signup') === 'true';
 
     if (forceFull) {
       showRegisterFullForm();
+      applyTinaLbsRegisterDefaults();
       return;
     }
 
@@ -1233,8 +1302,10 @@
             });
     probe.then(function (open) {
       if (forceFull) return;
-      if (open) showRegisterFullForm();
-      else showRegisterEarlyAccess();
+      if (open) {
+        showRegisterFullForm();
+        applyTinaLbsRegisterDefaults();
+      } else showRegisterEarlyAccess();
     });
   }
 
@@ -1242,6 +1313,7 @@
   applyEarlyAccessRegisterMode();
   applyOrganiserIntentContext();
   applyOrganiserClaimContext();
+  applyTinaLbsRegisterDefaults();
   applyConfirmEmailContext();
   initLoginAudienceToggle();
   maybeRedirectAuthenticatedLogin();

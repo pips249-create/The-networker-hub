@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<meta name="description" content="Join The Networker from The Business Show London — free profile for TINA, with the show added to your tickets.">
-<title>Join from The Business Show London · TINA · The Networker</title>
+<meta name="description" content="Join The Networker UK from The Business Show London — free profile for TINA, The Intelligent Networking Assistant, and mark the show as attended.">
+<title>Join from The Business Show London · TINA · The Networker UK</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&family=DM+Serif+Display&display=swap" rel="stylesheet">
@@ -72,8 +72,51 @@
   .lede {
     color: var(--muted);
     font-size: 0.98rem;
-    margin-bottom: 18px;
+    margin-bottom: 16px;
   }
+  .about {
+    margin: 0 0 18px;
+    padding: 14px 14px 12px;
+    border: 1px solid rgba(228, 216, 200, 0.95);
+    border-radius: 12px;
+    background: rgba(255, 253, 249, 0.9);
+  }
+  .about h2 {
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--plum);
+    margin-bottom: 8px;
+  }
+  .about p {
+    font-size: 0.92rem;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .find-list {
+    list-style: none;
+    display: grid;
+    gap: 8px;
+  }
+  .find-list li {
+    display: grid;
+    grid-template-columns: 18px 1fr;
+    gap: 8px;
+    align-items: start;
+    font-size: 0.9rem;
+    color: var(--ink);
+    line-height: 1.35;
+  }
+  .find-list li::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    margin-top: 5px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--tina-soft), var(--gold));
+  }
+  .find-list strong { font-weight: 700; }
   #lbs-join-status {
     min-height: 1.4em;
     font-size: 0.95rem;
@@ -125,18 +168,35 @@
         <img class="brand-show" src="assets/marketing/the-business-show-london-logo-navy.png" alt="The Business Show London" width="120" height="80">
       </div>
       <p class="kicker">From the show floor</p>
-      <h1>Meet <em>TINA</em> — and keep The Business Show London on your profile</h1>
+      <h1>Meet <em>TINA</em>, The Intelligent Networking Assistant</h1>
       <p class="lede">
-        Create your free Networker membership for TINA introductions. We’ll also add The Business Show London
-        as a free ticket on your account, so it shows in your tickets and attended events.
+        Create your free The Networker UK profile. We’ll record that you attended The Business Show London,
+        and set you up for TINA introductions.
       </p>
+      <section class="about" aria-labelledby="lbs-about-heading">
+        <h2 id="lbs-about-heading">What is The Networker UK?</h2>
+        <p>
+          The home for UK business networking — find groups and events, list opportunities, and meet the
+          right people through TINA.
+        </p>
+        <ul class="find-list">
+          <li><span><strong>Events &amp; organisers</strong> — browse networking meetings across the UK</span></li>
+          <li><span><strong>TINA introductions</strong> — ask who you want to meet; members approve before you connect</span></li>
+          <li><span><strong>Business opportunities</strong> — partnerships, sponsorships, and growth listings</span></li>
+        </ul>
+      </section>
       <p id="lbs-join-status" role="status">Preparing…</p>
       <div id="lbs-join-action"></div>
       <p class="note">
         Leaflet QR destination · <a href="/events/the-business-show-london">Event page</a>
+        · <a href="/">thenetworkeruk.com</a>
       </p>
     </article>
   </main>
+<<<<<<< HEAD
   <script src="js/lbs-tina-join.js?v=20261104lbs3"></script>
+=======
+  <script src="js/lbs-tina-join.js?v=20261104lbs4"></script>
+>>>>>>> origin/main
 </body>
 </html>

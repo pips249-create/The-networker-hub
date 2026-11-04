@@ -1,6 +1,6 @@
 /**
- * London Business Show stand join: create free account path + free Attendee ticket
- * so the show appears on the member’s tickets / attended list.
+ * London Business Show stand join: free account for TINA + mark the show as attended
+ * (stand check-in — not a ticket purchase).
  */
 (function () {
   'use strict';
@@ -30,31 +30,6 @@
     );
   }
 
-  function pickFreeTicket(event) {
-    var tickets = (event && event.tickets) || [];
-    for (var i = 0; i < tickets.length; i++) {
-      var t = tickets[i];
-      if (!t) continue;
-      if (t.soldOut) continue;
-      if (t.priceKey === 'free' || Number(t.priceNum) === 0 || t.price === 'Free') return t;
-    }
-    return null;
-  }
-
-  function fetchEvent() {
-    return fetch('/api/events?slug=' + encodeURIComponent(EVENT_SLUG), {
-      credentials: 'same-origin',
-      headers: { Accept: 'application/json' },
-    }).then(function (res) {
-      return res.json().then(function (data) {
-        if (!res.ok || !data || !data.event) {
-          throw new Error((data && data.error) || 'event_unavailable');
-        }
-        return data.event;
-      });
-    });
-  }
-
   function fetchSession() {
     return fetch('/api/auth/session', {
       credentials: 'same-origin',
@@ -73,24 +48,16 @@
       });
   }
 
-  function bookFree(event, ticket, user) {
-    return fetch('/api/auth/complete-booking', {
+  function markAttended() {
+    return fetch('/api/auth/lbs-stand-attend', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({
-        eventId: event.id,
-        ticketId: ticket.id,
-        qty: 1,
-        name: user.name || '',
-        email: user.email || '',
-        amountPaid: 0,
-        paymentStatus: 'Free',
-      }),
+      body: JSON.stringify({ source: 'leaflet_qr' }),
     }).then(function (res) {
       return res.json().then(function (data) {
         if (!res.ok || !data || !data.ok) {
-          var err = new Error((data && (data.message || data.error)) || 'booking_failed');
+          var err = new Error((data && (data.message || data.error)) || 'attend_failed');
           err.code = data && data.error;
           throw err;
         }
@@ -100,7 +67,9 @@
   }
 
   function showSignedOut() {
-    setStatus('Create your free profile, then we’ll add The Business Show London to your tickets.');
+    setStatus(
+      'Create your free Networker UK profile for TINA. We’ll also record that you visited The Business Show London.'
+    );
     setAction(
       '<a class="lbs-btn lbs-btn-primary" href="' +
         registerHref() +
@@ -111,8 +80,13 @@
     );
   }
 
-  function showSuccess() {
-    setStatus('You’re in — The Business Show London is on your tickets. Next, finish your TINA profile.', 'ok');
+  function showSuccess(already) {
+    setStatus(
+      already
+        ? 'You’re already recorded for The Business Show London. Next, finish your TINA profile.'
+        : 'You’re in — The Business Show London is recorded on your account as attended. Next, finish your TINA profile.',
+      'ok'
+    );
     setAction(
       '<a class="lbs-btn lbs-btn-primary" href="/account/#meet">Open TINA profile</a>' +
         '<a class="lbs-btn lbs-btn-secondary" href="/account/#tickets">View my tickets</a>'
@@ -122,44 +96,33 @@
   function humanError(err) {
     var code = err && err.code ? String(err.code) : '';
     var msg = err && err.message ? String(err.message) : '';
-    if (code === 'already_registered' || /already/i.test(msg)) {
-      return 'You’re already registered for The Business Show London.';
+    if (code === 'already_going' || code === 'already_registered' || /already/i.test(msg)) {
+      return 'You’re already marked as having attended The Business Show London.';
     }
-    if (code === 'ticket_sales_platform_closed' || /sales/i.test(msg)) {
-      return 'Ticket sales are closed right now. Create your free profile anyway — we’ll help you claim the show from My account.';
+    if (code === 'no_free_ticket') {
+      return 'Show check-in isn’t open on this listing yet. You can still finish your TINA profile.';
     }
-    return 'We couldn’t add the ticket automatically. Create or open your profile, then book the free Attendee ticket on the event page.';
+    if (code === 'event_not_found') {
+      return 'We couldn’t find the show listing. You can still create your free profile for TINA.';
+    }
+    return 'We couldn’t record attendance automatically. Create or open your profile — you can add the show from Events I’ve attended later.';
   }
 
   function run() {
     setStatus('Checking your account…');
     setAction('');
 
-    Promise.all([fetchSession(), fetchEvent()])
-      .then(function (parts) {
-        var user = parts[0];
-        var event = parts[1];
-        var ticket = pickFreeTicket(event);
-
+    fetchSession()
+      .then(function (user) {
         if (!user) {
           showSignedOut();
           return null;
         }
-        if (!ticket) {
-          setStatus('Free tickets aren’t open on this listing right now. You can still create your TINA profile.');
-          setAction(
-            '<a class="lbs-btn lbs-btn-primary" href="/account/#meet">Open TINA profile</a>' +
-              '<a class="lbs-btn lbs-btn-secondary" href="/events/' +
-              EVENT_SLUG +
-              '">View event</a>'
-          );
-          return null;
-        }
 
-        setStatus('Adding The Business Show London to your tickets…');
-        return bookFree(event, ticket, user)
-          .then(function () {
-            showSuccess();
+        setStatus('Recording that you attended The Business Show London…');
+        return markAttended()
+          .then(function (data) {
+            showSuccess(Boolean(data && data.already));
           })
           .catch(function (err) {
             var code = err && err.code ? String(err.code) : '';
@@ -170,20 +133,23 @@
               code === 'exists' ||
               /already/i.test(msg)
             ) {
-              showSuccess();
+              showSuccess(true);
               return;
             }
             setStatus(humanError(err), 'warn');
             setAction(
-              '<a class="lbs-btn lbs-btn-primary" href="/events/' +
+              '<a class="lbs-btn lbs-btn-primary" href="/account/#meet">Open TINA profile</a>' +
+                '<a class="lbs-btn lbs-btn-secondary" href="/events/' +
                 EVENT_SLUG +
-                '">Book free ticket</a>' +
-                '<a class="lbs-btn lbs-btn-secondary" href="/account/#meet">Open TINA profile</a>'
+                '">View event</a>'
             );
           });
       })
       .catch(function () {
-        setStatus('Something went wrong loading the show listing. You can still create your free profile for TINA.', 'warn');
+        setStatus(
+          'Something went wrong checking your session. You can still create your free profile for TINA.',
+          'warn'
+        );
         setAction(
           '<a class="lbs-btn lbs-btn-primary" href="' +
             registerHref() +
