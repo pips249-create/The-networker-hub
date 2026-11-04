@@ -68,6 +68,12 @@ module.exports = async function handler(req, res) {
     body.terms === true ||
     body.terms === 'true';
 
+  if (!name) {
+    return json(res, 400, {
+      error: 'missing_name',
+      message: 'Please enter your full name.',
+    });
+  }
   if (!email || !password) {
     return json(res, 400, {
       error: 'missing_fields',

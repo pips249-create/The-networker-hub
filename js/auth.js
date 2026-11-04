@@ -323,6 +323,10 @@
       var password2 = document.getElementById('password2').value;
       var next = getNextParam();
 
+      if (!name) {
+        showMessage(msg, 'Please enter your full name.', 'error');
+        return;
+      }
       if (password !== password2) {
         showMessage(msg, 'Passwords do not match.', 'error');
         return;
@@ -555,6 +559,55 @@
           btn.disabled = false;
         });
     });
+  }
+
+  function isTinaLbsJoinEntry() {
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('utm_campaign') === 'tina_lbs') return true;
+    if (params.get('utm_source') === 'the_business_show_london') return true;
+    var next = getNextParam();
+    return Boolean(next && /tina_lbs|lbs-tina-join/i.test(next));
+  }
+
+  function isAttendeeSignupEntry() {
+    return getIntentParam() === 'attendee' || isTinaLbsJoinEntry();
+  }
+
+  /**
+   * Leaflet QR join: TINA intros are the reason they scanned.
+   * Pre-check the visible opt-in (they can untick). Marketing stays off.
+   * GDPR: Recital 32 bars pre-ticked boxes for consent-based marketing;
+   * this path is a product feature they requested via a TINA-specific QR,
+   * with clear labelling and an easy opt-out — not silent marketing consent.
+   */
+  function applyTinaLbsRegisterDefaults() {
+    if (!registerForm || !isTinaLbsJoinEntry()) return;
+
+    var hubertEl = document.getElementById('register-hubert');
+    if (hubertEl) hubertEl.checked = true;
+
+    var registerTitle = document.getElementById('register-form-title');
+    if (registerTitle) {
+      registerTitle.textContent = 'Create your free Networker UK profile';
+    }
+
+    var registerLede = document.getElementById('register-form-lede');
+    if (registerLede) {
+      registerLede.textContent =
+        'Join The Networker UK for TINA introductions. After you confirm your email we’ll mark The Business Show London as attended and take you to your TINA profile.';
+    }
+
+    var registerProof = document.getElementById('auth-platform-proof');
+    if (registerProof) {
+      registerProof.textContent = 'From The Business Show London · Free to join · TINA intros';
+      registerProof.hidden = false;
+    }
+
+    var backLink = document.getElementById('register-back-link');
+    if (backLink) {
+      backLink.href = '/lbs-tina-join';
+      backLink.textContent = '← Back to show join';
+    }
   }
 
   function applyCheckoutContext() {
@@ -1202,11 +1255,13 @@
     var forceFull =
       isOrganiserClaimEntry() ||
       isOrganiserAuthIntentFromPage() ||
+      isAttendeeSignupEntry() ||
       params.get('signup') === '1' ||
       params.get('signup') === 'true';
 
     if (forceFull) {
       showRegisterFullForm();
+      applyTinaLbsRegisterDefaults();
       return;
     }
 
@@ -1233,8 +1288,10 @@
             });
     probe.then(function (open) {
       if (forceFull) return;
-      if (open) showRegisterFullForm();
-      else showRegisterEarlyAccess();
+      if (open) {
+        showRegisterFullForm();
+        applyTinaLbsRegisterDefaults();
+      } else showRegisterEarlyAccess();
     });
   }
 
@@ -1242,6 +1299,7 @@
   applyEarlyAccessRegisterMode();
   applyOrganiserIntentContext();
   applyOrganiserClaimContext();
+  applyTinaLbsRegisterDefaults();
   applyConfirmEmailContext();
   initLoginAudienceToggle();
   maybeRedirectAuthenticatedLogin();
