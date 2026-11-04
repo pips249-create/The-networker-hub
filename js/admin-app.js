@@ -12271,7 +12271,9 @@
               );
             })
             .catch(function (err) {
-              setStatus(statusEl, (err && err.message) || 'Could not send invite', 'error');
+              var msg = (err && err.message) || 'Could not send invite';
+              setStatus(statusEl, msg, 'error');
+              window.alert('Invite email failed: ' + msg);
             })
             .finally(function () {
               btn.disabled = false;
@@ -12594,13 +12596,16 @@
                 'ok'
               );
             } else if (res.inviteError || res.message) {
-              setStatus(
-                statusEl,
-                'Partner ' + code + ' created, but invite failed. Use Email invite to resend.',
-                'error'
-              );
+              var failMsg =
+                'Partner ' +
+                code +
+                ' created, but the invite email failed' +
+                (res.inviteError ? ' (' + res.inviteError + ')' : '') +
+                '. Click Email invite to resend.';
+              setStatus(statusEl, failMsg, 'error');
+              window.alert(failMsg);
             } else {
-              setStatus(statusEl, 'Partner ' + code + ' created.', 'ok');
+              setStatus(statusEl, 'Partner ' + code + ' created (invite not sent).', 'error');
             }
             return loadPartners();
           })
