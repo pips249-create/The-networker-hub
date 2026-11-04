@@ -364,7 +364,7 @@
       title: 'How to review business opportunities',
       steps: [
         'Filter to Pending review to see new listings.',
-        'One listing per brand — Utility Warehouse, Arbonne, and BNI cannot be duplicated (Command Centre blocks create/save if one already exists).',
+        'One listing per brand on the catalogue — Utility Warehouse, Arbonne, and BNI. Abandoned drafts do not hold the slot; live, pending-review, approved-awaiting-pay, and paid-unpublished listings do.',
         'Click Review to open the listing on its own page (submitted details, website preview, and admin edit).',
         'Approve — if unpaid, the owner gets a pay-to-go-live email; if already paid, it goes live now. Confirm dialog explains which.',
         'Deny if it does not meet standards (include a reason) — then you return to the list.',
@@ -27296,7 +27296,7 @@
     banner.innerHTML =
       '<div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 space-y-2">' +
       '<p class="text-sm font-semibold text-red-900">Exclusive brand duplicates in catalogue</p>' +
-      '<p class="text-xs text-red-800">Only one Utility Warehouse, Arbonne, or BNI listing should be live. Archive or delete extras, then keep the best one.</p>' +
+      '<p class="text-xs text-red-800">Only one Utility Warehouse, Arbonne, or BNI listing should hold the catalogue slot (live, pending review, or approved awaiting payment). Archive or delete extras, then keep the best one.</p>' +
       '<ul class="text-xs text-red-900 list-disc pl-5 space-y-1">' +
       parts.join('') +
       '</ul>' +
@@ -29524,7 +29524,7 @@
       '</div></div>' +
       '<div class="px-4 pb-4 space-y-4">' +
       '<p class="text-xs text-slate-600 pt-3">Create a hub-owned business opportunity with image, description, and card details. It stays claimable until you assign an owner email (or someone requests a claim). Prefix the title with <code class="text-[11px]">[TEST]</code> for throwaway previews.</p>' +
-      '<p class="text-xs text-amber-900 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">One listing per brand on <code class="text-[11px]">/opportunities/</code> — Utility Warehouse, Arbonne, and BNI. Command Centre blocks a duplicate if one is already in the catalogue.</p>' +
+      '<p class="text-xs text-amber-900 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">One listing per brand on <code class="text-[11px]">/opportunities/</code> — Utility Warehouse, Arbonne, and BNI. Blocks only when another listing is live, pending review, approved awaiting payment, or paid-unpublished — not abandoned drafts.</p>' +
       '<form class="opportunity-create-form grid sm:grid-cols-2 gap-3">' +
       opportunityListingFieldsHtml(
         { type: 'business-opportunity', status: 'published' },
