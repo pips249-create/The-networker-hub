@@ -2037,7 +2037,7 @@
       return 'Choose an ad placement to edit creatives and booking windows.';
     }
     if (route === 'referral-partners') {
-      return 'Invite-only partner programme — codes, links, and 20% referral commission tracking.';
+      return 'Invite-only partner programme — creating a partner emails the invite (T&Cs + accept link). Codes, links, and 20% commission tracking.';
     }
     return null;
   }
