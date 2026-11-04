@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="Printable A5 leave-behind for The London Business Show — Meet TINA and build your free Networker UK profile.">
+<title>Meet TINA · London Business Show leaflet · The Networker UK</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any">
+<style>
+  /* A5 landscape leave-behind — matches site TINA teaser + Networker UK print kit */
+  @page { size: A5 landscape; margin: 0; }
+
+  :root {
+    --ink: #241536;
+    --muted: #635c5e;
+    --navy: #1e3a4f;
+    --teal: #0d6e7a;
+    --tina: #7a3d8a;
+    --tina-soft: #9d60a7;
+    --line: rgba(125, 72, 150, 0.18);
+    --cream: #fbf8fd;
+    --paper: #ffffff;
+    --gold: #c4a574;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    color: var(--ink);
+    background: #dfe4ec;
+    line-height: 1.35;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .screen-bar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: var(--navy);
+    color: #fff;
+    font-size: 13px;
+  }
+  .screen-bar a,
+  .screen-bar button {
+    appearance: none;
+    border: 0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    background: #fff;
+    color: var(--navy);
+  }
+  .screen-bar .print { background: #e8d4ef; color: var(--ink); }
+  .screen-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .wrap {
+    padding: 24px 16px 48px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .page {
+    width: 210mm;
+    height: 148mm;
+    background:
+      radial-gradient(ellipse 55% 70% at 0% 100%, rgba(13, 110, 122, 0.08), transparent 55%),
+      radial-gradient(ellipse 50% 60% at 100% 0%, rgba(157, 96, 167, 0.14), transparent 50%),
+      linear-gradient(165deg, #fbf8fd 0%, #ffffff 48%, #f5f8fb 100%);
+    border: 1px solid #c9d4dc;
+    border-radius: 4px;
+    box-shadow: 0 10px 30px rgba(26, 46, 59, 0.12);
+    padding: 9mm 11mm 8mm;
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 8mm;
+  }
+  .page::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4mm;
+    background: linear-gradient(180deg, var(--tina-soft) 0%, var(--teal) 100%);
+  }
+
+  .col-copy {
+    padding-left: 2mm;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .brand-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 4mm;
+  }
+  .logo {
+    width: 46mm;
+    height: auto;
+    display: block;
+  }
+  .show-chip {
+    flex: 0 0 auto;
+    font-size: 8.5px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--tina);
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 999px;
+    padding: 4px 9px;
+    white-space: nowrap;
+  }
+
+  .tina-kicker {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2mm;
+  }
+  .tina-dot {
+    width: 10mm;
+    height: 10mm;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #0d0d12;
+    box-shadow:
+      0 0 0 1.5px rgba(255, 255, 255, 0.95),
+      0 2px 8px rgba(45, 27, 94, 0.14);
+  }
+  .tina-kicker span {
+    font-size: 11px;
+    font-weight: 750;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--tina);
+  }
+
+  h1 {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-weight: 400;
+    font-size: 26px;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    margin-bottom: 2.5mm;
+    max-width: 108mm;
+  }
+  h1 em {
+    font-style: normal;
+    color: var(--tina);
+  }
+
+  .lede {
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--muted);
+    max-width: 108mm;
+    margin-bottom: 5mm;
+  }
+
+  .points {
+    list-style: none;
+    display: grid;
+    gap: 3mm;
+    margin-top: 0;
+    margin-bottom: 4mm;
+  }
+  .points li {
+    display: grid;
+    grid-template-columns: 4.5mm 1fr;
+    gap: 2.5mm;
+    align-items: start;
+    font-size: 11.5px;
+    color: var(--navy);
+    line-height: 1.3;
+  }
+  .points li::before {
+    content: '';
+    width: 4.5mm;
+    height: 4.5mm;
+    margin-top: 1px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--tina-soft), var(--teal));
+  }
+  .points strong {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .points span {
+    display: block;
+    font-size: 10.5px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-top: 0.6mm;
+  }
+
+  .foot-note {
+    margin-top: auto;
+    font-size: 9.5px;
+    color: var(--muted);
+  }
+  .foot-note a {
+    color: var(--teal);
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .col-cta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 6mm 5mm 5.5mm;
+    box-shadow: 0 2px 10px rgba(45, 27, 94, 0.05);
+  }
+
+  .cta-label {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--tina);
+    margin-bottom: 3.5mm;
+  }
+
+  .qr-frame {
+    width: 52mm;
+    height: 52mm;
+    padding: 2.5mm;
+    background: #fff;
+    border: 1.5px solid rgba(125, 72, 150, 0.28);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-frame img {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .cta-action {
+    margin-top: 3.5mm;
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.2;
+    color: var(--ink);
+  }
+  .cta-sub {
+    margin-top: 1.5mm;
+    font-size: 11px;
+    color: var(--muted);
+    max-width: 58mm;
+    line-height: 1.35;
+  }
+  .cta-url {
+    margin-top: 3mm;
+    font-size: 10.5px;
+    font-weight: 750;
+    color: var(--tina-soft);
+    word-break: break-all;
+  }
+
+  @media print {
+    body { background: #fff; }
+    .screen-bar { display: none !important; }
+    .wrap { padding: 0; }
+    .page {
+      width: 210mm;
+      height: 148mm;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+    }
+  }
+
+  @media screen and (max-width: 900px) {
+    .page {
+      width: min(100%, 210mm);
+      height: auto;
+      min-height: 148mm;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+    .col-cta { padding: 18px 16px; }
+    .qr-frame { width: 180px; height: 180px; }
+  }
+</style>
+<script src="/js/hub-compliance-bootstrap.js?v=20260923cmp4" data-root="/"></script>
+</head>
+<body>
+  <div class="screen-bar">
+    <div><strong>London Business Show</strong> — A5 landscape leave-behind (Meet TINA)</div>
+    <div class="screen-actions">
+      <button type="button" class="print" id="leaflet-print">Print / Save as PDF</button>
+      <a href="../assets/marketing/london-business-show-tina-leaflet.pdf" download>Download PDF</a>
+      <a href="../">Site home</a>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <article class="page" aria-label="Meet TINA leaflet for The London Business Show">
+      <div class="col-copy">
+        <div class="brand-row">
+          <img class="logo" src="../assets/logo-nav-transparent.png?v=20260823uk3" alt="The Networker UK" width="180" height="40">
+          <span class="show-chip">London Business Show</span>
+        </div>
+
+        <div class="tina-kicker">
+          <img class="tina-dot" src="../assets/hubert-icon.png" width="64" height="64" alt="">
+          <span>TINA</span>
+        </div>
+
+        <h1>Meet <em>TINA</em>, The Intelligent Networking Assistant</h1>
+        <p class="lede">
+          Tell TINA who you want to meet — an IT director in Chester, a B2B founder, a solicitor in Manchester —
+          and get warm introductions. Members approve before you connect.
+        </p>
+
+        <ul class="points">
+          <li>
+            <div>
+              <strong>Build your free profile</strong>
+              <span>Join The Networker UK and get ready for intros.</span>
+            </div>
+          </li>
+          <li>
+            <div>
+              <strong>Find events &amp; organisers</strong>
+              <span>Browse networking across the UK in one place.</span>
+            </div>
+          </li>
+          <li>
+            <div>
+              <strong>Open to opportunities</strong>
+              <span>Partnerships, sponsorships, and growth listings.</span>
+            </div>
+          </li>
+        </ul>
+
+        <p class="foot-note">
+          Free to join · <a href="https://www.thenetworkeruk.com/">thenetworkeruk.com</a>
+        </p>
+      </div>
+
+      <aside class="col-cta">
+        <p class="cta-label">Create your profile</p>
+        <div class="qr-frame">
+          <img
+            src="../assets/marketing/qr-tina-lbs.svg"
+            alt="QR code — scan to register and build your TINA profile on The Networker UK"
+            width="200"
+            height="200"
+          >
+        </div>
+        <p class="cta-action">Scan to join free</p>
+        <p class="cta-sub">Opens registration, then your TINA profile setup.</p>
+        <p class="cta-url">thenetworkeruk.com/register</p>
+      </aside>
+    </article>
+  </div>
+
+  <script>
+    document.getElementById('leaflet-print').addEventListener('click', function () {
+      window.print();
+    });
+  </script>
+</body>
+</html>
