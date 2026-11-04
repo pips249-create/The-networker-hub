@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<meta name="description" content="Printable A5 leave-behind for The Business Show London — The Networker UK, TINA, Events, and Opportunities.">
+<meta name="description" content="Printable A5 leave-behind for The Business Show London, The Networker UK, TINA, Events, and Opportunities.">
 <title>Meet TINA · The Business Show London leaflet · The Networker UK</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,13 +19,24 @@
     --plum: #7a5f88;
     --plum-deep: #5f486b;
     --live: #9a7aa8;
-    --gold: #c9ad7a;
-    --gold-deep: #9a7d4a;
-    --bg: #faf6f0;
+    --live-deep: #7d6585;
+    --gold: #f5d998;
+    --gold-soft: #fff8ec;
+    --gold-mid: #ecd29a;
+    --gold-deep: #8a6210;
+    --opp-navy: #0d1f3c;
+    --opp-navy-mid: #162847;
+    --opp-gold: #c9961f;
+    --opp-gold-pale: #fdf6e3;
+    --events-lilac: #f3ebf7;
+    --events-mid: #e8dcf0;
+    --events-deep: #d9c4e0;
+    --events-ink: #7a5f8a;
     --tina: #7a3d8a;
     --tina-soft: #9d60a7;
+    --tina-bg: #fbf8fd;
     --panel: #241e28;
-    --rule: rgba(58, 52, 56, 0.42);
+    --rule: rgba(58, 52, 56, 0.18);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -80,10 +91,7 @@
     width: 210mm;
     height: 148mm;
     max-height: 148mm;
-    background:
-      radial-gradient(ellipse 48% 55% at 78% 18%, rgba(201, 173, 122, 0.22), transparent 58%),
-      radial-gradient(ellipse 40% 50% at 18% 88%, rgba(157, 96, 167, 0.16), transparent 55%),
-      linear-gradient(155deg, #fffefb 0%, var(--bg) 48%, #f0e6f4 100%);
+    background: #fff;
     border: 1.5px solid rgba(122, 61, 138, 0.38);
     border-radius: 3px;
     box-shadow: 0 10px 30px rgba(58, 52, 56, 0.12);
@@ -101,12 +109,11 @@
     z-index: 2;
   }
 
-  /* Compact brand header — no show date chip */
   .masthead {
     display: flex;
     align-items: center;
     gap: 5mm;
-    padding: 3.6mm 6mm 3.6mm 7.5mm;
+    padding: 3.2mm 6mm 3.2mm 7.5mm;
     background:
       radial-gradient(ellipse 60% 120% at 70% 30%, rgba(177, 137, 184, 0.28), transparent 65%),
       linear-gradient(100deg, #1c1720 0%, var(--panel) 55%, #3a3040 100%);
@@ -114,7 +121,7 @@
     border-bottom: 1.4px solid rgba(255, 255, 255, 0.08);
   }
   .brand-logo {
-    width: 38mm;
+    width: 48mm;
     height: auto;
     display: block;
     flex: 0 0 auto;
@@ -131,12 +138,38 @@
     color: #fff;
     font-weight: 750;
   }
+  .masthead-free {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4mm;
+    padding: 2mm 3.2mm;
+    border-radius: 8px;
+    background: linear-gradient(155deg, #fff8ec 0%, #f5d998 55%, #e8c47a 100%);
+    color: var(--ink);
+    text-align: center;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+  }
+  .masthead-free strong {
+    font-size: 11px;
+    font-weight: 850;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+  .masthead-free span {
+    font-size: 8px;
+    font-weight: 650;
+    color: rgba(46, 41, 48, 0.72);
+    line-height: 1.15;
+  }
 
-  /* Narrower TINA column — Events/Opps get more room */
   .grid {
     min-height: 0;
     display: grid;
-    grid-template-columns: 0.78fr 1.22fr;
+    grid-template-columns: 0.92fr 1.08fr;
     grid-template-rows: 1fr 1fr;
   }
 
@@ -144,38 +177,44 @@
     min-height: 0;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     text-align: left;
-    padding: 4mm 5mm;
+    padding: 3.5mm 4.5mm;
   }
 
+  /* TINA — site teaser colours (#fbf8fd / #7a3d8a) */
   .cell-tina {
     grid-row: 1 / span 2;
     grid-column: 1;
-    border-right: 1.4px solid var(--rule);
-    justify-content: flex-start;
-    gap: 2.5mm;
-    padding: 4mm 4.5mm 3.5mm 5.5mm;
-    background: linear-gradient(185deg, rgba(255, 255, 255, 0.55) 0%, rgba(247, 240, 250, 0.35) 100%);
+    border-right: 1.4px solid rgba(125, 72, 150, 0.18);
+    gap: 1.8mm;
+    padding: 3.4mm 4mm 3mm 5.2mm;
+    background:
+      radial-gradient(ellipse 70% 55% at 0% 0%, rgba(157, 96, 167, 0.16), transparent 60%),
+      linear-gradient(160deg, #fbf8fd 0%, #ffffff 42%, #f5f0f8 100%);
   }
 
+  /* Events — site purple (#f3ebf7 / #d9c4e0) */
   .cell-events {
     grid-row: 1;
     grid-column: 2;
-    border-bottom: 1.4px solid var(--rule);
-    padding: 4.5mm 5.5mm;
+    border-bottom: 1.4px solid rgba(154, 122, 168, 0.28);
+    padding: 3.8mm 5mm;
+    color: var(--opp-navy);
     background:
-      radial-gradient(ellipse 70% 80% at 100% 0%, rgba(201, 173, 122, 0.28), transparent 55%),
-      linear-gradient(165deg, #fff9ef 0%, rgba(255, 253, 249, 0.5) 100%);
+      radial-gradient(ellipse 80% 70% at 100% 0%, rgba(217, 196, 224, 0.7), transparent 55%),
+      linear-gradient(165deg, #f3ebf7 0%, #e8dcf0 42%, #d9c4e0 100%);
   }
 
+  /* Opportunities — site gold / navy (#fdf6e3 / #0d1f3c) */
   .cell-opps {
     grid-row: 2;
     grid-column: 2;
-    padding: 4.5mm 5.5mm;
+    padding: 3.8mm 5mm;
+    color: var(--opp-navy);
     background:
-      radial-gradient(ellipse 70% 80% at 100% 100%, rgba(157, 96, 167, 0.22), transparent 55%),
-      linear-gradient(200deg, #faf5fc 0%, rgba(255, 253, 249, 0.45) 100%);
+      radial-gradient(ellipse 80% 70% at 100% 100%, rgba(232, 184, 75, 0.45), transparent 55%),
+      linear-gradient(165deg, #fdf6e3 0%, #f5e6c4 42%, #ecd29a 100%);
   }
 
   .cell-kicker {
@@ -184,59 +223,64 @@
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--tina);
-    margin-bottom: 1mm;
+    margin-bottom: 0.6mm;
   }
-  .cell-events .cell-kicker { color: var(--gold-deep); }
-  .cell-opps .cell-kicker { color: var(--tina); }
+  .cell-events .cell-kicker { color: var(--events-ink); }
+  .cell-opps .cell-kicker { color: var(--opp-navy); }
 
   .cell-title {
     font-family: 'DM Serif Display', Georgia, serif;
     font-weight: 400;
-    font-size: 26px;
-    line-height: 1.05;
+    font-size: 25px;
+    line-height: 1.02;
     letter-spacing: -0.02em;
     color: var(--ink);
-    margin-bottom: 1.2mm;
+    margin-bottom: 0.8mm;
   }
+  .cell-events .cell-title { color: #3d2f4a; }
+  .cell-opps .cell-title { color: var(--opp-navy); }
 
   .cell-lede {
-    font-size: 11.5px;
-    font-weight: 500;
+    font-size: 11px;
+    font-weight: 550;
     color: var(--muted);
-    line-height: 1.3;
-    max-width: 78mm;
-    margin-bottom: 2.8mm;
+    line-height: 1.28;
+    max-width: 82mm;
+    margin-bottom: 2.2mm;
   }
+  .cell-events .cell-lede { color: rgba(61, 47, 74, 0.78); }
+  .cell-opps .cell-lede { color: rgba(13, 31, 60, 0.78); }
 
   .tina-head {
     display: grid;
     grid-template-columns: auto 1fr;
-    gap: 2.4mm;
+    gap: 3mm;
     align-items: center;
     width: 100%;
   }
 
   .tina-mark {
     position: relative;
-    width: 11mm;
-    height: 11mm;
+    width: 22mm;
+    height: 22mm;
   }
   .tina-mark img {
-    width: 11mm;
-    height: 11mm;
+    width: 22mm;
+    height: 22mm;
     border-radius: 50%;
     object-fit: cover;
     background: #0d0d12;
     box-shadow:
-      0 0 0 1.5px #fff,
-      0 0 0 2.6px rgba(154, 122, 168, 0.4);
+      0 0 0 2.2px #fff,
+      0 0 0 3.8px rgba(154, 122, 168, 0.5),
+      0 6px 16px rgba(122, 61, 138, 0.2);
   }
 
   .tina-title {
     font-family: 'DM Serif Display', Georgia, serif;
     font-weight: 400;
-    font-size: 17px;
-    line-height: 1.1;
+    font-size: 24px;
+    line-height: 1.05;
     letter-spacing: -0.01em;
     color: var(--ink);
   }
@@ -246,25 +290,28 @@
   }
   .tina-title span {
     display: block;
+    font-family: 'DM Sans', system-ui, sans-serif;
     font-size: 10px;
-    margin-top: 0.6mm;
+    font-weight: 650;
+    margin-top: 0.8mm;
     color: var(--plum-deep);
+    letter-spacing: 0.01em;
   }
 
   .tina-lede {
-    font-size: 10.5px;
-    font-weight: 500;
+    font-size: 11px;
+    font-weight: 550;
     color: var(--muted);
     line-height: 1.35;
   }
 
   .demo {
     width: 100%;
-    padding: 2.2mm 2.6mm;
-    border-radius: 8px;
+    padding: 2.4mm 2.8mm;
+    border-radius: 9px;
     background: #fff;
-    border: 1px solid rgba(154, 122, 168, 0.2);
-    box-shadow: 0 3px 12px rgba(122, 61, 138, 0.06);
+    border: 1px solid rgba(154, 122, 168, 0.22);
+    box-shadow: 0 4px 14px rgba(122, 61, 138, 0.08);
   }
   .demo-label {
     font-size: 7.5px;
@@ -278,7 +325,7 @@
     display: flex;
     align-items: center;
     gap: 1.5mm;
-    padding: 1.6mm 2mm;
+    padding: 1.8mm 2.2mm;
     border-radius: 6px;
     background: linear-gradient(90deg, #f7f2fb, #faf6f0);
     border: 1px solid rgba(154, 122, 168, 0.16);
@@ -286,7 +333,7 @@
   }
   .demo-prompt .typed {
     flex: 1;
-    font-size: 9.5px;
+    font-size: 10px;
     color: var(--ink);
     line-height: 1.2;
     min-width: 0;
@@ -302,7 +349,7 @@
     color: #fff;
     background: linear-gradient(135deg, var(--tina-soft), var(--tina));
     border-radius: 999px;
-    padding: 2px 6px;
+    padding: 2px 7px;
   }
   .demo-result {
     display: grid;
@@ -311,20 +358,20 @@
     align-items: center;
   }
   .demo-avatar {
-    width: 5.5mm;
-    height: 5.5mm;
+    width: 6mm;
+    height: 6mm;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 7px;
+    font-size: 7.5px;
     font-weight: 800;
     color: var(--plum-deep);
     background: linear-gradient(145deg, #f3ebf5, #efe2c8);
   }
   .demo-result strong {
     display: block;
-    font-size: 9.5px;
+    font-size: 10px;
     font-weight: 750;
     color: var(--ink);
   }
@@ -336,19 +383,52 @@
     margin-top: 0.3mm;
   }
 
+  .tina-points {
+    display: grid;
+    gap: 1.4mm;
+    width: 100%;
+    margin-top: 0.2mm;
+    padding: 2mm 2.4mm;
+    border-radius: 8px;
+    background: rgba(122, 61, 138, 0.06);
+    border: 1px solid rgba(122, 61, 138, 0.12);
+  }
+  .tina-points li {
+    list-style: none;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1.6mm;
+    align-items: start;
+    font-size: 9.5px;
+    font-weight: 600;
+    color: var(--plum-deep);
+    line-height: 1.25;
+  }
+  .tina-points li::before {
+    content: '';
+    width: 1.8mm;
+    height: 1.8mm;
+    margin-top: 1.1mm;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--tina-soft), var(--tina));
+  }
+
   .tina-qr-block {
     display: flex;
     align-items: center;
-    gap: 2.8mm;
+    gap: 2.6mm;
     width: 100%;
     margin-top: auto;
-    padding-top: 1mm;
+    padding: 2.4mm;
+    border-radius: 9px;
+    background: linear-gradient(135deg, rgba(122, 61, 138, 0.12), rgba(157, 96, 167, 0.08));
+    border: 1.2px solid rgba(122, 61, 138, 0.24);
   }
   .qr-frame {
     flex: 0 0 auto;
-    width: 22mm;
-    height: 22mm;
-    padding: 1.2mm;
+    width: 23mm;
+    height: 23mm;
+    padding: 1.1mm;
     background: #fff;
     border: 1.4px solid rgba(125, 72, 150, 0.35);
     border-radius: 6px;
@@ -363,6 +443,18 @@
     display: block;
   }
   .qr-copy { min-width: 0; }
+  .qr-free {
+    display: inline-block;
+    font-size: 8px;
+    font-weight: 850;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #fff;
+    background: linear-gradient(135deg, var(--tina-soft), var(--tina));
+    border-radius: 4px;
+    padding: 1.4px 5px;
+    margin-bottom: 1mm;
+  }
   .qr-caption {
     font-size: 11px;
     font-weight: 750;
@@ -377,17 +469,21 @@
     color: var(--muted);
   }
 
-  /* Bolder example cards on the right */
   .example {
     width: 100%;
-    max-width: 88mm;
-    padding: 3mm 3.2mm;
+    max-width: 92mm;
+    padding: 2.4mm 2.8mm;
     border-radius: 9px;
     background: rgba(255, 255, 255, 0.88);
     border: 1px solid rgba(58, 52, 56, 0.1);
-    box-shadow: 0 4px 14px rgba(58, 52, 56, 0.06);
+    box-shadow: 0 4px 14px rgba(58, 52, 56, 0.08);
     position: relative;
     overflow: hidden;
+  }
+  .cell-opps .example {
+    background: rgba(255, 255, 255, 0.88);
+    border-color: rgba(13, 31, 60, 0.12);
+    box-shadow: 0 4px 14px rgba(13, 31, 60, 0.1);
   }
   .example::before {
     content: '';
@@ -396,10 +492,10 @@
     width: 1.6mm;
   }
   .cell-events .example::before {
-    background: linear-gradient(180deg, var(--gold), #e0c89a);
+    background: linear-gradient(180deg, #9a7aa8, #7a5f8a);
   }
   .cell-opps .example::before {
-    background: linear-gradient(180deg, var(--tina-soft), var(--live));
+    background: linear-gradient(180deg, #e8b84b, #c9961f);
   }
   .example-kicker {
     font-size: 7.5px;
@@ -410,44 +506,71 @@
     margin-bottom: 1mm;
     padding-left: 1.5mm;
   }
-  .cell-events .example-kicker { color: var(--gold-deep); }
+  .cell-events .example-kicker { color: var(--events-ink); }
+  .cell-opps .example-kicker { color: var(--opp-navy); }
+  .example-row {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2.4mm;
+    align-items: center;
+    padding-left: 1.5mm;
+  }
+  .example-logo {
+    width: 12mm;
+    height: 12mm;
+    object-fit: contain;
+    border-radius: 5px;
+    background: #fff;
+    border: 1px solid rgba(58, 52, 56, 0.1);
+    display: block;
+  }
+  .cell-events .example-logo {
+    width: 16mm;
+    height: 11mm;
+    padding: 0.6mm;
+    object-fit: contain;
+  }
+  .example-copy { min-width: 0; }
   .example strong {
     display: block;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 750;
     color: var(--ink);
-    margin-bottom: 0.6mm;
-    padding-left: 1.5mm;
+    margin-bottom: 0.4mm;
     letter-spacing: -0.01em;
+    line-height: 1.15;
   }
+  .cell-events .example strong { color: #3d2f4a; }
+  .cell-opps .example strong { color: var(--opp-navy); }
   .example span {
     display: block;
-    font-size: 10px;
+    font-size: 9px;
     color: var(--muted);
-    line-height: 1.3;
-    padding-left: 1.5mm;
+    line-height: 1.25;
   }
+  .cell-events .example span { color: rgba(61, 47, 74, 0.72); }
+  .cell-opps .example span { color: rgba(13, 31, 60, 0.72); }
   .example-meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 1.4mm;
-    margin-top: 1.8mm;
+    gap: 1.2mm;
+    margin-top: 1.4mm;
     padding-left: 1.5mm;
   }
   .example-meta i {
     font-style: normal;
-    font-size: 8.5px;
+    font-size: 8px;
     font-weight: 700;
     border-radius: 4px;
-    padding: 1.8px 5.5px;
+    padding: 1.6px 5px;
   }
   .cell-events .example-meta i {
-    color: var(--gold-deep);
-    background: rgba(201, 173, 122, 0.22);
+    color: var(--events-ink);
+    background: rgba(255, 255, 255, 0.6);
   }
   .cell-opps .example-meta i {
-    color: var(--plum-deep);
-    background: rgba(154, 122, 168, 0.16);
+    color: var(--opp-navy);
+    background: rgba(13, 31, 60, 0.08);
   }
 
   .panel-row {
@@ -455,23 +578,50 @@
     align-items: baseline;
     justify-content: space-between;
     gap: 3mm;
-    margin-bottom: 0.5mm;
+    margin-bottom: 0.2mm;
   }
   .panel-stat {
     font-family: 'DM Serif Display', Georgia, serif;
-    font-size: 15px;
+    font-size: 14px;
     color: var(--ink);
     white-space: nowrap;
+    text-align: right;
   }
+  .cell-events .panel-stat { color: #3d2f4a; }
+  .cell-opps .panel-stat { color: var(--opp-navy); }
   .panel-stat span {
     display: block;
     font-family: 'DM Sans', system-ui, sans-serif;
-    font-size: 8px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
+    font-size: 7.5px;
+    font-weight: 750;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--muted);
-    margin-top: 0.4mm;
+    color: rgba(46, 41, 48, 0.62);
+    margin-top: 0.3mm;
+  }
+  .cell-events .panel-stat span { color: rgba(61, 47, 74, 0.62); }
+  .cell-opps .panel-stat span { color: rgba(13, 31, 60, 0.62); }
+
+  .panel-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.2mm;
+    margin-bottom: 2mm;
+  }
+  .panel-chips i {
+    font-style: normal;
+    font-size: 8px;
+    font-weight: 750;
+    border-radius: 4px;
+    padding: 1.6px 5px;
+  }
+  .cell-events .panel-chips i {
+    color: var(--events-ink);
+    background: rgba(255, 255, 255, 0.55);
+  }
+  .cell-opps .panel-chips i {
+    color: var(--opp-navy);
+    background: rgba(13, 31, 60, 0.08);
   }
 
   @media print {
@@ -514,7 +664,7 @@
 </head>
 <body>
   <div class="screen-bar">
-    <div><strong>The Business Show London</strong> — A5 landscape leave-behind (grid)</div>
+    <div><strong>The Business Show London</strong> · A5 landscape leave-behind (grid)</div>
     <div class="screen-actions">
       <button type="button" class="print" id="leaflet-print">Print / Save as PDF</button>
       <a href="../assets/marketing/london-business-show-tina-leaflet.pdf" download>Download PDF</a>
@@ -527,22 +677,26 @@
       <header class="masthead">
         <img
           class="brand-logo"
-          src="../assets/logo-networker-uk-on-dark.png?v=20260823uk3"
+          src="../assets/logo-networker-uk-email-navy-source.png?v=20261104lbs"
           alt="The Networker UK"
-          width="220"
-          height="99"
+          width="360"
+          height="120"
         >
         <p class="masthead-copy">
-          The home for <strong>UK business networking</strong> — find groups and events,
+          The home for <strong>UK business networking</strong>: find groups and events,
           list opportunities, and meet the right people through TINA.
         </p>
+        <div class="masthead-free" aria-label="Join for free">
+          <strong>For free</strong>
+          <span>Join today</span>
+        </div>
       </header>
 
       <div class="grid">
         <section class="cell cell-tina" aria-labelledby="tina-heading">
           <div class="tina-head">
             <div class="tina-mark">
-              <img src="../assets/hubert-icon.png" width="96" height="96" alt="">
+              <img src="../assets/hubert-icon.png" width="128" height="128" alt="">
             </div>
             <h1 class="tina-title" id="tina-heading">
               <em>TINA</em>
@@ -550,7 +704,7 @@
             </h1>
           </div>
           <p class="tina-lede">
-            Ask who you want to meet — members approve before you connect.
+            Ask who you want to meet. Members approve before you connect.
           </p>
 
           <div class="demo" aria-label="TINA product example">
@@ -563,21 +717,28 @@
               <div class="demo-avatar" aria-hidden="true">AJ</div>
               <div>
                 <strong>Match → private intro</strong>
-                <span>Approve first — contacts stay private.</span>
+                <span>Approve first. Contacts stay private.</span>
               </div>
             </div>
           </div>
+
+          <ul class="tina-points">
+            <li>Tell TINA who you want to meet</li>
+            <li>She finds matching members nearby</li>
+            <li>Both sides approve before details are shared</li>
+          </ul>
 
           <div class="tina-qr-block">
             <div class="qr-frame">
               <img
                 src="../assets/marketing/qr-tina-lbs.png"
-                alt="QR code — scan to join The Networker UK and set up TINA"
+                alt="QR code to join The Networker UK and set up TINA"
                 width="200"
                 height="200"
               >
             </div>
             <div class="qr-copy">
+              <span class="qr-free">Join for free</span>
               <p class="qr-caption">Scan · set up <strong>TINA</strong></p>
               <p class="qr-sub">thenetworkeruk.com/lbs-tina-join</p>
             </div>
@@ -592,14 +753,30 @@
             </div>
             <p class="panel-stat">UK-wide<span>directory</span></p>
           </div>
-          <p class="cell-lede">Browse networking meetings across the UK</p>
-          <div class="example" aria-label="Example event">
-            <p class="example-kicker">This week</p>
-            <strong>Manchester founders breakfast</strong>
-            <span>Weekly in-person networking · city centre</span>
+          <p class="cell-lede">Browse networking meetings across the UK, free to explore</p>
+          <div class="panel-chips" aria-hidden="true">
+            <i>Networking</i>
+            <i>Masterclasses</i>
+            <i>Exhibitions</i>
+          </div>
+          <div class="example" aria-label="Example event: The Business Show London">
+            <p class="example-kicker">On now</p>
+            <div class="example-row">
+              <img
+                class="example-logo"
+                src="../assets/marketing/the-business-show-london-logo-navy.png"
+                alt=""
+                width="120"
+                height="80"
+              >
+              <div class="example-copy">
+                <strong>The Business Show London</strong>
+                <span>UK’s leading business exhibition at ExCeL</span>
+              </div>
+            </div>
             <div class="example-meta">
-              <i>Manchester</i>
-              <i>Thu 7.30am</i>
+              <i>ExCeL London</i>
+              <i>11 &amp; 12 Nov</i>
             </div>
           </div>
         </section>
@@ -612,14 +789,30 @@
             </div>
             <p class="panel-stat">Live<span>listings</span></p>
           </div>
-          <p class="cell-lede">Partnerships, sponsorships, and growth listings</p>
-          <div class="example" aria-label="Example opportunity">
+          <p class="cell-lede">Partnerships, side hustles and growth listings. Browse free</p>
+          <div class="panel-chips" aria-hidden="true">
+            <i>Side hustles</i>
+            <i>Franchise</i>
+            <i>Partners</i>
+          </div>
+          <div class="example" aria-label="Example opportunity: Get Ahead Virtual Agency">
             <p class="example-kicker">Open now</p>
-            <strong>Seeking regional brand partner</strong>
-            <span>Sponsor a 40-group networking calendar across the North West</span>
+            <div class="example-row">
+              <img
+                class="example-logo"
+                src="../assets/marketing/get-ahead-virtual-agency-logo.png"
+                alt=""
+                width="96"
+                height="96"
+              >
+              <div class="example-copy">
+                <strong>Get Ahead Virtual Agency</strong>
+                <span>Franchise opportunity · run your own VA agency</span>
+              </div>
+            </div>
             <div class="example-meta">
-              <i>Sponsorship</i>
-              <i>North West</i>
+              <i>Franchise</i>
+              <i>Manchester</i>
             </div>
           </div>
         </section>
