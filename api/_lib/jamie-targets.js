@@ -1,23 +1,36 @@
 /**
- * Jamie's October–2 November targets for Command Centre.
+ * Jamie's November targets for Command Centre.
  * Visible to Catherine and Jamie. Counts come from her CRM meetings,
  * organiser claims she was last to work, and events she adds (including series dates).
+ * October's closed period is logged below so the scoreboard stays on record.
  */
 const { shownByFromEmail } = require('./organiser-sales-outreach');
 
-const PERIOD_START = '2026-10-01';
-const PERIOD_END = '2026-11-02';
-const PERIOD_START_ISO = '2026-09-30T23:00:00.000Z';
-const PERIOD_END_EXCLUSIVE_ISO = '2026-11-03T00:00:00.000Z';
+const PERIOD_START = '2026-11-01';
+const PERIOD_END = '2026-11-30';
+const PERIOD_START_ISO = '2026-11-01T00:00:00.000Z';
+const PERIOD_END_EXCLUSIVE_ISO = '2026-12-01T00:00:00.000Z';
 const LOOKBACK_DAYS = 90;
-const LOOKBACK_START = '2026-07-03';
-const LOOKBACK_START_ISO = '2026-07-02T23:00:00.000Z';
+const LOOKBACK_START = '2026-08-03';
+const LOOKBACK_START_ISO = '2026-08-02T23:00:00.000Z';
 
 const TARGETS = {
   meetings: 4,
   claimedPages: 25,
   events: 275,
 };
+
+/** Logged finals for closed periods — not recomputed from live activity. */
+const CLOSED_PERIODS = [
+  {
+    label: '1 October – 2 November 2026',
+    start: '2026-10-01',
+    end: '2026-11-02',
+    loggedAt: '2026-11-04',
+    targets: { meetings: 4, claimedPages: 25, events: 275 },
+    results: { meetings: 3, claimedPages: 5, events: 291 },
+  },
+];
 
 const STAFF = new Set(['Catherine', 'Rosie', 'Jamie']);
 const CREDIT_ACTIONS = new Set(['event_created', 'admin_claim_invite', 'admin_ownership_transfer']);
@@ -75,12 +88,38 @@ function periodMeta(now) {
     daysElapsed = daysTotal;
   }
   return {
-    label: '1 October – 2 November 2026',
+    label: '1 – 30 November 2026',
     start: PERIOD_START,
     end: PERIOD_END,
     daysTotal,
     daysElapsed,
     daysRemaining: Math.max(0, daysTotal - daysElapsed),
+  };
+}
+
+function closedPeriodSnapshot(entry) {
+  if (!entry) return null;
+  const targets = entry.targets || TARGETS;
+  const results = entry.results || {};
+  return {
+    label: entry.label,
+    start: entry.start,
+    end: entry.end,
+    loggedAt: entry.loggedAt || '',
+    metrics: {
+      meetings: {
+        ...progressSnapshot(results.meetings, targets.meetings),
+        label: 'Booked meetings',
+      },
+      claimedPages: {
+        ...progressSnapshot(results.claimedPages, targets.claimedPages),
+        label: 'Claimed organiser pages',
+      },
+      events: {
+        ...progressSnapshot(results.events, targets.events),
+        label: 'Events added',
+      },
+    },
   };
 }
 
@@ -426,6 +465,7 @@ function buildJamieTargetsReport(input) {
   const meetings = activity.filter((item) => item.kind === 'meeting');
   return {
     period: periodMeta(now),
+    previous: closedPeriodSnapshot(CLOSED_PERIODS[0]),
     metrics: {
       meetings: {
         ...progressSnapshot(meetings.length, TARGETS.meetings),
@@ -595,11 +635,13 @@ module.exports = {
   PERIOD_START_ISO,
   PERIOD_END_EXCLUSIVE_ISO,
   TARGETS,
+  CLOSED_PERIODS,
   canSeeJamieTargets,
   isBookedMeetingNotes,
   lastStaffBeforeClaim,
   progressSnapshot,
   periodMeta,
+  closedPeriodSnapshot,
   creditListedEvents,
   buildJamieTargetsReport,
   getJamieTargets,

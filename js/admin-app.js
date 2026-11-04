@@ -217,11 +217,11 @@
     },
     'pips-activity': {
       title: "Pip's Activity",
-      subtitle: '1 October – 2 November — events you add, CRM logs, and referrals',
+      subtitle: '1 – 30 November — events you add, CRM logs, and referrals',
     },
     'jamie-targets': {
       title: "Jamie's targets",
-      subtitle: '1 October – 2 November — meetings, claimed pages, and events added',
+      subtitle: '1 – 30 November — meetings, claimed pages, and events added',
     },
     sponsorship: {
       title: 'Ads & sponsors',
@@ -457,14 +457,14 @@
       title: "How Pip's Activity works",
       steps: [
         'This page is only for you. Jamie and Rosie cannot open it.',
-        'It covers the same dates as Jamie\'s targets: 1 October through 2 November.',
+        'It covers the same dates as Jamie\'s targets: 1 through 30 November.',
         'Events you add, including every date in a series, show here. So do CRM logs, meetings, and meetings you refer to Jamie.',
       ],
     },
     'jamie-targets': {
       title: "How Jamie's targets work",
       steps: [
-        'This page is only for Catherine and Jamie. It covers 1 October through 2 November.',
+        'This page is only for Catherine and Jamie. The live scores cover 1 through 30 November. October\'s finals are logged underneath.',
         'Booked meetings count when Jamie logs Meeting in the organiser sales kit. Pitch-deck saves do not count.',
         'A claimed page counts when the group claims in this period and Jamie was the last team member to contact them.',
         'Each date Jamie adds is logged as activity and counts toward events, including every date in a series.',
@@ -34296,7 +34296,7 @@
         '<section class="rounded-xl border border-brand-200 bg-gradient-to-r from-brand-50 to-white p-4 sm:p-5">' +
         '<p class="text-xs font-semibold uppercase tracking-wide text-brand-700">Pip</p>' +
         '<p class="text-lg font-bold text-brand-900 mt-1">' +
-        esc(period.label || '1 October – 2 November 2026') +
+        esc(period.label || '1 – 30 November 2026') +
         '</p>' +
         '<p class="text-sm text-slate-600 mt-1">Only you can see this page. It sits under CRM, above Jamie\'s targets.</p></section>' +
         '<section class="grid sm:grid-cols-3 gap-3">' +
@@ -34332,6 +34332,8 @@
       var targets = data.targets;
       var period = targets.period || {};
       var metrics = targets.metrics || {};
+      var previous = targets.previous || null;
+      var previousMetrics = (previous && previous.metrics) || {};
       var items = Array.isArray(targets.activity) ? targets.activity : [];
       var counted = items.filter(function (item) {
         return item.kind !== 'outreach';
@@ -34379,13 +34381,26 @@
       var crmHtml = crmNotes.length
         ? activityRows(crmNotes, 'text-amber-950')
         : '<p class="text-sm text-amber-900">No CRM notes in this period yet.</p>';
+      var previousHtml = previous
+        ? '<section class="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:p-5">' +
+          '<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Logged results</p>' +
+          '<p class="text-base font-bold text-slate-800 mt-1">' +
+          esc(previous.label || 'Previous period') +
+          '</p>' +
+          '<p class="text-sm text-slate-600 mt-1">Finals locked in for the last target window. These do not change with new activity.</p>' +
+          '<div class="grid sm:grid-cols-3 gap-3 mt-4">' +
+          jamieTargetsMetricCard(previousMetrics.meetings || {}) +
+          jamieTargetsMetricCard(previousMetrics.claimedPages || {}) +
+          jamieTargetsMetricCard(previousMetrics.events || {}) +
+          '</div></section>'
+        : '';
 
       main.innerHTML =
         '<div class="space-y-5">' +
         '<section class="rounded-xl border border-brand-200 bg-gradient-to-r from-brand-50 to-white p-4 sm:p-5">' +
         '<p class="text-xs font-semibold uppercase tracking-wide text-brand-700">Jamie</p>' +
         '<p class="text-lg font-bold text-brand-900 mt-1">' +
-        esc(period.label || '1 October – 2 November 2026') +
+        esc(period.label || '1 – 30 November 2026') +
         '</p>' +
         '<p class="text-sm text-slate-600 mt-1">' +
         esc(String(period.daysElapsed || 0)) +
@@ -34403,6 +34418,7 @@
         jamieTargetsMetricCard(metrics.claimedPages || {}) +
         jamieTargetsMetricCard(metrics.events || {}) +
         '</section>' +
+        previousHtml +
         '<section class="admin-dash-section">' +
         '<div class="admin-dash-section-head"><h3>Counts toward the targets</h3>' +
         '<p>Meetings she logs, pages claimed after her last contact, and events or series dates she adds.</p></div>' +
