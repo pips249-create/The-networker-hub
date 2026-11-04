@@ -1,5 +1,5 @@
 /**
- * Export the London Business Show TINA A5 landscape leave-behind PDF.
+ * Export the London Business Show TINA A5 landscape leave-behind PDF (front + reverse).
  * Usage: node marketing/export-tina-lbs-leaflet.mjs
  *
  * Prefers Playwright when installed (same as organiser leave-behind);
@@ -26,8 +26,7 @@ const assetPath = path.join(assetsDir, outName);
 const pdfOpts = {
   path: outPath,
   printBackground: true,
-  width: '210mm',
-  height: '148mm',
+  preferCSSPageSize: true,
   margin: { top: '0', right: '0', bottom: '0', left: '0' },
 };
 
