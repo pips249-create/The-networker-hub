@@ -38,14 +38,14 @@ insert into public.email_templates (
 values (
   'account_welcome',
   'Account welcome',
-  'Sent after email confirm. Leads with core profile fill plus Hubert and Most networked CTAs.',
+  'Sent after email confirm. TINA profile CTA, Meet Rosie/Catherine team events, Most networked claim.',
   'Welcome to The Networker UK',
   '${escaped}',
   array[
     'user_name', 'user_email', 'hub_account_url', 'account_settings_url', 'hubert_profile_url', 'claim_attended_url', 'browse_events_url', 'opportunities_url', 'welcome_url',
     'contact_url', 'privacy_url', 'terms_url', 'refunds_url',
     'site_url', 'logo_url', 'logo_footer_url', 'support_email',
-    'sponsor_row', 'sponsor_section', 'mini_sponsors_row', 'unsubscribe_url'
+    'sponsor_row', 'sponsor_section', 'mini_sponsors_row', 'meet_team_section', 'unsubscribe_url'
   ],
   'attendees'
 )

@@ -186,12 +186,12 @@ function normalizeSeedInput(body, opts) {
 async function listSeedContacts(opts) {
   const { getSupabaseAdmin, isSupabaseConfigured } = supabaseApi();
   if (!isSupabaseConfigured()) {
-    return { configured: false, contacts: [], totals: {}, page: 1, pageSize: 50, totalMatched: 0 };
+    return { configured: false, contacts: [], totals: {}, page: 1, pageSize: 25, totalMatched: 0 };
   }
   const sb = getSupabaseAdmin();
   const status = opts && opts.status ? String(opts.status).trim().toLowerCase() : '';
   const q = opts && opts.q ? String(opts.q).trim() : '';
-  const pageSize = Math.min(100, Math.max(10, parseInt(opts && (opts.pageSize || opts.limit), 10) || 50));
+  const pageSize = Math.min(100, Math.max(10, parseInt(opts && (opts.pageSize || opts.limit), 10) || 25));
   const page = Math.max(1, parseInt(opts && opts.page, 10) || 1);
   const offset = (page - 1) * pageSize;
 

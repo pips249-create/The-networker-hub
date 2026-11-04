@@ -5971,12 +5971,7 @@ body.ad-hubert-optin-modal-open {
 }
 
 .hmm-profile-discoverable.is-included input {
-  pointer-events: none;
   accent-color: #2f6b45;
-}
-
-.hmm-profile-discoverable.is-included > .hmm-profile-discoverable-copy > label {
-  cursor: default;
 }
 
 .hmm-discoverable-off {

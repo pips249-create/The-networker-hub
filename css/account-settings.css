@@ -688,7 +688,6 @@
 }
 
 .as-discoverable-choice.is-included #as-discoverable {
-  pointer-events: none;
   accent-color: #2f6b45;
 }
 

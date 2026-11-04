@@ -284,6 +284,11 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.location_tip_html = '';
   }
 
+  if (slug === 'account_welcome') {
+    const { enrichAccountWelcomeVars } = require('./booking-email-sections');
+    Object.assign(vars, enrichAccountWelcomeVars(vars, ''));
+  }
+
   if (slug === 'attendee_hubert_event_concierge') {
     const { buildMeetTeamSectionHtml, hubertConciergeWeekLabel } = require('./hubert-event-concierge');
     vars.week_label = hubertConciergeWeekLabel(new Date());

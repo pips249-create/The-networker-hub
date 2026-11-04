@@ -1208,17 +1208,54 @@
     if (hint) {
       if (included) {
         hint.textContent =
-          'You’re included. Use “Stop including me” if you want to opt out — it won’t untick from a casual click.';
+          'You’re included. Untick the box (or use Stop including me) to opt out — we’ll ask you to confirm.';
       } else if (searchEnabled) {
-        hint.textContent =
-          'Required to unlock search. Stays off until you tick it. Turning it off needs confirmation.';
+        hint.textContent = 'Required to unlock search. Tick the box to join TINA’s pool.';
       } else {
-        hint.textContent =
-          'Required to join TINA’s pool. Stays off until you tick it. Turning it off needs confirmation.';
+        hint.textContent = 'Required to join TINA’s pool. Tick the box, then save your profile.';
       }
     }
     void disc;
     void profile;
+  }
+
+  function persistDiscoverableOff(disc, offBtn) {
+    setProfileStatus(true, 'Saving…');
+    if (offBtn) offBtn.disabled = true;
+    return fetch('/api/auth/profile', {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ discoverable: false }),
+    })
+      .then(function (res) {
+        return res.json().then(function (data) {
+          return { status: res.status, data: data };
+        });
+      })
+      .then(function (result) {
+        var data = result.data || {};
+        if (!data.ok) {
+          disc.checked = true;
+          syncDiscoverableUi(lastProfile);
+          setProfileStatus(false, (data && data.message) || 'Could not turn inclusion off.');
+          return;
+        }
+        lastProfile = data.profile || lastProfile;
+        fillProfileForm(data.profile || { discoverable: false });
+        setProfileStatus(
+          false,
+          'You’re opted out. Tick Include me and save when you want TINA to put you forward again.'
+        );
+      })
+      .catch(function () {
+        disc.checked = true;
+        syncDiscoverableUi(lastProfile);
+        setProfileStatus(false, 'Could not turn inclusion off — check your connection.');
+      })
+      .finally(function () {
+        if (offBtn) offBtn.disabled = false;
+      });
   }
 
   function bindDiscoverableGuard() {
@@ -1228,25 +1265,19 @@
     if (!disc || disc.dataset.hmmGuard === '1') return;
     disc.dataset.hmmGuard = '1';
 
-    // Checkbox click fires after the browser toggles `checked`. Opt-in must be
-    // allowed; only block a post-toggle untick (route opt-out through Stop).
-    disc.addEventListener('click', function (e) {
+    // Normal checkbox: free to tick on. Unticking asks for confirmation, then saves.
+    disc.addEventListener('change', function () {
       if (disc.checked) {
         syncDiscoverableUi(lastProfile);
         return;
       }
-      e.preventDefault();
-      disc.checked = true;
-      if (offBtn) offBtn.focus();
-    });
-
-    // keydown runs before the toggle — block Space/Enter only while already included.
-    disc.addEventListener('keydown', function (e) {
-      if (!disc.checked) return;
-      if (e.key === ' ' || e.key === 'Enter') {
-        e.preventDefault();
-        if (offBtn) offBtn.focus();
+      if (!confirmStopIncludingMe()) {
+        disc.checked = true;
+        syncDiscoverableUi(lastProfile);
+        return;
       }
+      syncDiscoverableUi(lastProfile);
+      persistDiscoverableOff(disc, offBtn);
     });
 
     if (offBtn && offBtn.dataset.hmmBound !== '1') {
@@ -1256,58 +1287,7 @@
         if (!confirmStopIncludingMe()) return;
         disc.checked = false;
         syncDiscoverableUi(lastProfile);
-        setProfileStatus(true, 'Saving…');
-        offBtn.disabled = true;
-        fetch('/api/auth/profile', {
-          method: 'PATCH',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify({ discoverable: false }),
-        })
-          .then(function (res) {
-            return res.json().then(function (data) {
-              return { status: res.status, data: data };
-            });
-          })
-          .then(function (result) {
-            var data = result.data || {};
-            if (!data.ok) {
-              disc.checked = true;
-              syncDiscoverableUi(lastProfile);
-              setProfileStatus(false, (data && data.message) || 'Could not turn inclusion off.');
-              return;
-            }
-            lastProfile = data.profile || lastProfile;
-            fillProfileForm(data.profile || { discoverable: false });
-            setProfileStatus(
-              false,
-              'You’re opted out. Tick Include me and save when you want TINA to put you forward again.'
-            );
-          })
-          .catch(function () {
-            disc.checked = true;
-            syncDiscoverableUi(lastProfile);
-            setProfileStatus(false, 'Could not turn inclusion off — check your connection.');
-          })
-          .finally(function () {
-            offBtn.disabled = false;
-          });
-      });
-    }
-
-    var label = wrap && wrap.querySelector('label[for="hmm-profile-discoverable"]');
-    if (label && label.dataset.hmmBound !== '1') {
-      label.dataset.hmmBound = '1';
-      label.addEventListener('click', function (e) {
-        if (!disc.checked) return;
-        e.preventDefault();
-        if (offBtn) offBtn.focus();
-      });
-    }
-
-    if (wrap) {
-      wrap.addEventListener('change', function () {
-        syncDiscoverableUi(lastProfile);
+        persistDiscoverableOff(disc, offBtn);
       });
     }
   }
