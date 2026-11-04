@@ -337,38 +337,9 @@ module.exports = async function handler(req, res) {
       const loaded = await queryAffiliatePartnerSingle(sb, function (q) {
         return q.eq('id', inserted.id).single();
       });
-      const partnerRow = loaded.row;
-      const partner = mapPartnerRow(partnerRow);
 
-      // Default: email invite (T&Cs link + accept CTA + partner workspace) as soon as created.
-      // Pass sendInvite: false to create the record without emailing (e.g. staged setup).
-      const sendInviteFlag = body.sendInvite != null ? body.sendInvite : body.send_invite;
-      const sendInvite =
-        sendInviteFlag !== false &&
-        String(sendInviteFlag == null ? 'true' : sendInviteFlag).toLowerCase() !== 'false';
-
-      let invite = null;
-      if (sendInvite && partnerRow && partnerRow.active !== false) {
-        try {
-          invite = await sendPartnerInviteEmail(partnerRow);
-        } catch (inviteErr) {
-          return json(res, 200, {
-            ok: true,
-            partner,
-            inviteSent: false,
-            inviteError: inviteErr.code || inviteErr.message || 'invite_failed',
-            message:
-              'Partner created, but the invite email failed. Use Email invite to resend (includes T&Cs).',
-          });
-        }
-      }
-
-      return json(res, 200, {
-        ok: true,
-        partner,
-        inviteSent: !!(invite && invite.ok),
-        sent: invite || null,
-      });
+      // Create only saves the partner. Email is sent explicitly via action: send_invite.
+      return json(res, 200, { ok: true, partner: mapPartnerRow(loaded.row) });
     }
 
     if (action === 'set_active') {
