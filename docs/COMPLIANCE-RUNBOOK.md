@@ -2,7 +2,7 @@
 
 Internal checklist for items that cannot be fully automated in code. Review quarterly.
 
-**Last updated:** 28 August 2026  
+**Last updated:** 4 November 2026  
 **Readiness check:** `npm run check:business-ops` (target ~75% before marketing push)
 
 ## Implemented in the platform
