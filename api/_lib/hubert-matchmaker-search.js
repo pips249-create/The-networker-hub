@@ -18,8 +18,11 @@ const {
   buildSearchSuggestions,
   emptySuggestionCopy,
   personPlace,
+  nearbyFor,
+  normalizeText,
   titleCase,
 } = require('./hubert-matchmaker-intel');
+const { formatIlikeFilter } = require('./search-match');
 
 const MAX_SHORTLIST = 5;
 /** Rotate the shortlist across this many top-scoring candidates. */
@@ -31,13 +34,36 @@ const MIN_TEXT_SCORE = 6;
 /** Card teaser — enough for 1–2 short sentences without dumping a full bio. */
 const SHORTLIST_BLURB_MAX = 160;
 /**
- * Candidate pool fetch — page through active seeds / discoverable members.
- * The old unordered .limit(200) silently dropped most of the Rosie seed list
- * once letter batches pushed the table past ~200 rows.
+ * Candidate pool fetch — only people who could match the ask (SQL prefilter),
+ * then page + rank. Latency can be a moment; correctness over scanning everyone.
+ * The old unordered .limit(200) silently dropped most of the Rosie seed list.
  */
-const CANDIDATE_FETCH_PAGE = 1000;
-const SEED_POOL_MAX = 5000;
-const MEMBER_POOL_MAX = 3000;
+const CANDIDATE_FETCH_PAGE = 500;
+/** Max rows pulled after match-criteria prefilter (per pool). */
+const SEED_POOL_MAX = 800;
+const MEMBER_POOL_MAX = 800;
+/** Cap PostgREST `.or()` clauses to stay under URL practical limits. */
+const MATCH_FILTER_OR_MAX = 72;
+
+const SEED_MATCH_COLUMNS = [
+  'full_name',
+  'company',
+  'job_title',
+  'industry',
+  'professional_role',
+  'blurb',
+  'location',
+  'country',
+];
+const MEMBER_MATCH_COLUMNS = [
+  'name',
+  'company',
+  'job_title',
+  'business_sector',
+  'professional_role',
+  'matchmaker_blurb',
+  'location',
+];
 
 /**
  * Page a Supabase/PostgREST query with stable ordering until exhausted or maxRows.
@@ -68,6 +94,135 @@ async function fetchPagedRows(buildQuery, opts) {
     from += pageSize;
   }
   return { data: out, error: null };
+}
+
+function sanitizeMatchFilterTerm(term) {
+  return String(term || '')
+    .toLowerCase()
+    .replace(/[%_,"\\]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 48);
+}
+
+/**
+ * Terms from the ask used to prefilter candidates in SQL.
+ * Place + role asks keep separate groups (AND); keywords alone are OR’d.
+ */
+function collectMatchFilterGroups(query, intel) {
+  const placeTerms = [];
+  const roleTerms = [];
+  const keywordTerms = [];
+  const seenPlace = new Set();
+  const seenRole = new Set();
+  const seenKw = new Set();
+
+  function pushUnique(list, seen, raw) {
+    const t = sanitizeMatchFilterTerm(raw);
+    if (!t || t.length < 2) return;
+    if (seen.has(t)) return;
+    seen.add(t);
+    list.push(t);
+  }
+
+  const qi = intel || parseQueryIntel(query);
+  (qi.places || []).forEach((p) => {
+    pushUnique(placeTerms, seenPlace, p);
+    nearbyFor(p).forEach((n) => pushUnique(placeTerms, seenPlace, n));
+  });
+
+  (qi.roleGroups || []).forEach((g) => {
+    (g.labels || []).forEach((label) => {
+      const n = normalizeText(label);
+      pushUnique(roleTerms, seenRole, n);
+      String(n || '')
+        .split(/\s+/)
+        .forEach((w) => {
+          if (w.length >= 4 || SHORT_KEEP_TOKENS.has(w)) pushUnique(roleTerms, seenRole, w);
+        });
+    });
+  });
+
+  tokenize(query).forEach((tok) => {
+    expandTokenForms(tok).forEach((form) => {
+      // Skip bare place tokens here — they live in the place group.
+      if (qi.hasPlaceIntel && (qi.places || []).includes(form)) return;
+      pushUnique(keywordTerms, seenKw, form);
+    });
+  });
+
+  if (queryMentionsNetworkerBrand(query)) {
+    ['networker', 'networker uk', 'networker group'].forEach((t) =>
+      pushUnique(keywordTerms, seenKw, t)
+    );
+  }
+
+  return {
+    placeTerms: placeTerms.slice(0, 24),
+    roleTerms: roleTerms.slice(0, 36),
+    keywordTerms: keywordTerms.slice(0, 24),
+    hasCriteria:
+      placeTerms.length > 0 || roleTerms.length > 0 || keywordTerms.length > 0,
+  };
+}
+
+function buildIlikeOrClause(columns, terms, maxParts) {
+  const cols = (columns || []).filter(Boolean);
+  const list = (terms || []).filter(Boolean);
+  if (!cols.length || !list.length) return '';
+  const cap = Math.max(1, Number(maxParts) || MATCH_FILTER_OR_MAX);
+  const parts = [];
+  for (let i = 0; i < list.length && parts.length < cap; i++) {
+    const pattern = '%' + list[i] + '%';
+    for (let j = 0; j < cols.length && parts.length < cap; j++) {
+      const part = formatIlikeFilter(cols[j], pattern);
+      if (part) parts.push(part);
+    }
+  }
+  return parts.join(',');
+}
+
+/**
+ * Restrict a Supabase query to rows that could match the ask.
+ * - Place + role: must match a place term AND a role term (each OR’d across columns)
+ * - Otherwise: any place / role / keyword term is enough to enter the rank pool
+ */
+function applyMatchCriteriaFilter(dbQuery, columns, groups) {
+  if (!dbQuery || !groups || !groups.hasCriteria) return dbQuery;
+  let next = dbQuery;
+  const placeCols = (columns || []).filter((c) =>
+    /^(location|country|blurb|matchmaker_blurb|company)$/.test(c)
+  );
+  const roleCols = (columns || []).filter((c) =>
+    /^(job_title|professional_role|blurb|matchmaker_blurb|industry|business_sector|company|full_name|name)$/.test(
+      c
+    )
+  );
+  const allCols = columns || [];
+
+  if (groups.placeTerms.length && groups.roleTerms.length) {
+    const placeOr = buildIlikeOrClause(
+      placeCols.length ? placeCols : allCols,
+      groups.placeTerms,
+      Math.floor(MATCH_FILTER_OR_MAX / 2)
+    );
+    const roleOr = buildIlikeOrClause(
+      roleCols.length ? roleCols : allCols,
+      groups.roleTerms,
+      Math.floor(MATCH_FILTER_OR_MAX / 2)
+    );
+    if (placeOr) next = next.or(placeOr);
+    if (roleOr) next = next.or(roleOr);
+    return next;
+  }
+
+  const anyTerms = []
+    .concat(groups.placeTerms || [])
+    .concat(groups.roleTerms || [])
+    .concat(groups.keywordTerms || []);
+  const anyOr = buildIlikeOrClause(allCols, anyTerms, MATCH_FILTER_OR_MAX);
+  if (anyOr) next = next.or(anyOr);
+  return next;
 }
 
 const EVENT_QUERY_HINT =
@@ -1600,6 +1755,8 @@ async function searchMatchmaker(opts) {
   const candidates = [];
   const byId = new Map();
   const allowInternal = queryMentionsNetworkerBrand(query);
+  const queryIntel = parseQueryIntel(query);
+  const matchFilterGroups = collectMatchFilterGroups(query, queryIntel);
 
   function addCandidate(person) {
     if (!person || !person.id) return;
@@ -1617,75 +1774,114 @@ async function searchMatchmaker(opts) {
     if (!existing.blurb && person.blurb) existing.blurb = person.blurb;
   }
 
-  // Active seed contacts — page the full active list (not an arbitrary 200).
-  try {
-    const seedRes = await fetchPagedRows(
-      () =>
-        sb
-          .from('hubert_match_seed')
-          .select(
-            'id, full_name, company, job_title, industry, professional_role, looking_to_meet, blurb, location, country, status'
-          )
-          .eq('status', 'active')
-          .order('id', { ascending: true }),
-      { pageSize: CANDIDATE_FETCH_PAGE, maxRows: SEED_POOL_MAX }
-    );
-    if (!seedRes.error) {
-      (seedRes.data || []).forEach((row) => addCandidate(mapSeedRow(row)));
+  // Existing Hub bookings first — attendee-intent asks (“who attended Evolution…”)
+  let matchedEvents = [];
+  let eventCandidates = [];
+  let needsEventPick = false;
+  let eventAttendeeCount = 0;
+  const lockedEventId = String(opts.eventId || opts.event_id || '').trim();
+  const eventQuery = Boolean(lockedEventId) || looksLikeEventAttendeeQuery(query);
+
+  if (lockedEventId) {
+    const locked = await loadEventById(sb, lockedEventId);
+    if (locked) {
+      matchedEvents = [locked];
+      eventCandidates = [locked];
     }
-  } catch {
-    /* seed table may be missing pre-migration */
+  } else if (eventQuery) {
+    const scored = await findMatchingEvents(sb, query);
+    const selection = resolveEventMatchSelection(scored);
+    matchedEvents = selection.matchedEvents;
+    eventCandidates = selection.eventCandidates;
+    needsEventPick = selection.needsEventPick;
   }
 
-  // Discoverable members — page Include-me attendees (not an arbitrary 200).
-  try {
-    const memberColsRich =
-      'id, name, company, job_title, business_sector, professional_role, looking_to_meet, matchmaker_blurb, discoverable_at, location';
-    const memberColsBasic =
-      'id, name, company, job_title, business_sector, professional_role, looking_to_meet, matchmaker_blurb, discoverable_at';
-    let memberRes = await fetchPagedRows(
-      () => {
-        let q = sb
-          .from('attendees')
-          .select(memberColsRich)
-          .not('discoverable_at', 'is', null)
-          .order('id', { ascending: true });
-        if (excludeAttendeeId) q = q.neq('id', excludeAttendeeId);
-        return q;
-      },
-      { pageSize: CANDIDATE_FETCH_PAGE, maxRows: MEMBER_POOL_MAX }
-    );
-    if (memberRes.error && /location/i.test(String(memberRes.error.message || ''))) {
-      memberRes = await fetchPagedRows(
+  if (matchedEvents.length && !needsEventPick) {
+    const eventPeople = await loadAttendeesForEvents(sb, matchedEvents, excludeAttendeeId);
+    eventAttendeeCount = eventPeople.length;
+    eventPeople.forEach(addCandidate);
+  }
+
+  // Seed + Include-me pools: only rows that could match the ask (SQL prefilter).
+  // Skip when confirming which event, or when the ask has no usable criteria
+  // (unless this is a Networker brand / event-attendee path already handled).
+  const loadMatchPools =
+    !needsEventPick && (matchFilterGroups.hasCriteria || allowInternal);
+
+  if (loadMatchPools && matchFilterGroups.hasCriteria) {
+    try {
+      const seedRes = await fetchPagedRows(
+        () =>
+          applyMatchCriteriaFilter(
+            sb
+              .from('hubert_match_seed')
+              .select(
+                'id, full_name, company, job_title, industry, professional_role, looking_to_meet, blurb, location, country, status'
+              )
+              .eq('status', 'active')
+              .order('id', { ascending: true }),
+            SEED_MATCH_COLUMNS,
+            matchFilterGroups
+          ),
+        { pageSize: CANDIDATE_FETCH_PAGE, maxRows: SEED_POOL_MAX }
+      );
+      if (!seedRes.error) {
+        (seedRes.data || []).forEach((row) => addCandidate(mapSeedRow(row)));
+      }
+    } catch {
+      /* seed table may be missing pre-migration */
+    }
+
+    try {
+      const memberColsRich =
+        'id, name, company, job_title, business_sector, professional_role, looking_to_meet, matchmaker_blurb, discoverable_at, location';
+      const memberColsBasic =
+        'id, name, company, job_title, business_sector, professional_role, looking_to_meet, matchmaker_blurb, discoverable_at';
+      let memberRes = await fetchPagedRows(
         () => {
           let q = sb
             .from('attendees')
-            .select(memberColsBasic)
+            .select(memberColsRich)
             .not('discoverable_at', 'is', null)
             .order('id', { ascending: true });
           if (excludeAttendeeId) q = q.neq('id', excludeAttendeeId);
-          return q;
+          return applyMatchCriteriaFilter(q, MEMBER_MATCH_COLUMNS, matchFilterGroups);
         },
         { pageSize: CANDIDATE_FETCH_PAGE, maxRows: MEMBER_POOL_MAX }
       );
+      if (memberRes.error && /location/i.test(String(memberRes.error.message || ''))) {
+        memberRes = await fetchPagedRows(
+          () => {
+            let q = sb
+              .from('attendees')
+              .select(memberColsBasic)
+              .not('discoverable_at', 'is', null)
+              .order('id', { ascending: true });
+            if (excludeAttendeeId) q = q.neq('id', excludeAttendeeId);
+            const colsNoLoc = MEMBER_MATCH_COLUMNS.filter((c) => c !== 'location');
+            return applyMatchCriteriaFilter(q, colsNoLoc, matchFilterGroups);
+          },
+          { pageSize: CANDIDATE_FETCH_PAGE, maxRows: MEMBER_POOL_MAX }
+        );
+      }
+      if (!memberRes.error) {
+        const rows = memberRes.data || [];
+        const nextMap = await loadNextEventsByAttendeeIds(
+          sb,
+          rows.map((r) => r.id)
+        );
+        rows.forEach((row) => {
+          if (!row.name) return;
+          addCandidate(mapMemberRow(row, nextMap.get(row.id) || null, null));
+        });
+      }
+    } catch {
+      /* discoverable columns may be missing pre-migration */
     }
-    if (!memberRes.error) {
-      const rows = memberRes.data || [];
-      const nextMap = await loadNextEventsByAttendeeIds(
-        sb,
-        rows.map((r) => r.id)
-      );
-      rows.forEach((row) => {
-        if (!row.name) return;
-        addCandidate(mapMemberRow(row, nextMap.get(row.id) || null, null));
-      });
-    }
-  } catch {
-    /* discoverable columns may be missing pre-migration */
   }
 
   // Networker UK brand asks: include Hub team even if they have not opted into Include me.
-  if (allowInternal) {
+  if (allowInternal && !needsEventPick) {
     try {
       let opsQuery = sb
         .from('attendees')
@@ -1723,35 +1919,6 @@ async function searchMatchmaker(opts) {
     }
   }
 
-  // Existing Hub bookings: only for attendee-intent asks (“who attended Evolution…”)
-  let matchedEvents = [];
-  let eventCandidates = [];
-  let needsEventPick = false;
-  let eventAttendeeCount = 0;
-  const lockedEventId = String(opts.eventId || opts.event_id || '').trim();
-  const eventQuery = Boolean(lockedEventId) || looksLikeEventAttendeeQuery(query);
-
-  if (lockedEventId) {
-    const locked = await loadEventById(sb, lockedEventId);
-    if (locked) {
-      matchedEvents = [locked];
-      eventCandidates = [locked];
-    }
-  } else if (eventQuery) {
-    const scored = await findMatchingEvents(sb, query);
-    const selection = resolveEventMatchSelection(scored);
-    matchedEvents = selection.matchedEvents;
-    eventCandidates = selection.eventCandidates;
-    needsEventPick = selection.needsEventPick;
-  }
-
-  if (matchedEvents.length && !needsEventPick) {
-    const eventPeople = await loadAttendeesForEvents(sb, matchedEvents, excludeAttendeeId);
-    eventAttendeeCount = eventPeople.length;
-    eventPeople.forEach(addCandidate);
-  }
-
-  const queryIntel = parseQueryIntel(query);
   const matches = needsEventPick
     ? []
     : rankCandidates(candidates, query, requesterEventIds, {
@@ -1875,7 +2042,14 @@ module.exports = {
   CANDIDATE_FETCH_PAGE,
   SEED_POOL_MAX,
   MEMBER_POOL_MAX,
+  MATCH_FILTER_OR_MAX,
+  SEED_MATCH_COLUMNS,
+  MEMBER_MATCH_COLUMNS,
   fetchPagedRows,
+  sanitizeMatchFilterTerm,
+  collectMatchFilterGroups,
+  buildIlikeOrClause,
+  applyMatchCriteriaFilter,
   shortDisplayName,
   normalizeSearchQuery,
   tokenize,

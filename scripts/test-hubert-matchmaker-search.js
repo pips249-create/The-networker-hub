@@ -34,6 +34,10 @@ const {
   SEED_POOL_MAX,
   MEMBER_POOL_MAX,
   fetchPagedRows,
+  collectMatchFilterGroups,
+  buildIlikeOrClause,
+  applyMatchCriteriaFilter,
+  parseQueryIntel,
 } = require('../api/_lib/hubert-matchmaker-search');
 
 function assert(cond, msg) {
@@ -900,10 +904,43 @@ assert(
 );
 assert(placeRoleCard.placeFit === 'exact', 'placeFit exact retained');
 
-// Candidate pool must cover the Rosie letter-batch seed volume (was a silent .limit(200)).
-assert(SEED_POOL_MAX >= 1000, 'seed pool max covers letter batches');
-assert(MEMBER_POOL_MAX >= 1000, 'member pool max above old 200 cap');
+// Prefiltered pools — caps are for matched candidates, not the whole Hub.
+assert(SEED_POOL_MAX >= 400, 'seed pool max after prefilter');
+assert(MEMBER_POOL_MAX >= 400, 'member pool max after prefilter');
 assert(CANDIDATE_FETCH_PAGE >= 100 && CANDIDATE_FETCH_PAGE <= SEED_POOL_MAX, 'page size sane');
+
+const leedsIt = collectMatchFilterGroups(
+  'IT Director in Leeds',
+  parseQueryIntel('IT Director in Leeds')
+);
+assert(leedsIt.hasCriteria, 'IT Director Leeds has match criteria');
+assert(leedsIt.placeTerms.includes('leeds'), 'place terms include leeds');
+assert(
+  leedsIt.placeTerms.includes('bradford') || leedsIt.placeTerms.includes('york'),
+  'place terms include nearby for Leeds'
+);
+assert(
+  leedsIt.roleTerms.some((t) => t.includes('director') || t === 'cio' || t.includes('it')),
+  'role terms from IT Director family'
+);
+
+const vague = collectMatchFilterGroups('hi', parseQueryIntel('hi'));
+assert(!vague.hasCriteria || vague.keywordTerms.length === 0, 'tiny ask has no usable criteria');
+
+const clause = buildIlikeOrClause(['job_title', 'blurb'], ['director', 'leeds'], 10);
+assert(/job_title\.ilike\.%director%/i.test(clause), 'ilike clause includes director');
+assert((clause.match(/ilike/gi) || []).length <= 10, 'ilike clause respects max parts');
+
+const applied = [];
+const fakeQ = {
+  or(filter) {
+    applied.push(filter);
+    return fakeQ;
+  },
+};
+applyMatchCriteriaFilter(fakeQ, ['job_title', 'location', 'blurb'], leedsIt);
+assert(applied.length === 2, 'place+role ask ANDs two or() groups');
+assert(applied[0].includes('leeds') || applied[1].includes('leeds'), 'place or() includes leeds');
 
 (async function testFetchPagedRows() {
   const pages = {
