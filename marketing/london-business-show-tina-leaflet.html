@@ -140,21 +140,33 @@
     padding: 10mm 14mm;
     max-width: 170mm;
   }
-  .back-logo-plate {
+  .logo-plate {
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 2.2mm 3.6mm;
+    border-radius: 10px;
+    background: linear-gradient(165deg, #fffefb 0%, #f7f2fb 55%, #fff8ec 100%);
+    box-shadow:
+      0 8px 20px rgba(45, 35, 50, 0.2),
+      0 0 0 1px rgba(255, 255, 255, 0.55);
+    flex: 0 0 auto;
+  }
+  .page-back .logo-plate {
     padding: 4.5mm 8mm;
     border-radius: 14px;
-    background: linear-gradient(165deg, #fffefb 0%, #f7f2fb 55%, #fff8ec 100%);
     box-shadow:
       0 12px 30px rgba(45, 35, 50, 0.22),
       0 0 0 1px rgba(255, 255, 255, 0.55);
   }
+  .brand-logo,
   .back-logo {
-    width: 72mm;
+    width: 48mm;
     height: auto;
     display: block;
+  }
+  .page-back .back-logo {
+    width: 72mm;
   }
   .back-slogan {
     font-family: 'DM Serif Display', Georgia, serif;
@@ -192,12 +204,6 @@
       linear-gradient(100deg, #1c1720 0%, var(--panel) 55%, #3a3040 100%);
     color: #fff;
     border-bottom: 1.4px solid rgba(255, 255, 255, 0.08);
-  }
-  .brand-logo {
-    width: 48mm;
-    height: auto;
-    display: block;
-    flex: 0 0 auto;
   }
   .masthead-copy {
     flex: 1;
@@ -757,13 +763,15 @@
   <div class="wrap">
     <article class="page page-front" aria-label="The Networker UK leaflet front for The Business Show London">
       <header class="masthead">
-        <img
-          class="brand-logo"
-          src="../assets/logo-networker-uk-email-navy-source.png?v=20261104lbs"
-          alt="The Networker UK"
-          width="360"
-          height="120"
-        >
+        <div class="logo-plate">
+          <img
+            class="brand-logo"
+            src="../assets/logo-networker-uk-email-navy-source.png?v=20261104lbs"
+            alt="The Networker UK"
+            width="360"
+            height="120"
+          >
+        </div>
         <p class="masthead-copy">
           The home for <strong>UK business networking</strong>: find groups and events,
           list opportunities, and meet the right people through TINA.
@@ -904,7 +912,7 @@
 
     <article class="page page-back" aria-label="The Networker UK leaflet reverse">
       <div class="back-inner">
-        <div class="back-logo-plate">
+        <div class="logo-plate">
           <img
             class="back-logo"
             src="../assets/logo-networker-uk-email-navy-source.png?v=20261104lbs"
