@@ -44,7 +44,7 @@ const { getSupabaseAdmin, isSupabaseConfigured } = require('../api/_lib/supabase
 const { setEventFeaturedPlacement } = require('../api/_lib/event-featured');
 const { parseAdminFeaturedUntil } = require('../api/_lib/admin-featured-until');
 
-const DEFAULT_SLUGS = ['the-business-show-london'];
+const DEFAULT_SLUGS = ['the-martech-summit-london-2026', 'the-business-show-london'];
 
 function parseArgs(argv) {
   const out = { slugs: [], ids: [], until: null };

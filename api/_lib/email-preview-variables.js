@@ -42,10 +42,23 @@ const {
 const { campaignSiteVars, applyOrganiserLaunchInviteCopy } = require('./organiser-campaign-defaults');
 const { buildListingAlertSeriesCopy } = require('./listing-alert-series');
 
-function sampleRecommendationCard(title, subtitle, url) {
+function sampleRecommendationCard(title, subtitle, url, options = {}) {
+  const logoUrl = String((options && options.logoUrl) || '').trim();
+  const logoAlt = String((options && options.logoAlt) || 'Organiser').trim() || 'Organiser';
+  const logoCell = logoUrl
+    ? '<td style="width:56px;vertical-align:top;padding:0 0 0 14px;">' +
+      '<img src="' +
+      logoUrl +
+      '" alt="' +
+      logoAlt +
+      '" width="48" height="48" style="display:block;width:48px;height:48px;object-fit:contain;border:0;border-radius:10px;background:#ffffff;padding:4px;box-sizing:border-box;" />' +
+      '</td>'
+    : '';
   return (
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#1c2040;border-radius:14px;margin:0 0 12px;">' +
     '<tr><td style="padding:18px 20px;">' +
+    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr>' +
+    '<td style="vertical-align:top;">' +
     '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:600;color:#ffffff;margin:0 0 6px;line-height:1.35;">' +
     title +
     '</p>' +
@@ -55,6 +68,9 @@ function sampleRecommendationCard(title, subtitle, url) {
     '<a href="' +
     url +
     '" style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#4aa8f0;text-decoration:none;">View &rarr;</a>' +
+    '</td>' +
+    logoCell +
+    '</tr></table>' +
     '</td></tr></table>'
   );
 }
@@ -236,21 +252,42 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.nearby_events_html =
       '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Events near London</p>' +
       sampleRecommendationCard(
-        'London Founders Breakfast',
-        'City Connectors · Tuesday 12 August 2026 · 8:00 AM · The Shard, London',
-        vars.event_url
+        'The MarTech Summit London 2026',
+        'The MarTech Summit · Tuesday 10 November 2026 · 9:00 AM · London',
+        site + '/events/the-martech-summit-london-2026',
+        {
+          logoUrl: site + '/assets/logo-networker-uk-on-dark.png',
+          logoAlt: 'The MarTech Summit',
+        }
       ) +
       sampleRecommendationCard(
-        'West End Networking Lunch',
-        'Capital Connect · Wednesday 13 August 2026 · 12:30 PM · Covent Garden',
-        vars.event_url
+        'The Business Show London',
+        'The Business Show – London · Wednesday 11 November 2026 · 10:00 AM · ExCeL London',
+        site + '/events/the-business-show-london',
+        {
+          logoUrl: site + '/assets/logo-networker-uk-on-dark.png',
+          logoAlt: 'The Business Show',
+        }
+      ) +
+      sampleRecommendationCard(
+        'London Founders Breakfast',
+        'City Connectors · Tuesday 12 August 2026 · 8:00 AM · The Shard, London',
+        vars.event_url,
+        {
+          logoUrl: 'https://placehold.co/96x96/png?text=CC',
+          logoAlt: 'City Connectors',
+        }
       );
     vars.popular_events_html =
       '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Popular right now</p>' +
       sampleRecommendationCard(
         'Tech Leaders Roundtable',
         'Northbridge Network · Thursday 14 August 2026 · 6:00 PM · Manchester',
-        vars.browse_events_url
+        vars.browse_events_url,
+        {
+          logoUrl: 'https://placehold.co/96x96/png?text=NN',
+          logoAlt: 'Northbridge Network',
+        }
       );
     vars.add_location_url = String(vars.site_url || '').replace(/\/$/, '') + '/account/settings/';
     vars.location_tip_html =
@@ -313,16 +350,42 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.nearby_events_html =
       '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Events within 25 miles of York</p>' +
       sampleRecommendationCard(
+        'The MarTech Summit London 2026',
+        'The MarTech Summit · Tuesday 10 November 2026 · 9:00 AM · London',
+        site + '/events/the-martech-summit-london-2026',
+        {
+          logoUrl: site + '/assets/logo-networker-uk-on-dark.png',
+          logoAlt: 'The MarTech Summit',
+        }
+      ) +
+      sampleRecommendationCard(
         'York Business Breakfast',
         'York Connectors · Tuesday 19 August 2026 · 8:00 AM · York city centre',
-        vars.event_url
+        vars.event_url,
+        {
+          logoUrl: 'https://placehold.co/96x96/png?text=YC',
+          logoAlt: 'York Connectors',
+        }
       );
     vars.popular_events_html =
       '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Popular right now</p>' +
       sampleRecommendationCard(
+        'The Business Show London',
+        'The Business Show – London · Wednesday 11 November 2026 · 10:00 AM · ExCeL London',
+        site + '/events/the-business-show-london',
+        {
+          logoUrl: site + '/assets/logo-networker-uk-on-dark.png',
+          logoAlt: 'The Business Show',
+        }
+      ) +
+      sampleRecommendationCard(
         'Tech Leaders Roundtable',
         'Northbridge Network · Thursday 14 August 2026 · 6:00 PM · Manchester',
-        vars.browse_events_url
+        vars.browse_events_url,
+        {
+          logoUrl: 'https://placehold.co/96x96/png?text=NN',
+          logoAlt: 'Northbridge Network',
+        }
       );
     vars.meet_rosie_html = buildMeetTeamSectionHtml(site);
   }

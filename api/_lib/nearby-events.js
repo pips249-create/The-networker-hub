@@ -3,12 +3,19 @@ const { isOnlineEvent } = require('./event-refund-policy');
 const { haversineMiles, bboxForRadiusMiles } = require('./uk-outcode');
 const { geocodeUkLocation } = require('./postcode-geocode');
 const { countryName, isUkCountryCode } = require('./profile-countries');
+const {
+  PARTNER_EMAIL_SPOTLIGHT_SLUGS,
+  COFOUNDER_EVENT_PROMO_UNTIL_MS,
+} = require('./hubert-event-concierge');
 
 /** Max distance for "events near you" blocks in lifecycle emails. */
 const NEARBY_EMAIL_RADIUS_MILES = 25;
 
+const ORGANISER_SELECT = 'organisers(name, slug, photo_url)';
+
 const EVENT_SELECT_FIELDS =
-  'id, title, slug, starts_at, city, venue, location_label, postcode, outcode, latitude, longitude, meeting_type, meeting_link, status, approval_status, published_at, featured, ticket_sales_enabled, refund_terms_agreed_at, refund_terms_agreed, organisers(name)';
+  'id, title, slug, starts_at, city, venue, location_label, postcode, outcode, latitude, longitude, meeting_type, meeting_link, status, approval_status, published_at, featured, ticket_sales_enabled, refund_terms_agreed_at, refund_terms_agreed, ' +
+  ORGANISER_SELECT;
 
 function locationTokens(location) {
   const raw = String(location || '').trim().toLowerCase();
@@ -280,6 +287,65 @@ async function fetchNearbyEvents(sb, location, options = {}) {
 }
 
 /**
+ * Upcoming partner shows (MarTech Summit, Business Show London) — one date per slug —
+ * for pinning at the top of nurture / Hubert pick emails while those shows are live.
+ */
+async function fetchPartnerSpotlightEvents(sb, options = {}) {
+  const nowDate = options.now instanceof Date ? options.now : new Date();
+  if (nowDate.getTime() > COFOUNDER_EVENT_PROMO_UNTIL_MS) return [];
+
+  const excludeIds = new Set(
+    (options.excludeEventIds || []).map((id) => String(id || '').trim()).filter(Boolean)
+  );
+  const slugs = (options.slugs || PARTNER_EMAIL_SPOTLIGHT_SLUGS)
+    .map((slug) => String(slug || '').trim())
+    .filter(Boolean);
+  if (!slugs.length) return [];
+
+  const now = nowDate.toISOString();
+  const { data, error } = await sb
+    .from('events')
+    .select(EVENT_SELECT_FIELDS)
+    .in('slug', slugs)
+    .eq('status', 'published')
+    .eq('approval_status', 'Approved')
+    .gt('starts_at', now)
+    .order('starts_at', { ascending: true })
+    .limit(24);
+  if (error) throw new Error(error.message);
+
+  const bySlug = new Map();
+  for (const row of data || []) {
+    if (!isEventPublishedForSale(row)) continue;
+    const id = String(row.id || '').trim();
+    if (!id || excludeIds.has(id)) continue;
+    const slug = String(row.slug || '').trim();
+    if (!slug || bySlug.has(slug)) continue;
+    bySlug.set(slug, row);
+  }
+
+  // Preserve partner priority order (MarTech first, then Business Show).
+  return slugs.map((slug) => bySlug.get(slug)).filter(Boolean);
+}
+
+/**
+ * Put partner spotlights first, then the rest, deduped by id, capped at limit.
+ */
+function prependPartnerSpotlightEvents(events, partners, limit) {
+  const cap = Math.max(1, Math.min(Number(limit) || 5, 12));
+  const seen = new Set();
+  const out = [];
+  for (const row of [...(partners || []), ...(events || [])]) {
+    const id = String(row?.id || '').trim();
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    out.push(row);
+    if (out.length >= cap) break;
+  }
+  return out;
+}
+
+/**
  * Upcoming events ranked by recent booking volume (last 30 days), with featured/rating fallback.
  */
 async function fetchPopularEvents(sb, options = {}) {
@@ -292,7 +358,8 @@ async function fetchPopularEvents(sb, options = {}) {
     new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
   const now = new Date().toISOString();
   const selectFields =
-    'id, title, slug, starts_at, city, venue, location_label, postcode, outcode, meeting_type, meeting_link, status, approval_status, published_at, featured, average_rating, ticket_sales_enabled, refund_terms_agreed_at, refund_terms_agreed, organisers(name)';
+    'id, title, slug, starts_at, city, venue, location_label, postcode, outcode, meeting_type, meeting_link, status, approval_status, published_at, featured, average_rating, ticket_sales_enabled, refund_terms_agreed_at, refund_terms_agreed, ' +
+    ORGANISER_SELECT;
 
   const { data: regs, error: regErr } = await sb
     .from('registrations')
@@ -378,4 +445,6 @@ module.exports = {
   fetchPopularEvents,
   fetchPopularOnlineEvents,
   fetchUpcomingEvents,
+  fetchPartnerSpotlightEvents,
+  prependPartnerSpotlightEvents,
 };
