@@ -15,6 +15,7 @@ const {
 const {
   siteBase,
   browseEventsUrl,
+  hubAccountUrl,
   organiserPublicUrl,
   organiserDashboardUrl,
 } = require('./hub-email-urls');
@@ -135,6 +136,12 @@ const SIGNUP_NUDGE_MAX_AGE_DAYS = 60;
 /** Second nurture ~10 days after signup (after the day-3 nudge). */
 const SIGNUP_NUDGE_FOLLOWUP_DELAY_DAYS = 10;
 const SIGNUP_NUDGE_FOLLOWUP_MAX_AGE_DAYS = 60;
+/** Business Show leaflet QR: finish TINA profile ~24h after quick signup. */
+const LBS_FINISH_PROFILE_HOURS = 24;
+const LBS_FINISH_PROFILE_WINDOW_HOURS = 6;
+const LBS_FINISH_PROFILE_MAX_AGE_DAYS = 7;
+const LBS_FINISH_PROFILE_BATCH_LIMIT = 80;
+const LBS_SIGNUP_SOURCE = 'tina_lbs';
 /** Skip TINA if a signup nurture email landed this recently (avoids same-day doubles). */
 const HUBERT_AFTER_NURTURE_COOLDOWN_DAYS = 7;
 const HUBERT_CONCIERGE_BATCH_LIMIT = 80;
@@ -1003,6 +1010,155 @@ async function fetchNextOrganiserEvents(sb, organiserIds) {
   }
 
   return map;
+}
+
+function tinaProfileIncomplete(attendee) {
+  const blurb = String(attendee?.matchmaker_blurb || '').trim();
+  const looking = Array.isArray(attendee?.looking_to_meet)
+    ? attendee.looking_to_meet.filter(Boolean)
+    : [];
+  const discoverable = Boolean(attendee?.discoverable_at);
+  // Ready intros need discoverable + blurb + who-to-meet. Show-floor signup only
+  // seeds company/location (+ optional blurb), so this stays true until they finish.
+  return !discoverable || !blurb || looking.length === 0;
+}
+
+function formatLbsSignupCountSentence(count) {
+  const n = Math.max(0, Number(count) || 0);
+  if (n <= 1) {
+    return 'You were among the first to join from The Business Show London.';
+  }
+  return (
+    'So far, ' +
+    n.toLocaleString('en-GB') +
+    ' people have signed up from The Business Show London.'
+  );
+}
+
+async function countLbsTinaSignups(sb) {
+  const { count, error } = await sb
+    .from('attendees')
+    .select('id', { count: 'exact', head: true })
+    .eq('signup_source', LBS_SIGNUP_SOURCE);
+  if (error) {
+    if (/signup_source|column/i.test(String(error.message || ''))) return 0;
+    throw new Error(error.message);
+  }
+  return Number(count) || 0;
+}
+
+/**
+ * ~24h after Business Show leaflet QR signup: thank them, share show signup
+ * count, and nudge unfinished TINA profiles.
+ */
+async function sendDueLbsFinishTinaProfileEmails(sb, options) {
+  const opts = options && typeof options === 'object' ? options : {};
+  const dryRun = opts.dryRun === true;
+  const dueBefore = hoursAgo(LBS_FINISH_PROFILE_HOURS);
+  const dueAfter = hoursAgo(LBS_FINISH_PROFILE_HOURS + LBS_FINISH_PROFILE_WINDOW_HOURS);
+  const maxAge = daysAgo(LBS_FINISH_PROFILE_MAX_AGE_DAYS);
+  const createdAfter = dueAfter > maxAge ? dueAfter : maxAge;
+  const result = { sent: 0, skipped: 0, errors: [], candidates: 0 };
+
+  let query = sb
+    .from('attendees')
+    .select(
+      'id, email, name, company, location, created_at, supabase_user_id, signup_source, matchmaker_blurb, looking_to_meet, discoverable_at, lbs_finish_profile_email_sent_at'
+    )
+    .eq('signup_source', LBS_SIGNUP_SOURCE)
+    .is('lbs_finish_profile_email_sent_at', null)
+    .lte('created_at', dueBefore)
+    .gte('created_at', createdAfter)
+    .order('created_at', { ascending: true })
+    .limit(LBS_FINISH_PROFILE_BATCH_LIMIT);
+
+  let { data: attendees, error } = await query;
+  if (error && /signup_source|lbs_finish_profile_email_sent_at|column/i.test(String(error.message || ''))) {
+    return { ...result, skipped: 1, disabled: true, reason: 'column_missing' };
+  }
+  if (error) throw new Error(error.message);
+  attendees = attendees || [];
+  result.candidates = attendees.length;
+  if (!attendees.length) return result;
+
+  const signupCount = await countLbsTinaSignups(sb);
+  const signupCountSentence = formatLbsSignupCountSentence(signupCount);
+  const siteUrl = siteBase();
+  const tinaProfileUrl = hubAccountUrl(siteUrl) + '#meet';
+
+  for (const attendee of attendees) {
+    try {
+      const email = String(attendee.email || '')
+        .trim()
+        .toLowerCase();
+      if (!email) {
+        result.skipped += 1;
+        continue;
+      }
+      if (!tinaProfileIncomplete(attendee)) {
+        // Mark sent so we do not keep selecting finished profiles.
+        const claimedAt = new Date().toISOString();
+        await claimRowTimestamp(sb, {
+          table: 'attendees',
+          id: attendee.id,
+          column: 'lbs_finish_profile_email_sent_at',
+          claimedAt,
+        }).catch(function () {});
+        result.skipped += 1;
+        continue;
+      }
+      if (!hasLinkedAttendeeAccount(attendee)) {
+        result.skipped += 1;
+        continue;
+      }
+      if (dryRun) {
+        result.sent += 1;
+        continue;
+      }
+
+      const claimedAt = new Date().toISOString();
+      const claimed = await claimRowTimestamp(sb, {
+        table: 'attendees',
+        id: attendee.id,
+        column: 'lbs_finish_profile_email_sent_at',
+        claimedAt,
+      });
+      if (!claimed) {
+        result.skipped += 1;
+        continue;
+      }
+
+      try {
+        await sendTemplatedEmail({
+          slug: 'attendee_lbs_finish_tina_profile',
+          to: email,
+          variables: {
+            ...baseEmailVars(siteUrl),
+            user_name: String(attendee.name || '').trim() || 'there',
+            signup_count: String(signupCount),
+            signup_count_sentence: signupCountSentence,
+            tina_profile_url: tinaProfileUrl,
+            browse_events_url: browseEventsUrl(siteUrl),
+            account_settings_url: accountSettingsUrl(siteUrl),
+          },
+        });
+      } catch (sendErr) {
+        await releaseRowTimestamp(sb, {
+          table: 'attendees',
+          id: attendee.id,
+          column: 'lbs_finish_profile_email_sent_at',
+          claimedAt,
+        });
+        throw sendErr;
+      }
+      result.sent += 1;
+    } catch (e) {
+      if (e.code === 'emails_disabled') result.skipped += 1;
+      else result.errors.push({ attendee_id: attendee.id, error: e.message || String(e) });
+    }
+  }
+
+  return result;
 }
 
 async function sendDueGuestVisitFollowupEmails(sb, options) {
@@ -1951,6 +2107,7 @@ async function sendDueHubertEventConciergeEmails(sb) {
 
 async function runEngagementEmailMaintenance(sb) {
   // Post-event reviews run hourly from /api/cron/booking-reminders (with organiser checklist).
+  // LBS finish-profile also runs hourly there for a tighter ~24h window.
   const guestVisitFollowup = await sendDueGuestVisitFollowupEmails(sb);
   const categoryExclusivityPayment = await sendDueCategoryExclusivityPaymentReminders(sb);
   const reengagement = await sendDueAttendeeReengagementEmails(sb);
@@ -1981,11 +2138,16 @@ module.exports = {
   sendDueHubertEventConciergeEmails,
   sendOrganiserLowUpcomingEventsNudges,
   sendDueGuestVisitFollowupEmails,
+  sendDueLbsFinishTinaProfileEmails,
   sendDuePostEventReviewEmails,
   sendDuePostEventReviewReminderEmails,
   sendDueCategoryExclusivityPaymentReminders,
   sendDueStripeConnectNudges,
   runEngagementEmailMaintenance,
+  formatLbsSignupCountSentence,
+  tinaProfileIncomplete,
+  LBS_SIGNUP_SOURCE,
+  LBS_FINISH_PROFILE_HOURS,
   buildRecommendationsHtml,
   buildSignupNudgeEventsHtml,
   buildMeetTeamSectionHtml,

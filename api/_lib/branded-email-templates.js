@@ -372,6 +372,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v3-purple',
     subject: 'Still looking for your first event?',
   },
+  attendee_lbs_finish_tina_profile: {
+    file: 'attendee-lbs-finish-tina-profile.html',
+    marker: 'hub-email-layout-v3-purple',
+    subject: 'Finish your TINA profile after The Business Show London',
+  },
   attendee_hubert_event_concierge: {
     file: 'attendee-hubert-event-concierge.html',
     marker: 'hub-email-layout-v3-purple',

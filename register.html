@@ -114,6 +114,28 @@
                   placeholder="you@company.com"
                 />
               </div>
+              <div id="register-lbs-extra-fields" class="auth-lbs-extra" hidden>
+                <div class="auth-field">
+                  <label for="company">Company</label>
+                  <input
+                    type="text"
+                    id="company"
+                    name="company"
+                    autocomplete="organization"
+                    placeholder="Your company"
+                  />
+                </div>
+                <div class="auth-field">
+                  <label for="location">Location</label>
+                  <input
+                    type="text"
+                    id="location"
+                    name="location"
+                    autocomplete="address-level2"
+                    placeholder="City or town"
+                  />
+                </div>
+              </div>
               <div class="auth-field">
                 <label for="password">Password</label>
                 <div class="password-input-wrap">
@@ -197,6 +219,6 @@
 
     <script src="js/hub-turnstile.js?v=20260827sec3"></script>
     <script src="js/register-offer-preview.js?v=20261002offers1"></script>
-    <script src="js/auth.js?v=20261104lbsjoin2"></script>
+    <script src="js/auth.js?v=20261104lbsjoin3"></script>
   </body>
 </html>

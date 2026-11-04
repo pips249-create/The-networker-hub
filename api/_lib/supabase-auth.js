@@ -476,11 +476,32 @@ function cryptoRandomPassword() {
   return crypto.randomBytes(24).toString('base64url');
 }
 
-async function registerUser({ email, password, name, marketingOptIn, hubertOptIn }) {
+async function registerUser({
+  email,
+  password,
+  name,
+  company,
+  location,
+  signupSource,
+  marketingOptIn,
+  hubertOptIn,
+}) {
   const sb = getSupabaseAdmin();
   const em = email.trim().toLowerCase();
   const optedInToMarketing = Boolean(marketingOptIn);
   const optedInToHubert = Boolean(hubertOptIn);
+  const companyClean = String(company || '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .slice(0, 120);
+  const locationClean = String(location || '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .slice(0, 120);
+  const sourceClean = String(signupSource || '')
+    .trim()
+    .toLowerCase()
+    .slice(0, 64);
 
   // Silent imports create Auth users with unknown passwords and never sign in.
   // Allow those people to set a password via /register (organiser claim wave).
@@ -524,16 +545,36 @@ async function registerUser({ email, password, name, marketingOptIn, hubertOptIn
     name: name || null,
     supabase_user_id: userId,
   };
+  if (companyClean) attendeeRow.company = companyClean;
+  if (locationClean) attendeeRow.location = locationClean;
+  if (sourceClean) attendeeRow.signup_source = sourceClean;
   if (optedInToHubert) {
     attendeeRow.hubert_intros_interest_at = new Date().toISOString();
+    // Seed a basic TINA blurb from company so the profile is not empty after a
+    // show-floor signup. Looking-to-meet + discoverable stay for the finish step.
+    if (companyClean && !attendeeRow.matchmaker_blurb) {
+      attendeeRow.matchmaker_blurb = ('Works at ' + companyClean).slice(0, 280);
+    }
   }
   let attendeeUpsert = await sb.from('attendees').upsert(attendeeRow, { onConflict: 'email' });
-  if (
-    attendeeUpsert.error &&
-    /hubert_intros_interest_at/i.test(String(attendeeUpsert.error.message || ''))
-  ) {
-    delete attendeeRow.hubert_intros_interest_at;
-    attendeeUpsert = await sb.from('attendees').upsert(attendeeRow, { onConflict: 'email' });
+  if (attendeeUpsert.error) {
+    const msg = String(attendeeUpsert.error.message || '');
+    let retry = false;
+    if (/hubert_intros_interest_at/i.test(msg)) {
+      delete attendeeRow.hubert_intros_interest_at;
+      retry = true;
+    }
+    if (/signup_source/i.test(msg)) {
+      delete attendeeRow.signup_source;
+      retry = true;
+    }
+    if (/matchmaker_blurb/i.test(msg)) {
+      delete attendeeRow.matchmaker_blurb;
+      retry = true;
+    }
+    if (retry) {
+      attendeeUpsert = await sb.from('attendees').upsert(attendeeRow, { onConflict: 'email' });
+    }
   }
   if (attendeeUpsert.error) throw new Error(attendeeUpsert.error.message);
 

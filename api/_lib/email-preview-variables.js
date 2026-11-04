@@ -264,6 +264,17 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
       '</td></tr></table>';
   }
 
+  if (slug === 'attendee_lbs_finish_tina_profile') {
+    vars.signup_count = '128';
+    vars.signup_count_sentence =
+      'So far, 128 people have signed up from The Business Show London.';
+    vars.tina_profile_url = String(vars.site_url || '').replace(/\/$/, '') + '/account/#meet';
+    vars.browse_events_url =
+      vars.browse_events_url || String(vars.site_url || '').replace(/\/$/, '') + '/events/';
+    vars.account_settings_url =
+      String(vars.site_url || '').replace(/\/$/, '') + '/account/settings/';
+  }
+
   if (slug === 'attendee_signup_events_nudge_followup') {
     vars.near_location_phrase = 'near London';
     vars.nearby_events_html =
