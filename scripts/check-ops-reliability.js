@@ -18,12 +18,13 @@ const MANUAL_GATES = [
   },
   {
     id: 'supabase_pro',
-    label: 'Supabase Pro upgrade (Free tier today — no automated daily backups until Pro)',
+    label: 'Supabase Pro active (confirmed Nov 2026 — no auto-pause; daily backups available)',
     doc: 'docs/OPS-RELIABILITY.md §2',
+    done: true,
   },
   {
     id: 'supabase_backups',
-    label: 'After Pro: note backup retention + last backup time in Dashboard → Database → Backups',
+    label: 'Note backup retention + last backup time in Dashboard → Database → Backups',
     doc: 'docs/OPS-RELIABILITY.md §2',
   },
   {
@@ -74,7 +75,7 @@ async function probeHealth() {
   const opsDoc = path.join(root, 'docs/OPS-RELIABILITY.md');
   console.log('\nManual gates (confirm in Supabase / UptimeRobot / Vercel dashboards):');
   for (const gate of MANUAL_GATES) {
-    console.log('  ☐', gate.label);
+    console.log(gate.done ? '  ☑' : '  ☐', gate.label);
     console.log('      →', gate.doc);
   }
 
