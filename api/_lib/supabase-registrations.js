@@ -600,6 +600,18 @@ function normalizeAttendeeExtraText(input) {
 }
 
 /**
+ * Prefer the name typed on the Hub booking form (Stripe session metadata) over
+ * Stripe Checkout's billing/cardholder name. People often pay with someone else's card.
+ */
+function resolveCheckoutAttendeeName(session) {
+  const metadata = session?.metadata || {};
+  const formName = String(metadata.attendee_name || '').trim();
+  if (formName) return formName;
+  const billingName = String(session?.customer_details?.name || '').trim();
+  return billingName || null;
+}
+
+/**
  * Handle Stripe checkout.session.completed — expects metadata.event_id (+ optional ticket_id),
  * or client_reference_id from the platform checkout URL (id<event-uuid>-ticket-<ticket-uuid>-...).
  */
@@ -621,6 +633,7 @@ async function handleCheckoutSessionCompleted(session) {
     session.metadata?.attendee_email ||
     session.metadata?.email ||
     '';
+  const attendeeName = resolveCheckoutAttendeeName(session);
   let eventId = metadata.event_id || metadata.eventId;
   let ticketId = metadata.ticket_id || metadata.ticketId || null;
   let quantity = parseQuantity(metadata.quantity, 1);
@@ -649,7 +662,7 @@ async function handleCheckoutSessionCompleted(session) {
     }
     return createSeriesBundleFromPayment({
       email: customerEmail,
-      name: session.customer_details?.name || metadata.attendee_name || null,
+      name: attendeeName,
       bundleItems,
       guestNames: metadata.guest_names || metadata.guestNames || null,
       dietaryRequirements: metadata.dietary_requirements || metadata.dietaryRequirements || null,
@@ -670,7 +683,7 @@ async function handleCheckoutSessionCompleted(session) {
     }
     return createSeriesBundleFromPayment({
       email: customerEmail,
-      name: session.customer_details?.name || metadata.attendee_name || null,
+      name: attendeeName,
       bundleItems,
       guestNames: metadata.guest_names || metadata.guestNames || null,
       dietaryRequirements: metadata.dietary_requirements || metadata.dietaryRequirements || null,
@@ -685,7 +698,7 @@ async function handleCheckoutSessionCompleted(session) {
 
   return createRegistrationFromPayment({
     email: customerEmail,
-    name: session.customer_details?.name || metadata.attendee_name || null,
+    name: attendeeName,
     eventId,
     ticketId,
     quantity,
@@ -709,6 +722,7 @@ module.exports = {
   createRegistrationFromPayment,
   createSeriesBundleFromPayment,
   handleCheckoutSessionCompleted,
+  resolveCheckoutAttendeeName,
   parseStripeEventBody,
   parseClientReferenceId,
   normalizeGuestNames,
