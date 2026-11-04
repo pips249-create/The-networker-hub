@@ -326,18 +326,28 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
 
   if (!template) {
     const fileTpl = fileOnlyEmailTemplate(slug);
-    if (!fileTpl) {
+    if (fileTpl) {
+      const resolved = fileTpl.resolveBody('');
+      template = {
+        slug,
+        subject: fileTpl.subject,
+        body_html: resolved.bodyHtml,
+      };
+      templateSource = resolved.source || 'file';
+    } else if (isBrandedEmailSlug(slug)) {
+      // Branded templates live in email-templates/*.html; DB row is optional stub.
+      const resolved = resolveBrandedEmailBody(slug, '');
+      template = {
+        slug,
+        subject: getBrandedEmailSubject(slug) || slug,
+        body_html: resolved.bodyHtml,
+      };
+      templateSource = resolved.source || 'file';
+    } else {
       const err = new Error('template_not_found');
       err.code = 'template_not_found';
       throw err;
     }
-    const resolved = fileTpl.resolveBody('');
-    template = {
-      slug,
-      subject: fileTpl.subject,
-      body_html: resolved.bodyHtml,
-    };
-    templateSource = resolved.source || 'file';
   }
 
   if (isBrandedEmailSlug(slug)) {
