@@ -242,6 +242,11 @@ const ORGANISER_EARLY_ACCESS_PREFIXES = [
   '/with-rosie.html',
   '/with-rosie-card',
   '/with-rosie-card.html',
+  // London Business Show stand QR — must stay reachable while the public gate is on
+  '/lbs-tina-join',
+  '/lbs-tina-join.html',
+  '/marketing/lbs-tina-join',
+  '/marketing/lbs-tina-join.html',
   '/api/auth',
   '/api/organiser',
   '/api/contact-chat',

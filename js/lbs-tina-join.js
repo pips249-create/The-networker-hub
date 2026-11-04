@@ -7,7 +7,7 @@
 
   var EVENT_SLUG = 'the-business-show-london';
   var JOIN_PATH =
-    '/marketing/lbs-tina-join?utm_source=the_business_show_london&utm_medium=leaflet&utm_campaign=tina_lbs';
+    '/lbs-tina-join?utm_source=the_business_show_london&utm_medium=leaflet&utm_campaign=tina_lbs';
 
   var statusEl = document.getElementById('lbs-join-status');
   var actionEl = document.getElementById('lbs-join-action');
