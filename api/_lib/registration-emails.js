@@ -24,6 +24,9 @@ const { resolveOrganiserNotificationEmail } = require('./organiser-notification-
 const { formatEventDateTime } = require('./event-timezone');
 const { normalizeMeetingLink, meetingLinkHref } = require('./meeting-link');
 const { resolveOrganiserBcc } = require('./organiser-email-bcc');
+const {
+  shouldSkipOrganiserNewRegistrationNotify,
+} = require('./organiser-registration-notify-guard');
 
 function formatAmount(amountPaid) {
   const n = Number(amountPaid);
@@ -237,35 +240,48 @@ async function sendRegistrationEmails(sb, registration) {
   }
 
   if (organiserEmail) {
-    try {
-      const stats = await fetchEventRegistrationStats(sb, eventId);
-      const organiserVars = buildOrganiserEmailVars(vars, stats);
-      organiserVars.dashboard_url = organiserAttendeesDashboardUrl(siteBase(), eventId);
-      await sendTemplatedEmail({
-        slug: 'organiser_new_registration',
-        to: organiserEmail,
-        variables: organiserVars,
+    if (
+      shouldSkipOrganiserNewRegistrationNotify({
+        email: organiserEmail,
+        eventSlug: eventRow.slug,
+      })
+    ) {
+      sent.errors.push({
+        target: 'organiser',
+        message: 'organiser_notify_blocked_phoebe_strange_lbs',
+        skipped: true,
       });
-      sent.organiser = true;
+    } else {
+      try {
+        const stats = await fetchEventRegistrationStats(sb, eventId);
+        const organiserVars = buildOrganiserEmailVars(vars, stats);
+        organiserVars.dashboard_url = organiserAttendeesDashboardUrl(siteBase(), eventId);
+        await sendTemplatedEmail({
+          slug: 'organiser_new_registration',
+          to: organiserEmail,
+          variables: organiserVars,
+        });
+        sent.organiser = true;
 
-      const remaining = parseInt(stats.tickets_remaining, 10);
-      if (
-        Number.isFinite(remaining) &&
-        remaining > 0 &&
-        remaining <= 3 &&
-        !eventRow.almost_full_email_sent_at
-      ) {
-        try {
-          await sendEventAlmostFullEmail(sb, eventRow, stats);
-        } catch (almostFullErr) {
-          sent.errors.push({
-            target: 'organiser_almost_full',
-            message: almostFullErr.message || String(almostFullErr),
-          });
+        const remaining = parseInt(stats.tickets_remaining, 10);
+        if (
+          Number.isFinite(remaining) &&
+          remaining > 0 &&
+          remaining <= 3 &&
+          !eventRow.almost_full_email_sent_at
+        ) {
+          try {
+            await sendEventAlmostFullEmail(sb, eventRow, stats);
+          } catch (almostFullErr) {
+            sent.errors.push({
+              target: 'organiser_almost_full',
+              message: almostFullErr.message || String(almostFullErr),
+            });
+          }
         }
+      } catch (e) {
+        sent.errors.push({ target: 'organiser', message: e.message || String(e) });
       }
-    } catch (e) {
-      sent.errors.push({ target: 'organiser', message: e.message || String(e) });
     }
   } else {
     sent.errors.push({ target: 'organiser', message: 'organiser_email_missing' });
@@ -758,6 +774,20 @@ async function sendSeriesBundleConfirmation(sb, { primaryRegistration, bundleReg
     for (const reg of bundleRegistrations || []) {
       const eventRow = eventsById.get(reg.event_id);
       if (!eventRow) continue;
+      if (
+        shouldSkipOrganiserNewRegistrationNotify({
+          email: organiserContact.email,
+          eventSlug: eventRow.slug,
+        })
+      ) {
+        sent.errors.push({
+          target: 'organiser',
+          eventId: reg.event_id,
+          message: 'organiser_notify_blocked_phoebe_strange_lbs',
+          skipped: true,
+        });
+        continue;
+      }
       try {
         const stats = await fetchEventRegistrationStats(sb, reg.event_id);
         const organiserVars = buildOrganiserEmailVars(

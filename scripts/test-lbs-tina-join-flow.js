@@ -29,8 +29,87 @@ assert.ok(authRoute.includes('lbs-stand-attend'), 'auth router mounts lbs-stand-
 
 const standAttend = read('api/_lib/routes/auth-lbs-stand-attend.js');
 assert.ok(standAttend.includes('skipConfirmationEmail'), 'no ticket confirmation email');
+assert.ok(standAttend.includes('skipConfirmationEmail: true'), 'stand-attend skips confirmation email');
 assert.ok(standAttend.includes('the-business-show-london'), 'targets Business Show slug');
 assert.ok(standAttend.includes("paymentStatus: 'Free'"), 'free attendance registration');
+
+const notifyGuardSrc = read('api/_lib/organiser-registration-notify-guard.js');
+assert.ok(notifyGuardSrc.includes('phoebe.strange'), 'blocks Phoebe.strange local-part');
+assert.ok(notifyGuardSrc.includes('the-business-show-london'), 'guard scoped to Business Show');
+assert.ok(
+  notifyGuardSrc.includes('shouldSkipOrganiserNewRegistrationNotify'),
+  'exports organiser notify skip helper'
+);
+
+const {
+  shouldSkipOrganiserNewRegistrationNotify,
+} = require('../api/_lib/organiser-registration-notify-guard');
+assert.strictEqual(
+  shouldSkipOrganiserNewRegistrationNotify({
+    email: 'Phoebe.Strange@example.com',
+    eventSlug: 'the-business-show-london',
+  }),
+  true,
+  'case-insensitive Phoebe.strange blocked for Business Show'
+);
+assert.strictEqual(
+  shouldSkipOrganiserNewRegistrationNotify({
+    email: 'phoebe.strange@businesseventsessex.com',
+    eventSlug: 'the-business-show-london',
+  }),
+  true,
+  'Phoebe.strange blocked for Business Show QR/stand notify'
+);
+assert.strictEqual(
+  shouldSkipOrganiserNewRegistrationNotify({
+    email: 'other.organiser@example.com',
+    eventSlug: 'the-business-show-london',
+  }),
+  false,
+  'other organisers still notify on Business Show'
+);
+assert.strictEqual(
+  shouldSkipOrganiserNewRegistrationNotify({
+    email: 'phoebe.strange@example.com',
+    eventSlug: 'some-other-event',
+  }),
+  false,
+  'Phoebe block is Business Show only'
+);
+
+const registrationEmails = read('api/_lib/registration-emails.js');
+assert.ok(
+  registrationEmails.includes('organiser-registration-notify-guard'),
+  'registration emails use Phoebe notify guard'
+);
+assert.ok(
+  registrationEmails.includes('shouldSkipOrganiserNewRegistrationNotify'),
+  'organiser_new_registration path checks Phoebe guard'
+);
+assert.ok(
+  registrationEmails.includes('organiser_notify_blocked_phoebe_strange_lbs'),
+  'Phoebe.strange organiser notify block is wired'
+);
+
+const supabaseRegs = read('api/_lib/supabase-registrations.js');
+assert.ok(
+  /skipConfirmationEmail/.test(supabaseRegs),
+  'createRegistrationFromPayment honour skipConfirmationEmail'
+);
+assert.ok(
+  supabaseRegs.includes('if (!skipConfirmationEmail && !existingSession.data.ticket_email_sent)'),
+  'exists (checkout session) path respects skipConfirmationEmail'
+);
+assert.ok(
+  supabaseRegs.includes('if (!skipConfirmationEmail && !existing.data.ticket_email_sent)'),
+  'exists (payment intent) path respects skipConfirmationEmail'
+);
+assert.ok(
+  /if \(!skipConfirmationEmail\) \{\s*try \{\s*emailResult = await sendRegistrationEmails\(sb, upd\.data\)/m.test(
+    supabaseRegs
+  ),
+  'linked/update path respects skipConfirmationEmail'
+);
 
 const registerHtml = read('register.html');
 assert.ok(!/Tickets from 9am on 1 September/i.test(registerHtml), 'Sept soft-launch proof removed');
