@@ -61,6 +61,10 @@ async function createRegistrationFromPayment(input) {
   const email = String(input.email || '').trim().toLowerCase();
   if (!email) throw new Error('missing_email');
 
+  const skipConfirmationEmail = Boolean(
+    input.skipConfirmationEmail || input.skip_confirmation_email
+  );
+
   if (stripeCheckoutSessionId) {
     const existingSession = await sb
       .from('registrations')
@@ -70,7 +74,7 @@ async function createRegistrationFromPayment(input) {
     if (existingSession.error) throw new Error(existingSession.error.message);
     if (existingSession.data?.id) {
       let emailResult = null;
-      if (!existingSession.data.ticket_email_sent) {
+      if (!skipConfirmationEmail && !existingSession.data.ticket_email_sent) {
         try {
           emailResult = await sendRegistrationEmails(sb, existingSession.data);
         } catch (e) {
@@ -95,7 +99,7 @@ async function createRegistrationFromPayment(input) {
     if (existing.error) throw new Error(existing.error.message);
     if (existing.data?.id) {
       let emailResult = null;
-      if (!existing.data.ticket_email_sent) {
+      if (!skipConfirmationEmail && !existing.data.ticket_email_sent) {
         try {
           emailResult = await sendRegistrationEmails(sb, existing.data);
         } catch (e) {
@@ -178,10 +182,12 @@ async function createRegistrationFromPayment(input) {
     if (upd.error) throw new Error(upd.error.message);
 
     let emailResult = null;
-    try {
-      emailResult = await sendRegistrationEmails(sb, upd.data);
-    } catch (e) {
-      emailResult = { error: e.message || String(e) };
+    if (!skipConfirmationEmail) {
+      try {
+        emailResult = await sendRegistrationEmails(sb, upd.data);
+      } catch (e) {
+        emailResult = { error: e.message || String(e) };
+      }
     }
 
     await lockEventOnFirstSale(sb, eventId);
@@ -428,7 +434,7 @@ async function createRegistrationFromPayment(input) {
   await lockEventOnFirstSale(sb, eventId);
 
   let emailResult = null;
-  if (!input.skipConfirmationEmail && !input.skip_confirmation_email) {
+  if (!skipConfirmationEmail) {
     try {
       emailResult = await sendRegistrationEmails(sb, ins.data);
     } catch (e) {
