@@ -429,12 +429,20 @@
     text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
   }
 
+  .tina-lede {
+    font-size: 13.5px;
+    font-weight: 650;
+    color: #3d3342;
+    line-height: 1.35;
+    max-width: 78mm;
+  }
+
   .tina-points {
     counter-reset: tina-step;
     display: grid;
     gap: 2.4mm;
     width: 100%;
-    margin-top: 0.8mm;
+    margin-top: 0.4mm;
     flex: 1;
     padding: 3.2mm 3.4mm;
     border-radius: 10px;
@@ -472,22 +480,13 @@
     background: linear-gradient(135deg, var(--tina-soft), var(--tina));
     box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35) inset;
   }
-  .tina-points li.tina-payoff {
-    color: #5a3d08;
-    font-weight: 850;
-  }
-  .tina-points li.tina-payoff::before {
-    color: #1a1420;
-    background: linear-gradient(155deg, #fffef8 0%, #f5d998 55%, #e4b85a 100%);
-  }
-
   .tina-qr-block {
     display: flex;
     align-items: center;
     gap: 3mm;
     width: 100%;
     margin-top: auto;
-    padding: 2.6mm;
+    padding: 2.4mm;
     border-radius: 10px;
     background: linear-gradient(135deg, #7a3d8a 0%, #5f2f6e 100%);
     border: 1.6px solid rgba(255, 255, 255, 0.28);
@@ -496,9 +495,9 @@
   }
   .qr-frame {
     flex: 0 0 auto;
-    /* QR module ≥ 20mm for arm's-length scanning */
-    width: 24mm;
-    height: 24mm;
+    /* Larger QR for arm's-length scanning on A5 */
+    width: 30mm;
+    height: 30mm;
     padding: 1.2mm;
     background: #fff;
     border: 1.6px solid rgba(255, 255, 255, 0.85);
@@ -781,12 +780,14 @@
               <em class="tina-name">TINA</em>
             </h1>
           </div>
+          <p class="tina-lede">
+            TINA finds the right people for you and makes warm introductions — only after both sides approve.
+          </p>
           <ol class="tina-points">
             <li>Who do you want to meet?</li>
             <li>TINA finds your new connection</li>
             <li>TINA makes a warm introduction</li>
             <li>Meet ideal connections with a simple search</li>
-            <li class="tina-payoff">For free</li>
           </ol>
 
           <div class="tina-qr-block">
@@ -819,8 +820,8 @@
             <li>Filter by location, format, date &amp; price</li>
             <li>Browse free · book what fits</li>
           </ul>
-          <div class="example" aria-label="Example event: The Business Show London">
-            <p class="example-kicker">On now</p>
+          <div class="example" aria-label="Example event listing: The Business Show London">
+            <p class="example-kicker">Example listing</p>
             <div class="example-row">
               <img
                 class="example-logo"
@@ -831,7 +832,7 @@
               >
               <div class="example-copy">
                 <strong>The Business Show London</strong>
-                <span>UK’s leading business exhibition at ExCeL</span>
+                <span>Listed in our UK events directory</span>
               </div>
             </div>
             <div class="example-meta">
