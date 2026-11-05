@@ -171,7 +171,7 @@
   .back-slogan {
     font-family: 'DM Serif Display', Georgia, serif;
     font-weight: 400;
-    font-size: 42px;
+    font-size: 48px;
     line-height: 1.05;
     letter-spacing: -0.02em;
     color: #fff;
@@ -180,15 +180,15 @@
       0 4px 28px rgba(45, 35, 50, 0.28);
   }
   .back-support {
-    font-size: 14px;
+    font-size: 16.5px;
     font-weight: 550;
     line-height: 1.4;
     color: rgba(255, 248, 236, 0.92);
-    max-width: 120mm;
+    max-width: 128mm;
   }
   .back-url {
     margin-top: 2mm;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 750;
     letter-spacing: 0.04em;
     color: #fff8ec;
@@ -318,9 +318,12 @@
     color: var(--ink);
     margin-bottom: 0.8mm;
   }
-  .cell-events .cell-title { color: #3d2f4a; }
+  /* Headlines contrast with panel bg + body copy */
+  .cell-events .cell-title {
+    color: #0d1f3c;
+  }
   .cell-opps .cell-title {
-    color: var(--opp-navy);
+    color: #7a3d8a;
     font-size: 24px;
     letter-spacing: -0.03em;
     line-height: 1.05;
@@ -376,43 +379,44 @@
 
   .tina-mark {
     position: relative;
-    width: 26mm;
-    height: 26mm;
+    width: 16mm;
+    height: 16mm;
   }
   .tina-mark img {
-    width: 26mm;
-    height: 26mm;
+    width: 16mm;
+    height: 16mm;
     border-radius: 50%;
     object-fit: cover;
     background: #0d0d12;
     box-shadow:
-      0 0 0 2.4px #fff,
-      0 0 0 4.2px rgba(154, 122, 168, 0.55),
-      0 8px 18px rgba(122, 61, 138, 0.28);
+      0 0 0 1.8px #fff,
+      0 0 0 3.2px rgba(154, 122, 168, 0.5),
+      0 5px 12px rgba(122, 61, 138, 0.22);
   }
 
   .tina-title {
     font-family: 'DM Serif Display', Georgia, serif;
     font-weight: 400;
-    font-size: 38px;
-    line-height: 0.95;
+    font-size: 32px;
+    line-height: 0.98;
     letter-spacing: -0.025em;
     color: var(--ink);
   }
-  .tina-title em {
-    font-style: normal;
-    color: var(--tina);
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
-  }
-  .tina-title span {
+  /* Description first, then the name */
+  .tina-title .tina-role {
     display: block;
     font-family: 'DM Sans', system-ui, sans-serif;
-    font-size: 12.5px;
+    font-size: 11.5px;
     font-weight: 750;
-    margin-top: 1.6mm;
+    margin: 0 0 1.2mm;
     color: var(--tina);
     letter-spacing: 0.01em;
     line-height: 1.2;
+  }
+  .tina-title .tina-name {
+    font-style: normal;
+    color: var(--tina);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
   }
 
   .tina-lede {
@@ -767,7 +771,7 @@
     .page-back {
       min-height: 148mm;
     }
-    .back-slogan { font-size: 32px; }
+    .back-slogan { font-size: 36px; }
     .back-logo { width: min(78mm, 70%); }
     .grid {
       grid-template-columns: 1fr;
@@ -827,8 +831,8 @@
               <img src="../assets/hubert-icon.png" width="128" height="128" alt="">
             </div>
             <h1 class="tina-title" id="tina-heading">
-              <em>TINA</em>
-              <span>The Intelligent Networking Assistant</span>
+              <span class="tina-role">The Intelligent Networking Assistant</span>
+              <em class="tina-name">TINA</em>
             </h1>
           </div>
           <p class="tina-lede">
@@ -932,7 +936,7 @@
         </div>
         <p class="back-slogan">Find your next&hellip;</p>
         <p class="back-support">
-          The home for UK business networking: events, opportunities, and TINA introductions.
+          The home for UK business networking: events, opportunities, and exclusive TINA introductions.
         </p>
         <p class="back-url">thenetworkeruk.com</p>
       </div>
