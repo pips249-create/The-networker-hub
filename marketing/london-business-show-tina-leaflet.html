@@ -318,9 +318,12 @@
     color: var(--ink);
     margin-bottom: 0.8mm;
   }
-  .cell-events .cell-title { color: #3d2f4a; }
+  /* Headlines contrast with panel bg + body copy */
+  .cell-events .cell-title {
+    color: #0d1f3c;
+  }
   .cell-opps .cell-title {
-    color: var(--opp-navy);
+    color: #7a3d8a;
     font-size: 24px;
     letter-spacing: -0.03em;
     line-height: 1.05;
@@ -376,43 +379,44 @@
 
   .tina-mark {
     position: relative;
-    width: 26mm;
-    height: 26mm;
+    width: 16mm;
+    height: 16mm;
   }
   .tina-mark img {
-    width: 26mm;
-    height: 26mm;
+    width: 16mm;
+    height: 16mm;
     border-radius: 50%;
     object-fit: cover;
     background: #0d0d12;
     box-shadow:
-      0 0 0 2.4px #fff,
-      0 0 0 4.2px rgba(154, 122, 168, 0.55),
-      0 8px 18px rgba(122, 61, 138, 0.28);
+      0 0 0 1.8px #fff,
+      0 0 0 3.2px rgba(154, 122, 168, 0.5),
+      0 5px 12px rgba(122, 61, 138, 0.22);
   }
 
   .tina-title {
     font-family: 'DM Serif Display', Georgia, serif;
     font-weight: 400;
-    font-size: 38px;
-    line-height: 0.95;
+    font-size: 32px;
+    line-height: 0.98;
     letter-spacing: -0.025em;
     color: var(--ink);
   }
-  .tina-title em {
-    font-style: normal;
-    color: var(--tina);
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
-  }
-  .tina-title span {
+  /* Description first, then the name */
+  .tina-title .tina-role {
     display: block;
     font-family: 'DM Sans', system-ui, sans-serif;
-    font-size: 12.5px;
+    font-size: 11.5px;
     font-weight: 750;
-    margin-top: 1.6mm;
+    margin: 0 0 1.2mm;
     color: var(--tina);
     letter-spacing: 0.01em;
     line-height: 1.2;
+  }
+  .tina-title .tina-name {
+    font-style: normal;
+    color: var(--tina);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
   }
 
   .tina-lede {
@@ -827,8 +831,8 @@
               <img src="../assets/hubert-icon.png" width="128" height="128" alt="">
             </div>
             <h1 class="tina-title" id="tina-heading">
-              <em>TINA</em>
-              <span>The Intelligent Networking Assistant</span>
+              <span class="tina-role">The Intelligent Networking Assistant</span>
+              <em class="tina-name">TINA</em>
             </h1>
           </div>
           <p class="tina-lede">
