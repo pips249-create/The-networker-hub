@@ -261,7 +261,8 @@
     grid-column: 1;
     border-right: 1.4px solid rgba(125, 72, 150, 0.18);
     gap: 1.5mm;
-    padding: 4mm 4.5mm 5mm 8mm;
+    /* Extra bottom inset so QR clears VistaPrint trim/safe */
+    padding: 4mm 4.5mm 8mm 8mm;
     background:
       radial-gradient(ellipse 70% 55% at 0% 0%, rgba(157, 96, 167, 0.16), transparent 60%),
       linear-gradient(160deg, #fbf8fd 0%, #ffffff 42%, #f5f0f8 100%);
@@ -283,7 +284,7 @@
   .cell-opps {
     grid-row: 2;
     grid-column: 2;
-    padding: 4mm 8mm 5.5mm 5mm;
+    padding: 4mm 8mm 8mm 5mm;
     color: var(--opp-navy);
     justify-content: flex-start;
     gap: 2.4mm;
@@ -457,11 +458,12 @@
   .tina-points {
     counter-reset: tina-step;
     display: grid;
-    gap: 2.4mm;
+    gap: 2mm;
     width: 100%;
     margin-top: 0.4mm;
     flex: 1;
-    padding: 3.2mm 3.4mm;
+    min-height: 0;
+    padding: 2.8mm 3.2mm;
     border-radius: 10px;
     background: rgba(122, 61, 138, 0.07);
     border: 1px solid rgba(122, 61, 138, 0.14);
@@ -512,9 +514,9 @@
   }
   .qr-frame {
     flex: 0 0 auto;
-    /* Larger QR for arm's-length scanning on A5 */
-    width: 30mm;
-    height: 30mm;
+    /* Keep QR ≥20mm module while leaving bottom safe margin for VistaPrint */
+    width: 28mm;
+    height: 28mm;
     padding: 1.2mm;
     background: #fff;
     border: 1.6px solid rgba(255, 255, 255, 0.85);
