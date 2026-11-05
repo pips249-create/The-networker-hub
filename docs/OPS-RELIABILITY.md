@@ -55,42 +55,37 @@ Browser SDK loads via `js/hub-sentry.js` (EU region). Server routes use `@sentry
 
 ## 2. Backups (Supabase)
 
-**Current plan (28 Aug 2026):** **Free tier** — not yet on Pro.
+**Current plan (4 Nov 2026):** **Pro** — no auto-pause; daily backups available in the dashboard.
 
-| What Free gives you | What you do **not** have yet |
-|---------------------|------------------------------|
-| Live Postgres + Auth | Automated daily backups in the dashboard |
-| Manual SQL / migrations via SQL Editor | One-click restore to a point in time |
-| Project can **auto-pause** after inactivity | 7-day backup retention (Pro) |
-
-**Upgrade to Pro when:** you scale paid ticketing, hold large member lists, or want proper RPO/RTO. Pro is ~$25/month and adds daily backups + no auto-pause (confirm current pricing in Supabase Billing).
+| Pro includes | Still do manually |
+|--------------|-------------------|
+| Live Postgres + Auth (no idle pause) | Confirm last backup time before risky migrations |
+| Automated daily backups + retention | Keep migrations in git (`supabase/migrations/`) |
+| Higher compute / connection headroom | Quarterly restore drill (see §3) |
 
 ### Checklist
 
 | Step | Action | Status |
 |------|--------|--------|
-| 1 | Confirm current tier: **Free** (Dashboard → Settings → Billing) | ☑ Aug 2026 |
-| 2 | **Upgrade to Pro** before busy ticket weekends or major launch | ☐ Planned |
-| 3 | After Pro: **Settings → Database → Backups** — note retention and last backup time | ☐ After upgrade |
-| 4 | Store project ref + dashboard URL in company password manager | ☐ |
-| 5 | Run `npm run check:ops` after UptimeRobot monitor is live | ☑ Script added 28 Aug 2026 |
+| 1 | Confirm current tier: **Pro** (Dashboard → Settings → Billing) | ☑ Nov 2026 (Catherine) |
+| 2 | **Settings → Database → Backups** — note retention and last backup time | ☐ Confirm in dashboard |
+| 3 | Store project ref + dashboard URL in company password manager | ☐ |
+| 4 | Run `npm run check:ops` after UptimeRobot monitor is live | ☑ Script added 28 Aug 2026 |
 
-### Interim mitigations (while on Free)
+### Before risky migrations
 
-1. **Before risky migrations** (capacity, money, auth): take a manual [`pg_dump`](https://supabase.com/docs/guides/database/backups) via connection string, or export critical tables from SQL Editor — store in company folder, not git.
+1. Check **Dashboard → Database → Backups** for a fresh daily backup (or take a manual [`pg_dump`](https://supabase.com/docs/guides/database/backups)).
 2. **Keep migrations in git** (`supabase/migrations/`) so schema is reproducible.
-3. **Avoid experimental SQL on production** without a noted export first.
-4. **Watch auto-pause:** wake the project if the dashboard shows paused — `/api/health` will show `supabaseConfigured: false` if the DB is unreachable.
+3. **Avoid experimental SQL on production** without a noted backup timestamp first.
 
-**RPO (today, Free):** no guaranteed automatic backup — treat manual exports + migration discipline as your safety net.  
-**RPO (target after Pro):** up to ~24 hours (daily backups).  
-**RTO (target):** same day, manual restore via Supabase dashboard/support after Pro.
+**RPO (Pro):** up to ~24 hours (daily backups) — confirm retention in the dashboard.  
+**RTO (target):** same day, manual restore via Supabase dashboard/support.
 
 ---
 
 ## 3. Restore drill (quarterly)
 
-When you have Pro backups:
+Pro backups are on — run this drill at least quarterly:
 
 1. Pick a non-destructive test: restore to a **new** temporary project / branch (prefer this over overwriting prod).
 2. Or document: open Supabase support → “restore backup from DATE to new project”.
@@ -140,6 +135,7 @@ Infra outage (site down, payments failing): treat as P0 — check Vercel / Supab
 
 | Date | Note |
 |------|------|
+| 2026-11-04 | Supabase **Pro** confirmed active; Free-tier / upgrade checklist retired |
 | 2026-08-28 | Documented Free tier (not Pro yet); interim backup mitigations |
 | 2026-08-28 | `npm run check:ops` added; production health probe verified |
 | 2026-08-13 | Created; health endpoint added; SurgoTech prep |
