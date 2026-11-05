@@ -208,44 +208,14 @@
   .masthead-copy {
     flex: 1;
     min-width: 0;
-    font-size: 12px;
-    font-weight: 550;
+    font-size: 13.5px;
+    font-weight: 600;
     line-height: 1.35;
-    color: #ebe0d8;
+    color: #f4ebe4;
   }
   .masthead-copy strong {
     color: #fff;
-    font-weight: 750;
-  }
-  .masthead-free {
-    flex: 0 0 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.6mm;
-    padding: 2.6mm 3.8mm;
-    border-radius: 9px;
-    background: linear-gradient(155deg, #fffef8 0%, #f5d998 48%, #e4b85a 100%);
-    color: #1a1420;
-    text-align: center;
-    border: 1.6px solid rgba(255, 248, 236, 0.95);
-    box-shadow:
-      0 0 0 2px rgba(26, 20, 32, 0.55),
-      0 6px 16px rgba(0, 0, 0, 0.35);
-  }
-  .masthead-free strong {
-    font-size: 13px;
-    font-weight: 900;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    line-height: 1;
-  }
-  .masthead-free span {
-    font-size: 10px;
-    font-weight: 750;
-    color: rgba(26, 20, 32, 0.78);
-    line-height: 1.15;
+    font-weight: 800;
   }
 
   .grid {
@@ -460,8 +430,9 @@
   }
 
   .tina-points {
+    counter-reset: tina-step;
     display: grid;
-    gap: 2.6mm;
+    gap: 2.4mm;
     width: 100%;
     margin-top: 0.8mm;
     flex: 1;
@@ -472,9 +443,10 @@
     align-content: start;
   }
   .tina-points li {
+    counter-increment: tina-step;
     list-style: none;
     display: grid;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: 6.5mm 1fr;
     gap: 2.4mm;
     align-items: start;
     font-size: 14.5px;
@@ -483,12 +455,27 @@
     line-height: 1.28;
   }
   .tina-points li::before {
-    content: '';
-    width: 2.6mm;
-    height: 2.6mm;
-    margin-top: 1.7mm;
+    content: counter(tina-step);
+    width: 6.5mm;
+    height: 6.5mm;
+    margin-top: 0.2mm;
     border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 850;
+    color: #fff;
     background: linear-gradient(135deg, var(--tina-soft), var(--tina));
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35) inset;
+  }
+  .tina-points li.tina-payoff {
+    color: #5a3d08;
+    font-weight: 850;
+  }
+  .tina-points li.tina-payoff::before {
+    color: #1a1420;
+    background: linear-gradient(155deg, #fffef8 0%, #f5d998 55%, #e4b85a 100%);
   }
 
   .tina-qr-block {
@@ -545,11 +532,10 @@
   }
   .qr-caption strong { color: #f5d998; }
   .qr-sub {
-    font-size: 10.5px;
-    font-weight: 700;
-    color: rgba(255, 248, 236, 0.92);
+    font-size: 13px;
+    font-weight: 850;
+    color: #fff;
     letter-spacing: 0.01em;
-    word-break: break-all;
   }
 
   .example {
@@ -777,13 +763,8 @@
           >
         </div>
         <p class="masthead-copy">
-          The home for <strong>UK business networking</strong>: find groups and events,
-          list opportunities, and meet the right people through TINA.
+          <strong>UK business networking</strong> + exclusive TINA introductions.
         </p>
-        <div class="masthead-free" aria-label="Join for free">
-          <strong>For free</strong>
-          <span>Join today</span>
-        </div>
       </header>
 
       <div class="grid">
@@ -797,13 +778,13 @@
               <em class="tina-name">TINA</em>
             </h1>
           </div>
-          <ul class="tina-points">
+          <ol class="tina-points">
             <li>Who do you want to meet?</li>
             <li>TINA finds your new connection</li>
-            <li>TINA makes warm introduction</li>
-            <li>You meet ideal connections with a simple search</li>
-            <li>For Free</li>
-          </ul>
+            <li>TINA makes a warm introduction</li>
+            <li>Meet ideal connections with a simple search</li>
+            <li class="tina-payoff">For free</li>
+          </ol>
 
           <div class="tina-qr-block">
             <div class="qr-frame">
@@ -817,7 +798,7 @@
             <div class="qr-copy">
               <span class="qr-free">Join for free</span>
               <p class="qr-caption">Scan · set up <strong>TINA</strong></p>
-              <p class="qr-sub">thenetworkeruk.com/lbs-tina-join</p>
+              <p class="qr-sub">thenetworkeruk.com</p>
             </div>
           </div>
         </section>
