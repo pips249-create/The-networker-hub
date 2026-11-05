@@ -136,9 +136,9 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 5mm;
-    padding: 10mm 14mm;
-    max-width: 170mm;
+    gap: 6.5mm;
+    padding: 12mm 14mm;
+    max-width: 176mm;
   }
   .logo-plate {
     display: flex;
@@ -153,11 +153,11 @@
     flex: 0 0 auto;
   }
   .page-back .logo-plate {
-    padding: 4.5mm 8mm;
-    border-radius: 14px;
+    padding: 5.5mm 10mm;
+    border-radius: 16px;
     box-shadow:
-      0 12px 30px rgba(45, 35, 50, 0.22),
-      0 0 0 1px rgba(255, 255, 255, 0.55);
+      0 14px 34px rgba(45, 35, 50, 0.26),
+      0 0 0 1px rgba(255, 255, 255, 0.6);
   }
   .brand-logo,
   .back-logo {
@@ -166,21 +166,42 @@
     display: block;
   }
   .page-back .back-logo {
-    width: 72mm;
+    width: 86mm;
+  }
+  .back-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2.2mm;
+    max-width: 140mm;
   }
   .back-support {
-    font-size: 18px;
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 26px;
+    font-weight: 400;
+    line-height: 1.18;
+    letter-spacing: -0.02em;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(45, 35, 50, 0.28);
+  }
+  .back-sub {
+    font-size: 15.5px;
     font-weight: 600;
-    line-height: 1.4;
-    color: rgba(255, 248, 236, 0.94);
-    max-width: 132mm;
+    line-height: 1.35;
+    color: rgba(255, 248, 236, 0.92);
   }
   .back-url {
-    margin-top: 2mm;
-    font-size: 15px;
-    font-weight: 750;
-    letter-spacing: 0.04em;
-    color: #fff8ec;
+    margin-top: 1mm;
+    padding: 2.6mm 6mm;
+    border-radius: 999px;
+    font-size: 17px;
+    font-weight: 850;
+    letter-spacing: 0.03em;
+    color: #1a1420;
+    background: linear-gradient(155deg, #fffef8 0%, #f5d998 55%, #e4b85a 100%);
+    box-shadow:
+      0 0 0 1.5px rgba(255, 255, 255, 0.45),
+      0 8px 18px rgba(45, 35, 50, 0.22);
   }
 
   .masthead {
@@ -855,9 +876,10 @@
             height="160"
           >
         </div>
-        <p class="back-support">
-          The home for UK business networking: events, opportunities, and exclusive TINA introductions.
-        </p>
+        <div class="back-copy">
+          <p class="back-support">The home for UK business networking</p>
+          <p class="back-sub">Events, opportunities and exclusive TINA introductions</p>
+        </div>
         <p class="back-url">thenetworkeruk.com</p>
       </div>
     </article>
