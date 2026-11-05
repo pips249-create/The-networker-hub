@@ -43,7 +43,7 @@ Works while the site gate is on (bypassed in middleware).
 
 Also in Vercel: **Project → Settings → Notifications** — enable deployment failure emails for the team.
 
-**Build costs:** agent preview spam was the main bill driver — see `docs/VERCEL-BUILD-COSTS.md` (disable `cursor/**` previews + one-build-per-branch).
+**Build costs:** only `main` auto-deploys — see `docs/VERCEL-BUILD-COSTS.md` (merge PR → one production build).
 
 ### Error monitoring (Sentry)
 

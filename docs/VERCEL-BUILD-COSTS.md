@@ -2,42 +2,64 @@
 
 **Why this exists:** Weekly usage hit ~**414 Build CPU hours (~$87)** almost entirely from **Build & Deploy**. Runtime (Functions, CDN, Analytics) was only a few dollars.
 
-**Root cause:** Cursor agent branches (`cursor/**`) push many commits per PR. Each commit was triggering a full Vercel preview build. ~100 PRs / ~240 commits in a week compounds fast.
+**Root cause:** Every push to every branch (especially Cursor agent `cursor/**` PRs) triggered a full Vercel preview build.
 
-## What we changed in the repo
+## Rule: only `main` deploys
 
-1. **`vercel.json` → `git.deploymentEnabled`**
-   - `"cursor/**": false` — no automatic preview deployments for agent branches.
-   - Production still deploys on every merge to `main`.
+| Branch | Auto-deploy to Vercel? |
+|--------|-------------------------|
+| `main` | Yes → **production** (`www.thenetworkeruk.com`) |
+| Everything else (`cursor/**`, feature branches, PR branches) | **No** |
 
-2. **`scripts/vercel-ignore-build.js`** (Ignored Build Step)
-   - Skips preview builds with no pull request.
-   - Skips previews when only docs / marketing / ops / email templates / migrations / PDFs changed.
-   - Always builds production.
+Configured in `vercel.json`:
 
-## Dashboard settings (do these once — biggest remaining win)
+```json
+"git": {
+  "deploymentEnabled": {
+    "**": false,
+    "main": true
+  }
+}
+```
 
-In **Vercel → the-networker-hub → Settings → Build and Deployment**:
+`scripts/vercel-ignore-build.js` skips any leftover preview builds as a safety net.
 
-| Setting | Set to | Why |
-|---------|--------|-----|
-| **On-Demand Concurrent Builds** | **Run up to one build per branch** | When an agent pushes a burst of commits, only the latest queued deploy builds. Vercel’s own guidance for coding agents. |
-| **Build Machine** | **Basic** (2 vCPU) or **Elastic** if already fine | Avoid Enhanced/Turbo unless builds OOM — more vCPUs × minutes = higher bill. |
-| **Ignored Build Step** | Confirm it shows the repo `ignoreCommand` (or `node scripts/vercel-ignore-build.js`) | Must not be overridden to “Automatic” in the UI. |
-| **System Environment Variables** | **Enabled** | Required for `VERCEL_TARGET_ENV` / `VERCEL_GIT_*` in the ignore script. |
+## Everyday workflow
 
-Optional: **Deployments →** prune old failed/canceled previews; they don’t bill CPU after the fact but clutter the list.
+You can still use as many branches and Cloud Agents as you like. **Nothing goes live until it lands on `main`.**
 
-## When you *need* a preview URL
+1. Agent / you work on a branch (e.g. `cursor/fix-thing-abcd`).
+2. Open a PR → review the **diff** (and any local/agent screenshots). No Vercel preview URL.
+3. **Merge the PR into `main`** → that merge triggers **one** production build.
+4. Check the live site.
 
-Agent branches no longer auto-deploy. Options:
+You do **not** need to “push the branch to main first” as a separate step — **merging the PR is the push to main**.
 
-1. **Ship via `main`** — merge the PR; production updates in one build.
-2. **Use a preview branch** — push the same commits to `preview/<short-name>` (not under `cursor/`). That pattern still deploys.
-3. **Manual deploy** — `npx vercel` from a laptop with the Vercel CLI linked (creates a one-off preview).
+```text
+branch work  →  PR review  →  merge to main  →  one Vercel production deploy
+```
 
-To re-enable agent previews temporarily, remove or comment the `cursor/**` entry under `git.deploymentEnabled` in `vercel.json`.
+### If you need a one-off preview before merge
 
-## Sanity check after a quiet week
+Rare. Options:
 
-Usage → **Build CPU Minutes** should drop from hundreds of hours toward roughly **one production build per merged PR** (plus any intentional `preview/**` deploys). Runtime line items staying ~$5–10 is expected.
+1. Merge to `main` behind a feature flag / unfinished UI (prefer this when safe).
+2. Manual CLI: `npx vercel` from your machine (one-off preview; not every commit).
+3. Temporarily set `"preview-temp": true` under `git.deploymentEnabled` and push that branch name — then remove it.
+
+## Dashboard (do once)
+
+**Vercel → the-networker-hub → Settings → Build and Deployment:**
+
+| Setting | Set to |
+|---------|--------|
+| **Ignored Build Step** | Repo command (`node scripts/vercel-ignore-build.js`) — don’t override to Automatic |
+| **On-Demand Concurrent Builds** | **Run up to one build per branch** (belt and braces) |
+| **Build Machine** | **Basic** or **Elastic** — avoid Enhanced/Turbo unless builds OOM |
+| **System Environment Variables** | **Enabled** |
+
+Optional UI shortcut with the same intent: Ignored Build Step → **Only build production**.
+
+## Sanity check
+
+After a normal week of agent PRs, Build CPU should track **merged PRs to main** (one build each), not every agent commit. Runtime staying ~$5–10 is expected.
