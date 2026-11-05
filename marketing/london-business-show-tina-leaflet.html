@@ -11,9 +11,19 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any">
 <style>
-  @page { size: A5 landscape; margin: 0; }
+  /*
+   * VistaPrint A5 landscape upload size (full bleed):
+   *   Bleed  213 × 151 mm
+   *   Trim   210 × 148 mm
+   *   Safe   207 × 145 mm
+   * Backgrounds fill the bleed; keep type/QR inside the safe area.
+   */
+  @page { size: 213mm 151mm; margin: 0; }
 
   :root {
+    --bleed: 3mm;
+    --page-w: 213mm;
+    --page-h: 151mm;
     --ink: #2e2930;
     --muted: #5c5458;
     --plum: #7a5f88;
@@ -90,9 +100,9 @@
   }
 
   .page {
-    width: 210mm;
-    height: 148mm;
-    max-height: 148mm;
+    width: var(--page-w);
+    height: var(--page-h);
+    max-height: var(--page-h);
     background: #fff;
     border: 1.5px solid rgba(122, 61, 138, 0.38);
     border-radius: 3px;
@@ -137,7 +147,7 @@
     flex-direction: column;
     align-items: center;
     gap: 6.5mm;
-    padding: 12mm 14mm;
+    padding: 14mm 16mm;
     max-width: 176mm;
   }
   .logo-plate {
@@ -208,7 +218,8 @@
     display: flex;
     align-items: center;
     gap: 5mm;
-    padding: 3.2mm 6mm 3.2mm 7.5mm;
+    /* Outer padding ≥ bleed+safe so type sits inside VistaPrint safe area */
+    padding: 5.2mm 9mm 4.2mm 9.5mm;
     background:
       radial-gradient(ellipse 60% 120% at 70% 30%, rgba(177, 137, 184, 0.28), transparent 65%),
       linear-gradient(100deg, #1c1720 0%, var(--panel) 55%, #3a3040 100%);
@@ -250,7 +261,7 @@
     grid-column: 1;
     border-right: 1.4px solid rgba(125, 72, 150, 0.18);
     gap: 1.5mm;
-    padding: 3mm 3.8mm 2.8mm 5mm;
+    padding: 4mm 4.5mm 5mm 8mm;
     background:
       radial-gradient(ellipse 70% 55% at 0% 0%, rgba(157, 96, 167, 0.16), transparent 60%),
       linear-gradient(160deg, #fbf8fd 0%, #ffffff 42%, #f5f0f8 100%);
@@ -261,7 +272,7 @@
     grid-row: 1;
     grid-column: 2;
     border-bottom: 1.4px solid rgba(154, 122, 168, 0.28);
-    padding: 3.8mm 5mm;
+    padding: 4.2mm 8mm 3.8mm 5mm;
     color: var(--opp-navy);
     background:
       radial-gradient(ellipse 80% 70% at 100% 0%, rgba(217, 196, 224, 0.7), transparent 55%),
@@ -272,7 +283,7 @@
   .cell-opps {
     grid-row: 2;
     grid-column: 2;
-    padding: 4mm 5mm 3.6mm;
+    padding: 4mm 8mm 5.5mm 5mm;
     color: var(--opp-navy);
     justify-content: flex-start;
     gap: 2.4mm;
@@ -709,8 +720,8 @@
       gap: 0;
     }
     .page {
-      width: 210mm;
-      height: 148mm;
+      width: var(--page-w);
+      height: var(--page-h);
       border-radius: 0;
       box-shadow: none;
       border: 0;
@@ -719,13 +730,13 @@
 
   @media screen and (max-width: 900px) {
     .page {
-      width: min(100%, 210mm);
+      width: min(100%, var(--page-w));
       height: auto;
-      min-height: 148mm;
+      min-height: var(--page-h);
       max-height: none;
     }
     .page-back {
-      min-height: 148mm;
+      min-height: var(--page-h);
     }
     .back-logo { width: min(78mm, 70%); }
     .grid {
@@ -749,7 +760,7 @@
 </head>
 <body>
   <div class="screen-bar">
-    <div><strong>The Business Show London</strong> · A5 landscape leave-behind (front + reverse)</div>
+    <div><strong>The Business Show London</strong> · A5 landscape leave-behind (VistaPrint bleed 213×151mm · trim 210×148mm)</div>
     <div class="screen-actions">
       <button type="button" class="print" id="leaflet-print">Print / Save as PDF</button>
       <a href="../assets/marketing/london-business-show-tina-leaflet.pdf" download>Download PDF</a>

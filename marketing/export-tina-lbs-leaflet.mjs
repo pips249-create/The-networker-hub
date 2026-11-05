@@ -31,10 +31,10 @@ const backPngExport = path.join(exportsDir, 'london-business-show-tina-leaflet-b
 const frontPngAsset = path.join(assetsDir, 'london-business-show-tina-leaflet-front.png');
 const backPngAsset = path.join(assetsDir, 'london-business-show-tina-leaflet-back.png');
 
-/** A5 landscape ~300 DPI proof PNGs (optional; PDF stays vector) */
+/** VistaPrint A5 landscape full-bleed upload size; ~300 DPI proof PNGs (optional; PDF stays vector) */
 const DPI = 300;
-const PAGE_WIDTH_MM = 210;
-const PAGE_HEIGHT_MM = 148;
+const PAGE_WIDTH_MM = 213;
+const PAGE_HEIGHT_MM = 151;
 const DEVICE_SCALE = DPI / 96;
 const CSS_PX_PER_MM = 96 / 25.4;
 
