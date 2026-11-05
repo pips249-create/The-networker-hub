@@ -4,6 +4,13 @@
   "buildCommand": "npm run build",
   "outputDirectory": ".",
   "cleanUrls": true,
+  "git": {
+    "deploymentEnabled": {
+      "**": false,
+      "main": true
+    }
+  },
+  "ignoreCommand": "node scripts/vercel-ignore-build.js",
   "redirects": [
     {
       "source": "/:path*",

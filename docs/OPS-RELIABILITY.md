@@ -43,6 +43,8 @@ Works while the site gate is on (bypassed in middleware).
 
 Also in Vercel: **Project → Settings → Notifications** — enable deployment failure emails for the team.
 
+**Build costs:** only `main` auto-deploys — see `docs/VERCEL-BUILD-COSTS.md` (merge PR → one production build).
+
 ### Error monitoring (Sentry)
 
 Browser SDK loads via `js/hub-sentry.js` (EU region). Server routes use `@sentry/node` when `SENTRY_DSN` is set in Vercel.
