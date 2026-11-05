@@ -32,6 +32,13 @@ assert.ok(joinJs.includes('company: company'), 'inline signup sends company');
 assert.ok(joinJs.includes('location: location'), 'inline signup sends location');
 assert.ok(!joinJs.includes('complete-booking'), 'does not purchase via complete-booking');
 assert.ok(/attended/i.test(joinJs), 'status copy uses attended');
+assert.ok(
+  joinJs.includes('markAttended()') && /Account created — recording/.test(joinJs),
+  'after register, records attendance on the stand without bouncing to verify-email first'
+);
+assert.ok(joinJs.includes('needsEmailConfirm'), 'soft email-confirm CTA after stand check-in');
+assert.ok(joinJs.includes('Finish TINA later') || joinJs.includes('Browse events'), 'does not force full TINA profile on the stand');
+assert.ok(/Just the essentials|name, email, company, location/i.test(joinHtml), 'page copy lists the quick fields only');
 
 const authRoute = read('api/auth.js');
 assert.ok(authRoute.includes('lbs-stand-attend'), 'auth router mounts lbs-stand-attend');
@@ -140,6 +147,14 @@ const registerRoute = read('api/_lib/routes/auth-register.js');
 assert.ok(registerRoute.includes('missing_name'), 'server requires full name');
 assert.ok(registerRoute.includes('tinaLbsJoin'), 'server recognises TINA leaflet campaign');
 assert.ok(registerRoute.includes("utmCampaign === 'tina_lbs'"), 'server maps tina_lbs to intros');
+assert.ok(
+  registerRoute.includes('if (!tinaLbsJoin)') && registerRoute.includes('buildEmailVerifyRedirect'),
+  'LBS leaflet signup defers forced verify-email redirect'
+);
+assert.ok(
+  registerRoute.includes('deferEmailVerification: Boolean(tinaLbsJoin && requiresEmailVerification)'),
+  'LBS response flags deferred email verification'
+);
 
 assert.ok(registerHtml.includes('register-hubert-lbs-note'), 'register has leaflet TINA disclosure');
 assert.ok(registerHtml.includes('register-lbs-extra-fields'), 'register has LBS company/location block');

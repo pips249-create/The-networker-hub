@@ -240,11 +240,16 @@ module.exports = async function handler(req, res) {
       } catch {
         emailSent = false;
       }
-      // The code stays in the email. This redirect only opens the entry form.
-      redirect = buildEmailVerifyRedirect({
-        next: afterVerify,
-        email: sessionUser.email,
-      });
+      // Business Show leaflet QR: keep them on the quick join URL so attendance
+      // can record on the stand. Confirmation email still sends; they finish
+      // the code when they have a moment (not before show check-in).
+      if (!tinaLbsJoin) {
+        // The code stays in the email. This redirect only opens the entry form.
+        redirect = buildEmailVerifyRedirect({
+          next: afterVerify,
+          email: sessionUser.email,
+        });
+      }
     }
 
     try {
@@ -258,15 +263,20 @@ module.exports = async function handler(req, res) {
 
     return json(res, 201, {
       ok: true,
-      message: requiresEmailVerification
+      message: tinaLbsJoin
         ? emailSent
-          ? 'Account created — check your email for a confirmation code.'
-          : 'Account created — confirm your email to continue.'
-        : 'Your account has been created.',
+          ? 'Account created — recording show attendance. Confirm your email when you can (code sent).'
+          : 'Account created — recording show attendance. You can confirm your email later from your account.'
+        : requiresEmailVerification
+          ? emailSent
+            ? 'Account created — check your email for a confirmation code.'
+            : 'Account created — confirm your email to continue.'
+          : 'Your account has been created.',
       user: sessionUser,
       redirect,
       requiresEmailVerification,
       emailSent,
+      deferEmailVerification: Boolean(tinaLbsJoin && requiresEmailVerification),
     });
   } catch (e) {
     const msg = e.message || 'Could not create your account.';

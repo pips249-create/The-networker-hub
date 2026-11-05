@@ -1,6 +1,9 @@
 /**
  * London Business Show stand join: inline quick signup for TINA + mark the show
  * as attended (stand check-in — not a ticket purchase).
+ *
+ * Show-floor path only asks for name, email, company, location and password.
+ * Full TINA “who you want to meet” stays for the 24h finish-profile email.
  */
 (function () {
   'use strict';
@@ -33,17 +36,6 @@
   function showForm(show) {
     if (!formEl) return;
     formEl.hidden = !show;
-  }
-
-  function withoutEmailVerifySecret(url) {
-    try {
-      var u = new URL(url, window.location.origin);
-      u.searchParams.delete('secret');
-      u.searchParams.delete('code');
-      return u.pathname + u.search + u.hash;
-    } catch (e) {
-      return url;
-    }
   }
 
   function fetchSession() {
@@ -91,17 +83,26 @@
     }
   }
 
-  function showSuccess(already) {
+  function showSuccess(already, opts) {
+    opts = opts || {};
     showForm(false);
     setStatus(
       already
-        ? 'You’re already recorded for The Business Show London. Next, finish your TINA profile.'
-        : 'You’re in — The Business Show London is recorded on your account as attended. Next, finish your TINA profile.',
+        ? 'You’re already recorded for The Business Show London. You’re done for now on the stand.'
+        : 'You’re in — The Business Show London is recorded on your account as attended. You’re done for now on the stand.',
       'ok'
     );
+    var emailNote = opts.needsEmailConfirm
+      ? '<p class="lbs-note">We’ve emailed a confirmation code — confirm when you have a moment (not needed to finish here).</p>'
+      : '<p class="lbs-note">We’ll email you tomorrow to finish the rest of your TINA profile if you haven’t already.</p>';
     setAction(
-      '<a class="lbs-btn lbs-btn-primary" href="/account/#meet">Open TINA profile</a>' +
-        '<a class="lbs-btn lbs-btn-secondary" href="/account/#tickets">View my tickets</a>'
+      emailNote +
+        '<a class="lbs-btn lbs-btn-primary" href="/events/">Browse events</a>' +
+        (opts.needsEmailConfirm
+          ? '<a class="lbs-btn lbs-btn-secondary" href="/organiser/verify-email?next=' +
+            encodeURIComponent(JOIN_PATH) +
+            '">Confirm email</a>'
+          : '<a class="lbs-btn lbs-btn-secondary" href="/account/#meet">Finish TINA later</a>')
     );
   }
 
@@ -112,12 +113,12 @@
       return 'You’re already marked as having attended The Business Show London.';
     }
     if (code === 'no_free_ticket') {
-      return 'Show check-in isn’t open on this listing yet. You can still finish your TINA profile.';
+      return 'Show check-in isn’t open on this listing yet. You can still finish your TINA profile later.';
     }
     if (code === 'event_not_found') {
-      return 'We couldn’t find the show listing. You can still create your free profile for TINA.';
+      return 'We couldn’t find the show listing. Your free profile is still created.';
     }
-    return 'We couldn’t record attendance automatically. Create or open your profile — you can add the show from Events I’ve attended later.';
+    return 'We couldn’t record attendance automatically. You can add the show from Events I’ve attended later.';
   }
 
   function val(id) {
@@ -221,17 +222,47 @@
             if (submitBtn) submitBtn.disabled = false;
             return;
           }
-          setStatus(
-            (result.data && result.data.message) ||
-              'Account created — confirm your email to finish show check-in.',
-            'ok'
-          );
-          var go = function () {
-            window.location.href = withoutEmailVerifySecret(
-              (result.data && result.data.redirect) || JOIN_PATH
-            );
-          };
-          setTimeout(go, 350);
+
+          // Stay on the stand flow: session is set, record attendance now.
+          // Email confirm is deferred (code already emailed when available).
+          setStatus('Account created — recording that you attended…', 'ok');
+          return markAttended()
+            .then(function (data) {
+              showSuccess(Boolean(data && data.already), {
+                needsEmailConfirm: Boolean(
+                  result.data &&
+                    (result.data.deferEmailVerification || result.data.requiresEmailVerification)
+                ),
+              });
+            })
+            .catch(function (err) {
+              var code = err && err.code ? String(err.code) : '';
+              var msg = err && err.message ? String(err.message) : '';
+              if (
+                code === 'already_registered' ||
+                code === 'already_going' ||
+                code === 'exists' ||
+                /already/i.test(msg)
+              ) {
+                showSuccess(true, {
+                  needsEmailConfirm: Boolean(
+                    result.data &&
+                      (result.data.deferEmailVerification || result.data.requiresEmailVerification)
+                  ),
+                });
+                return;
+              }
+              setStatus(
+                (result.data && result.data.message) || humanError(err),
+                'warn'
+              );
+              setAction(
+                '<a class="lbs-btn lbs-btn-primary" href="/events/">Browse events</a>' +
+                  '<a class="lbs-btn lbs-btn-secondary" href="/organiser/verify-email?next=' +
+                  encodeURIComponent(JOIN_PATH) +
+                  '">Confirm email</a>'
+              );
+            });
         })
         .catch(function () {
           setStatus('Could not reach the server. Try again shortly.', 'error');
@@ -241,9 +272,10 @@
   }
 
   function run() {
+    // Form stays visible by default for signed-out show-floor visitors.
+    // Only hide it once we know they already have a session.
     setStatus('Checking your account…');
     setAction('');
-    showForm(false);
     bindSignupForm();
 
     fetchSession()
@@ -273,7 +305,7 @@
             }
             setStatus(humanError(err), 'warn');
             setAction(
-              '<a class="lbs-btn lbs-btn-primary" href="/account/#meet">Open TINA profile</a>' +
+              '<a class="lbs-btn lbs-btn-primary" href="/events/">Browse events</a>' +
                 '<a class="lbs-btn lbs-btn-secondary" href="/events/' +
                 EVENT_SLUG +
                 '">View event</a>'

@@ -20,6 +20,17 @@
     --gold: #c9ad7a;
     --bg: #faf6f0;
     --line: #e4d8c8;
+    /* Cookie banner (this page does not load hub.css) */
+    --surface-card: #fffdf9;
+    --border-soft: rgba(122, 95, 136, 0.22);
+    --text-body: var(--muted);
+    --lavender-deep: var(--tina);
+    --lavender: #c9b0d4;
+    --lavender-light: #f3ebf6;
+    --lavender-soft: #b895c4;
+    --cream: #faf6f0;
+    --charcoal: var(--ink);
+    --radius-pill: 999px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -213,6 +224,13 @@
     color: var(--muted);
   }
   .note a { color: var(--plum); font-weight: 700; text-decoration: none; }
+  body.hub-cookie-banner-open {
+    padding-bottom: max(160px, var(--hub-cookie-banner-h, 160px));
+  }
+  #lbs-join-action .lbs-note {
+    width: 100%;
+    margin: 0 0 4px;
+  }
 </style>
 <script src="js/hub-compliance-bootstrap.js?v=20260923cmp4" data-root=""></script>
 </head>
@@ -226,8 +244,9 @@
       <p class="kicker">From the show floor</p>
       <h1>Meet <em>TINA</em>, The Intelligent Networking Assistant</h1>
       <p class="lede">
-        Fill this in now — we’ll create your free Networker UK account, start a basic TINA profile,
-        and record that you attended The Business Show London. Finish the rest later.
+        Just the essentials on the stand — name, email, company, location and a password.
+        We’ll create your free account, start a basic TINA profile, and record that you attended.
+        Finish the rest later by email.
       </p>
       <section class="about" aria-labelledby="lbs-about-heading">
         <h2 id="lbs-about-heading">The Networker UK</h2>
@@ -308,6 +327,6 @@
     </article>
   </main>
   <script src="js/hub-turnstile.js?v=20260827sec3"></script>
-  <script src="js/lbs-tina-join.js?v=20261104lbs6"></script>
+  <script src="js/lbs-tina-join.js?v=20261105lbs7"></script>
 </body>
 </html>
