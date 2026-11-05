@@ -223,25 +223,28 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.4mm;
-    padding: 2mm 3.2mm;
-    border-radius: 8px;
-    background: linear-gradient(155deg, #fff8ec 0%, #f5d998 55%, #e8c47a 100%);
-    color: var(--ink);
+    gap: 0.6mm;
+    padding: 2.6mm 3.8mm;
+    border-radius: 9px;
+    background: linear-gradient(155deg, #fffef8 0%, #f5d998 48%, #e4b85a 100%);
+    color: #1a1420;
     text-align: center;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+    border: 1.6px solid rgba(255, 248, 236, 0.95);
+    box-shadow:
+      0 0 0 2px rgba(26, 20, 32, 0.55),
+      0 6px 16px rgba(0, 0, 0, 0.35);
   }
   .masthead-free strong {
-    font-size: 11px;
-    font-weight: 850;
-    letter-spacing: 0.12em;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     line-height: 1;
   }
   .masthead-free span {
-    font-size: 8px;
-    font-weight: 650;
-    color: rgba(46, 41, 48, 0.72);
+    font-size: 10px;
+    font-weight: 750;
+    color: rgba(26, 20, 32, 0.78);
     line-height: 1.15;
   }
 
@@ -266,8 +269,8 @@
     grid-row: 1 / span 2;
     grid-column: 1;
     border-right: 1.4px solid rgba(125, 72, 150, 0.18);
-    gap: 1.8mm;
-    padding: 3.4mm 4mm 3mm 5.2mm;
+    gap: 1.5mm;
+    padding: 3mm 3.8mm 2.8mm 5mm;
     background:
       radial-gradient(ellipse 70% 55% at 0% 0%, rgba(157, 96, 167, 0.16), transparent 60%),
       linear-gradient(160deg, #fbf8fd 0%, #ffffff 42%, #f5f0f8 100%);
@@ -339,34 +342,71 @@
     margin-bottom: 2.2mm;
   }
   .cell-events .cell-lede {
-    color: rgba(61, 47, 74, 0.82);
-    font-size: 11.5px;
-    font-weight: 600;
-    line-height: 1.35;
+    color: rgba(61, 47, 74, 0.88);
+    font-size: 12.5px;
+    font-weight: 700;
+    line-height: 1.25;
     max-width: 92mm;
+    margin-bottom: 1.6mm;
   }
   .cell-opps .cell-lede {
-    color: rgba(13, 31, 60, 0.84);
-    font-size: 13.5px;
-    font-weight: 600;
-    line-height: 1.42;
+    color: rgba(13, 31, 60, 0.88);
+    font-size: 12.5px;
+    font-weight: 700;
+    line-height: 1.25;
     max-width: 96mm;
-    margin-bottom: 0;
+    margin-bottom: 1.6mm;
+  }
+
+  .panel-points {
+    display: grid;
+    gap: 1.2mm;
+    width: 100%;
+    margin-bottom: 2mm;
+  }
+  .panel-points li {
+    list-style: none;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1.8mm;
+    align-items: start;
+    font-size: 11.5px;
+    font-weight: 650;
+    line-height: 1.28;
+  }
+  .panel-points li::before {
+    content: '';
+    width: 1.9mm;
+    height: 1.9mm;
+    margin-top: 1.3mm;
+    border-radius: 50%;
+  }
+  .cell-events .panel-points li {
+    color: rgba(61, 47, 74, 0.9);
+  }
+  .cell-events .panel-points li::before {
+    background: linear-gradient(135deg, #9a7aa8, #7a5f8a);
+  }
+  .cell-opps .panel-points li {
+    color: rgba(13, 31, 60, 0.9);
+  }
+  .cell-opps .panel-points li::before {
+    background: linear-gradient(135deg, #e8b84b, #c9961f);
   }
 
   .opps-foot {
     margin-top: auto;
     padding-top: 2.4mm;
     border-top: 1px solid rgba(13, 31, 60, 0.14);
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 750;
     letter-spacing: 0.02em;
-    color: rgba(13, 31, 60, 0.72);
+    color: rgba(13, 31, 60, 0.78);
     line-height: 1.3;
   }
   .opps-foot strong {
     color: var(--opp-navy);
-    font-weight: 800;
+    font-weight: 850;
   }
 
   .tina-head {
@@ -420,41 +460,41 @@
   }
 
   .tina-lede {
-    font-size: 11px;
-    font-weight: 550;
+    font-size: 12px;
+    font-weight: 600;
     color: var(--muted);
-    line-height: 1.35;
+    line-height: 1.3;
   }
 
   .demo {
     width: 100%;
-    padding: 2.4mm 2.8mm;
+    padding: 2.2mm 2.6mm;
     border-radius: 9px;
     background: #fff;
     border: 1px solid rgba(154, 122, 168, 0.22);
     box-shadow: 0 4px 14px rgba(122, 61, 138, 0.08);
   }
   .demo-label {
-    font-size: 7.5px;
+    font-size: 8.5px;
     font-weight: 800;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--tina);
-    margin-bottom: 1.2mm;
+    margin-bottom: 1.1mm;
   }
   .demo-prompt {
     display: flex;
     align-items: center;
     gap: 1.5mm;
-    padding: 1.8mm 2.2mm;
+    padding: 2mm 2.4mm;
     border-radius: 6px;
     background: linear-gradient(90deg, #f7f2fb, #faf6f0);
     border: 1px solid rgba(154, 122, 168, 0.16);
-    margin-bottom: 1.6mm;
+    margin-bottom: 1.4mm;
   }
   .demo-prompt .typed {
     flex: 1;
-    font-size: 10px;
+    font-size: 12px;
     color: var(--ink);
     line-height: 1.2;
     min-width: 0;
@@ -463,14 +503,14 @@
   .demo-prompt .typed strong { font-weight: 750; color: var(--plum-deep); }
   .demo-go {
     flex: 0 0 auto;
-    font-size: 8px;
-    font-weight: 800;
+    font-size: 9.5px;
+    font-weight: 850;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: #fff;
     background: linear-gradient(135deg, var(--tina-soft), var(--tina));
     border-radius: 999px;
-    padding: 2px 7px;
+    padding: 2.5px 8px;
   }
   .demo-result {
     display: grid;
@@ -479,26 +519,26 @@
     align-items: center;
   }
   .demo-avatar {
-    width: 6mm;
-    height: 6mm;
+    width: 6.5mm;
+    height: 6.5mm;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 7.5px;
+    font-size: 8px;
     font-weight: 800;
     color: var(--plum-deep);
     background: linear-gradient(145deg, #f3ebf5, #efe2c8);
   }
   .demo-result strong {
     display: block;
-    font-size: 10px;
+    font-size: 11.5px;
     font-weight: 750;
     color: var(--ink);
   }
   .demo-result span {
     display: block;
-    font-size: 8.5px;
+    font-size: 10px;
     color: var(--muted);
     line-height: 1.25;
     margin-top: 0.3mm;
@@ -506,10 +546,10 @@
 
   .tina-points {
     display: grid;
-    gap: 1.4mm;
+    gap: 1.5mm;
     width: 100%;
     margin-top: 0.2mm;
-    padding: 2mm 2.4mm;
+    padding: 2.2mm 2.6mm;
     border-radius: 8px;
     background: rgba(122, 61, 138, 0.06);
     border: 1px solid rgba(122, 61, 138, 0.12);
@@ -518,18 +558,18 @@
     list-style: none;
     display: grid;
     grid-template-columns: auto 1fr;
-    gap: 1.6mm;
+    gap: 1.8mm;
     align-items: start;
-    font-size: 9.5px;
-    font-weight: 600;
+    font-size: 11.5px;
+    font-weight: 650;
     color: var(--plum-deep);
-    line-height: 1.25;
+    line-height: 1.28;
   }
   .tina-points li::before {
     content: '';
-    width: 1.8mm;
-    height: 1.8mm;
-    margin-top: 1.1mm;
+    width: 2mm;
+    height: 2mm;
+    margin-top: 1.3mm;
     border-radius: 50%;
     background: linear-gradient(135deg, var(--tina-soft), var(--tina));
   }
@@ -537,21 +577,24 @@
   .tina-qr-block {
     display: flex;
     align-items: center;
-    gap: 2.6mm;
+    gap: 3mm;
     width: 100%;
     margin-top: auto;
-    padding: 2.4mm;
-    border-radius: 9px;
-    background: linear-gradient(135deg, rgba(122, 61, 138, 0.12), rgba(157, 96, 167, 0.08));
-    border: 1.2px solid rgba(122, 61, 138, 0.24);
+    padding: 2.6mm;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #7a3d8a 0%, #5f2f6e 100%);
+    border: 1.6px solid rgba(255, 255, 255, 0.28);
+    box-shadow: 0 6px 16px rgba(95, 47, 110, 0.28);
+    color: #fff;
   }
   .qr-frame {
     flex: 0 0 auto;
-    width: 23mm;
-    height: 23mm;
-    padding: 1.1mm;
+    /* QR module ≥ 20mm for arm's-length scanning */
+    width: 24mm;
+    height: 24mm;
+    padding: 1.2mm;
     background: #fff;
-    border: 1.4px solid rgba(125, 72, 150, 0.35);
+    border: 1.6px solid rgba(255, 255, 255, 0.85);
     border-radius: 6px;
     display: flex;
     align-items: center;
@@ -566,28 +609,30 @@
   .qr-copy { min-width: 0; }
   .qr-free {
     display: inline-block;
-    font-size: 8px;
-    font-weight: 850;
+    font-size: 9.5px;
+    font-weight: 900;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: #fff;
-    background: linear-gradient(135deg, var(--tina-soft), var(--tina));
+    color: #1a1420;
+    background: linear-gradient(155deg, #fffef8 0%, #f5d998 55%, #e4b85a 100%);
     border-radius: 4px;
-    padding: 1.4px 5px;
-    margin-bottom: 1mm;
+    padding: 2px 7px;
+    margin-bottom: 1.2mm;
   }
   .qr-caption {
-    font-size: 11px;
-    font-weight: 750;
-    color: var(--ink);
+    font-size: 13px;
+    font-weight: 800;
+    color: #fff;
     line-height: 1.2;
-    margin-bottom: 0.5mm;
+    margin-bottom: 0.7mm;
   }
-  .qr-caption strong { color: var(--tina); }
+  .qr-caption strong { color: #f5d998; }
   .qr-sub {
-    font-size: 8.5px;
-    font-weight: 600;
-    color: var(--muted);
+    font-size: 10.5px;
+    font-weight: 700;
+    color: rgba(255, 248, 236, 0.92);
+    letter-spacing: 0.01em;
+    word-break: break-all;
   }
 
   .example {
@@ -836,8 +881,7 @@
             </h1>
           </div>
           <p class="tina-lede">
-            Warm intros to the right people, without cold LinkedIn outreach.
-            Members approve before you connect.
+            Warm intros to the right people. Both sides approve first.
           </p>
 
           <div class="demo" aria-label="TINA product example">
@@ -850,7 +894,7 @@
               <div class="demo-avatar" aria-hidden="true">AJ</div>
               <div>
                 <strong>Match → private intro</strong>
-                <span>Both sides approve. Contacts stay private.</span>
+                <span>Both approve. Contacts stay private.</span>
               </div>
             </div>
           </div>
@@ -858,7 +902,7 @@
           <ul class="tina-points">
             <li>Free for Networker UK members</li>
             <li>Tell TINA who you want to meet</li>
-            <li>She finds matches. Both sides approve first</li>
+            <li>She matches. You both approve</li>
           </ul>
 
           <div class="tina-qr-block">
@@ -886,7 +930,11 @@
             </div>
             <p class="panel-stat">UK-wide<span>directory</span></p>
           </div>
-          <p class="cell-lede">Discover business networking events, meetings, conferences and workshops across the UK, with filters for location, format, date and price.</p>
+          <p class="cell-lede">UK networking events, meetings &amp; workshops</p>
+          <ul class="panel-points">
+            <li>Filter by location, format, date &amp; price</li>
+            <li>Browse free · book what fits</li>
+          </ul>
           <div class="example" aria-label="Example event: The Business Show London">
             <p class="example-kicker">On now</p>
             <div class="example-row">
@@ -917,7 +965,11 @@
             </div>
             <p class="panel-stat">Live<span>listings</span></p>
           </div>
-          <p class="cell-lede">Browse UK franchises, side hustles, partnerships and affiliate opportunities, filter by sector and location, and connect directly with providers.</p>
+          <p class="cell-lede">Franchises, side hustles, partnerships &amp; affiliates</p>
+          <ul class="panel-points">
+            <li>Filter by sector &amp; location</li>
+            <li>Connect directly with providers</li>
+          </ul>
           <p class="opps-foot">Free to browse · <strong>thenetworkeruk.com</strong></p>
         </section>
       </div>
