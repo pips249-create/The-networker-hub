@@ -198,7 +198,7 @@
     display: flex;
     align-items: center;
     gap: 5mm;
-    padding: 3.2mm 6mm 3.2mm 7.5mm;
+    padding: 3mm 6mm 3mm 7.5mm;
     background:
       radial-gradient(ellipse 60% 120% at 70% 30%, rgba(177, 137, 184, 0.28), transparent 65%),
       linear-gradient(100deg, #1c1720 0%, var(--panel) 55%, #3a3040 100%);
@@ -208,587 +208,252 @@
   .masthead-copy {
     flex: 1;
     min-width: 0;
-    font-size: 12px;
-    font-weight: 550;
+    font-size: 13px;
+    font-weight: 600;
     line-height: 1.35;
-    color: #ebe0d8;
+    color: #f4ebe4;
   }
   .masthead-copy strong {
     color: #fff;
-    font-weight: 750;
-  }
-  .masthead-free {
-    flex: 0 0 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.6mm;
-    padding: 2.6mm 3.8mm;
-    border-radius: 9px;
-    background: linear-gradient(155deg, #fffef8 0%, #f5d998 48%, #e4b85a 100%);
-    color: #1a1420;
-    text-align: center;
-    border: 1.6px solid rgba(255, 248, 236, 0.95);
-    box-shadow:
-      0 0 0 2px rgba(26, 20, 32, 0.55),
-      0 6px 16px rgba(0, 0, 0, 0.35);
-  }
-  .masthead-free strong {
-    font-size: 13px;
-    font-weight: 900;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    line-height: 1;
-  }
-  .masthead-free span {
-    font-size: 10px;
-    font-weight: 750;
-    color: rgba(26, 20, 32, 0.78);
-    line-height: 1.15;
-  }
-
-  .grid {
-    min-height: 0;
-    display: grid;
-    grid-template-columns: 0.92fr 1.08fr;
-    grid-template-rows: 1fr 1fr;
-  }
-
-  .cell {
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    text-align: left;
-    padding: 3.5mm 4.5mm;
-  }
-
-  /* TINA — site teaser colours (#fbf8fd / #7a3d8a) */
-  .cell-tina {
-    grid-row: 1 / span 2;
-    grid-column: 1;
-    border-right: 1.4px solid rgba(125, 72, 150, 0.18);
-    gap: 1.5mm;
-    padding: 3mm 3.8mm 2.8mm 5mm;
-    background:
-      radial-gradient(ellipse 70% 55% at 0% 0%, rgba(157, 96, 167, 0.16), transparent 60%),
-      linear-gradient(160deg, #fbf8fd 0%, #ffffff 42%, #f5f0f8 100%);
-  }
-
-  /* Events — site purple (#f3ebf7 / #d9c4e0) */
-  .cell-events {
-    grid-row: 1;
-    grid-column: 2;
-    border-bottom: 1.4px solid rgba(154, 122, 168, 0.28);
-    padding: 3.8mm 5mm;
-    color: var(--opp-navy);
-    background:
-      radial-gradient(ellipse 80% 70% at 100% 0%, rgba(217, 196, 224, 0.7), transparent 55%),
-      linear-gradient(165deg, #f3ebf7 0%, #e8dcf0 42%, #d9c4e0 100%);
-  }
-
-  /* Opportunities — site gold / navy (#fdf6e3 / #0d1f3c) */
-  .cell-opps {
-    grid-row: 2;
-    grid-column: 2;
-    padding: 4mm 5mm 3.6mm;
-    color: var(--opp-navy);
-    justify-content: flex-start;
-    gap: 2.4mm;
-    background:
-      radial-gradient(ellipse 80% 70% at 100% 100%, rgba(232, 184, 75, 0.45), transparent 55%),
-      linear-gradient(165deg, #fdf6e3 0%, #f5e6c4 42%, #ecd29a 100%);
-  }
-
-  .cell-kicker {
-    font-size: 8.5px;
     font-weight: 800;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--tina);
-    margin-bottom: 0.6mm;
-  }
-  .cell-events .cell-kicker { color: var(--events-ink); }
-  .cell-opps .cell-kicker { color: var(--opp-navy); }
-
-  .cell-title {
-    font-family: 'DM Serif Display', Georgia, serif;
-    font-weight: 400;
-    font-size: 25px;
-    line-height: 1.02;
-    letter-spacing: -0.02em;
-    color: var(--ink);
-    margin-bottom: 0.8mm;
-  }
-  /* Headlines contrast with panel bg + body copy */
-  .cell-events .cell-title {
-    color: #0d1f3c;
-  }
-  .cell-opps .cell-title {
-    color: #7a3d8a;
-    font-size: 24px;
-    letter-spacing: -0.03em;
-    line-height: 1.05;
-    max-width: 78mm;
   }
 
-  .cell-lede {
-    font-size: 11px;
-    font-weight: 550;
-    color: var(--muted);
-    line-height: 1.28;
-    max-width: 82mm;
-    margin-bottom: 2.2mm;
-  }
-  .cell-events .cell-lede {
-    color: rgba(61, 47, 74, 0.88);
-    font-size: 12.5px;
-    font-weight: 700;
-    line-height: 1.25;
-    max-width: 92mm;
-    margin-bottom: 1.6mm;
-  }
-  .cell-opps .cell-lede {
-    color: rgba(13, 31, 60, 0.88);
-    font-size: 12.5px;
-    font-weight: 700;
-    line-height: 1.25;
-    max-width: 96mm;
-    margin-bottom: 1.6mm;
-  }
-
-  .panel-points {
+  /* TINA hero (~65%) + support strip */
+  .front-body {
+    min-height: 0;
     display: grid;
-    gap: 1.2mm;
-    width: 100%;
-    margin-bottom: 2mm;
-  }
-  .panel-points li {
-    list-style: none;
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 1.8mm;
-    align-items: start;
-    font-size: 11.5px;
-    font-weight: 650;
-    line-height: 1.28;
-  }
-  .panel-points li::before {
-    content: '';
-    width: 1.9mm;
-    height: 1.9mm;
-    margin-top: 1.3mm;
-    border-radius: 50%;
-  }
-  .cell-events .panel-points li {
-    color: rgba(61, 47, 74, 0.9);
-  }
-  .cell-events .panel-points li::before {
-    background: linear-gradient(135deg, #9a7aa8, #7a5f8a);
-  }
-  .cell-opps .panel-points li {
-    color: rgba(13, 31, 60, 0.9);
-  }
-  .cell-opps .panel-points li::before {
-    background: linear-gradient(135deg, #e8b84b, #c9961f);
+    grid-template-rows: minmax(0, 1fr) auto;
   }
 
-  .opps-foot {
-    margin-top: auto;
-    padding-top: 2.4mm;
-    border-top: 1px solid rgba(13, 31, 60, 0.14);
-    font-size: 12px;
-    font-weight: 750;
-    letter-spacing: 0.02em;
-    color: rgba(13, 31, 60, 0.78);
-    line-height: 1.3;
+  .hero-tina {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(58mm, 0.85fr);
+    gap: 4mm;
+    padding: 4mm 5.5mm 3.5mm 6mm;
+    background:
+      radial-gradient(ellipse 70% 55% at 0% 0%, rgba(157, 96, 167, 0.18), transparent 60%),
+      linear-gradient(160deg, #fbf8fd 0%, #ffffff 45%, #f5f0f8 100%);
   }
-  .opps-foot strong {
-    color: var(--opp-navy);
-    font-weight: 850;
+
+  .hero-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2.4mm;
   }
 
   .tina-head {
     display: grid;
     grid-template-columns: auto 1fr;
-    gap: 3mm;
+    gap: 3.2mm;
     align-items: center;
     width: 100%;
   }
 
   .tina-mark {
-    position: relative;
-    width: 16mm;
-    height: 16mm;
+    width: 18mm;
+    height: 18mm;
   }
   .tina-mark img {
-    width: 16mm;
-    height: 16mm;
+    width: 18mm;
+    height: 18mm;
     border-radius: 50%;
     object-fit: cover;
     background: #0d0d12;
     box-shadow:
-      0 0 0 1.8px #fff,
-      0 0 0 3.2px rgba(154, 122, 168, 0.5),
+      0 0 0 2px #fff,
+      0 0 0 3.4px rgba(122, 61, 138, 0.45),
       0 5px 12px rgba(122, 61, 138, 0.22);
   }
 
   .tina-title {
     font-family: 'DM Serif Display', Georgia, serif;
     font-weight: 400;
-    font-size: 32px;
+    font-size: 36px;
     line-height: 0.98;
     letter-spacing: -0.025em;
     color: var(--ink);
   }
-  /* Description first, then the name */
   .tina-title .tina-role {
     display: block;
     font-family: 'DM Sans', system-ui, sans-serif;
-    font-size: 11.5px;
-    font-weight: 750;
+    font-size: 12.5px;
+    font-weight: 800;
     margin: 0 0 1.2mm;
-    color: var(--tina);
+    color: #5a2d68;
     letter-spacing: 0.01em;
     line-height: 1.2;
   }
   .tina-title .tina-name {
     font-style: normal;
     color: var(--tina);
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
   }
 
   .tina-lede {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--muted);
-    line-height: 1.3;
-  }
-
-  .demo {
-    width: 100%;
-    padding: 2.2mm 2.6mm;
-    border-radius: 9px;
-    background: #fff;
-    border: 1px solid rgba(154, 122, 168, 0.22);
-    box-shadow: 0 4px 14px rgba(122, 61, 138, 0.08);
-  }
-  .demo-label {
-    font-size: 8.5px;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--tina);
-    margin-bottom: 1.1mm;
-  }
-  .demo-prompt {
-    display: flex;
-    align-items: center;
-    gap: 1.5mm;
-    padding: 2mm 2.4mm;
-    border-radius: 6px;
-    background: linear-gradient(90deg, #f7f2fb, #faf6f0);
-    border: 1px solid rgba(154, 122, 168, 0.16);
-    margin-bottom: 1.4mm;
-  }
-  .demo-prompt .typed {
-    flex: 1;
-    font-size: 12px;
-    color: var(--ink);
-    line-height: 1.2;
-    min-width: 0;
-  }
-  .demo-prompt .typed span { color: var(--muted); font-weight: 500; }
-  .demo-prompt .typed strong { font-weight: 750; color: var(--plum-deep); }
-  .demo-go {
-    flex: 0 0 auto;
-    font-size: 9.5px;
-    font-weight: 850;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: #fff;
-    background: linear-gradient(135deg, var(--tina-soft), var(--tina));
-    border-radius: 999px;
-    padding: 2.5px 8px;
-  }
-  .demo-result {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 1.8mm;
-    align-items: center;
-  }
-  .demo-avatar {
-    width: 6.5mm;
-    height: 6.5mm;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 8px;
-    font-weight: 800;
-    color: var(--plum-deep);
-    background: linear-gradient(145deg, #f3ebf5, #efe2c8);
-  }
-  .demo-result strong {
-    display: block;
-    font-size: 11.5px;
-    font-weight: 750;
-    color: var(--ink);
-  }
-  .demo-result span {
-    display: block;
-    font-size: 10px;
-    color: var(--muted);
-    line-height: 1.25;
-    margin-top: 0.3mm;
+    font-size: 14.5px;
+    font-weight: 650;
+    color: #3d3342;
+    line-height: 1.35;
+    max-width: 95mm;
   }
 
   .tina-points {
     display: grid;
-    gap: 1.5mm;
+    gap: 2mm;
     width: 100%;
-    margin-top: 0.2mm;
-    padding: 2.2mm 2.6mm;
-    border-radius: 8px;
-    background: rgba(122, 61, 138, 0.06);
-    border: 1px solid rgba(122, 61, 138, 0.12);
+    padding: 2.8mm 3mm;
+    border-radius: 9px;
+    background: rgba(122, 61, 138, 0.07);
+    border: 1px solid rgba(122, 61, 138, 0.16);
   }
   .tina-points li {
     list-style: none;
     display: grid;
     grid-template-columns: auto 1fr;
-    gap: 1.8mm;
+    gap: 2.2mm;
     align-items: start;
-    font-size: 11.5px;
+    font-size: 13.5px;
     font-weight: 650;
-    color: var(--plum-deep);
-    line-height: 1.28;
+    color: #3d2a48;
+    line-height: 1.3;
   }
   .tina-points li::before {
     content: '';
-    width: 2mm;
-    height: 2mm;
-    margin-top: 1.3mm;
+    width: 2.4mm;
+    height: 2.4mm;
+    margin-top: 1.5mm;
     border-radius: 50%;
     background: linear-gradient(135deg, var(--tina-soft), var(--tina));
   }
 
-  .tina-qr-block {
+  .tina-cta {
     display: flex;
-    align-items: center;
-    gap: 3mm;
-    width: 100%;
-    margin-top: auto;
-    padding: 2.6mm;
-    border-radius: 10px;
-    background: linear-gradient(135deg, #7a3d8a 0%, #5f2f6e 100%);
-    border: 1.6px solid rgba(255, 255, 255, 0.28);
-    box-shadow: 0 6px 16px rgba(95, 47, 110, 0.28);
+    flex-direction: column;
+    justify-content: center;
+    gap: 2.8mm;
+    padding: 3.5mm;
+    border-radius: 12px;
+    background: linear-gradient(155deg, #7a3d8a 0%, #5a2d68 100%);
+    border: 1.8px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 20px rgba(90, 45, 104, 0.28);
     color: #fff;
   }
-  .qr-frame {
-    flex: 0 0 auto;
-    /* QR module ≥ 20mm for arm's-length scanning */
-    width: 24mm;
-    height: 24mm;
-    padding: 1.2mm;
+  .tina-cta .qr-frame {
+    align-self: center;
+    width: 28mm;
+    height: 28mm;
+    padding: 1.4mm;
     background: #fff;
-    border: 1.6px solid rgba(255, 255, 255, 0.85);
-    border-radius: 6px;
+    border: 1.8px solid #fff;
+    border-radius: 7px;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 12px rgba(125, 72, 150, 0.14);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
   }
-  .qr-frame img {
+  .tina-cta .qr-frame img {
     width: 100%;
     height: 100%;
     display: block;
   }
-  .qr-copy { min-width: 0; }
-  .qr-free {
+  .cta-copy {
+    text-align: center;
+  }
+  .cta-free {
     display: inline-block;
-    font-size: 9.5px;
+    font-size: 11px;
     font-weight: 900;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: #1a1420;
     background: linear-gradient(155deg, #fffef8 0%, #f5d998 55%, #e4b85a 100%);
-    border-radius: 4px;
-    padding: 2px 7px;
-    margin-bottom: 1.2mm;
+    border-radius: 5px;
+    padding: 2.4px 8px;
+    margin-bottom: 1.6mm;
   }
-  .qr-caption {
-    font-size: 13px;
+  .cta-caption {
+    font-size: 15px;
     font-weight: 800;
     color: #fff;
     line-height: 1.2;
-    margin-bottom: 0.7mm;
+    margin-bottom: 1.4mm;
   }
-  .qr-caption strong { color: #f5d998; }
-  .qr-sub {
-    font-size: 10.5px;
-    font-weight: 700;
-    color: rgba(255, 248, 236, 0.92);
-    letter-spacing: 0.01em;
-    word-break: break-all;
-  }
-
-  .example {
-    width: 100%;
-    max-width: 92mm;
-    padding: 2.4mm 2.8mm;
-    border-radius: 9px;
-    background: rgba(255, 255, 255, 0.88);
-    border: 1px solid rgba(58, 52, 56, 0.1);
-    box-shadow: 0 4px 14px rgba(58, 52, 56, 0.08);
-    position: relative;
-    overflow: hidden;
-  }
-  .cell-opps .example {
-    background: rgba(255, 255, 255, 0.88);
-    border-color: rgba(13, 31, 60, 0.12);
-    box-shadow: 0 4px 14px rgba(13, 31, 60, 0.1);
-  }
-  .example::before {
-    content: '';
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 1.6mm;
-  }
-  .cell-events .example::before {
-    background: linear-gradient(180deg, #9a7aa8, #7a5f8a);
-  }
-  .cell-opps .example::before {
-    background: linear-gradient(180deg, #e8b84b, #c9961f);
-  }
-  .example-kicker {
-    font-size: 7.5px;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--plum);
-    margin-bottom: 1mm;
-    padding-left: 1.5mm;
-  }
-  .cell-events .example-kicker { color: var(--events-ink); }
-  .cell-opps .example-kicker { color: var(--opp-navy); }
-  .example-row {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 2.4mm;
-    align-items: center;
-    padding-left: 1.5mm;
-  }
-  .example-logo {
-    width: 12mm;
-    height: 12mm;
-    object-fit: contain;
-    border-radius: 5px;
-    background: #fff;
-    border: 1px solid rgba(58, 52, 56, 0.1);
-    display: block;
-  }
-  .cell-events .example-logo {
-    width: 16mm;
-    height: 11mm;
-    padding: 0.6mm;
-    object-fit: contain;
-  }
-  .example-copy { min-width: 0; }
-  .example strong {
-    display: block;
-    font-size: 12px;
-    font-weight: 750;
-    color: var(--ink);
-    margin-bottom: 0.4mm;
-    letter-spacing: -0.01em;
-    line-height: 1.15;
-  }
-  .cell-events .example strong { color: #3d2f4a; }
-  .cell-opps .example strong { color: var(--opp-navy); }
-  .example span {
-    display: block;
-    font-size: 9px;
-    color: var(--muted);
-    line-height: 1.25;
-  }
-  .cell-events .example span { color: rgba(61, 47, 74, 0.72); }
-  .cell-opps .example span { color: rgba(13, 31, 60, 0.72); }
-  .example-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1.2mm;
-    margin-top: 1.4mm;
-    padding-left: 1.5mm;
-  }
-  .example-meta i {
-    font-style: normal;
-    font-size: 8px;
-    font-weight: 700;
-    border-radius: 4px;
-    padding: 1.6px 5px;
-  }
-  .cell-events .example-meta i {
-    color: var(--events-ink);
-    background: rgba(255, 255, 255, 0.6);
-  }
-  .cell-opps .example-meta i {
-    color: var(--opp-navy);
-    background: rgba(13, 31, 60, 0.08);
-  }
-
-  .panel-row {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 3mm;
-    margin-bottom: 0.2mm;
-  }
-  .panel-stat {
-    font-family: 'DM Serif Display', Georgia, serif;
+  .cta-caption strong { color: #f5d998; }
+  .cta-url {
     font-size: 14px;
-    color: var(--ink);
-    white-space: nowrap;
-    text-align: right;
+    font-weight: 850;
+    letter-spacing: 0.01em;
+    color: #fff;
   }
-  .cell-events .panel-stat { color: #3d2f4a; }
-  .cell-opps .panel-stat { color: var(--opp-navy); }
-  .panel-stat span {
-    display: block;
-    font-family: 'DM Sans', system-ui, sans-serif;
-    font-size: 7.5px;
-    font-weight: 750;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: rgba(46, 41, 48, 0.62);
-    margin-top: 0.3mm;
+  .cta-hint {
+    margin-top: 1mm;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 248, 236, 0.88);
   }
-  .cell-events .panel-stat span { color: rgba(61, 47, 74, 0.62); }
-  .cell-opps .panel-stat span { color: rgba(13, 31, 60, 0.62); }
 
-  .panel-chips {
+  .support-strip {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-top: 1.4px solid rgba(122, 61, 138, 0.16);
+  }
+  .support-card {
+    padding: 2.8mm 4.5mm 2.6mm;
+    min-width: 0;
+  }
+  .support-events {
+    border-right: 1.4px solid rgba(154, 122, 168, 0.28);
+    background:
+      radial-gradient(ellipse 80% 90% at 100% 0%, rgba(217, 196, 224, 0.65), transparent 55%),
+      linear-gradient(165deg, #f3ebf7 0%, #e8dcf0 55%, #d9c4e0 100%);
+  }
+  .support-opps {
+    background:
+      radial-gradient(ellipse 80% 90% at 100% 100%, rgba(232, 184, 75, 0.4), transparent 55%),
+      linear-gradient(165deg, #fdf6e3 0%, #f5e6c4 55%, #ecd29a 100%);
+  }
+  .support-kicker {
+    font-size: 9px;
+    font-weight: 850;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.6mm;
+  }
+  .support-events .support-kicker { color: #4a3558; }
+  .support-opps .support-kicker { color: #5a3d08; }
+  .support-title {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 18px;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 1mm;
+  }
+  .support-events .support-title { color: #0d1f3c; }
+  .support-opps .support-title { color: #7a3d8a; }
+  .support-copy {
+    font-size: 12px;
+    font-weight: 650;
+    line-height: 1.3;
+  }
+  .support-events .support-copy { color: #3d2f4a; }
+  .support-opps .support-copy { color: #0d1f3c; }
+  .support-now {
+    grid-column: 1 / -1;
     display: flex;
-    flex-wrap: wrap;
-    gap: 1.2mm;
-    margin-bottom: 2mm;
+    align-items: center;
+    gap: 2.5mm;
+    padding: 1.8mm 4.5mm;
+    background: #241e28;
+    color: #fff8ec;
+    font-size: 11.5px;
+    font-weight: 650;
   }
-  .panel-chips i {
-    font-style: normal;
-    font-size: 8px;
-    font-weight: 750;
-    border-radius: 4px;
-    padding: 1.6px 5px;
+  .support-now strong {
+    font-weight: 850;
+    color: #f5d998;
   }
-  .cell-events .panel-chips i {
-    color: var(--events-ink);
-    background: rgba(255, 255, 255, 0.55);
-  }
-  .cell-opps .panel-chips i {
-    color: var(--opp-navy);
-    background: rgba(13, 31, 60, 0.08);
-  }
+  .support-now span { color: rgba(255, 248, 236, 0.85); }
 
   @media print {
     body { background: #fff; }
@@ -818,20 +483,14 @@
     }
     .back-slogan { font-size: 36px; }
     .back-logo { width: min(78mm, 70%); }
-    .grid {
+    .hero-tina {
       grid-template-columns: 1fr;
-      grid-template-rows: auto;
     }
-    .cell-tina,
-    .cell-events,
-    .cell-opps {
-      grid-row: auto;
-      grid-column: auto;
-      border-right: 0;
-      border-bottom: 1.4px solid var(--rule);
+    .support-strip {
+      grid-template-columns: 1fr;
     }
-    .cell-opps { border-bottom: 0; }
-    .qr-frame { width: 90px; height: 90px; }
+    .support-events { border-right: 0; border-bottom: 1.4px solid var(--rule); }
+    .tina-cta .qr-frame { width: 100px; height: 100px; }
     .masthead { flex-wrap: wrap; }
   }
 </style>
@@ -860,118 +519,67 @@
           >
         </div>
         <p class="masthead-copy">
-          The home for <strong>UK business networking</strong>: find groups and events,
-          list opportunities, and meet the right people through TINA.
+          The home for <strong>UK business networking</strong> — and exclusive TINA introductions.
         </p>
-        <div class="masthead-free" aria-label="Join for free">
-          <strong>For free</strong>
-          <span>Join today</span>
-        </div>
       </header>
 
-      <div class="grid">
-        <section class="cell cell-tina" aria-labelledby="tina-heading">
-          <div class="tina-head">
-            <div class="tina-mark">
-              <img src="../assets/hubert-icon.png" width="128" height="128" alt="">
-            </div>
-            <h1 class="tina-title" id="tina-heading">
-              <span class="tina-role">The Intelligent Networking Assistant</span>
-              <em class="tina-name">TINA</em>
-            </h1>
-          </div>
-          <p class="tina-lede">
-            Warm intros to the right people. Both sides approve first.
-          </p>
-
-          <div class="demo" aria-label="TINA product example">
-            <p class="demo-label">Try asking</p>
-            <div class="demo-prompt">
-              <p class="typed"><span>Meet?</span> <strong>IT director in Chester</strong></p>
-              <span class="demo-go">Go</span>
-            </div>
-            <div class="demo-result">
-              <div class="demo-avatar" aria-hidden="true">AJ</div>
-              <div>
-                <strong>Match → private intro</strong>
-                <span>Both approve. Contacts stay private.</span>
+      <div class="front-body">
+        <section class="hero-tina" aria-labelledby="tina-heading">
+          <div class="hero-copy">
+            <div class="tina-head">
+              <div class="tina-mark">
+                <img src="../assets/hubert-icon.png" width="128" height="128" alt="">
               </div>
+              <h1 class="tina-title" id="tina-heading">
+                <span class="tina-role">The Intelligent Networking Assistant</span>
+                <em class="tina-name">TINA</em>
+              </h1>
             </div>
+            <p class="tina-lede">
+              Tell TINA who you want to meet. She finds the right people and makes warm introductions — only after both of you approve.
+            </p>
+            <ul class="tina-points">
+              <li>Free for Networker UK members</li>
+              <li>No cold LinkedIn outreach</li>
+              <li>Contacts stay private until you both say yes</li>
+              <li>Built for UK business networking</li>
+            </ul>
           </div>
 
-          <ul class="tina-points">
-            <li>Free for Networker UK members</li>
-            <li>Tell TINA who you want to meet</li>
-            <li>She matches. You both approve</li>
-          </ul>
-
-          <div class="tina-qr-block">
+          <aside class="tina-cta" aria-label="Join for free with TINA">
             <div class="qr-frame">
               <img
                 src="../assets/marketing/qr-tina-lbs.png"
                 alt="QR code to join The Networker UK and set up TINA"
-                width="200"
-                height="200"
+                width="220"
+                height="220"
               >
             </div>
-            <div class="qr-copy">
-              <span class="qr-free">Join for free</span>
-              <p class="qr-caption">Scan · set up <strong>TINA</strong></p>
-              <p class="qr-sub">thenetworkeruk.com/lbs-tina-join</p>
+            <div class="cta-copy">
+              <span class="cta-free">Join for free</span>
+              <p class="cta-caption">Scan to set up <strong>TINA</strong></p>
+              <p class="cta-url">thenetworkeruk.com</p>
+              <p class="cta-hint">Or type the address above</p>
             </div>
-          </div>
+          </aside>
         </section>
 
-        <section class="cell cell-events" aria-labelledby="events-heading">
-          <div class="panel-row">
-            <div>
-              <p class="cell-kicker">Discover</p>
-              <h2 class="cell-title" id="events-heading">Events</h2>
-            </div>
-            <p class="panel-stat">UK-wide<span>directory</span></p>
-          </div>
-          <p class="cell-lede">UK networking events, meetings &amp; workshops</p>
-          <ul class="panel-points">
-            <li>Filter by location, format, date &amp; price</li>
-            <li>Browse free · book what fits</li>
-          </ul>
-          <div class="example" aria-label="Example event: The Business Show London">
-            <p class="example-kicker">On now</p>
-            <div class="example-row">
-              <img
-                class="example-logo"
-                src="../assets/marketing/the-business-show-london-logo-navy.png"
-                alt=""
-                width="120"
-                height="80"
-              >
-              <div class="example-copy">
-                <strong>The Business Show London</strong>
-                <span>UK’s leading business exhibition at ExCeL</span>
-              </div>
-            </div>
-            <div class="example-meta">
-              <i>ExCeL London</i>
-              <i>11 &amp; 12 Nov</i>
-            </div>
-          </div>
-        </section>
-
-        <section class="cell cell-opps" aria-labelledby="opps-heading">
-          <div class="panel-row">
-            <div>
-              <p class="cell-kicker">Grow</p>
-              <h2 class="cell-title" id="opps-heading">Business Opportunities</h2>
-            </div>
-            <p class="panel-stat">Live<span>listings</span></p>
-          </div>
-          <p class="cell-lede">Franchises, side hustles, partnerships &amp; affiliates</p>
-          <ul class="panel-points">
-            <li>Filter by sector &amp; location</li>
-            <li>Connect directly with providers</li>
-          </ul>
-          <p class="opps-foot">Free to browse · <strong>thenetworkeruk.com</strong></p>
-        </section>
+        <div class="support-strip">
+          <section class="support-card support-events" aria-labelledby="events-heading">
+            <p class="support-kicker">Also on the platform</p>
+            <h2 class="support-title" id="events-heading">Events</h2>
+            <p class="support-copy">UK networking meetings, conferences &amp; workshops — filter by location, date and price.</p>
+          </section>
+          <section class="support-card support-opps" aria-labelledby="opps-heading">
+            <p class="support-kicker">Also on the platform</p>
+            <h2 class="support-title" id="opps-heading">Business Opportunities</h2>
+            <p class="support-copy">Franchises, side hustles, partnerships &amp; affiliates — connect direct with providers.</p>
+          </section>
+          <p class="support-now">
+            <strong>On now</strong>
+            <span>The Business Show London · ExCeL · 11 &amp; 12 Nov</span>
+          </p>
+        </div>
       </div>
     </article>
 
