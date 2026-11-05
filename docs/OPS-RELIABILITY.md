@@ -43,6 +43,8 @@ Works while the site gate is on (bypassed in middleware).
 
 Also in Vercel: **Project → Settings → Notifications** — enable deployment failure emails for the team.
 
+**Build costs:** agent preview spam was the main bill driver — see `docs/VERCEL-BUILD-COSTS.md` (disable `cursor/**` previews + one-build-per-branch).
+
 ### Error monitoring (Sentry)
 
 Browser SDK loads via `js/hub-sentry.js` (EU region). Server routes use `@sentry/node` when `SENTRY_DSN` is set in Vercel.
