@@ -741,39 +741,49 @@ body.nav-menu-open {
     flex-direction: column;
   }
 
-  /* Search + controls first; Premium Spotlight above organic listings; cities below */
+  /* Advert carousel first; search next; a results error stays with the listings */
+  .events-page .events-browse-ads {
+    order: 0;
+    margin-top: 0;
+    margin-bottom: 12px;
+  }
+
   .events-page .events-filter-wrap {
     order: 1;
   }
 
-  .events-page .events-results-meta {
+  .events-page .load-status {
     order: 2;
+    margin-top: 0;
   }
 
-  .events-page .events-promo-section,
-  .events-page .organisers-promo-section {
+  .events-page .events-results-meta {
     order: 3;
+  }
+
+  .events-page .organisers-promo-section {
+    order: 4;
     margin-top: 4px;
     margin-bottom: 12px;
   }
 
   .events-page .events-map-wrap,
   .events-page .events-map-hint-bar {
-    order: 4;
-  }
-
-  .events-page .events-body {
     order: 5;
   }
 
-  .events-page #networking-location-directory {
+  .events-page .events-body {
     order: 6;
+  }
+
+  .events-page #networking-location-directory {
+    order: 7;
     margin-top: 8px;
     margin-bottom: 12px;
   }
 
   .events-page #networking-region-intro {
-    order: 7;
+    order: 8;
   }
 
   /* City / county landings: keep the local intro + City Sponsor above the feed,

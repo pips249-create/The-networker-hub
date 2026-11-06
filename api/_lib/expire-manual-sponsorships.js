@@ -8,6 +8,7 @@ const {
   EVENT_PAGE_CAROUSEL_SLOT,
   ORGANISER_PAGE_CAROUSEL_SLOT,
   OPPORTUNITY_PAGE_CAROUSEL_SLOT,
+  EVENTS_BROWSE_CAROUSEL_SLOT,
   parseCarouselBody,
   serializeCarouselBody,
   normalizeCarouselAdsList,
@@ -18,6 +19,7 @@ const CAROUSEL_SLOTS = [
   EVENT_PAGE_CAROUSEL_SLOT,
   ORGANISER_PAGE_CAROUSEL_SLOT,
   OPPORTUNITY_PAGE_CAROUSEL_SLOT,
+  EVENTS_BROWSE_CAROUSEL_SLOT,
 ];
 
 async function expirePagePartnerCarouselAds(sb, now = new Date()) {

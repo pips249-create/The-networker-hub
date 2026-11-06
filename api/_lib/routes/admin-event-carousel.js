@@ -7,6 +7,7 @@ const {
   OPPORTUNITY_PAGE_CAROUSEL_SLOT,
   PAGE_CAROUSEL_SLOTS,
   EVENT_PAGE_CAROUSEL_SIZE,
+  carouselSize,
   EMAIL_MINI_SPONSOR_SLOTS,
   parseCarouselBody,
   serializeCarouselBody,
@@ -19,6 +20,7 @@ function carouselTitle(slot) {
   if (slot === EVENT_PAGE_CAROUSEL_SLOT) return 'Event page carousel ads';
   if (slot === ORGANISER_PAGE_CAROUSEL_SLOT) return 'Organiser page carousel ads';
   if (slot === OPPORTUNITY_PAGE_CAROUSEL_SLOT) return 'Opportunity page carousel ads';
+  if (slot === 'events_browse_carousel_ads') return 'Events directory advert carousel';
   return 'Email mini sponsors';
 }
 
@@ -126,8 +128,9 @@ module.exports = async function handler(req, res) {
 
       incoming = await resolveCarouselLogos(
         incoming.map((raw, index) => {
+          const size = carouselSize(slot);
           const normalized =
-            normalizeCarouselAdsList([raw], slot)[Math.min(index, EVENT_PAGE_CAROUSEL_SIZE - 1)] ||
+            normalizeCarouselAdsList([raw], slot)[Math.min(index, size - 1)] ||
             normalizeCarouselAdsList([{ slot_index: index }], slot)[index];
           const prev = existingById.get(normalized.id);
           if (!normalized.logo_url && prev?.logo_url) {

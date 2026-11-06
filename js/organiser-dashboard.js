@@ -1710,7 +1710,7 @@
       eventCount +
       (eventCount === 1 ? ' upcoming live event ready to upgrade' : ' upcoming live events ready to upgrade');
     if (slots && slots.full) {
-      text += ' · Spotlight carousel is full — try again later';
+      text += ' · Featured places are full — try again later';
     } else if (slots && slots.available > 0 && slots.available <= 3) {
       text += ' · Only ' + slots.available + ' spotlight place' + (slots.available === 1 ? '' : 's') + ' left';
     }

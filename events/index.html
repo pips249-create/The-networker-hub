@@ -25,8 +25,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/hub.css?v=20261016signin1">
-<link rel="stylesheet" href="../css/hub-mobile.css?v=20261007adslot">
-<link rel="stylesheet" href="../css/events-page.css?v=20261007adlabel">
+<link rel="stylesheet" href="../css/hub-mobile.css?v=20261106adfirst">
+<link rel="stylesheet" href="../css/events-page.css?v=20261106adnobadge">
 <link rel="stylesheet" href="../css/events-filter-bar.css?v=20261015country">
 <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml">
@@ -85,7 +85,6 @@
 <script src="../js/sponsor-hub.js?v=20260828perf1" defer></script>
 
 <div class="shell">
-  <p class="load-status" id="load-status" hidden>Loading…</p>
 
   <section class="networking-region-intro" id="networking-region-intro" hidden aria-labelledby="networking-region-intro-heading">
     <div class="networking-region-intro-accent" aria-hidden="true"></div>
@@ -122,25 +121,22 @@
     </div>
   </section>
 
-  <div class="events-promo-section" hidden>
-    <section class="premium-spotlight" aria-labelledby="spotlight-heading">
+  <div class="events-promo-section events-browse-ads" hidden>
+    <section class="premium-spotlight events-browse-ads-panel" aria-labelledby="events-browse-ads-heading">
       <div class="spotlight-header">
-        <div class="spotlight-title" id="spotlight-heading">
-          <span class="icon" aria-hidden="true">★</span>
-          Premium Spotlight
-        </div>
+        <h2 class="spotlight-title" id="events-browse-ads-heading">Sponsored</h2>
         <div class="spotlight-nav">
-          <a href="#listings" class="spotlight-view-all">View all</a>
-          <button type="button" id="spotlight-prev" aria-label="Previous">‹</button>
-          <button type="button" id="spotlight-next" aria-label="Next">›</button>
+          <button type="button" id="spotlight-prev" aria-label="Previous advert">‹</button>
+          <button type="button" id="spotlight-next" aria-label="Next advert">›</button>
         </div>
       </div>
-      <p class="spotlight-note" id="spotlight-note" hidden role="note"></p>
       <div class="spotlight-wrap">
-        <div class="spotlight-track" id="spotlight-track"></div>
+        <div class="spotlight-track spotlight-track--carousel" id="spotlight-track"></div>
       </div>
     </section>
   </div>
+
+  <p class="load-status" id="load-status" hidden>Loading…</p>
 
   <div class="organisers-promo-section" id="organisers-promo-section" hidden>
     <section class="premium-spotlight org-premium-spotlight" aria-labelledby="org-spotlight-heading">
@@ -773,7 +769,7 @@
   src="../js/hub-page-scripts.js?v=20261007req1"
   defer
   data-attrs='{"hub-organiser-actions.js":{"data-root":"../"}}'
-  data-scripts="../js/hub-favourites.js?v=20260630|../js/hub-organiser-favourites.js?v=20260630|../js/meeting-types.js?v=20260715mc|../js/postcode-outcode.js?v=20261001counties|../js/postcode-geo.js?v=20260723geo|../js/region-landmark-icons.js?v=20261001counties|../js/networking-region-themes.js?v=20261001counties|../js/home-location-chips.js?v=20261001icons|../js/cms-ad-blocks.js?v=20261103logosize1|../js/networking-region-directory.js?v=20261015country|../js/networking-region-search.js?v=20260729county|../js/networking-regions.js?v=20261007faq3|../js/booking-fees.js?v=20261002enq1|../js/hub-event-timezone.js?v=20260716|../js/hub-search-match.js?v=20260829search1|../js/profile-countries.js?v=20261015country|../js/events-filters.js?v=20261015country|../js/browse-analytics-client.js?v=20260728index1|../js/events-browse-api.js?v=20261015country|../js/events-map.js?v=20261002enq1|../js/flexible-event-image.js?v=20260612|../js/hub-event-preview.js?v=20260721|../js/hub-spotlight-carousel.js?v=20260807fix3|../js/hub-public-urls.js?v=20260807fix3b|../js/events.js?v=20261007dates2|../js/organisers-filters.js?v=20261030perf1|../js/organisers.js?v=20261007dates1|../js/hub-organiser-actions.js?v=20261022listacc1|../js/browse-mode.js?v=20260925title1"
+  data-scripts="../js/hub-favourites.js?v=20260630|../js/hub-organiser-favourites.js?v=20260630|../js/meeting-types.js?v=20260715mc|../js/postcode-outcode.js?v=20261001counties|../js/postcode-geo.js?v=20260723geo|../js/region-landmark-icons.js?v=20261001counties|../js/networking-region-themes.js?v=20261001counties|../js/home-location-chips.js?v=20261001icons|../js/cms-ad-blocks.js?v=20261106adrow|../js/networking-region-directory.js?v=20261015country|../js/networking-region-search.js?v=20260729county|../js/networking-regions.js?v=20261007faq3|../js/booking-fees.js?v=20261002enq1|../js/hub-event-timezone.js?v=20260716|../js/hub-search-match.js?v=20260829search1|../js/profile-countries.js?v=20261015country|../js/events-filters.js?v=20261015country|../js/browse-analytics-client.js?v=20260728index1|../js/events-browse-api.js?v=20261015country|../js/events-map.js?v=20261002enq1|../js/flexible-event-image.js?v=20260612|../js/hub-event-preview.js?v=20260721|../js/hub-spotlight-carousel.js?v=20260807fix3|../js/hub-public-urls.js?v=20260807fix3b|../js/events.js?v=20261106adnobadge|../js/organisers-filters.js?v=20261030perf1|../js/organisers.js?v=20261007dates1|../js/hub-organiser-actions.js?v=20261022listacc1|../js/browse-mode.js?v=20261106adrow"
 ></script>
 </body>
 </html>

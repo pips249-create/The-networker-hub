@@ -6,6 +6,7 @@ const {
   EVENT_PAGE_CAROUSEL_SLOT,
   ORGANISER_PAGE_CAROUSEL_SLOT,
   OPPORTUNITY_PAGE_CAROUSEL_SLOT,
+  EVENTS_BROWSE_CAROUSEL_SLOT,
   parseCarouselBody,
   normalizeCarouselAd,
 } = require('./event-page-carousel');
@@ -195,6 +196,7 @@ const PAGE_CAROUSEL_SLOTS = [
   EVENT_PAGE_CAROUSEL_SLOT,
   ORGANISER_PAGE_CAROUSEL_SLOT,
   OPPORTUNITY_PAGE_CAROUSEL_SLOT,
+  EVENTS_BROWSE_CAROUSEL_SLOT,
 ];
 
 const PLACEMENT_SURFACE_LABELS = {
@@ -205,6 +207,8 @@ const PLACEMENT_SURFACE_LABELS = {
   organisers_hero: 'Organisers directory hero',
   opportunities_sponsor_hub: 'Opportunities directory hero',
   opportunities_hero: 'Opportunities directory hero',
+  events_browse_carousel: 'Events directory advert carousel',
+  events_browse_carousel_ads: 'Events directory advert carousel',
   events_page_partner: 'Event detail pages',
   organisers_page_partner: 'Organiser detail pages',
   opportunities_page_partner: 'Opportunity detail pages',
@@ -231,6 +235,9 @@ function surfaceLabelForPlacement(placement) {
 
 function pagePartnerPlacementForSlot(slot) {
   const s = String(slot || '').toLowerCase();
+  if (s === EVENTS_BROWSE_CAROUSEL_SLOT || s === 'events_browse_carousel') {
+    return 'events_browse_carousel';
+  }
   if (s === ORGANISER_PAGE_CAROUSEL_SLOT || /organiser_page/.test(s)) {
     return 'organisers_page_partner';
   }

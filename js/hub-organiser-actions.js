@@ -410,7 +410,7 @@
     var isEvent = kind === 'event';
     var title = isEvent ? 'Boost your event here' : 'Boost your listing here';
     var line1 = isEvent
-      ? 'Premium Spotlight carousel on the events directory'
+      ? 'Premium badge on the events directory'
       : 'Premium Spotlight on business opportunities';
     var line2 = isEvent ? 'List or feature your event' : 'List or upgrade to premium';
     var action = isEvent ? 'boost-event' : 'boost-opportunity';

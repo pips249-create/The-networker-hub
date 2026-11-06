@@ -1,7 +1,9 @@
 const EVENT_PAGE_CAROUSEL_SLOT = 'event_page_carousel_ads';
 const ORGANISER_PAGE_CAROUSEL_SLOT = 'organiser_page_carousel_ads';
 const OPPORTUNITY_PAGE_CAROUSEL_SLOT = 'opportunity_page_carousel_ads';
+const EVENTS_BROWSE_CAROUSEL_SLOT = 'events_browse_carousel_ads';
 const EVENT_PAGE_CAROUSEL_SIZE = 3;
+const EVENTS_BROWSE_CAROUSEL_SIZE = 12;
 const EVENT_EMAIL_MINI_SPONSORS_SLOT = 'event_email_mini_sponsors';
 const ORGANISER_EMAIL_MINI_SPONSORS_SLOT = 'organiser_email_mini_sponsors';
 const OPPORTUNITY_EMAIL_MINI_SPONSORS_SLOT = 'opportunity_email_mini_sponsors';
@@ -9,6 +11,7 @@ const PAGE_CAROUSEL_SLOTS = new Set([
   EVENT_PAGE_CAROUSEL_SLOT,
   ORGANISER_PAGE_CAROUSEL_SLOT,
   OPPORTUNITY_PAGE_CAROUSEL_SLOT,
+  EVENTS_BROWSE_CAROUSEL_SLOT,
 ]);
 const EMAIL_MINI_SPONSOR_SLOTS = new Set([
   EVENT_EMAIL_MINI_SPONSORS_SLOT,
@@ -53,10 +56,23 @@ function sanitizeCtaColor(color) {
   return '';
 }
 
+function carouselSize(slot) {
+  if (slot === EVENTS_BROWSE_CAROUSEL_SLOT) return EVENTS_BROWSE_CAROUSEL_SIZE;
+  return EVENT_PAGE_CAROUSEL_SIZE;
+}
+
 function carouselIdPrefix(slot) {
   if (slot === ORGANISER_PAGE_CAROUSEL_SLOT) return 'organiser_carousel';
   if (slot === OPPORTUNITY_PAGE_CAROUSEL_SLOT) return 'opportunity_carousel';
+  if (slot === EVENTS_BROWSE_CAROUSEL_SLOT) return 'events_browse_carousel';
   return 'event_carousel';
+}
+
+function ctaLabelForSlot(raw, slot) {
+  const fallback = slot === EVENTS_BROWSE_CAROUSEL_SLOT ? 'Find out more' : 'Enquire now';
+  const label = String(raw?.cta_label || raw?.ctaLabel || fallback).trim() || fallback;
+  if (slot !== EVENTS_BROWSE_CAROUSEL_SLOT) return label;
+  return label.split(/\s+/).filter(Boolean).slice(0, 3).join(' ');
 }
 
 function normalizeCarouselAd(raw, index, slot) {
@@ -74,7 +90,7 @@ function normalizeCarouselAd(raw, index, slot) {
     company_name: String(raw?.company_name || raw?.companyName || '').trim(),
     logo_url: String(raw?.logo_url || raw?.logoUrl || '').trim(),
     cta_url: String(raw?.cta_url || raw?.ctaUrl || '').trim(),
-    cta_label: String(raw?.cta_label || raw?.ctaLabel || 'Enquire now').trim(),
+    cta_label: ctaLabelForSlot(raw, slot),
     cta_color: sanitizeCtaColor(raw?.cta_color || raw?.ctaColor) || '',
     logo_band_dark: raw?.logo_band_dark === true || raw?.logoBandDark === true,
     active: raw?.active !== false,
@@ -84,18 +100,19 @@ function normalizeCarouselAd(raw, index, slot) {
 
 function normalizeCarouselAdsList(list, slot) {
   const carouselSlot = PAGE_CAROUSEL_SLOTS.has(slot) ? slot : EVENT_PAGE_CAROUSEL_SLOT;
+  const size = carouselSize(carouselSlot);
   const prefix = carouselIdPrefix(carouselSlot);
   const incoming = Array.isArray(list) ? list : [];
   const byIndex = new Map();
   incoming.forEach((raw, index) => {
     const ad = normalizeCarouselAd(raw, index, carouselSlot);
-    const slotIndex = Math.min(Math.max(ad.slot_index, 0), EVENT_PAGE_CAROUSEL_SIZE - 1);
+    const slotIndex = Math.min(Math.max(ad.slot_index, 0), size - 1);
     ad.slot_index = slotIndex;
     byIndex.set(slotIndex, ad);
   });
 
   const out = [];
-  for (let i = 0; i < EVENT_PAGE_CAROUSEL_SIZE; i++) {
+  for (let i = 0; i < size; i++) {
     if (byIndex.has(i)) {
       out.push(byIndex.get(i));
       continue;
@@ -142,8 +159,11 @@ module.exports = {
   EVENT_PAGE_CAROUSEL_SLOT,
   ORGANISER_PAGE_CAROUSEL_SLOT,
   OPPORTUNITY_PAGE_CAROUSEL_SLOT,
+  EVENTS_BROWSE_CAROUSEL_SLOT,
   PAGE_CAROUSEL_SLOTS,
   EVENT_PAGE_CAROUSEL_SIZE,
+  EVENTS_BROWSE_CAROUSEL_SIZE,
+  carouselSize,
   carouselIdPrefix,
   EVENT_EMAIL_MINI_SPONSORS_SLOT,
   ORGANISER_EMAIL_MINI_SPONSORS_SLOT,

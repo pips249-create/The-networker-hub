@@ -165,7 +165,7 @@ const HUB_STRIPE_CATALOG = [
     key: 'event_featured_1month',
     priceEnvVar: 'STRIPE_EVENT_FEATURED_1MONTH_PRICE_ID',
     productName: 'Featured event listing — 1 month',
-    description: 'Premium Spotlight carousel placement for one month',
+    description: 'Premium badge and priority placement in the events listings for one month',
     amountPence: 5500,
     billing: 'one_time',
     createPaymentLink: false,

@@ -177,7 +177,7 @@
     },
     featured: {
       title: 'Premium Spotlight',
-      subtitle: 'Choose which approved events appear in the Premium Spotlight carousel',
+      subtitle: 'Choose which approved events are featured in the events listings',
     },
     spotlight: {
       title: 'Premium Spotlight',
@@ -851,6 +851,17 @@
       help: 'Powered by hero on the Business opportunities browse page.',
       tagline: 'Example offer — edit to match your sponsor package',
       ctaLabel: 'Enquire now',
+      ctaUrl: 'https://',
+      ctaColor: '#2d2636',
+    },
+    {
+      key: 'events_browse_carousel_ads',
+      group: 'Browse pages',
+      label: 'Events directory — advert carousel (12 slots)',
+      preview: 'carousel',
+      help: 'Up to 12 sponsored cards on the events directory, in the row above the filters. Each card shows a logo and a button underneath.',
+      tagline: '',
+      ctaLabel: 'Find out more',
       ctaUrl: 'https://',
       ctaColor: '#2d2636',
     },
@@ -15755,8 +15766,10 @@
 
   function renderEventCarouselPage(slotKey) {
     var slot = cmsSlotByKey(slotKey || 'event_page_carousel_ads');
-    var detailText =
-      slot.key === 'organiser_page_carousel_ads'
+    var isBrowseCarousel = slot.key === 'events_browse_carousel_ads';
+    var detailText = isBrowseCarousel
+      ? 'Up to 12 sponsored cards on the events directory. Each card shows the logo with a button underneath.'
+      : slot.key === 'organiser_page_carousel_ads'
         ? 'Three Mini Sponsor slots on organiser profile pages and selected organiser emails (one Page Partner inventory; separate from Event Page Partner).'
         : slot.key === 'opportunity_page_carousel_ads'
           ? 'Three Mini Sponsor slots on opportunity detail pages and selected opportunity emails (one Page Partner inventory; separate from Event and Organiser Page Partner).'
@@ -15774,10 +15787,14 @@
       ' Each active logo links to the sponsor website.</p></div></div>' +
       '<label class="flex items-center gap-2 text-sm text-slate-700">' +
       '<input type="checkbox" id="event-carousel-active" class="rounded border-slate-300" checked> ' +
-      'Mini sponsors active (uncheck to hide all three)</label>' +
+      (isBrowseCarousel
+        ? 'Advert carousel active (uncheck to hide every card)</label>'
+        : 'Mini sponsors active (uncheck to hide all three)</label>') +
       '<div id="event-carousel-list" class="space-y-4 min-w-0"></div>' +
       '<div class="flex flex-wrap gap-3 pt-1">' +
-      '<button type="button" id="event-carousel-save" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900">Save mini sponsors</button>' +
+      '<button type="button" id="event-carousel-save" class="rounded-lg bg-brand-700 text-white px-4 py-2 text-sm font-semibold hover:bg-brand-900">' +
+      (isBrowseCarousel ? 'Save advert carousel' : 'Save mini sponsors') +
+      '</button>' +
       '</div>' +
       '<p id="event-carousel-status" class="text-sm text-slate-500"></p></section></div>';
     initEventCarouselAdmin(slot.key);
@@ -15792,7 +15809,8 @@
 
     var adsState = [];
     var pendingLogos = {};
-    var CAROUSEL_SIZE = 3;
+    var isBrowseCarousel = slotKey === 'events_browse_carousel_ads';
+    var CAROUSEL_SIZE = isBrowseCarousel ? 12 : 3;
 
     function setCarouselStatus(text, tone) {
       if (!statusEl) return;
@@ -15810,6 +15828,7 @@
       var prefix = 'event_carousel_';
       if (slotKey === 'organiser_page_carousel_ads') prefix = 'organiser_carousel_';
       else if (slotKey === 'opportunity_page_carousel_ads') prefix = 'opportunity_carousel_';
+      else if (slotKey === 'events_browse_carousel_ads') prefix = 'events_browse_carousel_';
       var out = [];
       for (var i = 0; i < CAROUSEL_SIZE; i++) {
         out.push({
@@ -15836,7 +15855,7 @@
         '<div class="flex flex-wrap items-center justify-between gap-2">' +
         '<p class="text-sm font-semibold text-brand-900">Ad slot ' +
         (index + 1) +
-        (index === CAROUSEL_SIZE - 1 ? ' · available on site' : '') +
+        (!isBrowseCarousel && index === CAROUSEL_SIZE - 1 ? ' · available on site' : '') +
         '</p>' +
         '<div class="flex items-center gap-3">' +
         '<label class="flex items-center gap-2 text-xs text-slate-600">' +
@@ -15848,8 +15867,15 @@
         (darkBand ? ' checked' : '') +
         '> Dark logo band</label></div></div>' +
         '<p class="text-xs text-slate-500">Required for an active slot: company name, logo + click-through link. Tick <strong>Dark logo band</strong> for cream/white logos. Prefer <strong>upload</strong> over Facebook/Instagram links — those expire.</p>' +
-        (index === CAROUSEL_SIZE - 1
+        (!isBrowseCarousel && index === CAROUSEL_SIZE - 1
           ? '<p class="text-xs text-brand-800 bg-brand-50 border border-brand-100 rounded-lg px-3 py-2">When this slot is inactive and other slots are filled, the live site shows <strong>Advertise your business here</strong> as the last carousel slide.</p>'
+          : '') +
+        (isBrowseCarousel
+          ? '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Button label</label>' +
+            '<input type="text" class="event-carousel-ad-cta-label w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" maxlength="32" value="' +
+            attrEsc(ad.cta_label || 'Find out more') +
+            '" placeholder="Find out more">' +
+            '<p class="text-xs text-slate-500 mt-1">Up to 3 words. It sits on one line under the logo.</p></div>'
           : '') +
         '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Company name <span class="text-brand-700">*</span></label>' +
         '<input type="text" class="event-carousel-ad-company w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
@@ -15896,6 +15922,7 @@
         var id = row.getAttribute('data-carousel-ad-id') || 'event_carousel_' + (index + 1);
         var logoUrlEl = row.querySelector('.event-carousel-ad-logo-url');
         var linkUrlEl = row.querySelector('.event-carousel-ad-link-url');
+        var ctaLabelEl = row.querySelector('.event-carousel-ad-cta-label');
         var companyEl = row.querySelector('.event-carousel-ad-company');
         var endsAtEl = row.querySelector('.event-carousel-ad-ends-at');
         var activeCheckbox = row.querySelector('.event-carousel-ad-active');
@@ -15912,6 +15939,11 @@
           company_name: companyEl ? companyEl.value.trim() : existing ? existing.company_name || '' : '',
           logo_url: logoUrl,
           cta_url: linkUrlEl ? linkUrlEl.value.trim() : '',
+          cta_label: ctaLabelEl
+            ? ctaLabelEl.value.trim().split(/\s+/).filter(Boolean).slice(0, 3).join(' ')
+            : existing
+              ? existing.cta_label || ''
+              : '',
           active: activeCheckbox ? activeCheckbox.checked : false,
           logo_band_dark: darkCheckbox ? darkCheckbox.checked : false,
           ends_at: endsAtEl ? datetimeLocalUtcToIso(endsAtEl.value) : null,

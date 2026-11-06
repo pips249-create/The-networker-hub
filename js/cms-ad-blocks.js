@@ -770,6 +770,7 @@
       list = shuffleArray(list);
     }
 
+    var rowLayout = options.layout === 'row';
     var total = list.length + (appendLastPlaceholder ? 1 : 0);
     var slideHtml = list
       .map(function (block, index) {
@@ -797,20 +798,27 @@
 
     container.hidden = false;
     container.innerHTML =
-      '<div class="cms-ad-carousel" data-carousel-count="' +
+      '<div class="cms-ad-carousel' +
+      (rowLayout ? ' cms-ad-carousel--row' : '') +
+      '" data-carousel-count="' +
       total +
       '">' +
-      '<div class="cms-ad-carousel-viewport" aria-live="polite">' +
+      '<div class="cms-ad-carousel-viewport"' +
+      (rowLayout ? '' : ' aria-live="polite"') +
+      '>' +
       '<div class="cms-ad-carousel-track">' +
       slideHtml +
       '</div></div>' +
-      '<div class="cms-ad-carousel-controls">' +
-      '<button type="button" class="cms-ad-carousel-arrow cms-ad-carousel-arrow--prev" aria-label="Previous sponsor">‹</button>' +
-      '<div class="cms-ad-carousel-dots" role="tablist" aria-label="Sponsor adverts">' +
-      dots.join('') +
-      '</div>' +
-      '<button type="button" class="cms-ad-carousel-arrow cms-ad-carousel-arrow--next" aria-label="Next sponsor">›</button>' +
-      '</div></div>';
+      (rowLayout
+        ? ''
+        : '<div class="cms-ad-carousel-controls">' +
+          '<button type="button" class="cms-ad-carousel-arrow cms-ad-carousel-arrow--prev" aria-label="Previous sponsor">‹</button>' +
+          '<div class="cms-ad-carousel-dots" role="tablist" aria-label="Sponsor adverts">' +
+          dots.join('') +
+          '</div>' +
+          '<button type="button" class="cms-ad-carousel-arrow cms-ad-carousel-arrow--next" aria-label="Next sponsor">›</button>' +
+          '</div>') +
+      '</div>';
 
     list.forEach(function (block, index) {
       var slide = container.querySelector('[data-carousel-slide="' + index + '"]');
@@ -819,7 +827,14 @@
     });
 
     wireCarouselLogoBands(container);
-    initCarousel(container.querySelector('.cms-ad-carousel'));
+    if (rowLayout) {
+      container.querySelectorAll('[data-carousel-slide]').forEach(function (slide) {
+        slide.classList.add('is-active');
+        slide.setAttribute('aria-hidden', 'false');
+      });
+    } else {
+      initCarousel(container.querySelector('.cms-ad-carousel'));
+    }
     return true;
   }
 
@@ -900,6 +915,7 @@
       return renderCarouselAd(container, ads, slot, {
         shuffle: opts.shuffle,
         showPlaceholder: opts.showPlaceholder === true,
+        layout: opts.layout,
       });
     });
   }

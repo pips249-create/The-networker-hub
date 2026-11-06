@@ -104,13 +104,20 @@
     return premium.length < SPOTLIGHT_MAX;
   }
 
+  var browseAdsActive = false;
+  var browseAdCardsHtml = '';
+  var browseAdCount = 0;
+  var BROWSE_AD_MAX = 12;
+
   function getSpotlightTrackItemCount() {
+    if (browseAdsActive) return browseAdCount;
     const premium = getSpotlightPremium();
     if (!premium.length) return 0;
     return premium.length + (shouldAppendSpotlightBoostPromo() ? 1 : 0);
   }
 
   function buildSpotlightTrackHtml() {
+    if (browseAdsActive) return browseAdCardsHtml;
     const premium = getSpotlightPremium();
     let html = premium.map(premiumCard).join('');
     if (shouldAppendSpotlightBoostPromo()) html += spotlightBoostPromoCard();
@@ -1176,8 +1183,122 @@
     }
   }
 
+  var eventsBrowseAdsLoaded = false;
+
+  function browseAdCardHtml(ad) {
+    const company = String(ad.company_name || 'Sponsored partner').trim() || 'Sponsored partner';
+    const label =
+      String(ad.cta_label || 'Find out more')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 3)
+        .join(' ') || 'Find out more';
+    const href = String(ad.cta_url || '').trim();
+    const dark = ad.logo_band_dark ? ' is-dark' : '';
+    const colorAttr = ad.cta_color
+      ? ' data-cta-color="' + escapeHtml(ad.cta_color) + '"'
+      : '';
+    return (
+      '<article class="premium-card events-ad-card">' +
+      '<div class="events-ad-card-inner">' +
+      '<a class="events-ad-card-logo' +
+      dark +
+      '" href="' +
+      escapeHtml(href) +
+      '" data-sponsor-placement="events_browse_carousel" data-sponsor-company="' +
+      escapeHtml(company) +
+      '">' +
+      '<img src="' +
+      escapeHtml(ad.logo_url) +
+      '" alt="' +
+      escapeHtml(company) +
+      '"></a>' +
+      '<a class="events-ad-card-cta" href="' +
+      escapeHtml(href) +
+      '" data-sponsor-placement="events_browse_carousel" data-sponsor-company="' +
+      escapeHtml(company) +
+      '"' +
+      colorAttr +
+      '>' +
+      escapeHtml(label) +
+      '</a></div></article>'
+    );
+  }
+
+  function paintBrowseAdCarousel(ads) {
+    const list = (Array.isArray(ads) ? ads : []).slice(0, BROWSE_AD_MAX);
+    const section = document.querySelector('.events-browse-ads');
+    if (!list.length) {
+      browseAdsActive = true;
+      browseAdCardsHtml = '';
+      browseAdCount = 0;
+      stopSpotlightAuto();
+      if (section) section.hidden = true;
+      if (els.spotlightTrack && window.HubSpotlightCarousel && window.HubSpotlightCarousel.clearTrack) {
+        window.HubSpotlightCarousel.clearTrack(els.spotlightTrack);
+      } else if (els.spotlightTrack) {
+        els.spotlightTrack.innerHTML = '';
+      }
+      return;
+    }
+    if (section) section.hidden = false;
+    const html = list.map(browseAdCardHtml).join('');
+    browseAdsActive = true;
+    browseAdCardsHtml = html;
+    browseAdCount = list.length;
+    if (!els.spotlightTrack) return;
+    els.spotlightTrack.classList.add('spotlight-track--carousel');
+    bindSpotlightCarousel();
+    layoutSpotlightTrack(html, browseAdCount);
+    if (window.CmsSponsorFields) {
+      els.spotlightTrack.querySelectorAll('.events-ad-card-logo, .events-ad-card-cta').forEach(function (el) {
+        if (!el.getAttribute('data-sponsor-placement')) return;
+        window.CmsSponsorFields.applyCtaLink(el, el.getAttribute('href'), {
+          placement: 'events_browse_carousel',
+          company: el.getAttribute('data-sponsor-company') || '',
+          campaign: 'events_browse_carousel',
+        });
+        if (el.classList.contains('events-ad-card-cta') && window.CmsSponsorFields.applyCtaColor) {
+          window.CmsSponsorFields.applyCtaColor(el, el.getAttribute('data-cta-color') || '');
+        }
+      });
+      els.spotlightTrack.querySelectorAll('.events-ad-card-logo img').forEach(function (img) {
+        const wrap = img.closest('.events-ad-card-logo');
+        if (wrap && window.CmsSponsorFields.applyLogoBand) {
+          window.CmsSponsorFields.applyLogoBand(wrap, img, true);
+        }
+      });
+    }
+    syncSpotlightLoopScroll();
+    startSpotlightAuto();
+  }
+
+  function loadEventsBrowseAds() {
+    if (eventsBrowseAdsLoaded) return;
+    if (document.body.classList.contains('browse-mode-organisers')) return;
+    if (!els.spotlightTrack || !document.querySelector('.events-browse-ads')) return;
+    eventsBrowseAdsLoaded = true;
+    const load =
+      window.CmsAdBlocks && window.CmsAdBlocks.loadCarouselAds
+        ? window.CmsAdBlocks.loadCarouselAds('events_browse_carousel_ads')
+        : Promise.resolve([]);
+    load
+      .then(function (ads) {
+        paintBrowseAdCarousel(ads);
+      })
+      .catch(function () {
+        eventsBrowseAdsLoaded = false;
+        paintBrowseAdCarousel([]);
+      });
+  }
+
+  window.hubLoadEventsBrowseAds = loadEventsBrowseAds;
+
   function renderSpotlight() {
     if (document.body.classList.contains('browse-mode-organisers')) return;
+    /* This row is the sponsored advert carousel, not featured events. */
+    if (document.querySelector('.events-browse-ads')) return;
 
     const premium = getSpotlightPremium();
     const promo =
@@ -1459,5 +1580,8 @@
   var startInOrganisers =
     location.hash === '#organisers' ||
     (location.search && location.search.indexOf('mode=organisers') !== -1);
-  if (!startInOrganisers) load();
+  if (!startInOrganisers) {
+    loadEventsBrowseAds();
+    load();
+  }
 })();
