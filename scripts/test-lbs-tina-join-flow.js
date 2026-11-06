@@ -22,6 +22,18 @@ assert.ok(joinHtml.includes('id="lbs-email"'), 'inline form has email');
 assert.ok(joinHtml.includes('id="lbs-company"'), 'inline form has company');
 assert.ok(joinHtml.includes('id="lbs-location"'), 'inline form has location');
 assert.ok(joinHtml.includes('id="lbs-password"'), 'inline form has password');
+assert.ok(joinHtml.includes('id="lbs-discoverable"'), 'inline form has Include me tick');
+assert.ok(
+  !/id="lbs-discoverable"[^>]*\bchecked\b/.test(joinHtml) &&
+    !/\bchecked\b[^>]*id="lbs-discoverable"/.test(joinHtml),
+  'Include me is not pre-ticked'
+);
+assert.ok(
+  !/id="lbs-discoverable"[^>]*\brequired\b/.test(joinHtml),
+  'Include me is not required to join'
+);
+assert.ok(/not your name, email, or phone/i.test(joinHtml), 'Include me says what stays private');
+assert.ok(/Leave this unticked/i.test(joinHtml), 'Include me says joining works without the tick');
 assert.ok(joinHtml.includes('hub-turnstile.js'), 'inline form loads turnstile');
 
 const joinJs = read('js/lbs-tina-join.js');
@@ -30,14 +42,18 @@ assert.ok(joinJs.includes('/api/auth/register'), 'inline form posts to register 
 assert.ok(joinJs.includes("signupSource: 'tina_lbs'"), 'inline signup tags tina_lbs source');
 assert.ok(joinJs.includes('company: company'), 'inline signup sends company');
 assert.ok(joinJs.includes('location: location'), 'inline signup sends location');
+assert.ok(joinJs.includes('discoverable: discoverable'), 'Include me follows the checkbox');
+assert.ok(!joinJs.includes('discoverable: true'), 'Include me is not forced on');
 assert.ok(!joinJs.includes('complete-booking'), 'does not purchase via complete-booking');
 assert.ok(/attended/i.test(joinJs), 'status copy uses attended');
 assert.ok(
   joinJs.includes('markAttended()') && /Account created — recording/.test(joinJs),
   'after register, records attendance on the stand without bouncing to verify-email first'
 );
-assert.ok(joinJs.includes('needsEmailConfirm'), 'soft email-confirm CTA after stand check-in');
-assert.ok(joinJs.includes('Finish TINA later') || joinJs.includes('Browse events'), 'does not force full TINA profile on the stand');
+assert.ok(!joinJs.includes('/organiser/verify-email'), 'stand page does not send people into organiser email confirm');
+assert.ok(!joinJs.includes('/account/#meet'), 'stand page does not send people into the account TINA form');
+assert.ok(!joinJs.includes('window.location'), 'stand page does not navigate away after signup');
+assert.ok(joinJs.includes('Browse events'), 'stand success can browse events without leaving into the old signup');
 assert.ok(/Just the essentials|name, email, company, location/i.test(joinHtml), 'page copy lists the quick fields only');
 
 const authRoute = read('api/auth.js');
@@ -169,10 +185,23 @@ assert.ok(authJs.includes("signupSource = 'tina_lbs'"), 'LBS path tags signupSou
 assert.ok(registerRoute.includes('missing_company'), 'server requires company on LBS join');
 assert.ok(registerRoute.includes('missing_location'), 'server requires location on LBS join');
 assert.ok(registerRoute.includes('signupSource'), 'server accepts signupSource');
+assert.ok(
+  registerRoute.includes('explicitDiscoverableConsent(body.discoverable)'),
+  'server accepts Include me only as an explicit tick'
+);
+assert.ok(
+  !/tinaLbsJoin[\s\S]{0,80}discoverable/.test(registerRoute),
+  'leaflet campaign does not imply Include me'
+);
 
 const registerUserSrc = read('api/_lib/supabase-auth.js');
 assert.ok(registerUserSrc.includes('signup_source'), 'registerUser persists signup_source');
 assert.ok(registerUserSrc.includes('matchmaker_blurb'), 'registerUser can seed basic TINA blurb');
+assert.ok(
+  registerUserSrc.includes('const putForward = discoverable === true'),
+  'discoverable timestamp is set only for a real tick'
+);
+assert.ok(registerUserSrc.includes('attendeeRow.discoverable_at'), 'ticked Include me is stored');
 
 const migration = read('supabase/migrations/360_lbs_tina_quick_signup.sql');
 assert.ok(migration.includes('signup_source'), 'migration adds signup_source');

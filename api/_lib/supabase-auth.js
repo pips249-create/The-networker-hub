@@ -485,11 +485,13 @@ async function registerUser({
   signupSource,
   marketingOptIn,
   hubertOptIn,
+  discoverable,
 }) {
   const sb = getSupabaseAdmin();
   const em = email.trim().toLowerCase();
   const optedInToMarketing = Boolean(marketingOptIn);
   const optedInToHubert = Boolean(hubertOptIn);
+  const putForward = discoverable === true;
   const companyClean = String(company || '')
     .trim()
     .replace(/\s+/g, ' ')
@@ -551,10 +553,13 @@ async function registerUser({
   if (optedInToHubert) {
     attendeeRow.hubert_intros_interest_at = new Date().toISOString();
     // Seed a basic TINA blurb from company so the profile is not empty after a
-    // show-floor signup. Looking-to-meet + discoverable stay for the finish step.
+    // show-floor signup. Who they want to meet stays for the finish step.
     if (companyClean && !attendeeRow.matchmaker_blurb) {
       attendeeRow.matchmaker_blurb = ('Works at ' + companyClean).slice(0, 280);
     }
+  }
+  if (putForward) {
+    attendeeRow.discoverable_at = new Date().toISOString();
   }
   let attendeeUpsert = await sb.from('attendees').upsert(attendeeRow, { onConflict: 'email' });
   if (attendeeUpsert.error) {
@@ -570,6 +575,10 @@ async function registerUser({
     }
     if (/matchmaker_blurb/i.test(msg)) {
       delete attendeeRow.matchmaker_blurb;
+      retry = true;
+    }
+    if (/discoverable_at/i.test(msg)) {
+      delete attendeeRow.discoverable_at;
       retry = true;
     }
     if (retry) {

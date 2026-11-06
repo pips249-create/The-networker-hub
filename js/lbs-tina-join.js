@@ -83,8 +83,7 @@
     }
   }
 
-  function showSuccess(already, opts) {
-    opts = opts || {};
+  function showSuccess(already) {
     showForm(false);
     setStatus(
       already
@@ -92,17 +91,9 @@
         : 'You’re in — The Business Show London is recorded on your account as attended. You’re done for now on the stand.',
       'ok'
     );
-    var emailNote = opts.needsEmailConfirm
-      ? '<p class="lbs-note">We’ve emailed a confirmation code — confirm when you have a moment (not needed to finish here).</p>'
-      : '<p class="lbs-note">We’ll email you tomorrow to finish the rest of your TINA profile if you haven’t already.</p>';
     setAction(
-      emailNote +
-        '<a class="lbs-btn lbs-btn-primary" href="/events/">Browse events</a>' +
-        (opts.needsEmailConfirm
-          ? '<a class="lbs-btn lbs-btn-secondary" href="/organiser/verify-email?next=' +
-            encodeURIComponent(JOIN_PATH) +
-            '">Confirm email</a>'
-          : '<a class="lbs-btn lbs-btn-secondary" href="/account/#meet">Finish TINA later</a>')
+      '<p class="lbs-note">That’s everything needed on the stand. We’ll email you to confirm your address, and again tomorrow if your TINA profile still needs a finish.</p>' +
+        '<a class="lbs-btn lbs-btn-primary" href="/events/">Browse events</a>'
     );
   }
 
@@ -182,6 +173,8 @@
         setStatus('Please agree to the Terms & conditions and Privacy policy.', 'error');
         return;
       }
+      var discoverableEl = document.getElementById('lbs-discoverable');
+      var discoverable = Boolean(discoverableEl && discoverableEl.checked);
 
       if (submitBtn) submitBtn.disabled = true;
       setStatus('Creating your account…');
@@ -198,6 +191,7 @@
             intent: 'attendee',
             marketingOptIn: false,
             hubertOptIn: true,
+            discoverable: discoverable,
             termsAccepted: true,
             utmCampaign: 'tina_lbs',
             utmSource: 'the_business_show_london',
@@ -228,12 +222,7 @@
           setStatus('Account created — recording that you attended…', 'ok');
           return markAttended()
             .then(function (data) {
-              showSuccess(Boolean(data && data.already), {
-                needsEmailConfirm: Boolean(
-                  result.data &&
-                    (result.data.deferEmailVerification || result.data.requiresEmailVerification)
-                ),
-              });
+              showSuccess(Boolean(data && data.already));
             })
             .catch(function (err) {
               var code = err && err.code ? String(err.code) : '';
@@ -244,24 +233,14 @@
                 code === 'exists' ||
                 /already/i.test(msg)
               ) {
-                showSuccess(true, {
-                  needsEmailConfirm: Boolean(
-                    result.data &&
-                      (result.data.deferEmailVerification || result.data.requiresEmailVerification)
-                  ),
-                });
+                showSuccess(true);
                 return;
               }
               setStatus(
                 (result.data && result.data.message) || humanError(err),
                 'warn'
               );
-              setAction(
-                '<a class="lbs-btn lbs-btn-primary" href="/events/">Browse events</a>' +
-                  '<a class="lbs-btn lbs-btn-secondary" href="/organiser/verify-email?next=' +
-                  encodeURIComponent(JOIN_PATH) +
-                  '">Confirm email</a>'
-              );
+              setAction('<a class="lbs-btn lbs-btn-primary" href="/events/">Browse events</a>');
             });
         })
         .catch(function () {

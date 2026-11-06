@@ -47,6 +47,11 @@ function cleanMatchmakerBlurb(value) {
   return s.slice(0, BLURB_MAX);
 }
 
+/** Affirmative opt-in only. Missing, false, and stringly values are not consent. */
+function explicitDiscoverableConsent(value) {
+  return value === true;
+}
+
 function parseDiscoverable(value, currentAt) {
   if (value === undefined) return undefined;
   const on =
@@ -161,6 +166,7 @@ module.exports = {
   BLURB_MAX,
   cleanLookingToMeet,
   cleanMatchmakerBlurb,
+  explicitDiscoverableConsent,
   parseDiscoverable,
   suggestMatchmakerBlurb,
   normalizeLookingToMeetList,

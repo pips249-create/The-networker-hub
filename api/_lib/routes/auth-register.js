@@ -9,6 +9,7 @@ const {
 const { enforceRateLimitAsync, clientIp } = require('../rate-limit');
 const { verifyTurnstileToken } = require('../turnstile');
 const { validateNewPassword } = require('../password-policy');
+const { explicitDiscoverableConsent } = require('../hubert-matchmaker-profile');
 const { getOrganiserAccessStatus } = require('../organiser-access-guard');
 const {
   sendOrganiserEmailVerification,
@@ -82,6 +83,9 @@ module.exports = async function handler(req, res) {
   const hubertOptIn =
     tinaLbsJoin ||
     Boolean(body.hubertOptIn ?? body.hubert_opt_in ?? body.hubertIntros ?? body.hubert_intros);
+  // UK GDPR Art. 4(11) / Recital 32: being put forward is separate from joining.
+  // Only a boolean true counts. The leaflet campaign must not imply this consent.
+  const discoverable = explicitDiscoverableConsent(body.discoverable);
   const termsAccepted =
     body.termsAccepted === true ||
     body.terms_accepted === true ||
@@ -159,6 +163,7 @@ module.exports = async function handler(req, res) {
       signupSource,
       marketingOptIn,
       hubertOptIn,
+      discoverable,
     });
 
     const sessionUser = {

@@ -3,6 +3,7 @@ const {
   LOOKING_TO_MEET_OPTIONS,
   cleanLookingToMeet,
   cleanMatchmakerBlurb,
+  explicitDiscoverableConsent,
   parseDiscoverable,
   suggestMatchmakerBlurb,
   matchmakerProfileFromAttendee,
@@ -26,6 +27,11 @@ const on = parseDiscoverable(true, null);
 assert(typeof on === 'string' && on.length > 10, 'discoverable on sets timestamp');
 assert(parseDiscoverable(false, on) === null, 'discoverable off clears');
 assert(parseDiscoverable(undefined, on) === undefined, 'discoverable omit');
+assert(explicitDiscoverableConsent(true) === true, 'only boolean true is Include me consent');
+assert(explicitDiscoverableConsent(false) === false, 'unticked is not consent');
+assert(explicitDiscoverableConsent(undefined) === false, 'missing is not consent');
+assert(explicitDiscoverableConsent('true') === false, 'string true is not consent');
+assert(explicitDiscoverableConsent('on') === false, 'on is not consent');
 
 assert(
   suggestMatchmakerBlurb({ job_title: 'Founder', company: 'Northbridge' }) === 'Founder at Northbridge',
