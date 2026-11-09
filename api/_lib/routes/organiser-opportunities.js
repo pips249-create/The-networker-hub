@@ -15,6 +15,24 @@ function parseBody(req) {
   return body || {};
 }
 
+function sendOpportunityImageUploadError(res, json, err) {
+  const msg = String((err && err.message) || '');
+  const code = String((err && err.code) || '');
+  if (
+    msg === 'cover_upload_failed' ||
+    /under 2MB/i.test(msg) ||
+    code === 'image_unreadable' ||
+    /couldn'?t read that image/i.test(msg)
+  ) {
+    return json(res, 400, {
+      error: 'cover_upload_failed',
+      message:
+        'Your logo or cover photo could not be uploaded. Try a smaller JPG or PNG (under 2MB) and save again.',
+    });
+  }
+  return null;
+}
+
 function opportunityPayloadFromBody(body, session) {
   const types = Array.isArray(body.types)
     ? body.types.map((t) => String(t || '').trim()).filter(Boolean)
@@ -184,6 +202,8 @@ module.exports = async function handler(req, res) {
       if (e && e.code === 'exclusive_brand_conflict') {
         return sendExclusiveBrandConflict(res, json, e.conflict);
       }
+      const imageErr = sendOpportunityImageUploadError(res, json, e);
+      if (imageErr) return imageErr;
       return jsonPublicError(res, json, e, { code: 'opportunity_update_failed', logLabel: '[organiser-opportunities]' });
     }
   }
@@ -265,6 +285,8 @@ module.exports = async function handler(req, res) {
       if (e && e.code === 'exclusive_brand_conflict') {
         return sendExclusiveBrandConflict(res, json, e.conflict);
       }
+      const imageErr = sendOpportunityImageUploadError(res, json, e);
+      if (imageErr) return imageErr;
       return jsonPublicError(res, json, e, { code: 'opportunity_create_failed', logLabel: '[organiser-opportunities]' });
     }
   }

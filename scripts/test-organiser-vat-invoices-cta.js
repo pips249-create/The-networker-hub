@@ -73,7 +73,7 @@ assert(
 );
 assert(
   'opportunity edit cache key bumped',
-  /organiser-opportunity-edit\.js\?v=20261030compvat1/.test(editHtml)
+  /organiser-opportunity-edit\.js\?v=20261109saveimg1/.test(editHtml)
 );
 
 if (failed) {

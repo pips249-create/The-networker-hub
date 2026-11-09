@@ -3,11 +3,27 @@
  */
 (function () {
   const params = new URLSearchParams(location.search);
-  const editId = params.get('id') || '';
+  // Mutable: dual image upload may create the row on the first request, then
+  // fail on the cover — keep the id so retry PATCHes instead of duplicating.
+  let editId = params.get('id') || '';
   const checkoutCancelled = params.get('checkout') === 'cancelled';
   const checkoutStart = params.get('checkout') === 'start';
   const justSubmitted = params.get('submitted') === '1';
   const isEmbedDrawer = params.get('embed') === '1' || window.self !== window.top;
+
+  function adoptOpportunityEditId(opportunityId) {
+    const id = String(opportunityId || '').trim();
+    if (!id || editId === id) return;
+    editId = id;
+    try {
+      const next = new URLSearchParams(location.search);
+      next.set('id', id);
+      const query = next.toString();
+      history.replaceState({}, '', location.pathname + (query ? '?' + query : ''));
+    } catch (_err) {
+      /* ignore */
+    }
+  }
 
   if (isEmbedDrawer) {
     document.documentElement.classList.add('ee-embed-drawer-root');
@@ -1513,9 +1529,25 @@
     try {
       data = await res.json();
     } catch {
-      data = {};
+      // Vercel returns non-JSON (often empty/HTML) when the JSON body exceeds ~4.5MB —
+      // common when logo + cover are both sent as base64 in one request.
+      if (res.status === 413) {
+        data = {
+          error: 'payload_too_large',
+          message:
+            'Your logo and cover photo are too large to upload together. Try smaller JPG or PNG files (under 1MB each) and save again.',
+        };
+      } else if (!res.ok) {
+        data = {
+          error: 'bad_response',
+          message:
+            'Could not save opportunity — the server returned an unexpected response. Try smaller images, or email hi@thenetworkeruk.com if it keeps happening.',
+        };
+      } else {
+        data = {};
+      }
     }
-    return { ok: res.ok, status: res.status, data };
+    return { ok: res.ok, status: res.status, data: data && typeof data === 'object' ? data : {} };
   }
 
   function toDatetimeLocalValue(iso) {
@@ -2407,9 +2439,146 @@
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result || ''));
-      reader.onerror = reject;
+      reader.onerror = function () {
+        reject(
+          new Error(
+            'Could not read that image. Try a JPG or PNG under 2MB, or paste an image URL instead.'
+          )
+        );
+      };
       reader.readAsDataURL(file);
     });
+  }
+
+  function stripOpportunityMediaBase64(source) {
+    const next = Object.assign({}, source || {});
+    delete next.photoBase64;
+    delete next.photoMime;
+    delete next.photoFilename;
+    delete next.logoBase64;
+    delete next.logoMime;
+    delete next.logoFilename;
+    return next;
+  }
+
+  function clearOpportunityReviewFlags(source) {
+    const next = Object.assign({}, source || {});
+    delete next.submitForReview;
+    if (String(next.action || '').trim() === 'submit_for_review') delete next.action;
+    return next;
+  }
+
+  async function saveOpportunityRequest(opportunityId, body) {
+    if (opportunityId) {
+      return api('/api/organiser/opportunities', {
+        method: 'PATCH',
+        body: JSON.stringify({ id: opportunityId, ...body }),
+      });
+    }
+    return api('/api/organiser/opportunities', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  /**
+   * Never put logo + cover base64 in one JSON body — two ~2MB files become ~5MB+
+   * after base64 and hit Vercel's request limit, which surfaces as a blank
+   * "Could not save opportunity" on mobile.
+   */
+  async function saveOpportunityWithMedia(opportunityId, payload) {
+    const wantsReview = Boolean(payload.submitForReview);
+    const hasPhotoUpload = Boolean(payload.photoBase64);
+    const hasLogoUpload = Boolean(payload.logoBase64);
+
+    if (!(hasPhotoUpload && hasLogoUpload)) {
+      return saveOpportunityRequest(opportunityId, payload);
+    }
+
+    const first = clearOpportunityReviewFlags(stripOpportunityMediaBase64(payload));
+    first.logoBase64 = payload.logoBase64;
+    first.logoMime = payload.logoMime;
+    first.logoFilename = payload.logoFilename;
+
+    const firstRes = await saveOpportunityRequest(opportunityId, first);
+    if (!firstRes.ok) return firstRes;
+
+    const savedId =
+      (firstRes.data && firstRes.data.opportunity && firstRes.data.opportunity.id) || opportunityId;
+    if (!savedId) {
+      return {
+        ok: false,
+        status: 500,
+        data: {
+          error: 'opportunity_create_failed',
+          message: 'Listing details saved but the cover photo could not be attached. Please try again.',
+        },
+      };
+    }
+    adoptOpportunityEditId(savedId);
+    if (firstRes.data && firstRes.data.opportunity) {
+      currentOpportunity = firstRes.data.opportunity;
+      syncSavedOpportunityMedia(firstRes.data.opportunity);
+    }
+
+    const second = stripOpportunityMediaBase64(payload);
+    second.photoBase64 = payload.photoBase64;
+    second.photoMime = payload.photoMime;
+    second.photoFilename = payload.photoFilename;
+    if (wantsReview) {
+      second.submitForReview = true;
+      second.action = 'submit_for_review';
+    }
+    const secondRes = await saveOpportunityRequest(savedId, second);
+    if (
+      !secondRes.ok &&
+      firstRes.data &&
+      firstRes.data.opportunity &&
+      !(secondRes.data && secondRes.data.opportunity)
+    ) {
+      secondRes.data = secondRes.data || {};
+      secondRes.data.opportunity = firstRes.data.opportunity;
+    }
+    return secondRes;
+  }
+
+  function opportunitySaveErrorMessage(res) {
+    const data = (res && res.data) || {};
+    const err = String(data.error || '').trim();
+    if (err === 'network_error') {
+      return data.message || 'Connection interrupted — check your signal and try again.';
+    }
+    if (err === 'opportunities_unavailable') {
+      return 'Opportunity listings are not available yet — contact support if this persists.';
+    }
+    if (err === 'cover_upload_failed' || err === 'payload_too_large') {
+      return (
+        data.message ||
+        'Your logo or cover photo could not be uploaded. Try a smaller JPG or PNG (under 1MB each) and save again.'
+      );
+    }
+    if (err === 'review_submission_failed') {
+      return 'Your listing saved but could not be queued for review. Please try submitting again.';
+    }
+    if (err === 'live_listing_resubmit_required') {
+      return 'Live listings must be submitted for reapproval. Use Submit changes for reapproval — your subscription stays active.';
+    }
+    if (err === 'pending_review_locked') {
+      return 'This listing could not be updated. Change the fields you need and save again — it stays on the same submission.';
+    }
+    if (err === 'exclusive_brand_conflict') {
+      return (
+        data.message ||
+        'Only one listing is allowed for this brand on The Networker UK. Another listing already holds that slot — contact hi@thenetworkeruk.com for help.'
+      );
+    }
+    if (err === 'bad_response') {
+      return (
+        data.message ||
+        'Could not save opportunity — the server returned an unexpected response. Try smaller images, or email hi@thenetworkeruk.com.'
+      );
+    }
+    return data.message || err || 'Could not save opportunity';
   }
 
   function hasListingImage(payload) {
@@ -3530,46 +3699,20 @@
               ? 'Updating submission'
               : 'Submitting for review'
         );
+      } else if (loading && photoFile && logoFile) {
+        loading.show(updatingQueuedSubmission ? 'Uploading images' : 'Uploading logo and cover');
       }
-
-      const saveWork = async () => {
-        if (editId) {
-          return api('/api/organiser/opportunities', {
-            method: 'PATCH',
-            body: JSON.stringify({ id: editId, ...payload }),
-          });
-        }
-        return api('/api/organiser/opportunities', {
-          method: 'POST',
-          body: JSON.stringify(payload),
-        });
-      };
 
       let res;
       try {
-        res = await saveWork();
+        res = await saveOpportunityWithMedia(editId, payload);
       } catch (e) {
         showAlert((e && e.message) || 'Could not save opportunity');
         return;
       }
 
       if (!res.ok) {
-        const err = res.data.error || '';
-        const msg =
-          err === 'network_error'
-            ? res.data.message || 'Connection interrupted — check your signal and try again.'
-            : err === 'opportunities_unavailable'
-              ? 'Opportunity listings are not available yet — contact support if this persists.'
-              : err === 'cover_upload_failed'
-                ? 'Your cover photo could not be uploaded. Try a smaller JPG or PNG (under 2MB) and save again.'
-                : err === 'review_submission_failed'
-                  ? 'Your listing saved but could not be queued for review. Please try submitting again.'
-                  : err === 'live_listing_resubmit_required'
-                    ? 'Live listings must be submitted for reapproval. Use Submit changes for reapproval — your subscription stays active.'
-                    : err === 'pending_review_locked'
-                      ? 'This listing could not be updated. Change the fields you need and save again — it stays on the same submission.'
-                      : res.data.message || err || 'Could not save opportunity';
-        showAlert(msg);
+        showAlert(opportunitySaveErrorMessage(res));
         return;
       }
 
