@@ -345,6 +345,29 @@ function prependPartnerSpotlightEvents(events, partners, limit) {
   return out;
 }
 
+/** True when the nearby block is showing online-only picks (heading: Popular online events). */
+function nearbyResultIsOnlineFallback(nearbyResult) {
+  if (!nearbyResult) return false;
+  if (nearbyResult.outsideUk) return true;
+  return String(nearbyResult.source || '').trim() === 'popular_online';
+}
+
+/**
+ * In-person partner shows (Business Show, MarTech) must not be folded into an
+ * online-only nearby section — that produced "Popular online events" cards for
+ * ExCeL London. Pin them into Popular / Coming up instead.
+ */
+function shouldPrependPartnersToNearbySection(nearbyResult) {
+  if (nearbyResultIsOnlineFallback(nearbyResult)) return false;
+  const source = String(nearbyResult?.source || '').trim();
+  if (source === 'nearby' && (nearbyResult.events || []).length > 0) return false;
+  return true;
+}
+
+function shouldPinPartnersIntoPopularSection(nearbyResult) {
+  return !shouldPrependPartnersToNearbySection(nearbyResult);
+}
+
 /**
  * Upcoming events ranked by recent booking volume (last 30 days), with featured/rating fallback.
  */
@@ -445,6 +468,9 @@ module.exports = {
   fetchPopularEvents,
   fetchPopularOnlineEvents,
   fetchUpcomingEvents,
+  nearbyResultIsOnlineFallback,
+  shouldPrependPartnersToNearbySection,
+  shouldPinPartnersIntoPopularSection,
   fetchPartnerSpotlightEvents,
   prependPartnerSpotlightEvents,
 };
