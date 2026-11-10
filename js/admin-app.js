@@ -857,9 +857,9 @@
     {
       key: 'events_browse_carousel_ads',
       group: 'Browse pages',
-      label: 'Events directory — advert carousel (12 slots)',
+      label: 'Events directory — advert carousel (24 slots)',
       preview: 'carousel',
-      help: 'Up to 12 sponsored cards on the events directory, in the row above the filters. Each card shows a logo and a button underneath.',
+      help: 'Up to 24 sponsored cards on the events directory, in the row above the filters. Live cards shuffle on each visit. Each card shows a logo and a button underneath.',
       tagline: '',
       ctaLabel: 'Find out more',
       ctaUrl: 'https://',
@@ -15768,14 +15768,16 @@
     var slot = cmsSlotByKey(slotKey || 'event_page_carousel_ads');
     var isBrowseCarousel = slot.key === 'events_browse_carousel_ads';
     var detailText = isBrowseCarousel
-      ? 'Up to 12 sponsored cards on the events directory. Each card shows the logo with a button underneath.'
+      ? 'Up to 24 sponsored cards on the events directory. Live cards shuffle on each visit. Click a slot square to edit it.'
       : slot.key === 'organiser_page_carousel_ads'
         ? 'Three Mini Sponsor slots on organiser profile pages and selected organiser emails (one Page Partner inventory; separate from Event Page Partner).'
         : slot.key === 'opportunity_page_carousel_ads'
           ? 'Three Mini Sponsor slots on opportunity detail pages and selected opportunity emails (one Page Partner inventory; separate from Event and Organiser Page Partner).'
           : 'Three Mini Sponsor slots on event detail pages and selected event/attendee emails (one Page Partner inventory).';
     main.innerHTML =
-      '<div class="space-y-6 max-w-3xl">' +
+      '<div class="space-y-6 ' +
+      (isBrowseCarousel ? 'max-w-5xl' : 'max-w-3xl') +
+      '">' +
       sponsorshipBackLinkHtml() +
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5" id="event-carousel-admin">' +
       '<div class="flex flex-wrap items-start justify-between gap-3">' +
@@ -15810,7 +15812,8 @@
     var adsState = [];
     var pendingLogos = {};
     var isBrowseCarousel = slotKey === 'events_browse_carousel_ads';
-    var CAROUSEL_SIZE = isBrowseCarousel ? 12 : 3;
+    var CAROUSEL_SIZE = isBrowseCarousel ? 24 : 3;
+    var selectedBrowseIndex = 0;
 
     function setCarouselStatus(text, tone) {
       if (!statusEl) return;
@@ -15843,6 +15846,53 @@
       return out;
     }
 
+    function browseSlotIsLive(ad) {
+      return (
+        ad &&
+        ad.active !== false &&
+        String(ad.company_name || '').trim() &&
+        String(ad.logo_url || '').trim() &&
+        String(ad.cta_url || '').trim()
+      );
+    }
+
+    function browseSlotTileHtml(ad, index) {
+      var live = browseSlotIsLive(ad);
+      var pending = pendingLogos[ad.id];
+      var logo = (pending && pending.preview) || ad.logo_url || '';
+      var selected = index === selectedBrowseIndex;
+      var company = String(ad.company_name || '').trim();
+      return (
+        '<button type="button" class="admin-ad-picker-card text-left' +
+        (selected ? ' ring-2 ring-brand-500 border-brand-300' : '') +
+        '" data-browse-slot-index="' +
+        index +
+        '">' +
+        '<div class="admin-ad-picker-card-head">' +
+        '<span class="admin-ad-picker-type">Slot ' +
+        (index + 1) +
+        '</span>' +
+        '<span class="admin-ad-picker-badge ' +
+        (live ? 'admin-ad-picker-badge--live' : 'admin-ad-picker-badge--empty') +
+        '">' +
+        (live ? 'Live' : 'Empty') +
+        '</span></div>' +
+        (logo
+          ? '<img src="' +
+            attrEsc(logo) +
+            '" alt="" class="mt-2 h-8 max-w-full object-contain' +
+            (ad.logo_band_dark ? ' rounded bg-slate-900 p-1' : '') +
+            '" />'
+          : '') +
+        '<p class="admin-ad-picker-label">' +
+        esc(company || 'Ad slot ' + (index + 1)) +
+        '</p>' +
+        '<span class="admin-ad-picker-action">' +
+        (selected ? 'Editing' : 'Edit slot →') +
+        '</span></button>'
+      );
+    }
+
     function adRowHtml(ad, index) {
       var logo = ad.logo_url || '';
       var pending = pendingLogos[ad.id];
@@ -15851,6 +15901,8 @@
       return (
         '<div class="rounded-xl border border-slate-200 p-4 space-y-3 min-w-0" data-carousel-ad-id="' +
         attrEsc(ad.id) +
+        '" data-carousel-ad-index="' +
+        index +
         '">' +
         '<div class="flex flex-wrap items-center justify-between gap-2">' +
         '<p class="text-sm font-semibold text-brand-900">Ad slot ' +
@@ -15911,49 +15963,101 @@
         '<button type="button" class="event-carousel-ends-preset rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50" data-months="12">+12 mo</button>' +
         '<button type="button" class="event-carousel-ends-preset rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50" data-months="0">Clear</button>' +
         '</div>' +
-        '<p class="text-xs text-slate-500 mt-1">Leave blank for no automatic end. After this date the mini sponsor stops showing.</p></div></div>'
+        '<p class="text-xs text-slate-500 mt-1">Leave blank for no automatic end. After this date the advert stops showing.</p></div></div>'
       );
     }
 
+    function readEditorRowIntoAd(row, index, existing) {
+      var id =
+        (row && row.getAttribute('data-carousel-ad-id')) ||
+        (existing && existing.id) ||
+        (isBrowseCarousel ? 'events_browse_carousel_' : 'event_carousel_') + (index + 1);
+      var logoUrlEl = row ? row.querySelector('.event-carousel-ad-logo-url') : null;
+      var linkUrlEl = row ? row.querySelector('.event-carousel-ad-link-url') : null;
+      var ctaLabelEl = row ? row.querySelector('.event-carousel-ad-cta-label') : null;
+      var companyEl = row ? row.querySelector('.event-carousel-ad-company') : null;
+      var endsAtEl = row ? row.querySelector('.event-carousel-ad-ends-at') : null;
+      var activeCheckbox = row ? row.querySelector('.event-carousel-ad-active') : null;
+      var darkCheckbox = row ? row.querySelector('.event-carousel-ad-logo-dark') : null;
+      var logoUrl = logoUrlEl ? logoUrlEl.value.trim() : '';
+      if (!logoUrl && existing && existing.logo_url) logoUrl = existing.logo_url;
+      if (!logoUrl && pendingLogos[id] && pendingLogos[id].existing) logoUrl = pendingLogos[id].existing;
+      return {
+        id: id,
+        slot_index: index,
+        company_name: companyEl
+          ? companyEl.value.trim()
+          : existing
+            ? existing.company_name || ''
+            : '',
+        logo_url: logoUrl,
+        cta_url: linkUrlEl ? linkUrlEl.value.trim() : existing ? existing.cta_url || '' : '',
+        cta_label: ctaLabelEl
+          ? ctaLabelEl.value.trim().split(/\s+/).filter(Boolean).slice(0, 3).join(' ')
+          : existing
+            ? existing.cta_label || ''
+            : '',
+        active: activeCheckbox ? activeCheckbox.checked : existing ? existing.active !== false : false,
+        logo_band_dark: darkCheckbox
+          ? darkCheckbox.checked
+          : existing
+            ? existing.logo_band_dark === true
+            : false,
+        ends_at: endsAtEl
+          ? datetimeLocalUtcToIso(endsAtEl.value)
+          : existing
+            ? existing.ends_at || null
+            : null,
+      };
+    }
+
+    function syncSelectedBrowseFromDom() {
+      if (!isBrowseCarousel) return;
+      var row = listEl.querySelector('[data-carousel-ad-id]');
+      if (!row) return;
+      var index = selectedBrowseIndex;
+      var existing = adsState[index] || null;
+      adsState[index] = readEditorRowIntoAd(row, index, existing);
+    }
+
     function readAdsFromDom() {
+      if (isBrowseCarousel) {
+        syncSelectedBrowseFromDom();
+        return adsState.slice();
+      }
       var rows = listEl.querySelectorAll('[data-carousel-ad-id]');
       var out = [];
       rows.forEach(function (row, index) {
-        var id = row.getAttribute('data-carousel-ad-id') || 'event_carousel_' + (index + 1);
-        var logoUrlEl = row.querySelector('.event-carousel-ad-logo-url');
-        var linkUrlEl = row.querySelector('.event-carousel-ad-link-url');
-        var ctaLabelEl = row.querySelector('.event-carousel-ad-cta-label');
-        var companyEl = row.querySelector('.event-carousel-ad-company');
-        var endsAtEl = row.querySelector('.event-carousel-ad-ends-at');
-        var activeCheckbox = row.querySelector('.event-carousel-ad-active');
-        var darkCheckbox = row.querySelector('.event-carousel-ad-logo-dark');
         var existing = adsState.find(function (ad) {
-          return ad.id === id;
+          return ad.id === row.getAttribute('data-carousel-ad-id');
         });
-        var logoUrl = logoUrlEl ? logoUrlEl.value.trim() : '';
-        if (!logoUrl && existing && existing.logo_url) logoUrl = existing.logo_url;
-        if (!logoUrl && pendingLogos[id] && pendingLogos[id].existing) logoUrl = pendingLogos[id].existing;
-        out.push({
-          id: id,
-          slot_index: index,
-          company_name: companyEl ? companyEl.value.trim() : existing ? existing.company_name || '' : '',
-          logo_url: logoUrl,
-          cta_url: linkUrlEl ? linkUrlEl.value.trim() : '',
-          cta_label: ctaLabelEl
-            ? ctaLabelEl.value.trim().split(/\s+/).filter(Boolean).slice(0, 3).join(' ')
-            : existing
-              ? existing.cta_label || ''
-              : '',
-          active: activeCheckbox ? activeCheckbox.checked : false,
-          logo_band_dark: darkCheckbox ? darkCheckbox.checked : false,
-          ends_at: endsAtEl ? datetimeLocalUtcToIso(endsAtEl.value) : null,
-        });
+        out.push(readEditorRowIntoAd(row, index, existing));
       });
       return out;
     }
 
     function renderAdList() {
-      listEl.innerHTML = adsState.map(adRowHtml).join('');
+      if (!isBrowseCarousel) {
+        listEl.innerHTML = adsState.map(adRowHtml).join('');
+        return;
+      }
+      if (selectedBrowseIndex < 0 || selectedBrowseIndex >= adsState.length) {
+        selectedBrowseIndex = 0;
+      }
+      var selected = adsState[selectedBrowseIndex] || defaultAds()[0];
+      listEl.innerHTML =
+        '<div class="space-y-2">' +
+        '<h4 class="font-semibold text-brand-900">Ad slots</h4>' +
+        '<p class="text-xs text-slate-500">Click a square to edit that slot. Live cards shuffle on the events page.</p>' +
+        '<div class="admin-ad-picker-grid">' +
+        adsState.map(browseSlotTileHtml).join('') +
+        '</div></div>' +
+        '<div class="space-y-2 pt-2">' +
+        '<h4 class="font-semibold text-brand-900">Editing slot ' +
+        (selectedBrowseIndex + 1) +
+        '</h4>' +
+        adRowHtml(selected, selectedBrowseIndex) +
+        '</div>';
     }
 
     function detectCarouselLogoBandDark(logoUrl) {
@@ -16011,22 +16115,33 @@
             setCarouselStatus('Could not load carousel — showing empty slots.', 'error');
             return;
           }
-          adsState = Array.isArray(data.ads) && data.ads.length ? data.ads : defaultAds();
+          adsState = defaultAds();
+          if (Array.isArray(data.ads) && data.ads.length) {
+            data.ads.forEach(function (ad, index) {
+              var slotIndex = Number.isFinite(Number(ad.slot_index)) ? Number(ad.slot_index) : index;
+              if (slotIndex < 0 || slotIndex >= CAROUSEL_SIZE) return;
+              adsState[slotIndex] = Object.assign({}, adsState[slotIndex], ad, {
+                slot_index: slotIndex,
+              });
+            });
+          }
           if (activeEl) activeEl.checked = data.active !== false;
           applyDetectedDarkBands(adsState).then(function (detected) {
             adsState = detected.ads;
             renderAdList();
             var liveCount = adsState.filter(function (ad) {
-              return ad.active !== false && ad.logo_url && ad.cta_url;
+              return browseSlotIsLive(ad);
             }).length;
             setCarouselStatus(
               detected.changed
-                ? 'Light logo detected — Dark logo band applied. Save mini sponsors to publish.'
+                ? 'Light logo detected — Dark logo band applied. Save to publish.'
                 : liveCount
-                  ? liveCount + ' active ad' + (liveCount === 1 ? '' : 's') + ' in carousel.'
+                  ? liveCount + ' live ad' + (liveCount === 1 ? '' : 's') + ' in carousel.'
                   : data.active === false
-                    ? 'Mini sponsors are hidden — tick “Mini sponsors active” above, add logo + link per slot, then save.'
-                    : 'No active ads yet — add a logo and click-through link for each slot you want live, then save.'
+                    ? (isBrowseCarousel
+                        ? 'Advert carousel is hidden — tick “Advert carousel active” above, fill a slot, then save.'
+                        : 'Mini sponsors are hidden — tick “Mini sponsors active” above, add logo + link per slot, then save.')
+                    : 'No live ads yet — pick a slot, add company name, logo and link, tick Active, then save.'
             );
           });
         })
@@ -16038,6 +16153,15 @@
     }
 
     listEl.addEventListener('click', function (ev) {
+      var tile = ev.target.closest('[data-browse-slot-index]');
+      if (tile && isBrowseCarousel) {
+        var nextIndex = Number(tile.getAttribute('data-browse-slot-index'));
+        if (!Number.isFinite(nextIndex) || nextIndex === selectedBrowseIndex) return;
+        syncSelectedBrowseFromDom();
+        selectedBrowseIndex = nextIndex;
+        renderAdList();
+        return;
+      }
       var preset = ev.target.closest('.event-carousel-ends-preset');
       if (!preset) return;
       var row = preset.closest('[data-carousel-ad-id]');

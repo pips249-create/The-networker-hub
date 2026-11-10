@@ -107,7 +107,7 @@
   var browseAdsActive = false;
   var browseAdCardsHtml = '';
   var browseAdCount = 0;
-  var BROWSE_AD_MAX = 12;
+  var BROWSE_AD_MAX = 24;
 
   function getSpotlightTrackItemCount() {
     if (browseAdsActive) return browseAdCount;
@@ -1227,7 +1227,7 @@
   }
 
   function paintBrowseAdCarousel(ads) {
-    const list = (Array.isArray(ads) ? ads : []).slice(0, BROWSE_AD_MAX);
+    const list = shuffleList((Array.isArray(ads) ? ads : []).slice(0, BROWSE_AD_MAX));
     const section = document.querySelector('.events-browse-ads');
     if (!list.length) {
       browseAdsActive = true;
