@@ -91,7 +91,7 @@ async function activateDirectoryCarouselSlotFromCheckout(session) {
     .trim()
     .split(/\s+/)
     .filter(Boolean)
-    .slice(0, 3)
+    .slice(0, 5)
     .join(' ');
   const contactEmail = String(
     metadata.contact_email ||

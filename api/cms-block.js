@@ -87,9 +87,10 @@ module.exports = wrapHandler(async function handler(req, res) {
     slotHint.indexOf('opportunity_industry_sponsor_') === 0 ||
     slotHint === 'networking_city_partner' ||
     Boolean(regionHint);
+  const isBrowseCarouselRequest = slotHint === 'events_browse_carousel_ads';
   res.setHeader(
     'Cache-Control',
-    isRegionPartnerRequest
+    isRegionPartnerRequest || isBrowseCarouselRequest
       ? 'private, no-store'
       : 'public, max-age=0, s-maxage=30, stale-while-revalidate=60'
   );

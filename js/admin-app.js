@@ -15976,7 +15976,7 @@
             '<input type="text" class="event-carousel-ad-cta-label w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" maxlength="32" value="' +
             attrEsc(ad.cta_label || 'Find out more') +
             '" placeholder="Find out more">' +
-            '<p class="text-xs text-slate-500 mt-1">Up to 3 words. It sits on one line under the logo.</p></div>' +
+            '<p class="text-xs text-slate-500 mt-1">Up to 5 words. It sits on one line under the logo.</p></div>' +
             '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Button colour</label>' +
             '<div class="flex items-center gap-2">' +
             '<span class="event-carousel-ad-cta-swatch h-10 w-14 shrink-0 rounded border border-slate-200" style="background:' +
@@ -16048,8 +16048,15 @@
       var activeCheckbox = row ? row.querySelector('.event-carousel-ad-active') : null;
       var darkCheckbox = row ? row.querySelector('.event-carousel-ad-logo-dark') : null;
       var logoUrl = logoUrlEl ? logoUrlEl.value.trim() : '';
-      if (!logoUrl && existing && existing.logo_url) logoUrl = existing.logo_url;
-      if (!logoUrl && pendingLogos[id] && pendingLogos[id].existing) logoUrl = pendingLogos[id].existing;
+      /* A fresh Choose file upload replaces the previous logo — do not restore the old URL. */
+      if (pendingLogos[id] && pendingLogos[id].data) {
+        logoUrl = '';
+      } else {
+        if (!logoUrl && existing && existing.logo_url) logoUrl = existing.logo_url;
+        if (!logoUrl && pendingLogos[id] && pendingLogos[id].existing) {
+          logoUrl = pendingLogos[id].existing;
+        }
+      }
       var ctaColor = '';
       if (ctaColorEl) {
         ctaColor =
@@ -16075,7 +16082,7 @@
         logo_url: logoUrl,
         cta_url: linkUrlEl ? linkUrlEl.value.trim() : existing ? existing.cta_url || '' : '',
         cta_label: ctaLabelEl
-          ? ctaLabelEl.value.trim().split(/\s+/).filter(Boolean).slice(0, 3).join(' ')
+          ? ctaLabelEl.value.trim().split(/\s+/).filter(Boolean).slice(0, 5).join(' ')
           : existing
             ? existing.cta_label || ''
             : '',
@@ -16303,6 +16310,13 @@
             filename: file.name || 'logo.jpg',
             existing: existing ? existing.logo_url : '',
           };
+          /* Drop the previous logo URL so save cannot keep the old image for this slot. */
+          adsState.forEach(function (ad) {
+            if (ad.id === id) ad.logo_url = '';
+          });
+          var logoUrlEl = row.querySelector('.event-carousel-ad-logo-url');
+          if (logoUrlEl) logoUrlEl.value = '';
+          setCarouselStatus('New logo ready — click Save advert carousel to publish it.', 'ok');
           // Cream/white logos vanish on the white preview — auto-tick dark band when sampling says so.
           // Also pull a brand colour into the button when colour is still blank.
           var dataUrl = String(reader.result || '');
@@ -16476,7 +16490,10 @@
             adsState = Array.isArray(data.ads) ? data.ads : defaultAds();
             if (activeEl) activeEl.checked = data.active !== false;
             renderAdList();
-            setCarouselStatus('Saved — mini sponsors updated.', 'ok');
+            setCarouselStatus(
+              isBrowseCarousel ? 'Saved — advert carousel updated.' : 'Saved — mini sponsors updated.',
+              'ok'
+            );
           });
         })
         .catch(function (err) {
@@ -16485,6 +16502,16 @@
         .finally(function () {
           saveBtn.disabled = false;
         });
+    });
+
+    listEl.addEventListener('input', function (ev) {
+      var logoUrlInput = ev.target.closest('.event-carousel-ad-logo-url');
+      if (!logoUrlInput) return;
+      var row = logoUrlInput.closest('[data-carousel-ad-id]');
+      if (!row) return;
+      var id = row.getAttribute('data-carousel-ad-id');
+      /* Typing a new logo URL replaces any pending file for this slot. */
+      if (pendingLogos[id]) delete pendingLogos[id];
     });
 
     loadCarousel();

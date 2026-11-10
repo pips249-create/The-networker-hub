@@ -1276,19 +1276,6 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   min-height: 108px;
 }
 
-.events-ad-card-company {
-  margin: 0;
-  padding: 6px 10px 0;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.25;
-  text-align: center;
-  color: var(--charcoal, #2d2636);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .events-ad-card-logo img,
 .events-ad-card-logo .sponsor-logo--full {
   position: absolute;

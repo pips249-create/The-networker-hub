@@ -264,7 +264,7 @@
         window.hubRenderOrganiserSpotlight();
       }
     } else {
-      if (window.hubLoadEventsBrowseAds) window.hubLoadEventsBrowseAds();
+      if (window.hubLoadEventsBrowseAds) window.hubLoadEventsBrowseAds(true);
       if (window.hubStopOrganiserSpotlight) window.hubStopOrganiserSpotlight();
       if (!options.skipEventsRefresh) {
         if (window.hubApplyFilters) window.hubApplyFilters();

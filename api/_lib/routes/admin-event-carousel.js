@@ -196,8 +196,15 @@ module.exports = async function handler(req, res) {
             size - 1
           );
           normalized.slot_index = slotIndex;
+          /* normalizeCarouselAd strips upload fields — put them back before resolve. */
+          if (raw?.logoBase64) normalized.logoBase64 = raw.logoBase64;
+          if (raw?.logoMime) normalized.logoMime = raw.logoMime;
+          if (raw?.logoFilename) normalized.logoFilename = raw.logoFilename;
           const prev = existingById.get(normalized.id) || existingAds[slotIndex];
-          if (!normalized.logo_url && prev?.logo_url) {
+          const hasFreshUpload =
+            Boolean(normalized.logoBase64) || /^data:image\//i.test(String(normalized.logo_url || ''));
+          /* Never restore the previous logo when the editor just uploaded a new file. */
+          if (!hasFreshUpload && !normalized.logo_url && prev?.logo_url) {
             normalized.logo_url = prev.logo_url;
           }
           if (!normalized.company_name && prev?.company_name) {

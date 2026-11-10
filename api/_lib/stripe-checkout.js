@@ -852,7 +852,7 @@ async function createDirectoryCarouselCheckoutSession(opts) {
     .trim()
     .split(/\s+/)
     .filter(Boolean)
-    .slice(0, 3)
+    .slice(0, 5)
     .join(' ');
   const logoUrl = String(opts.logoUrl || opts.logo_url || '').trim();
   if (!company) throw new Error('missing_company');

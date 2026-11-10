@@ -1262,7 +1262,7 @@
         .trim()
         .split(/\s+/)
         .filter(Boolean)
-        .slice(0, 3)
+        .slice(0, 5)
         .join(' ') || 'Find out more';
     const href = String(ad.cta_url || '').trim();
     /* Directory ads always sit on white — saved Dark logo band flags were auto-set and looked wrong. */
@@ -1274,17 +1274,15 @@
       '<div class="events-ad-card-inner">' +
       '<a class="events-ad-card-logo" href="' +
       escapeHtml(href) +
+      '" aria-label="' +
+      escapeHtml(company) +
       '" data-sponsor-placement="events_browse_carousel" data-sponsor-company="' +
       escapeHtml(company) +
       '">' +
+      /* Empty alt — company name must not appear as fallback text when a logo fails to load. */
       '<img src="' +
       escapeHtml(ad.logo_url) +
-      '" alt="' +
-      escapeHtml(company) +
-      '"></a>' +
-      '<p class="events-ad-card-company">' +
-      escapeHtml(company) +
-      '</p>' +
+      '" alt=""></a>' +
       '<a class="events-ad-card-cta" href="' +
       escapeHtml(href) +
       '" data-sponsor-placement="events_browse_carousel" data-sponsor-company="' +
@@ -1333,10 +1331,13 @@
     const list = shuffleList((Array.isArray(ads) ? ads : []).slice(0, BROWSE_AD_MAX));
     const section = document.querySelector('.events-browse-ads');
     const showAvailable = list.length < BROWSE_AD_MAX;
-    /* Pin the sell card first so open slots stay visible while paid logos shuffle behind. */
-    let html = '';
-    if (showAvailable) html += browseAdAvailableCardHtml();
-    html += list.map(browseAdCardHtml).join('');
+    /* Paid logos shuffle every paint. Insert the Available card at a random index so the strip is not fixed. */
+    const cards = list.map(browseAdCardHtml);
+    if (showAvailable) {
+      const insertAt = Math.floor(Math.random() * (cards.length + 1));
+      cards.splice(insertAt, 0, browseAdAvailableCardHtml());
+    }
+    const html = cards.join('');
     const itemCount = list.length + (showAvailable ? 1 : 0);
     browseAdsActive = true;
     browseAdCardsHtml = html;
@@ -1371,8 +1372,8 @@
     startSpotlightAuto();
   }
 
-  function loadEventsBrowseAds() {
-    if (eventsBrowseAdsLoaded) return;
+  function loadEventsBrowseAds(forceReload) {
+    if (eventsBrowseAdsLoaded && !forceReload) return;
     if (document.body.classList.contains('browse-mode-organisers')) return;
     if (!els.spotlightTrack || !document.querySelector('.events-browse-ads')) return;
     eventsBrowseAdsLoaded = true;

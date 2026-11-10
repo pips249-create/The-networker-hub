@@ -72,7 +72,7 @@ function ctaLabelForSlot(raw, slot) {
   const fallback = slot === EVENTS_BROWSE_CAROUSEL_SLOT ? 'Find out more' : 'Enquire now';
   const label = String(raw?.cta_label || raw?.ctaLabel || fallback).trim() || fallback;
   if (slot !== EVENTS_BROWSE_CAROUSEL_SLOT) return label;
-  return label.split(/\s+/).filter(Boolean).slice(0, 3).join(' ');
+  return label.split(/\s+/).filter(Boolean).slice(0, 5).join(' ');
 }
 
 function normalizeCarouselAd(raw, index, slot) {
