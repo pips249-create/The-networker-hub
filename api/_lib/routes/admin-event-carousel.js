@@ -62,7 +62,12 @@ function looksLikeDirectImageUrl(url) {
   return false;
 }
 
-async function resolveCarouselLogos(ads, slot) {
+function isHostedCarouselLogoUrl(url) {
+  return /\/storage\/v1\/object\/public\//i.test(String(url || '').trim());
+}
+
+async function resolveCarouselLogos(ads, slot, previousAds) {
+  const prevById = new Map((Array.isArray(previousAds) ? previousAds : []).map((ad) => [ad.id, ad]));
   const out = [];
   for (let i = 0; i < ads.length; i++) {
     const ad = { ...ads[i] };
@@ -71,6 +76,19 @@ async function resolveCarouselLogos(ads, slot) {
     const hasUpload = Boolean(ad.logoBase64) || /^data:image\//i.test(logoUrl);
     const hasRemoteUrl = /^https?:\/\//i.test(logoUrl);
     const slotLabel = (ad.slot_index || 0) + 1;
+    const prev = prevById.get(ad.id) || previousAds?.[ad.slot_index];
+    const prevLogo = String(prev?.logo_url || '').trim();
+    const logoUnchanged = Boolean(logoUrl && prevLogo && logoUrl === prevLogo);
+
+    /* Already on our CDN, or an unchanged previously-saved URL — do not re-fetch.
+       Re-importing every active slot blocked saves when editing a different card. */
+    if (!hasUpload && (isHostedCarouselLogoUrl(logoUrl) || (logoUnchanged && hasRemoteUrl))) {
+      delete ad.logoBase64;
+      delete ad.logoMime;
+      delete ad.logoFilename;
+      out.push(ad);
+      continue;
+    }
 
     if (
       ad.active &&
@@ -95,7 +113,7 @@ async function resolveCarouselLogos(ads, slot) {
           logoBase64: ad.logoBase64 || (/^data:image\//i.test(logoUrl) ? logoUrl : ''),
           logoMime: ad.logoMime,
           logoFilename: ad.logoFilename,
-          /* Only re-host direct image URLs — never fetch HTML homepages. */
+          /* Only re-host new/changed direct image URLs — never fetch HTML homepages. */
           mirrorExternal: hasRemoteUrl && !hasUpload && looksLikeDirectImageUrl(logoUrl),
         });
         if (uploaded) ad.logo_url = uploaded;
@@ -188,9 +206,13 @@ module.exports = async function handler(req, res) {
           if (!normalized.cta_color && prev?.cta_color) {
             normalized.cta_color = prev.cta_color;
           }
+          if (!normalized.contact_email && prev?.contact_email) {
+            normalized.contact_email = prev.contact_email;
+          }
           return normalized;
         }),
-        slot
+        slot,
+        existingAds
       );
 
       const ads = normalizeCarouselAdsList(incoming, slot).map((ad) => {

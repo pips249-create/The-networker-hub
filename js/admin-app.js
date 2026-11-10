@@ -16350,89 +16350,9 @@
       }
     });
 
-    function isHostedCarouselLogoUrl(url) {
-      return /\/storage\/v1\/object\/public\/organiser-assets\//i.test(String(url || '').trim());
-    }
-
-    function isFragileSocialCdnLogoUrl(url) {
-      return /(?:facebook\.com|fbcdn\.net|fbsbx\.com|cdninstagram\.com|instagram\.com)/i.test(
-        String(url || '')
-      );
-    }
-
-    function importCarouselLogoFromUrl(logoUrl) {
-      return fetch('/api/admin/image-proxy?url=' + encodeURIComponent(String(logoUrl || '').trim()), {
-        credentials: 'include',
-      }).then(function (response) {
-        if (!response.ok) {
-          throw new Error(
-            'Could not import that logo link. Download the image to your computer, then use Choose file to upload it. Facebook and Instagram links expire and often block imports.'
-          );
-        }
-        return response.blob();
-      }).then(function (blob) {
-        if (!blob || !blob.size) {
-          throw new Error('That logo link returned an empty file — upload the image file instead.');
-        }
-        if (blob.size > 2 * 1024 * 1024) {
-          throw new Error('Logo must be under 2MB — upload a smaller file.');
-        }
-        return new Promise(function (resolve, reject) {
-          var reader = new FileReader();
-          reader.onload = function () {
-            resolve({
-              preview: String(reader.result || ''),
-              data: String(reader.result || ''),
-              mime: blob.type || 'image/jpeg',
-              filename: 'logo.jpg',
-            });
-          };
-          reader.onerror = function () {
-            reject(new Error('Could not read the imported logo.'));
-          };
-          reader.readAsDataURL(blob);
-        });
-      });
-    }
-
     function prepareCarouselAdsForSave(ads) {
-      return Promise.all(
-        ads.map(function (ad) {
-          if (pendingLogos[ad.id] && pendingLogos[ad.id].data) {
-            return Promise.resolve(ad);
-          }
-          var logoUrl = String(ad.logo_url || '').trim();
-          if (!logoUrl || isHostedCarouselLogoUrl(logoUrl) || !/^https:\/\//i.test(logoUrl)) {
-            return Promise.resolve(ad);
-          }
-          /* Inactive / empty slots must not block save when an old social CDN link is left behind. */
-          if (!ad.active) return Promise.resolve(ad);
-          if (isFragileSocialCdnLogoUrl(logoUrl)) {
-            return Promise.reject(
-              new Error(
-                'Ad slot ' +
-                  (ad.slot_index + 1) +
-                  ': Facebook and Instagram logo links expire and cannot be imported. Download the image, then use Choose file.'
-              )
-            );
-          }
-          return importCarouselLogoFromUrl(logoUrl)
-            .then(function (imported) {
-              pendingLogos[ad.id] = {
-                preview: imported.preview,
-                data: imported.data,
-                mime: imported.mime,
-                filename: imported.filename,
-                existing: ad.logo_url,
-              };
-              return ad;
-            })
-            .catch(function () {
-              /* Keep a direct https logo URL — server accepts remote logos; do not block the whole save. */
-              return ad;
-            });
-        })
-      );
+      /* Pending file uploads travel with the save payload — do not re-fetch other slots' logo URLs. */
+      return Promise.resolve(ads);
     }
 
     function carouselAdHasLogo(ad) {

@@ -1210,11 +1210,11 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   background: #fff;
   color: var(--charcoal);
   border: 1px solid var(--border-soft);
-  min-height: 168px;
+  min-height: 176px;
 }
 
 .spotlight-track .events-ad-card.premium-card {
-  min-height: 168px;
+  min-height: 176px;
 }
 
 /* Show more advert tiles so the strip can scroll instead of locking to three huge cards */
@@ -1240,17 +1240,16 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-height: 168px;
+  min-height: 176px;
   padding: 0;
   box-sizing: border-box;
 }
 
 .events-ad-card-logo {
   position: relative;
-  flex: 0 0 88px;
+  flex: 1 1 auto;
   display: block;
-  height: 88px;
-  min-height: 88px;
+  min-height: 108px;
   padding: 0;
   border-radius: 0;
   background: #fff;
@@ -1274,8 +1273,7 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   margin: 0;
   padding: 0;
   width: 100%;
-  height: 88px;
-  min-height: 88px;
+  min-height: 108px;
 }
 
 .events-ad-card-company {
@@ -1294,12 +1292,12 @@ body.browse-mode-organisers .events-organiser-footnote-link {
 .events-ad-card-logo img,
 .events-ad-card-logo .sponsor-logo--full {
   position: absolute;
-  top: 14px;
-  left: 16px;
+  top: 6px;
+  left: 8px;
   display: block;
   /* Explicit box — width/height:auto with all four insets collapsed many logos to 0×0 */
-  width: calc(100% - 32px);
-  height: calc(100% - 28px);
+  width: calc(100% - 16px);
+  height: calc(100% - 12px);
   max-width: none;
   max-height: none;
   margin: 0;
