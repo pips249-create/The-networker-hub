@@ -171,10 +171,11 @@
     /* Featured spotlight stays desktop-only; sponsored ads keep moving on phones too. */
     if (isCoarse && !browseAdsActive) return;
     if (!browseAdsActive && !sc.canAutoAdvance(els.spotlightTrack, itemCount)) return;
+    /* Sponsored ads: keep a lively pace so logos cycle through before people scroll away. */
     const intervalMs = browseAdsActive
       ? isCoarse
-        ? 3200
-        : Math.max(2200, SPOTLIGHT_AUTO_MS - 400)
+        ? 2200
+        : 1800
       : SPOTLIGHT_AUTO_MS;
     spotlightTimer = window.setInterval(function () {
       if (document.hidden || spotlightAnimating || spotlightPointerPaused) return;

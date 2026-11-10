@@ -1,6 +1,6 @@
 /* Events page — advanced filter bar (reference layout) */
 .events-promo-section {
-  margin-bottom: 28px;
+  margin-bottom: 12px;
 }
 
 .events-filter-wrap {
@@ -14,6 +14,20 @@
   color: var(--charcoal);
   margin: 0 0 10px;
   padding: 0 4px;
+}
+
+/* Drop the stand-alone “Filter events” line — the purple bar already says it,
+   and the heading was leaving a large gap under the Sponsored carousel. */
+.events-page .events-filter-heading {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .events-filter-inbox-title {
@@ -2628,10 +2642,6 @@ body.browse-mode-organisers .events-toolbar {
 @media (max-width: 900px) {
   .events-page .events-filter-wrap {
     margin-bottom: 12px;
-  }
-
-  .events-page .events-filter-heading {
-    display: none;
   }
 
   .events-page .events-filter-shell {

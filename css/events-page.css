@@ -1176,8 +1176,16 @@ body.browse-mode-organisers .events-organiser-footnote-link {
 }
 
 .events-promo-section {
-  margin-bottom: 20px;
-  padding-bottom: 4px;
+  margin-bottom: 12px;
+  padding-bottom: 0;
+}
+
+.events-browse-ads {
+  margin-bottom: 10px;
+}
+
+.events-browse-ads-panel.premium-spotlight {
+  padding: 10px 10px 8px;
 }
 
 .events-promo-section[hidden] {
