@@ -23,7 +23,7 @@
   function applyFeaturedQuote(quote) {
     if (!quote) return;
     document.querySelectorAll('.ep-featured-single-price .ep-featured-plan-price').forEach(function (el) {
-      el.textContent = quote.displayPrice || '£55.00';
+      el.textContent = quote.displayPrice || '£10.00';
     });
     if (featuredPlanDuration) {
       featuredPlanDuration.textContent =

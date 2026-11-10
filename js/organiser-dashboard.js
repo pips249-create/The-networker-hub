@@ -1601,7 +1601,7 @@
     });
   }
 
-  const FEATURED_LISTING_PRICE = '£55.00';
+  const FEATURED_LISTING_PRICE = '£10.00';
   const FEATURED_UPGRADE_QUEUE_KEY = 'hub_featured_upgrade_queue';
   let featuredSpotlightSlots = null;
   let featuredQuoteCache = Object.create(null);

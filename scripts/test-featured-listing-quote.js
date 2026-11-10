@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 /**
- * Unit checks for Premium Spotlight prorated floors (open vs scarce slots).
+ * Unit checks for Featured Event Boost floors (£10 + VAT list price).
  * Run: node scripts/test-featured-listing-quote.js
  */
 const {
   FEATURED_DEFAULT_MIN_PENCE,
   FEATURED_DEFAULT_OPEN_MIN_PENCE,
+  FEATURED_DEFAULT_MONTHLY_PENCE,
   FEATURED_SCARCE_AVAILABLE_THRESHOLD,
   featuredMinPricePenceForSlots,
   calculateFeaturedListingQuote,
@@ -22,15 +23,16 @@ function assert(label, condition) {
   console.log('OK  ', label);
 }
 
+assert('list price default is £10', FEATURED_DEFAULT_MONTHLY_PENCE === 1000);
 assert('scarce default min is £10', FEATURED_DEFAULT_MIN_PENCE === 1000);
-assert('open default min is £5', FEATURED_DEFAULT_OPEN_MIN_PENCE === 500);
+assert('open default min is £10', FEATURED_DEFAULT_OPEN_MIN_PENCE === 1000);
 assert('scarce threshold is 3', FEATURED_SCARCE_AVAILABLE_THRESHOLD === 3);
 
-assert('unknown slots use scarce floor', featuredMinPricePenceForSlots(undefined) === 1000);
-assert('0 slots use scarce floor', featuredMinPricePenceForSlots(0) === 1000);
-assert('3 slots use scarce floor', featuredMinPricePenceForSlots(3) === 1000);
-assert('4 slots use open floor', featuredMinPricePenceForSlots(4) === 500);
-assert('12 slots use open floor', featuredMinPricePenceForSlots(12) === 500);
+assert('unknown slots use £10 floor', featuredMinPricePenceForSlots(undefined) === 1000);
+assert('0 slots use £10 floor', featuredMinPricePenceForSlots(0) === 1000);
+assert('3 slots use £10 floor', featuredMinPricePenceForSlots(3) === 1000);
+assert('4 slots use £10 floor', featuredMinPricePenceForSlots(4) === 1000);
+assert('12 slots use £10 floor', featuredMinPricePenceForSlots(12) === 1000);
 
 const inOneDay = new Date(Date.now() + 20 * 60 * 60 * 1000).toISOString();
 
@@ -47,27 +49,16 @@ const openQuote = calculateFeaturedListingQuote({
   eventStartsAt: inOneDay,
   slotsAvailable: 8,
 });
-assert('1-day open quote is £5 floor', openQuote.amountPence === 500);
-assert('1-day open note mentions £5', /min £5\.00/.test(openQuote.pricingNote));
-
-const inTwoWeeks = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
-const midQuote = calculateFeaturedListingQuote({
-  planId: '1month',
-  eventStartsAt: inTwoWeeks,
-  slotsAvailable: 8,
-});
-assert(
-  '14-day open quote uses pro-rata above floor',
-  midQuote.amountPence > 500 && midQuote.amountPence < 5500
-);
+assert('1-day open quote is £10 floor', openQuote.amountPence === 1000);
+assert('1-day open note mentions £10', /min £10\.00/.test(openQuote.pricingNote));
 
 const fullMonth = calculateFeaturedListingQuote({
   planId: '1month',
   eventStartsAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
   slotsAvailable: 8,
 });
-assert('full month ignores open floor', fullMonth.amountPence === 5500);
-assert('full month mode', fullMonth.pricingMode === 'full_month');
+assert('full month is £10', fullMonth.amountPence === 1000);
+assert('full month mode', fullMonth.pricingMode === 'full_term');
 
 if (failed) {
   console.error('\n' + failed + ' check(s) failed');

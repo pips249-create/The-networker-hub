@@ -166,7 +166,7 @@ const HUB_STRIPE_CATALOG = [
     priceEnvVar: 'STRIPE_EVENT_FEATURED_1MONTH_PRICE_ID',
     productName: 'Featured event listing — 1 month',
     description: 'Premium badge and priority placement in the events listings for one month',
-    amountPence: 5500,
+    amountPence: 1000,
     billing: 'one_time',
     createPaymentLink: false,
     productMetadata: {

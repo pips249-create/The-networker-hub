@@ -3,11 +3,11 @@ const { applyPrepaidTermDiscount } = require('./sponsorship-term-discounts');
 const { upcomingBrowseRows } = require('./event-series-peers');
 
 const FEATURED_MONTH_DAYS = 30;
-const FEATURED_DEFAULT_MONTHLY_PENCE = 5500;
+const FEATURED_DEFAULT_MONTHLY_PENCE = 1000;
 /** Floor when spotlight inventory is scarce (≤ FEATURED_SCARCE_AVAILABLE_THRESHOLD left). */
 const FEATURED_DEFAULT_MIN_PENCE = 1000;
-/** Soft floor when slots are open — prefer fill rate over protecting ARPU. */
-const FEATURED_DEFAULT_OPEN_MIN_PENCE = 500;
+/** Soft floor when slots are open — keep Featured Event Boost at £10 + VAT. */
+const FEATURED_DEFAULT_OPEN_MIN_PENCE = 1000;
 /** Match published-page scarcity copy (warns at 1–3 places left). */
 const FEATURED_SCARCE_AVAILABLE_THRESHOLD = 3;
 

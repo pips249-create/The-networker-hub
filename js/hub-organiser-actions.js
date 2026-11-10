@@ -414,6 +414,7 @@
       : 'Premium Spotlight on business opportunities';
     var line2 = isEvent ? 'List or feature your event' : 'List or upgrade to premium';
     var action = isEvent ? 'boost-event' : 'boost-opportunity';
+    var priceLabel = isEvent ? '£10 + VAT' : '£55';
 
     return (
       '<article class="premium-card premium-card--boost-cta" data-hub-spotlight-boost="' +
@@ -431,7 +432,9 @@
       '<div class="premium-card-overlay"></div></div>' +
       '<div class="premium-card-top">' +
       '<span class="premium-badge">Premium</span>' +
-      '<span class="premium-price">£55/mo</span></div>' +
+      '<span class="premium-price">' +
+      priceLabel +
+      '</span></div>' +
       '<div class="premium-card-body">' +
       '<h3 class="premium-card-title">' +
       title +

@@ -1168,10 +1168,10 @@
       '<span class="premium-card-boost-icon" aria-hidden="true">★</span></div>' +
       '<div class="premium-card-overlay"></div></div>' +
       '<div class="premium-card-top"><span class="premium-badge">Premium</span>' +
-      '<span class="premium-price">£55/mo</span></div>' +
+      '<span class="premium-price">£10 + VAT</span></div>' +
       '<div class="premium-card-body"><h3 class="premium-card-title">Boost your event here</h3>' +
       '<div class="premium-card-meta">' +
-      '<p class="premium-meta-row"><span>Premium Spotlight carousel on the events directory</span></p>' +
+      '<p class="premium-meta-row"><span>Premium badge and first in the events directory grid</span></p>' +
       '<p class="premium-meta-row premium-meta-row--cta"><span>List or feature your event →</span></p>' +
       '</div></div></a></article>'
     );
