@@ -146,6 +146,9 @@ module.exports = async function handler(req, res) {
           if (!normalized.company_name && prev?.company_name) {
             normalized.company_name = prev.company_name;
           }
+          if (!normalized.cta_color && prev?.cta_color) {
+            normalized.cta_color = prev.cta_color;
+          }
           return normalized;
         }),
         slot

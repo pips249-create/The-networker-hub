@@ -1229,6 +1229,38 @@
     );
   }
 
+  function paintBrowseAdCtaColor(card) {
+    if (!card || !window.CmsSponsorFields || !window.CmsSponsorFields.applyCtaColor) return;
+    const cta = card.querySelector('.events-ad-card-cta');
+    const img = card.querySelector('.events-ad-card-logo img');
+    if (!cta) return;
+    const stored = String(cta.getAttribute('data-cta-color') || '').trim();
+    if (stored) {
+      window.CmsSponsorFields.applyCtaColor(cta, stored);
+      return;
+    }
+    if (!img || !window.CmsSponsorFields.sampleLogoColorHex) return;
+
+    function applyFrom(sampleImg) {
+      const hex = window.CmsSponsorFields.sampleLogoColorHex(sampleImg);
+      if (hex) window.CmsSponsorFields.applyCtaColor(cta, hex);
+    }
+
+    const src = String(img.currentSrc || img.src || '').trim();
+    if (!src) return;
+    if (/^data:/i.test(src)) {
+      if (img.complete && img.naturalWidth) applyFrom(img);
+      else img.addEventListener('load', function () { applyFrom(img); }, { once: true });
+      return;
+    }
+    const probe = new Image();
+    probe.crossOrigin = 'anonymous';
+    probe.onload = function () {
+      applyFrom(probe);
+    };
+    probe.src = src;
+  }
+
   function paintBrowseAdCarousel(ads) {
     const list = shuffleList((Array.isArray(ads) ? ads : []).slice(0, BROWSE_AD_MAX));
     const section = document.querySelector('.events-browse-ads');
@@ -1262,9 +1294,9 @@
           company: el.getAttribute('data-sponsor-company') || '',
           campaign: 'events_browse_carousel',
         });
-        if (el.classList.contains('events-ad-card-cta') && window.CmsSponsorFields.applyCtaColor) {
-          window.CmsSponsorFields.applyCtaColor(el, el.getAttribute('data-cta-color') || '');
-        }
+      });
+      els.spotlightTrack.querySelectorAll('.events-ad-card').forEach(function (card) {
+        paintBrowseAdCtaColor(card);
       });
       /* Logo band colour comes from the saved Dark logo band tick — do not re-sample here. */
     }

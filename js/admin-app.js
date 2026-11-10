@@ -15927,7 +15927,17 @@
             '<input type="text" class="event-carousel-ad-cta-label w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" maxlength="32" value="' +
             attrEsc(ad.cta_label || 'Find out more') +
             '" placeholder="Find out more">' +
-            '<p class="text-xs text-slate-500 mt-1">Up to 3 words. It sits on one line under the logo.</p></div>'
+            '<p class="text-xs text-slate-500 mt-1">Up to 3 words. It sits on one line under the logo.</p></div>' +
+            '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Button colour</label>' +
+            '<div class="flex items-center gap-2">' +
+            '<span class="event-carousel-ad-cta-swatch h-10 w-14 shrink-0 rounded border border-slate-200" style="background:' +
+            attrEsc(ad.cta_color || '#2d2636') +
+            '"></span>' +
+            '<input type="text" class="event-carousel-ad-cta-color flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono" maxlength="7" value="' +
+            attrEsc(ad.cta_color || '') +
+            '" placeholder="#2d2636">' +
+            '</div>' +
+            '<p class="text-xs text-slate-500 mt-1">Matches the logo when left blank. Or paste a hex colour.</p></div>'
           : '') +
         '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Company name <span class="text-brand-700">*</span></label>' +
         '<input type="text" class="event-carousel-ad-company w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
@@ -15975,6 +15985,7 @@
       var logoUrlEl = row ? row.querySelector('.event-carousel-ad-logo-url') : null;
       var linkUrlEl = row ? row.querySelector('.event-carousel-ad-link-url') : null;
       var ctaLabelEl = row ? row.querySelector('.event-carousel-ad-cta-label') : null;
+      var ctaColorEl = row ? row.querySelector('.event-carousel-ad-cta-color') : null;
       var companyEl = row ? row.querySelector('.event-carousel-ad-company') : null;
       var endsAtEl = row ? row.querySelector('.event-carousel-ad-ends-at') : null;
       var activeCheckbox = row ? row.querySelector('.event-carousel-ad-active') : null;
@@ -15982,6 +15993,15 @@
       var logoUrl = logoUrlEl ? logoUrlEl.value.trim() : '';
       if (!logoUrl && existing && existing.logo_url) logoUrl = existing.logo_url;
       if (!logoUrl && pendingLogos[id] && pendingLogos[id].existing) logoUrl = pendingLogos[id].existing;
+      var ctaColor = '';
+      if (ctaColorEl) {
+        ctaColor =
+          window.CmsSponsorFields && window.CmsSponsorFields.sanitizeCtaColor
+            ? window.CmsSponsorFields.sanitizeCtaColor(ctaColorEl.value)
+            : String(ctaColorEl.value || '').trim();
+      } else if (existing) {
+        ctaColor = existing.cta_color || '';
+      }
       return {
         id: id,
         slot_index: index,
@@ -15997,6 +16017,7 @@
           : existing
             ? existing.cta_label || ''
             : '',
+        cta_color: ctaColor,
         active: activeCheckbox ? activeCheckbox.checked : existing ? existing.active === true : false,
         logo_band_dark: darkCheckbox
           ? darkCheckbox.checked
@@ -16170,6 +16191,18 @@
       setPlacementEndsMonthsFromNow(input, preset.getAttribute('data-months'));
     });
 
+    listEl.addEventListener('input', function (ev) {
+      var colorInput = ev.target.closest('.event-carousel-ad-cta-color');
+      if (!colorInput) return;
+      var row = colorInput.closest('[data-carousel-ad-id]');
+      var swatch = row ? row.querySelector('.event-carousel-ad-cta-swatch') : null;
+      var safe =
+        window.CmsSponsorFields && window.CmsSponsorFields.sanitizeCtaColor
+          ? window.CmsSponsorFields.sanitizeCtaColor(colorInput.value)
+          : String(colorInput.value || '').trim();
+      if (swatch) swatch.style.background = safe || '#2d2636';
+    });
+
     listEl.addEventListener('change', function (ev) {
       var darkToggle = ev.target.closest('.event-carousel-ad-logo-dark');
       if (darkToggle) {
@@ -16203,17 +16236,32 @@
             existing: existing ? existing.logo_url : '',
           };
           // Cream/white logos vanish on the white preview — auto-tick dark band when sampling says so.
+          // Also pull a brand colour into the button when colour is still blank.
           var dataUrl = String(reader.result || '');
-          if (dataUrl && window.CmsSponsorFields && window.CmsSponsorFields.prefersDarkLogoBand) {
+          if (
+            dataUrl &&
+            window.CmsSponsorFields &&
+            (window.CmsSponsorFields.prefersDarkLogoBand || window.CmsSponsorFields.sampleLogoColorHex)
+          ) {
             var probe = new Image();
             probe.onload = function () {
               try {
-                if (window.CmsSponsorFields.prefersDarkLogoBand(probe)) {
-                  adsState = readAdsFromDom();
-                  adsState.forEach(function (ad) {
-                    if (ad.id === id) ad.logo_band_dark = true;
-                  });
-                }
+                adsState = readAdsFromDom();
+                adsState.forEach(function (ad) {
+                  if (ad.id !== id) return;
+                  if (
+                    window.CmsSponsorFields.prefersDarkLogoBand &&
+                    window.CmsSponsorFields.prefersDarkLogoBand(probe)
+                  ) {
+                    ad.logo_band_dark = true;
+                  }
+                  if (
+                    !String(ad.cta_color || '').trim() &&
+                    window.CmsSponsorFields.sampleLogoColorHex
+                  ) {
+                    ad.cta_color = window.CmsSponsorFields.sampleLogoColorHex(probe) || '';
+                  }
+                });
               } catch (e) {
                 /* ignore sampling failures */
               }
@@ -16358,6 +16406,7 @@
               logo_url: ad.logo_url,
               cta_url: ad.cta_url,
               cta_label: ad.cta_label || '',
+              cta_color: ad.cta_color || '',
               active: ad.active,
               logo_band_dark: ad.logo_band_dark === true,
               ends_at: ad.ends_at || null,

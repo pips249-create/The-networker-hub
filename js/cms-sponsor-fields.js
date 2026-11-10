@@ -148,10 +148,10 @@
       if (!ctx) return '';
       ctx.drawImage(img, 0, 0, size, size);
       var data = ctx.getImageData(0, 0, size, size).data;
-      var r = 0;
-      var g = 0;
-      var b = 0;
-      var n = 0;
+      var bestScore = -1;
+      var bestR = 0;
+      var bestG = 0;
+      var bestB = 0;
       var allR = 0;
       var allG = 0;
       var allB = 0;
@@ -167,14 +167,21 @@
         allN++;
         var mx = Math.max(pr, pg, pb);
         var mn = Math.min(pr, pg, pb);
+        var sat = mx - mn;
+        var lum = pixelLuminance(pr, pg, pb);
+        /* Skip near-white / near-black / grey — keep the punchiest brand colour. */
         if (mx > 245 && mn > 235) continue;
-        if (mx - mn < 28) continue;
-        r += pr;
-        g += pg;
-        b += pb;
-        n++;
+        if (lum < 0.08 || lum > 0.92) continue;
+        if (sat < 28) continue;
+        var score = sat * (1 - Math.abs(lum - 0.45));
+        if (score > bestScore) {
+          bestScore = score;
+          bestR = pr;
+          bestG = pg;
+          bestB = pb;
+        }
       }
-      if (n > 0 && n >= allN * 0.02) return rgbToHex(r / n, g / n, b / n);
+      if (bestScore >= 0) return rgbToHex(bestR, bestG, bestB);
       if (allN > 0) return rgbToHex(allR / allN, allG / allN, allB / allN);
       return '';
     } catch (e) {

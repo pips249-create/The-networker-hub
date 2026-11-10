@@ -1296,6 +1296,16 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   color: #fff;
 }
 
+.events-ad-card-cta.cms-cta--custom {
+  background: var(--sponsor-cta-bg) !important;
+  color: var(--sponsor-cta-fg, #fff) !important;
+}
+
+.events-ad-card-cta.cms-cta--custom:hover {
+  filter: brightness(1.08);
+  color: var(--sponsor-cta-fg, #fff) !important;
+}
+
 .events-ad-card--available {
   border-style: dashed;
   border-color: rgba(122, 61, 138, 0.35);
