@@ -1202,7 +1202,7 @@
       '">' +
       '<span class="events-ad-card-available-kicker">Available</span>' +
       '<span class="events-ad-card-available-title">Get your business here</span>' +
-      '<span class="events-ad-card-available-price">£55 <span>per slot</span></span>' +
+      '<span class="events-ad-card-available-price">£55 <span>per month + VAT</span></span>' +
       '</a>' +
       '<a class="events-ad-card-cta events-ad-card-cta--available" href="' +
       escapeHtml(href) +

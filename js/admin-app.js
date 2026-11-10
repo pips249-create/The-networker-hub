@@ -15918,7 +15918,10 @@
         '<input type="checkbox" class="event-carousel-ad-logo-dark rounded border-slate-300"' +
         (darkBand ? ' checked' : '') +
         '> Dark logo band</label></div></div>' +
-        '<p class="text-xs text-slate-500">Required for an active slot: company name, logo + click-through link. Tick <strong>Dark logo band</strong> for cream/white logos. Prefer <strong>upload</strong> over Facebook/Instagram links — those expire.</p>' +
+        '<p class="text-xs text-slate-500">Required for an active slot: company name, logo + click-through link. Prefer <strong>upload</strong> over Facebook/Instagram links — those expire.' +
+        (isBrowseCarousel
+          ? ' Leave <strong>Dark logo band</strong> unticked unless the logo is cream/white on transparency and needs a navy pad.</p>'
+          : ' Tick <strong>Dark logo band</strong> for cream/white logos.</p>') +
         (!isBrowseCarousel && index === CAROUSEL_SIZE - 1
           ? '<p class="text-xs text-brand-800 bg-brand-50 border border-brand-100 rounded-lg px-3 py-2">When this slot is inactive and other slots are filled, the live site shows <strong>Advertise your business here</strong> as the last carousel slide.</p>'
           : '') +
@@ -16249,7 +16252,10 @@
                 adsState = readAdsFromDom();
                 adsState.forEach(function (ad) {
                   if (ad.id !== id) return;
+                  /* Directory carousel: keep the uploaded artwork as-is. Auto dark-band
+                     was swapping light logo plates onto navy and looked like the background vanished. */
                   if (
+                    !isBrowseCarousel &&
                     window.CmsSponsorFields.prefersDarkLogoBand &&
                     window.CmsSponsorFields.prefersDarkLogoBand(probe)
                   ) {
