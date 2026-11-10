@@ -92,8 +92,12 @@
     options = options || {};
 
     /* Infinite HTML doubling causes flicker on phones — use simple snap scroll instead.
-       With only 2–3 cards on a 3-up desktop row, doubling looks like a duplicate third card. */
-    var allowLoop = options.loop !== false && itemCount > 3;
+       With only 2–3 cards on a 3-up desktop row, doubling looks like a duplicate third card —
+       unless the caller explicitly opts in (paid advert strips that must keep moving). */
+    var allowLoop =
+      options.loop === true
+        ? itemCount > 1
+        : options.loop !== false && itemCount > 3;
     var looping = allowLoop && !preferSimpleScroll();
     var desiredHtml = looping ? cardsHtml + cardsHtml : cardsHtml || '';
     var nextKey = contentKeyFor(desiredHtml, itemCount, looping);

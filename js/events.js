@@ -164,11 +164,14 @@
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const itemCount = getSpotlightTrackItemCount();
     const sc = window.HubSpotlightCarousel;
-    if (!sc || !sc.canAutoAdvance(els.spotlightTrack, itemCount)) return;
+    if (!sc || itemCount <= 1) return;
+    /* Sponsored ads keep moving even when a short row would otherwise sit still. */
+    if (!browseAdsActive && !sc.canAutoAdvance(els.spotlightTrack, itemCount)) return;
+    const intervalMs = browseAdsActive ? Math.max(2200, SPOTLIGHT_AUTO_MS - 400) : SPOTLIGHT_AUTO_MS;
     spotlightTimer = window.setInterval(function () {
       if (document.hidden || spotlightAnimating) return;
       advanceSpotlight(1);
-    }, SPOTLIGHT_AUTO_MS);
+    }, intervalMs);
   }
 
   function getSpotlightCardStep() {
@@ -200,9 +203,9 @@
     const sc = window.HubSpotlightCarousel;
     if (!sc || !els.spotlightTrack) return;
     const section = els.spotlightTrack.closest('.premium-spotlight');
-    /* Browse ads: never infinite-loop — a short inventory must not clone into a fake third card. */
+    /* Browse ads: force loop so the strip keeps moving with a short inventory. */
     sc.applyLoopLayout(els.spotlightTrack, section, itemCount, '.premium-card', cardsHtml, {
-      loop: !browseAdsActive,
+      loop: browseAdsActive ? true : undefined,
     });
   }
 
@@ -1220,16 +1223,14 @@
         .slice(0, 3)
         .join(' ') || 'Find out more';
     const href = String(ad.cta_url || '').trim();
-    const dark = ad.logo_band_dark ? ' is-dark' : '';
+    /* Directory ads always sit on white — saved Dark logo band flags were auto-set and looked wrong. */
     const colorAttr = ad.cta_color
       ? ' data-cta-color="' + escapeHtml(ad.cta_color) + '"'
       : '';
     return (
       '<article class="premium-card events-ad-card">' +
       '<div class="events-ad-card-inner">' +
-      '<a class="events-ad-card-logo' +
-      dark +
-      '" href="' +
+      '<a class="events-ad-card-logo" href="' +
       escapeHtml(href) +
       '" data-sponsor-placement="events_browse_carousel" data-sponsor-company="' +
       escapeHtml(company) +

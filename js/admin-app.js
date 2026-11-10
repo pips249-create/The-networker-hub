@@ -16108,6 +16108,10 @@
     }
 
     function applyDetectedDarkBands(ads) {
+      /* Directory advert carousel keeps uploaded plates as-is — auto navy band looked like the bg vanished. */
+      if (isBrowseCarousel) {
+        return Promise.resolve({ ads: ads, changed: false });
+      }
       var jobs = ads.map(function (ad, index) {
         if (ad.logo_band_dark || !ad.logo_url) return Promise.resolve({ index: index, dark: false });
         var logo = ad.logo_url;
@@ -16147,6 +16151,8 @@
               adsState[slotIndex] = Object.assign({}, adsState[slotIndex], ad, {
                 slot_index: slotIndex,
               });
+              /* Clear previously auto-applied navy bands on the directory carousel. */
+              if (isBrowseCarousel) adsState[slotIndex].logo_band_dark = false;
             });
           }
           if (activeEl) activeEl.checked = data.active !== false;
@@ -16289,6 +16295,12 @@
       return /\/storage\/v1\/object\/public\/organiser-assets\//i.test(String(url || '').trim());
     }
 
+    function isFragileSocialCdnLogoUrl(url) {
+      return /(?:facebook\.com|fbcdn\.net|fbsbx\.com|cdninstagram\.com|instagram\.com)/i.test(
+        String(url || '')
+      );
+    }
+
     function importCarouselLogoFromUrl(logoUrl) {
       return fetch('/api/admin/image-proxy?url=' + encodeURIComponent(String(logoUrl || '').trim()), {
         credentials: 'include',
@@ -16334,16 +16346,32 @@
           if (!logoUrl || isHostedCarouselLogoUrl(logoUrl) || !/^https:\/\//i.test(logoUrl)) {
             return Promise.resolve(ad);
           }
-          return importCarouselLogoFromUrl(logoUrl).then(function (imported) {
-            pendingLogos[ad.id] = {
-              preview: imported.preview,
-              data: imported.data,
-              mime: imported.mime,
-              filename: imported.filename,
-              existing: ad.logo_url,
-            };
-            return ad;
-          });
+          /* Inactive / empty slots must not block save when an old social CDN link is left behind. */
+          if (!ad.active) return Promise.resolve(ad);
+          if (isFragileSocialCdnLogoUrl(logoUrl)) {
+            return Promise.reject(
+              new Error(
+                'Ad slot ' +
+                  (ad.slot_index + 1) +
+                  ': Facebook and Instagram logo links expire and cannot be imported. Download the image, then use Choose file.'
+              )
+            );
+          }
+          return importCarouselLogoFromUrl(logoUrl)
+            .then(function (imported) {
+              pendingLogos[ad.id] = {
+                preview: imported.preview,
+                data: imported.data,
+                mime: imported.mime,
+                filename: imported.filename,
+                existing: ad.logo_url,
+              };
+              return ad;
+            })
+            .catch(function () {
+              /* Keep a direct https logo URL — server accepts remote logos; do not block the whole save. */
+              return ad;
+            });
         })
       );
     }
