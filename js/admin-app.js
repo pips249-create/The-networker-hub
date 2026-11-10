@@ -16178,6 +16178,18 @@
 
     saveBtn.addEventListener('click', function () {
       var ads = readAdsFromDom();
+      var missingCompanySlot = ads.find(function (ad) {
+        return ad.active && !String(ad.company_name || '').trim();
+      });
+      if (missingCompanySlot) {
+        setCarouselStatus(
+          'Ad slot ' +
+            (missingCompanySlot.slot_index + 1) +
+            ' is active but missing a company name.',
+          'error'
+        );
+        return;
+      }
       var missingLogoSlot = ads.find(function (ad) {
         return ad.active && !carouselAdHasLogo(ad);
       });
@@ -16213,8 +16225,10 @@
             var item = {
               id: ad.id,
               slot_index: ad.slot_index,
+              company_name: ad.company_name || '',
               logo_url: ad.logo_url,
               cta_url: ad.cta_url,
+              cta_label: ad.cta_label || '',
               active: ad.active,
               logo_band_dark: ad.logo_band_dark === true,
               ends_at: ad.ends_at || null,
