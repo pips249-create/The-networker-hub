@@ -200,7 +200,10 @@
     const sc = window.HubSpotlightCarousel;
     if (!sc || !els.spotlightTrack) return;
     const section = els.spotlightTrack.closest('.premium-spotlight');
-    sc.applyLoopLayout(els.spotlightTrack, section, itemCount, '.premium-card', cardsHtml);
+    /* Browse ads: never infinite-loop — a short inventory must not clone into a fake third card. */
+    sc.applyLoopLayout(els.spotlightTrack, section, itemCount, '.premium-card', cardsHtml, {
+      loop: !browseAdsActive,
+    });
   }
 
   function refreshSpotlightLayout() {
@@ -1263,12 +1266,7 @@
           window.CmsSponsorFields.applyCtaColor(el, el.getAttribute('data-cta-color') || '');
         }
       });
-      els.spotlightTrack.querySelectorAll('.events-ad-card-logo img').forEach(function (img) {
-        const wrap = img.closest('.events-ad-card-logo');
-        if (wrap && window.CmsSponsorFields.applyLogoBand) {
-          window.CmsSponsorFields.applyLogoBand(wrap, img, true);
-        }
-      });
+      /* Logo band colour comes from the saved Dark logo band tick — do not re-sample here. */
     }
     syncSpotlightLoopScroll();
     startSpotlightAuto();

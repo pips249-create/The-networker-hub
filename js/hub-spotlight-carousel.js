@@ -87,11 +87,14 @@
     return { overflow: overflow, looping: looping };
   }
 
-  function applyLoopLayout(track, section, itemCount, cardSelector, cardsHtml) {
+  function applyLoopLayout(track, section, itemCount, cardSelector, cardsHtml, options) {
     if (!track) return { overflow: false, looping: false };
+    options = options || {};
 
-    /* Infinite HTML doubling causes flicker on phones — use simple snap scroll instead */
-    var looping = itemCount > 1 && !preferSimpleScroll();
+    /* Infinite HTML doubling causes flicker on phones — use simple snap scroll instead.
+       With only 2–3 cards on a 3-up desktop row, doubling looks like a duplicate third card. */
+    var allowLoop = options.loop !== false && itemCount > 3;
+    var looping = allowLoop && !preferSimpleScroll();
     var desiredHtml = looping ? cardsHtml + cardsHtml : cardsHtml || '';
     var nextKey = contentKeyFor(desiredHtml, itemCount, looping);
     var htmlChanged = track.dataset.spotlightContentKey !== nextKey;
