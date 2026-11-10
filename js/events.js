@@ -1188,6 +1188,28 @@
 
   var eventsBrowseAdsLoaded = false;
 
+  function browseAdAvailableHref() {
+    return '../advertising#ad-pkg-events-directory-carousel';
+  }
+
+  function browseAdAvailableCardHtml() {
+    const href = browseAdAvailableHref();
+    return (
+      '<article class="premium-card events-ad-card events-ad-card--available">' +
+      '<div class="events-ad-card-inner">' +
+      '<a class="events-ad-card-available-panel" href="' +
+      escapeHtml(href) +
+      '">' +
+      '<span class="events-ad-card-available-kicker">Available</span>' +
+      '<span class="events-ad-card-available-title">Get your business here</span>' +
+      '<span class="events-ad-card-available-price">£55 <span>per slot</span></span>' +
+      '</a>' +
+      '<a class="events-ad-card-cta events-ad-card-cta--available" href="' +
+      escapeHtml(href) +
+      '">Advertise here</a></div></article>'
+    );
+  }
+
   function browseAdCardHtml(ad) {
     const company = String(ad.company_name || 'Sponsored partner').trim() || 'Sponsored partner';
     const label =
@@ -1264,24 +1286,14 @@
   function paintBrowseAdCarousel(ads) {
     const list = shuffleList((Array.isArray(ads) ? ads : []).slice(0, BROWSE_AD_MAX));
     const section = document.querySelector('.events-browse-ads');
-    if (!list.length) {
-      browseAdsActive = true;
-      browseAdCardsHtml = '';
-      browseAdCount = 0;
-      stopSpotlightAuto();
-      if (section) section.hidden = true;
-      if (els.spotlightTrack && window.HubSpotlightCarousel && window.HubSpotlightCarousel.clearTrack) {
-        window.HubSpotlightCarousel.clearTrack(els.spotlightTrack);
-      } else if (els.spotlightTrack) {
-        els.spotlightTrack.innerHTML = '';
-      }
-      return;
-    }
-    if (section) section.hidden = false;
-    const html = list.map(browseAdCardHtml).join('');
+    const showAvailable = list.length < BROWSE_AD_MAX;
+    let html = list.map(browseAdCardHtml).join('');
+    if (showAvailable) html += browseAdAvailableCardHtml();
+    const itemCount = list.length + (showAvailable ? 1 : 0);
     browseAdsActive = true;
     browseAdCardsHtml = html;
-    browseAdCount = list.length;
+    browseAdCount = itemCount;
+    if (section) section.hidden = false;
     if (!els.spotlightTrack) return;
     els.spotlightTrack.classList.add('spotlight-track--carousel');
     bindSpotlightCarousel();
@@ -1295,7 +1307,7 @@
           campaign: 'events_browse_carousel',
         });
       });
-      els.spotlightTrack.querySelectorAll('.events-ad-card').forEach(function (card) {
+      els.spotlightTrack.querySelectorAll('.events-ad-card:not(.events-ad-card--available)').forEach(function (card) {
         paintBrowseAdCtaColor(card);
       });
       /* Logo band colour comes from the saved Dark logo band tick — do not re-sample here. */

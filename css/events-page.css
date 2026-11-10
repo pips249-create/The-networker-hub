@@ -1309,6 +1309,56 @@ body.browse-mode-organisers .events-organiser-footnote-link {
 .events-ad-card--available {
   border-style: dashed;
   border-color: rgba(122, 61, 138, 0.35);
+  background: #faf8fc;
+}
+
+.events-ad-card-available-panel {
+  flex: 1 1 auto;
+  min-height: 96px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 12px 8px;
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+}
+
+.events-ad-card-available-kicker {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--purple-700, #7a3d8a);
+}
+
+.events-ad-card-available-title {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--charcoal, #2d2636);
+}
+
+.events-ad-card-available-price {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--charcoal, #2d2636);
+}
+
+.events-ad-card-available-price span {
+  font-weight: 600;
+  color: var(--text-muted, #635c5e);
+}
+
+.events-ad-card-cta--available {
+  background: var(--purple-700, #7a3d8a);
+}
+
+.events-ad-card-cta--available:hover {
+  background: #5b2d82;
+  color: #fff;
 }
 .spotlight-header {
   display: flex;
