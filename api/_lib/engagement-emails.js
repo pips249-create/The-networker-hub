@@ -26,6 +26,9 @@ const {
   prependPartnerSpotlightEvents,
   nearbySectionHeading,
   nearbyLocationLabel,
+  nearbyResultIsOnlineFallback,
+  shouldPrependPartnersToNearbySection,
+  shouldPinPartnersIntoPopularSection,
 } = require('./nearby-events');
 const { escapeHtml } = require('./event-refund-policy');
 const { claimRowTimestamp, releaseRowTimestamp } = require('./email-send-claim');
@@ -179,18 +182,18 @@ async function buildSignupNudgeEventsHtml(sb, attendeeLocation, countryCode) {
     countryCode: countryCode,
   });
   const partnerEvents = await fetchPartnerSpotlightEvents(sb);
-  // Keep partner shows under "nearby" only when that block is a fallback (no local geo hits).
-  // When the member has real nearby events, pin partners into Popular instead.
-  const hasRealNearby = nearbyResult.source === 'nearby' && nearbyResult.events.length > 0;
-  const nearbyEvents = hasRealNearby
-    ? nearbyResult.events
-    : prependPartnerSpotlightEvents(nearbyResult.events, partnerEvents, nearbyLimit);
+  // Keep partner shows under "nearby" only for generic upcoming fallback — never under
+  // "Popular online events" (Business Show / MarTech are in-person at ExCeL).
+  // When the member has real nearby events or an online fallback, pin partners into Popular.
+  const nearbyEvents = shouldPrependPartnersToNearbySection(nearbyResult)
+    ? prependPartnerSpotlightEvents(nearbyResult.events, partnerEvents, nearbyLimit)
+    : nearbyResult.events;
   const nearbyIds = nearbyEvents.map((ev) => ev.id);
   const popularResult = await fetchPopularEvents(sb, {
     limit: popularLimit,
     excludeEventIds: nearbyIds,
   });
-  const popularEvents = hasRealNearby
+  const popularEvents = shouldPinPartnersIntoPopularSection(nearbyResult)
     ? prependPartnerSpotlightEvents(popularResult.events, partnerEvents, popularLimit)
     : popularResult.events;
 
@@ -281,16 +284,21 @@ async function buildRecommendationsHtml(sb, attendeeLocation, countryCode) {
     countryCode: countryCode,
   });
   const partnerEvents = await fetchPartnerSpotlightEvents(sb);
-  const hasRealNearby = nearby.source === 'nearby' && nearby.events.length > 0;
-  const nearbyEvents = hasRealNearby
-    ? nearby.events
-    : prependPartnerSpotlightEvents(nearby.events, partnerEvents, nearbyLimit);
+  const nearbyEvents = shouldPrependPartnersToNearbySection(nearby)
+    ? prependPartnerSpotlightEvents(nearby.events, partnerEvents, nearbyLimit)
+    : nearby.events;
   if (nearbyEvents.length) {
     parts.push(sectionHeading(nearbySectionHeading(nearby)));
     for (const ev of nearbyEvents) {
       parts.push(eventRecommendationCard(ev, siteUrl));
     }
-  } else if (partnerEvents.length) {
+  }
+  // Online fallback must not mix ExCeL partner shows into that heading — list them apart.
+  // (Real nearby already omits partners here; signup nudge pins them under Popular instead.)
+  if (
+    partnerEvents.length &&
+    (nearbyResultIsOnlineFallback(nearby) || !nearbyEvents.length)
+  ) {
     parts.push(sectionHeading('Coming up on The Networker UK'));
     for (const ev of partnerEvents.slice(0, nearbyLimit)) {
       parts.push(eventRecommendationCard(ev, siteUrl));

@@ -5,6 +5,10 @@
 const {
   prependPartnerSpotlightEvents,
   fetchPartnerSpotlightEvents,
+  shouldPrependPartnersToNearbySection,
+  shouldPinPartnersIntoPopularSection,
+  nearbyResultIsOnlineFallback,
+  nearbySectionHeading,
 } = require('../api/_lib/nearby-events');
 const {
   recommendationCard,
@@ -74,6 +78,51 @@ assert(merged[2].id === 'pdn-1', 'remaining pick kept third');
 assert(
   !merged.some((row, i) => merged.findIndex((other) => other.id === row.id) !== i),
   'no duplicate ids after prepend'
+);
+
+assert(
+  nearbyResultIsOnlineFallback({ source: 'popular_online' }),
+  'popular_online is an online fallback'
+);
+assert(
+  nearbyResultIsOnlineFallback({ outsideUk: true, source: null }),
+  'outside UK uses online fallback'
+);
+assert(
+  !nearbyResultIsOnlineFallback({ source: 'nearby' }),
+  'real nearby is not an online fallback'
+);
+assert(
+  !shouldPrependPartnersToNearbySection({ source: 'popular_online', events: [{ id: 'o1' }] }),
+  'do not prepend in-person partners under Popular online events'
+);
+assert(
+  shouldPinPartnersIntoPopularSection({ source: 'popular_online', events: [{ id: 'o1' }] }),
+  'pin partners into Popular when nearby is online-only'
+);
+assert(
+  !shouldPrependPartnersToNearbySection({
+    source: 'nearby',
+    events: [{ id: 'n1' }],
+  }),
+  'do not prepend partners when real nearby hits exist'
+);
+assert(
+  shouldPrependPartnersToNearbySection({
+    source: 'upcoming',
+    events: [{ id: 'u1' }],
+  }),
+  'upcoming fallback may still pin partners into that section'
+);
+assert(
+  nearbySectionHeading({ source: 'popular_online' }) === 'Popular online events',
+  'online fallback keeps Popular online events heading'
+);
+assert(
+  !/Business Show/i.test(
+    nearbySectionHeading({ source: 'popular_online' })
+  ),
+  'heading itself stays online-only copy'
 );
 
 const withLogo = recommendationCard(
