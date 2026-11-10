@@ -11,6 +11,7 @@ const {
   EMAIL_MINI_SPONSOR_SLOTS,
   parseCarouselBody,
   serializeCarouselBody,
+  normalizeCarouselAd,
   normalizeCarouselAdsList,
   hasValidCarouselLogo,
   hasValidCarouselCta,
@@ -128,11 +129,17 @@ module.exports = async function handler(req, res) {
 
       incoming = await resolveCarouselLogos(
         incoming.map((raw, index) => {
+          const normalized = normalizeCarouselAd(raw, index, slot);
           const size = carouselSize(slot);
-          const normalized =
-            normalizeCarouselAdsList([raw], slot)[Math.min(index, size - 1)] ||
-            normalizeCarouselAdsList([{ slot_index: index }], slot)[index];
-          const prev = existingById.get(normalized.id);
+          const slotIndex = Math.min(
+            Math.max(
+              Number.isFinite(Number(raw?.slot_index)) ? Number(raw.slot_index) : index,
+              0
+            ),
+            size - 1
+          );
+          normalized.slot_index = slotIndex;
+          const prev = existingById.get(normalized.id) || existingAds[slotIndex];
           if (!normalized.logo_url && prev?.logo_url) {
             normalized.logo_url = prev.logo_url;
           }
@@ -145,8 +152,10 @@ module.exports = async function handler(req, res) {
       );
 
       const ads = normalizeCarouselAdsList(incoming, slot).map((ad) => {
+        /* Only auto-activate a filled card when company, logo and link are all present. */
         if (
           !ad.active &&
+          String(ad.company_name || '').trim() &&
           hasValidCarouselLogo(ad.logo_url) &&
           hasValidCarouselCta(ad.cta_url)
         ) {
@@ -162,7 +171,10 @@ module.exports = async function handler(req, res) {
             ok: false,
             error: 'missing_carousel_company',
             slot: ad.slot_index + 1,
-            message: 'Add a company name for each active mini sponsor slot.',
+            message:
+              'Ad slot ' +
+              (ad.slot_index + 1) +
+              ' is active — add the company name in that slot, then save again.',
           });
         }
         if (!hasValidCarouselLogo(ad.logo_url)) {

@@ -15912,7 +15912,7 @@
         '<div class="flex items-center gap-3">' +
         '<label class="flex items-center gap-2 text-xs text-slate-600">' +
         '<input type="checkbox" class="event-carousel-ad-active rounded border-slate-300"' +
-        (ad.active !== false ? ' checked' : '') +
+        (ad.active === true ? ' checked' : '') +
         '> Active</label>' +
         '<label class="flex items-center gap-2 text-xs text-slate-600" title="For white, cream, or light logos">' +
         '<input type="checkbox" class="event-carousel-ad-logo-dark rounded border-slate-300"' +
@@ -15997,7 +15997,7 @@
           : existing
             ? existing.cta_label || ''
             : '',
-        active: activeCheckbox ? activeCheckbox.checked : existing ? existing.active !== false : false,
+        active: activeCheckbox ? activeCheckbox.checked : existing ? existing.active === true : false,
         logo_band_dark: darkCheckbox
           ? darkCheckbox.checked
           : existing
@@ -16303,13 +16303,18 @@
     saveBtn.addEventListener('click', function () {
       var ads = readAdsFromDom();
       var missingCompanySlot = ads.find(function (ad) {
-        return ad.active && !String(ad.company_name || '').trim();
+        return ad.active === true && !String(ad.company_name || '').trim();
       });
       if (missingCompanySlot) {
+        if (isBrowseCarousel) {
+          selectedBrowseIndex = missingCompanySlot.slot_index;
+          adsState = ads;
+          renderAdList();
+        }
         setCarouselStatus(
           'Ad slot ' +
             (missingCompanySlot.slot_index + 1) +
-            ' is active but missing a company name.',
+            ' is marked Active but has no company name. Add the company name in that slot, then save.',
           'error'
         );
         return;
