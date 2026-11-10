@@ -1590,6 +1590,23 @@ function enquiryRowToDto(row, opportunity) {
   };
 }
 
+/** Max opportunity enquiries a signed-in member may send in a rolling 24 hours. */
+const OPPORTUNITY_ENQUIRIES_PER_DAY = 5;
+const OPPORTUNITY_ENQUIRY_DAY_MS = 24 * 60 * 60 * 1000;
+
+async function countOpportunityEnquiriesSentInLastDay(sb, enquirerEmail) {
+  const email = String(enquirerEmail || '').trim().toLowerCase();
+  if (!email) return 0;
+  const sinceIso = new Date(Date.now() - OPPORTUNITY_ENQUIRY_DAY_MS).toISOString();
+  const { count, error } = await sb
+    .from('opportunity_enquiries')
+    .select('id', { count: 'exact', head: true })
+    .ilike('enquirer_email', email)
+    .gte('created_at', sinceIso);
+  if (error) throw new Error(error.message);
+  return Number(count) || 0;
+}
+
 async function createOpportunityEnquiry(input, session) {
   const { arePublicEnquiriesOpen } = require('./soft-launch');
   if (!arePublicEnquiriesOpen()) {
@@ -1618,6 +1635,15 @@ async function createOpportunityEnquiry(input, session) {
   if (!opportunity) throw new Error('not_found');
 
   const sb = getSupabaseAdmin();
+  const sentToday = await countOpportunityEnquiriesSentInLastDay(sb, email);
+  if (sentToday >= OPPORTUNITY_ENQUIRIES_PER_DAY) {
+    const err = new Error('daily_limit_exceeded');
+    err.code = 'daily_limit_exceeded';
+    err.limit = OPPORTUNITY_ENQUIRIES_PER_DAY;
+    err.used = sentToday;
+    throw err;
+  }
+
   const { data, error } = await sb
     .from('opportunity_enquiries')
     .insert({
@@ -2073,6 +2099,7 @@ module.exports = {
   handleOpportunityPremiumCheckout,
   handleOpportunityListingCheckout,
   syncOpportunityListingPayment,
+  OPPORTUNITY_ENQUIRIES_PER_DAY,
   createOpportunityEnquiry,
   listOpportunityEnquiriesForSession,
   listOpportunityEnquiriesSentBySession,

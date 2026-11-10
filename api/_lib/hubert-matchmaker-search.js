@@ -162,6 +162,25 @@ const QUERY_STOP = new Set([
   'intro',
   'connect',
   'connection',
+  // Filler in “people who work in the X sector” — they match almost every bio.
+  'work',
+  'works',
+  'working',
+  'worked',
+  'worker',
+  'workers',
+  'sector',
+  'sectors',
+  'business',
+  'businesses',
+  'company',
+  'companies',
+  'professional',
+  'professionals',
+  'service',
+  'services',
+  'industry',
+  'industries',
 ]);
 
 const EVENT_STOP = new Set([
@@ -621,13 +640,15 @@ function roleFitScore(person, intent) {
   return 0;
 }
 
-function haystackFor(person) {
+function identityHay(person) {
+  return [person.company, person.jobTitle, person.industry, person.professionalRole, person.role]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+}
+
+function aboutHay(person) {
   return [
-    person.fullName,
-    person.company,
-    person.jobTitle,
-    person.industry,
-    person.professionalRole,
     person.blurb,
     person.location,
     person.matchedEvent && person.matchedEvent.title,
@@ -638,29 +659,38 @@ function haystackFor(person) {
     .toLowerCase();
 }
 
+/** Whole-word match. “work” must not hit inside “network” or “framework”. */
+function wordHit(hay, form) {
+  const f = String(form || '')
+    .trim()
+    .toLowerCase();
+  if (!hay || !f) return false;
+  const esc = f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp('(?:^|[^a-z0-9])' + esc + '(?:[^a-z0-9]|$)', 'i').test(hay);
+}
+
+function tokenWeight(token) {
+  if (SHORT_KEEP_TOKENS.has(token)) return 4;
+  if (token.length >= 8) return 5;
+  if (token.length >= 5) return 4;
+  return 3;
+}
+
 function scoreAgainstQuery(person, tokens) {
   if (!tokens.length) return 0;
-  const hay = haystackFor(person);
-  if (!hay) return 0;
+  const identity = identityHay(person);
+  const about = aboutHay(person);
+  if (!identity && !about) return 0;
   let score = 0;
   tokens.forEach((t) => {
-    // Longer tokens (advertising, employees) weigh more than short leftovers.
-    // Two-letter role acronyms (MD/HR) expand to real titles — keep them above the floor.
-    const weight = SHORT_KEEP_TOKENS.has(t) ? 4 : t.length >= 8 ? 5 : t.length >= 5 ? 4 : 3;
+    const weight = tokenWeight(t);
     const forms = expandTokenForms(t);
-    let hit = false;
-    let boundary = false;
-    forms.forEach((f) => {
-      if (hay.includes(f)) hit = true;
-      if (
-        new RegExp('(?:^|\\s)' + f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(hay)
-      ) {
-        boundary = true;
-      }
-    });
-    // Score once per original token even when plural/singular both match.
-    if (hit) score += weight;
-    if (boundary) score += 2;
+    const inIdentity = forms.some((f) => wordHit(identity, f));
+    const inAbout = forms.some((f) => wordHit(about, f));
+    // Role, company, or industry must outrank a passing word in a bio
+    // (“Energy consultant” vs “strength, energy, and consistency”).
+    if (inIdentity) score += weight + 8;
+    else if (inAbout) score += Math.min(3, weight);
   });
   return score;
 }
@@ -688,7 +718,8 @@ function nameMatchScore(person, tokens) {
 
 /** Tokens from the ask that also appear in this person’s profile (for why copy). */
 function matchedSearchTokens(person, tokens, intel) {
-  const hay = haystackFor(person);
+  const identity = identityHay(person);
+  const about = aboutHay(person);
   const nameHay = String(person && (person.fullName || person.displayName) || '').toLowerCase();
   const placeSet = new Set((intel && intel.places) || []);
   const roleLabels = ((intel && intel.roleGroups) || [])
@@ -704,10 +735,10 @@ function matchedSearchTokens(person, tokens, intel) {
   (tokens || []).forEach((t) => {
     if (!t || seen.has(t)) return;
     const forms = expandTokenForms(t);
-    const inName = forms.some((f) => nameHay.includes(f));
+    const inName = forms.some((f) => wordHit(nameHay, f));
     const inPlace = placeSet.has(t) || forms.some((f) => placeSet.has(f));
-    const inRole = roleLabels.some((label) => forms.some((f) => label.includes(f) || f.includes(label)));
-    const inHay = forms.some((f) => hay.includes(f));
+    const inRole = roleLabels.some((label) => forms.some((f) => wordHit(label, f) || wordHit(f, label)));
+    const inHay = forms.some((f) => wordHit(identity, f) || wordHit(about, f) || wordHit(nameHay, f));
     if (!inName && !inPlace && !inRole && !inHay) return;
     seen.add(t);
     out.push({

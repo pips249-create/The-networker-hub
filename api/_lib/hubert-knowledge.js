@@ -67,7 +67,7 @@ const KNOWLEDGE_SECTIONS = [
     title: 'BUSINESS OPPORTUNITIES',
     body:
       'Browse free at /opportunities/. Types: franchise, side hustle, partnership, distributorship / reseller (take on territory or brand rights as your own venture — not wholesale logistics hiring), networking/referral. Not FCA-regulated; not investment advice; due diligence is your responsibility. ' +
-      'To enquire: free account → open listing → send enquiry from the page. ' +
+      'To enquire: free account → open listing → send enquiry from the page (max 5 per day). ' +
       'SAVE & ALERTS: signed-in members can heart-save listings in My account → Saved Opportunities, get email when a saved listing is closing soon, and save search criteria for email alerts when new matching listings publish. Compare up to 3 saved opportunities side by side. ' +
       'To list an opportunity as an organiser: /opportunities/list or /organiser/.',
   },
@@ -135,7 +135,7 @@ const KNOWLEDGE_SECTIONS = [
   {
     title: 'ADVERTISING & SPONSORSHIP',
     body:
-      'Paid hero sponsor placements appear on event and opportunity pages — labelled Powered by on browse pages and clearly labelled Sponsored elsewhere. The events directory row above the filters is its own Sponsored advert carousel at £55 per month + VAT per card (up to 24 cards shuffled on each visit, full-size logo with a button of up to 3 words underneath), not featured events and not the Event Page Partner sidebar. Featured events still show a Premium badge in the listings. Rate card at /advertising (events main sponsor £2,000/mo, mini sponsors £600/slot ×3, featured events £10 + VAT one-time; organisers main sponsor £1,000/mo, mini £300/slot ×3, featured profiles £27.50 one-time; opportunities main sponsor £2,000/mo, mini £600/slot ×3, listings £25/mo + VAT, premium spotlight £55 one-time; City Partner from £29/mo per city + VAT, £75 for 3 cities). Most sponsorship packages offer monthly billing or prepaid 1 / 3 / 6 / 12 months (save 5% / 10% / 15% on longer prepaid terms). Enquiries: rosie@thenetworkeruk.com. Policy: /legal-policies#advertising. ' +
+      'Paid hero sponsor placements appear on event and opportunity pages — labelled Powered by on browse pages and clearly labelled Sponsored elsewhere. The events directory row above the filters is its own Sponsored advert carousel at £55 per month + VAT per card (up to 24 cards shuffled on each visit, full-size logo with a button of up to 5 words underneath), not featured events and not the Event Page Partner sidebar. Featured events still show a Premium badge in the listings. Rate card at /advertising (events main sponsor £2,000/mo, mini sponsors £600/slot ×3, featured events £10 + VAT one-time; organisers main sponsor £1,000/mo, mini £300/slot ×3, featured profiles £27.50 one-time; opportunities main sponsor £2,000/mo, mini £600/slot ×3, listings £25/mo + VAT, premium spotlight £55 one-time; City Partner from £29/mo per city + VAT, £75 for 3 cities). Most sponsorship packages offer monthly billing or prepaid 1 / 3 / 6 / 12 months (save 5% / 10% / 15% on longer prepaid terms). Enquiries: rosie@thenetworkeruk.com. Policy: /legal-policies#advertising. ' +
       'Organisers can also reach audiences by listing events (/organiser/) or business opportunities (/opportunities/list). Featured placement may be available — ask rosie@thenetworkeruk.com.',
   },
   {
@@ -428,7 +428,7 @@ const FALLBACK_REPLIES = [
   {
     match: /opportunit|franchise|partnership|side[\s-]?hustle|distributorship|white.?label/i,
     reply:
-      'Business opportunities — franchises, side hustles, partnerships, and more — are at /opportunities/. Browse free; listings are informational only so do your own due diligence. To enquire, create a free account and send a message from the listing page.',
+      'Business opportunities — franchises, side hustles, partnerships, and more — are at /opportunities/. Browse free; listings are informational only so do your own due diligence. To enquire, create a free account and send a message from the listing page (up to 5 enquiries per day).',
   },
   {
     match: /after choosing.*format|what do i fill in|fill in after|what happens next|after event format/i,

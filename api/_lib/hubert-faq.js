@@ -36,7 +36,7 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'How do I enquire about a business opportunity?',
     answer:
-      'Browse opportunities for free at /opportunities/. When you find one you are interested in, sign in or create a free account to send a direct enquiry to the lister from the opportunity page.',
+      'Browse opportunities for free at /opportunities/. When you find one you are interested in, sign in or create a free account to send a direct enquiry to the lister from the opportunity page. You can send up to 5 opportunity enquiries per day.',
     category: 'general',
     icon: '💼',
   },

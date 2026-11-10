@@ -210,6 +210,19 @@ module.exports = wrapHandler(async function handler(req, res) {
           softLaunch: softLaunchPublicMeta(),
         });
       }
+      if (msg === 'daily_limit_exceeded') {
+        const { OPPORTUNITY_ENQUIRIES_PER_DAY } = require('./_lib/supabase-opportunities');
+        const limit = Number(e.limit) || OPPORTUNITY_ENQUIRIES_PER_DAY;
+        return json(res, 429, {
+          ok: false,
+          error: 'daily_limit_exceeded',
+          limit,
+          message:
+            'You’ve reached today’s limit of ' +
+            limit +
+            ' opportunity enquiries. Please try again tomorrow.',
+        });
+      }
       if (msg === 'not_found') return json(res, 404, { ok: false, error: 'not_found' });
       if (msg === 'not_authenticated') {
         return json(res, 401, {

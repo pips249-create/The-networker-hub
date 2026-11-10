@@ -900,6 +900,126 @@ assert(
 );
 assert(placeRoleCard.placeFit === 'exact', 'placeFit exact retained');
 
+// “people who work in the energy sector” must not match on work/sector/network,
+// or on the word energy buried in a fitness bio.
+const energyAsk = 'For people who work in the energy sector around the uk';
+const energyTokens = tokenize(energyAsk);
+assert(energyTokens.includes('energy'), 'energy ask keeps energy');
+assert(!energyTokens.includes('work'), 'energy ask drops work');
+assert(!energyTokens.includes('sector'), 'energy ask drops sector');
+assert(!energyTokens.includes('uk'), 'energy ask drops uk');
+assert(
+  scoreAgainstQuery(
+    { company: 'Framework Networking Ltd', jobTitle: 'Host', blurb: 'Weekly networking' },
+    ['work']
+  ) < MIN_TEXT_SCORE,
+  'work does not match inside network'
+);
+const energyConsultant = {
+  id: 'seed:energy',
+  kind: 'seed',
+  fullName: 'Lee Harris',
+  displayName: 'Lee H.',
+  role: 'Energy Consultant',
+  company: 'National Energy Hub',
+  jobTitle: 'Energy Consultant',
+  industry: '',
+  professionalRole: 'Energy Consultant',
+  lookingToMeet: ['Clients'],
+  blurb: 'Energy consultant helping businesses reduce energy costs and improve efficiency.',
+  location: 'United Kingdom',
+  nextEvent: null,
+  matchedEvent: null,
+  onHub: false,
+};
+const cleanEnergy = {
+  id: 'seed:clean',
+  kind: 'seed',
+  fullName: 'Robyn Harris',
+  displayName: 'Robyn H.',
+  role: 'Clean Energy Consultant',
+  company: 'Equenergy',
+  jobTitle: 'Clean Energy Consultant',
+  industry: '',
+  professionalRole: 'Clean Energy Consultant',
+  lookingToMeet: [],
+  blurb: 'Renewable energy specialist helping clients reduce carbon emissions.',
+  location: 'United Kingdom',
+  nextEvent: null,
+  matchedEvent: null,
+  onHub: false,
+};
+const fitnessEnergy = {
+  id: 'seed:fitness',
+  kind: 'seed',
+  fullName: 'Adam Housley',
+  displayName: 'Adam H.',
+  role: 'Owner',
+  company: '3T Functional Fitness',
+  jobTitle: 'Owner',
+  industry: '',
+  professionalRole: 'Owner',
+  lookingToMeet: ['Clients'],
+  blurb: 'Fitness coaching: Build strength, energy, and consistency that lasts.',
+  location: 'Leeds',
+  nextEvent: null,
+  matchedEvent: null,
+  onHub: false,
+};
+const financeSector = {
+  id: 'seed:finance',
+  kind: 'seed',
+  fullName: 'Pat Broker',
+  displayName: 'Pat B.',
+  role: 'Director',
+  company: 'Northbar Finance Ltd',
+  jobTitle: 'Director',
+  industry: 'Finance broker',
+  professionalRole: 'Director',
+  lookingToMeet: ['Clients'],
+  blurb:
+    'We help clients exit their business through a sales process. I work with founders across the charity sectors and networking groups.',
+  location: 'United Kingdom',
+  nextEvent: null,
+  matchedEvent: null,
+  onHub: false,
+};
+assert(
+  scoreAgainstQuery(fitnessEnergy, energyTokens) < MIN_TEXT_SCORE,
+  'fitness bio energy stays under the match floor'
+);
+assert(
+  scoreAgainstQuery(energyConsultant, energyTokens) >= MIN_TEXT_SCORE,
+  'energy consultant title clears the match floor'
+);
+assert(
+  scoreAgainstQuery(financeSector, energyTokens) < MIN_TEXT_SCORE,
+  'work and sector filler does not score a finance broker'
+);
+const energyRanked = rankCandidates(
+  [fitnessEnergy, financeSector, cleanEnergy, energyConsultant],
+  energyAsk,
+  [],
+  { disableRotation: true }
+);
+assert(
+  energyRanked.some((m) => m.id === 'seed:energy') &&
+    energyRanked.some((m) => m.id === 'seed:clean'),
+  'energy consultants surface for an energy-sector ask'
+);
+assert(
+  energyRanked[0].id === 'seed:energy' || energyRanked[0].id === 'seed:clean',
+  'an energy consultant leads the shortlist'
+);
+assert(
+  !energyRanked.some((m) => m.id === 'seed:fitness' || m.id === 'seed:finance'),
+  'fitness and finance do not match an energy-sector ask'
+);
+assert(
+  energyRanked.every((m) => /energy/i.test(m.why || '') && !/\bwork\b|\bsector\b/i.test(m.why || '')),
+  'why line cites energy, not work or sector'
+);
+
 // Candidate pool must cover the Rosie letter-batch seed volume (was a silent .limit(200)).
 assert(SEED_POOL_MAX >= 1000, 'seed pool max covers letter batches');
 assert(MEMBER_POOL_MAX >= 1000, 'member pool max above old 200 cap');

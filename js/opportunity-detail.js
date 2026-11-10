@@ -1306,6 +1306,14 @@
             els.submit.disabled = false;
             els.submit.textContent = 'Send enquiry';
           }
+          if (result.data && result.data.error === 'daily_limit_exceeded') {
+            showEnquireStatus(
+              (result.data && result.data.message) ||
+                'You’ve reached today’s enquiry limit. Please try again tomorrow.',
+              false
+            );
+            return;
+          }
           showEnquireStatus(
             (result.data && (result.data.message || result.data.error)) ||
               'Could not send your enquiry. Try the email link below.',
