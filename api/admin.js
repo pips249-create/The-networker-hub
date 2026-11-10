@@ -33,6 +33,7 @@ const routes = {
   'international-leads': require('./_lib/routes/admin-international-leads'),
   'event-intake': require('./_lib/routes/admin-event-intake'),
   'sponsor-clicks': require('./_lib/routes/admin-sponsor-clicks'),
+  'sponsor-pack-email': require('./_lib/routes/admin-sponsor-pack-email'),
   emails: require('./_lib/routes/admin-emails'),
   unsubscribes: require('./_lib/routes/admin-unsubscribes'),
   'event-health': require('./_lib/routes/admin-event-health'),

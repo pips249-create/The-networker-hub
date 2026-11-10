@@ -34,6 +34,7 @@ const SELF_SERVE_CHECKOUT_TYPES = new Set([
 const PLACEMENT_CATEGORIES = {
   events_main_sponsor: 'events',
   events_directory_sponsor: 'events',
+  events_directory_carousel: 'events',
   events_mini_sponsor: 'events',
   events_sidebar: 'events',
   opportunities_main_sponsor: 'opportunities',

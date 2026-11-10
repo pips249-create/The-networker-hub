@@ -838,6 +838,83 @@ async function createMembershipBillingPortalSession(opts) {
   });
 }
 
+/**
+ * Events directory carousel — £55/mo + VAT subscription with uploaded creative in metadata.
+ */
+async function createDirectoryCarouselCheckoutSession(opts) {
+  const stripe = getStripeClient();
+  const { directoryCarouselQuote } = require('./directory-carousel-subscriptions');
+  const quote = directoryCarouselQuote();
+  const company = String(opts.companyName || opts.company_name || '').trim();
+  const email = String(opts.email || '').trim().toLowerCase();
+  const ctaUrl = String(opts.ctaUrl || opts.cta_url || '').trim();
+  const ctaLabel = String(opts.ctaLabel || opts.cta_label || 'Find out more')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 3)
+    .join(' ');
+  const logoUrl = String(opts.logoUrl || opts.logo_url || '').trim();
+  if (!company) throw new Error('missing_company');
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('missing_email');
+  if (!/^https?:\/\//i.test(ctaUrl)) throw new Error('missing_cta_url');
+  if (!/^https:\/\//i.test(logoUrl)) throw new Error('missing_logo_url');
+
+  const catalogPriceId = getCatalogPriceId('events_directory_carousel');
+  const lineItems = catalogPriceId
+    ? [{ price: catalogPriceId, quantity: 1 }]
+    : [
+        {
+          price_data: {
+            currency: 'gbp',
+            product_data: {
+              name: 'Events directory carousel — ' + company,
+              description:
+                'Sponsored logo card on the events directory. £55 + VAT per month. Renews until cancelled.',
+            },
+            unit_amount: quote.totalPence,
+            recurring: { interval: 'month' },
+          },
+          quantity: 1,
+        },
+      ];
+
+  const metadata = {
+    checkout_type: 'events_directory_carousel',
+    revenue_category: 'events',
+    placement: 'events_directory_carousel',
+    cms_slot: 'events_browse_carousel_ads',
+    package_name: 'Events directory carousel',
+    company_name: company.slice(0, 120),
+    contact_email: email.slice(0, 120),
+    cta_url: ctaUrl.slice(0, 500),
+    cta_label: (ctaLabel || 'Find out more').slice(0, 40),
+    logo_url: logoUrl.slice(0, 500),
+    amount_ex_vat_pence: String(quote.netPence),
+    vat_pence: String(quote.vatPence),
+  };
+  const { withAffiliateMetadata } = require('./affiliate-programme');
+  const metaWithAffiliate = withAffiliateMetadata(metadata, opts.affiliateCode);
+
+  const sessionParams = {
+    mode: 'subscription',
+    customer_email: email,
+    client_reference_id: ('dir-carousel-' + company).slice(0, 200),
+    metadata: metaWithAffiliate,
+    subscription_data: { metadata: metaWithAffiliate },
+    success_url:
+      String(opts.successUrl || '').trim() ||
+      siteBaseUrl() + '/advertising?directory_carousel=success#ad-pkg-events-directory-carousel',
+    cancel_url:
+      String(opts.cancelUrl || '').trim() ||
+      siteBaseUrl() + '/advertising?directory_carousel=cancel#ad-pkg-events-directory-carousel',
+    line_items: lineItems,
+  };
+
+  applyCheckoutReceiptEmail(sessionParams, email);
+  return stripe.checkout.sessions.create(sessionParams);
+}
+
 module.exports = {
   getStripeSecretKey,
   isStripeCheckoutConfigured,
@@ -852,6 +929,7 @@ module.exports = {
   createConnectionsCreditsCheckoutSession,
   createCityPartnerCheckoutSession,
   createCountyPartnerCheckoutSession,
+  createDirectoryCarouselCheckoutSession,
   createMembershipCheckoutSession,
   createConnectedBookingCheckoutSession,
   createConnectedBookingBillingPortalSession,

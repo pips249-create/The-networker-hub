@@ -51,30 +51,69 @@ async function fetchCarouselRow(sb, slot) {
   return res.data || null;
 }
 
+function looksLikeDirectImageUrl(url) {
+  const u = String(url || '').trim();
+  if (!u) return false;
+  if (/\/storage\/v1\/object\/public\//i.test(u)) return true;
+  if (/\.(png|jpe?g|gif|webp|svg)(\?|#|$)/i.test(u)) return true;
+  if (/(?:cloudinary\.com|imgix\.net|googleusercontent\.com|twimg\.com|fbcdn\.net)/i.test(u)) {
+    return true;
+  }
+  return false;
+}
+
 async function resolveCarouselLogos(ads, slot) {
   const out = [];
   for (let i = 0; i < ads.length; i++) {
     const ad = { ...ads[i] };
     const folder = `sponsor-logos/${slot}/${ad.id || 'ad'}`;
-    const hasUpload = Boolean(ad.logoBase64) || /^data:image\//i.test(String(ad.logo_url || '').trim());
-    const hasRemoteUrl = /^https?:\/\//i.test(String(ad.logo_url || '').trim());
+    const logoUrl = String(ad.logo_url || '').trim();
+    const hasUpload = Boolean(ad.logoBase64) || /^data:image\//i.test(logoUrl);
+    const hasRemoteUrl = /^https?:\/\//i.test(logoUrl);
+    const slotLabel = (ad.slot_index || 0) + 1;
 
-    if (hasUpload || hasRemoteUrl) {
+    if (
+      ad.active &&
+      hasRemoteUrl &&
+      !hasUpload &&
+      !looksLikeDirectImageUrl(logoUrl)
+    ) {
+      const err = new Error(
+        'Ad slot ' +
+          slotLabel +
+          ': logo must be an uploaded image file (PNG/JPG under 2MB), not a website homepage link. Use Choose file.'
+      );
+      err.code = 'carousel_logo_not_image';
+      throw err;
+    }
+
+    if (hasUpload || (hasRemoteUrl && looksLikeDirectImageUrl(logoUrl))) {
       try {
         const uploaded = await resolveImageUrl({
           folder,
           logoUrl: ad.logo_url,
-          logoBase64: ad.logoBase64 || (/^data:image\//i.test(String(ad.logo_url || '')) ? ad.logo_url : ''),
+          logoBase64: ad.logoBase64 || (/^data:image\//i.test(logoUrl) ? logoUrl : ''),
           logoMime: ad.logoMime,
           logoFilename: ad.logoFilename,
-          mirrorExternal: hasRemoteUrl && !hasUpload,
+          /* Only re-host direct image URLs — never fetch HTML homepages. */
+          mirrorExternal: hasRemoteUrl && !hasUpload && looksLikeDirectImageUrl(logoUrl),
         });
         if (uploaded) ad.logo_url = uploaded;
-        else if (ad.active) {
-          throw new Error(`Logo upload failed for ad slot ${(ad.slot_index || 0) + 1}`);
+        else if (ad.active && hasUpload) {
+          throw new Error('Logo upload failed for ad slot ' + slotLabel);
         }
       } catch (e) {
-        if (ad.active) throw e;
+        if (hasUpload && ad.active) throw e;
+        if (ad.active && /web page|not an image|fetch logo|Could not fetch/i.test(String(e.message || ''))) {
+          const err = new Error(
+            'Ad slot ' +
+              slotLabel +
+              ': could not import that logo link. Download the image and use Choose file (max 2MB).'
+          );
+          err.code = 'carousel_logo_import_failed';
+          throw err;
+        }
+        /* Keep existing remote URL when re-host is optional / inactive. */
       }
     }
 
@@ -224,7 +263,14 @@ module.exports = async function handler(req, res) {
         updatedAt: saveRes.data.updated_at,
       });
     } catch (e) {
-      return json(res, 500, { ok: false, error: 'carousel_save_failed', message: e.message });
+      const code = e.code || 'carousel_save_failed';
+      const status =
+        code === 'carousel_logo_not_image' || code === 'carousel_logo_import_failed' ? 400 : 500;
+      return json(res, status, {
+        ok: false,
+        error: code,
+        message: e.message || 'Could not save carousel.',
+      });
     }
   }
 

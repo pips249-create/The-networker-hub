@@ -34,6 +34,9 @@ const {
   handleCityPartnerSubscriptionDeleted,
 } = require('./_lib/city-partner-subscriptions');
 const {
+  handleDirectoryCarouselCheckoutCompleted,
+} = require('./_lib/directory-carousel-subscriptions');
+const {
   handleCountyPartnerCheckoutCompleted,
   handleCountyPartnerSubscriptionUpdated,
   handleCountyPartnerSubscriptionDeleted,
@@ -208,6 +211,9 @@ async function handler(req, res) {
       const cityPartnerResult = await runHandler('city_partner', () =>
         handleCityPartnerCheckoutCompleted(session)
       );
+      const directoryCarouselResult = await runHandler('directory_carousel', () =>
+        handleDirectoryCarouselCheckoutCompleted(session)
+      );
       const countyPartnerResult = await runHandler('county_partner', () =>
         handleCountyPartnerCheckoutCompleted(session)
       );
@@ -244,6 +250,7 @@ async function handler(req, res) {
           ok: true,
           sponsorshipResult,
           cityPartnerResult,
+          directoryCarouselResult,
           countyPartnerResult,
           membershipResult,
           connectedBookingResult,

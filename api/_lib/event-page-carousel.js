@@ -92,9 +92,18 @@ function normalizeCarouselAd(raw, index, slot) {
     cta_url: String(raw?.cta_url || raw?.ctaUrl || '').trim(),
     cta_label: ctaLabelForSlot(raw, slot),
     cta_color: sanitizeCtaColor(raw?.cta_color || raw?.ctaColor) || '',
+    contact_email: String(raw?.contact_email || raw?.contactEmail || '')
+      .trim()
+      .toLowerCase(),
     logo_band_dark: raw?.logo_band_dark === true || raw?.logoBandDark === true,
     active: raw?.active !== false,
     ends_at: endsAt,
+    stripe_checkout_session_id: String(
+      raw?.stripe_checkout_session_id || raw?.stripeCheckoutSessionId || ''
+    ).trim(),
+    stripe_subscription_id: String(
+      raw?.stripe_subscription_id || raw?.stripeSubscriptionId || ''
+    ).trim(),
   };
 }
 

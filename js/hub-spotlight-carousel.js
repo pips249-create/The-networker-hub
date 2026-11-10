@@ -98,7 +98,8 @@
       options.loop === true
         ? itemCount > 1
         : options.loop !== false && itemCount > 3;
-    var looping = allowLoop && !preferSimpleScroll();
+    var looping =
+      allowLoop && (!preferSimpleScroll() || options.loopOnTouch === true);
     var desiredHtml = looping ? cardsHtml + cardsHtml : cardsHtml || '';
     var nextKey = contentKeyFor(desiredHtml, itemCount, looping);
     var htmlChanged = track.dataset.spotlightContentKey !== nextKey;

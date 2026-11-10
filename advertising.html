@@ -26,7 +26,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=20261016signin1">
 <link rel="stylesheet" href="css/content-page.css">
-<link rel="stylesheet" href="css/advertising-page.css?v=20261106adnobadge">
+<link rel="stylesheet" href="css/advertising-page.css?v=20261110all7">
 <link rel="stylesheet" href="css/cms-carousel-ad.css?v=20260612f">
 <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml">
@@ -656,14 +656,14 @@
             <span class="ad-package-badge">Directory carousel</span>
             <h3 class="ad-package-title">Events directory carousel</h3>
             <p class="ad-package-placement">One sponsored card in the carousel at the top of the events directory.</p>
-            <p class="ad-package-pitch">Your logo fills the card, with a button underneath. Three cards show at a time, and visitors can move along the row. Live cards shuffle on each visit. The row is labelled Sponsored.</p>
+            <p class="ad-package-pitch">Your logo sits on a sponsored card with your company name and a short button underneath. The row keeps moving so thousands of event browsers see it each month. Live cards shuffle on each visit. The row is labelled Sponsored.</p>
             <p class="ad-package-price">£55 <span>per month + VAT</span></p>
-            <p class="ad-package-term-note">One card · up to 24 slots · shuffled on each visit · button label up to 3 words</p>
+            <p class="ad-package-term-note">One card · up to 24 slots · shuffled on each visit · button label up to 3 words · self-serve checkout</p>
             <ul>
-              <li><strong>Same size as the old event cards:</strong> The card fills one third of the row. The logo uses the whole area above the button, with no inner box around it.</li>
-              <li><strong>Your button:</strong> Up to 3 words, on one line under the logo. For example, Find out more.</li>
-              <li><strong>Capped:</strong> 24 cards at a time. Live cards shuffle on each visit, so the row stays a carousel rather than a fixed wall of logos.</li>
-              <li><strong>Separate from Event Page Partner:</strong> This row is not the event-page sidebar, and it is not the £10 + VAT Featured Event Boost.</li>
+              <li><strong>Self-serve:</strong> Upload your logo, set your button, and pay by card. Your card goes live after payment.</li>
+              <li><strong>Your button:</strong> Up to 3 words under the logo — for example, Find out more.</li>
+              <li><strong>Monthly report:</strong> We can email you logo views and clicks from the Sponsored row.</li>
+              <li><strong>Capped:</strong> 24 cards at a time. Separate from Event Page Partner and the £10 + VAT Featured Event Boost.</li>
             </ul>
           </div>
           <div class="ad-package-preview">
@@ -688,7 +688,36 @@
                 </div>
               </div>
             </div>
-            <p class="ad-mock-context">£55 per month + VAT. Logo fills the card. Button is 3 words or fewer.</p>
+            <p class="ad-mock-context">£55 per month + VAT. Logo, company name, and a 3-word button.</p>
+          </div>
+          <div class="ad-package-span-full" id="directory-carousel-checkout">
+            <p class="ad-preview-label ad-preview-label--checkout">Book a slot</p>
+            <p class="city-partner-vat-note">£55 + VAT = £66 billed monthly until you cancel. Upload a PNG or JPG under 2MB.</p>
+            <form class="directory-carousel-checkout" id="directory-carousel-form">
+              <label class="ad-enquiry-field">
+                <span>Company name</span>
+                <input type="text" id="directory-carousel-company" name="company" required maxlength="80" autocomplete="organization" placeholder="Your company">
+              </label>
+              <label class="ad-enquiry-field">
+                <span>Work email</span>
+                <input type="email" id="directory-carousel-email" name="email" required autocomplete="email" placeholder="you@company.com">
+              </label>
+              <label class="ad-enquiry-field">
+                <span>Website / button link</span>
+                <input type="url" id="directory-carousel-cta-url" name="ctaUrl" required placeholder="https://">
+              </label>
+              <label class="ad-enquiry-field">
+                <span>Button label (up to 3 words)</span>
+                <input type="text" id="directory-carousel-cta-label" name="ctaLabel" maxlength="32" placeholder="Find out more" value="Find out more">
+              </label>
+              <label class="ad-enquiry-field">
+                <span>Logo file</span>
+                <input type="file" id="directory-carousel-logo" name="logo" accept="image/png,image/jpeg,image/webp,image/gif" required>
+              </label>
+              <p id="directory-carousel-status" class="city-partner-status" role="status"></p>
+              <button type="submit" class="ad-package-cta" id="directory-carousel-submit">Pay £66 and go live →</button>
+            </form>
+            <p class="ad-mock-context">Prefer to talk first? <a class="ad-enquiry-jump" href="#ad-enquiry" data-ad-enquiry-section="Events" data-ad-enquiry-package="Directory carousel">Send an enquiry</a>.</p>
           </div>
           <div class="ad-package-span-full ad-email-reach ad-email-reach--table" aria-label="Directory carousel package summary">
             <div class="ad-email-reach-head">
@@ -705,7 +734,7 @@
                 <tbody>
                   <tr>
                     <th scope="row">Pricing</th>
-                    <td>£55 per month + VAT</td>
+                    <td>£55 per month + VAT (£66 total)</td>
                   </tr>
                   <tr>
                     <th scope="row">Placement</th>
@@ -713,11 +742,11 @@
                   </tr>
                   <tr>
                     <th scope="row">Creative</th>
-                    <td>Full-size logo with a button underneath (3 words maximum)</td>
+                    <td>Logo, company name, and a button underneath (3 words maximum)</td>
                   </tr>
                   <tr>
                     <th scope="row">Availability</th>
-                    <td>24 slots maximum · order shuffled on each visit</td>
+                    <td>24 slots maximum · order shuffled on each visit · self-serve</td>
                   </tr>
                   <tr>
                     <th scope="row">Best for</th>
@@ -728,7 +757,7 @@
             </div>
           </div>
           <div class="ad-package-foot">
-            <a class="ad-package-cta ad-enquiry-jump" href="#ad-enquiry" data-ad-enquiry-section="Events" data-ad-enquiry-package="Directory carousel">Enquire about a slot →</a>
+            <a class="ad-package-cta" href="#directory-carousel-checkout">Book a slot →</a>
           </div>
         </article>
 
@@ -1897,6 +1926,7 @@
 <script src="js/hub-turnstile.js?v=20260827sec1"></script>
 <script src="js/advertising-page.js?v=20261110pmvat"></script>
 <script src="js/city-partner-advertising.js?v=20260910aff1"></script>
+<script src="js/directory-carousel-advertising.js?v=20261110logosfix"></script>
 <script src="js/county-partner-advertising.js?v=20260910aff1"></script>
 
 </body>

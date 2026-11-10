@@ -5745,6 +5745,28 @@ body.nav-menu-open .ad-sticky-cta {
   border: 1px solid rgba(109, 92, 232, 0.15);
 }
 
+.directory-carousel-checkout {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--ad-soft-muted);
+  border: 1px solid rgba(109, 92, 232, 0.15);
+}
+
+.directory-carousel-checkout .ad-package-cta {
+  width: 100%;
+  text-align: center;
+  border: 0;
+  cursor: pointer;
+}
+
+.directory-carousel-checkout .ad-package-cta:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
 .city-partner-section-label {
   margin: 0;
   font-size: 12px;

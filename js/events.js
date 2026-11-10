@@ -156,20 +156,28 @@
     }
   }
 
+  var spotlightPointerPaused = false;
+
   function startSpotlightAuto() {
     stopSpotlightAuto();
     if (!els.spotlightTrack) return;
-    /* Auto-advance fights touch scrolling on phones and causes flicker */
-    if (window.matchMedia('(hover: none), (max-width: 768px)').matches) return;
+    if (spotlightPointerPaused) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const itemCount = getSpotlightTrackItemCount();
     const sc = window.HubSpotlightCarousel;
     if (!sc || itemCount <= 1) return;
-    /* Sponsored ads keep moving even when a short row would otherwise sit still. */
+    const isCoarse =
+      window.matchMedia('(hover: none), (max-width: 768px)').matches;
+    /* Featured spotlight stays desktop-only; sponsored ads keep moving on phones too. */
+    if (isCoarse && !browseAdsActive) return;
     if (!browseAdsActive && !sc.canAutoAdvance(els.spotlightTrack, itemCount)) return;
-    const intervalMs = browseAdsActive ? Math.max(2200, SPOTLIGHT_AUTO_MS - 400) : SPOTLIGHT_AUTO_MS;
+    const intervalMs = browseAdsActive
+      ? isCoarse
+        ? 3200
+        : Math.max(2200, SPOTLIGHT_AUTO_MS - 400)
+      : SPOTLIGHT_AUTO_MS;
     spotlightTimer = window.setInterval(function () {
-      if (document.hidden || spotlightAnimating) return;
+      if (document.hidden || spotlightAnimating || spotlightPointerPaused) return;
       advanceSpotlight(1);
     }, intervalMs);
   }
@@ -203,10 +211,14 @@
     const sc = window.HubSpotlightCarousel;
     if (!sc || !els.spotlightTrack) return;
     const section = els.spotlightTrack.closest('.premium-spotlight');
-    /* Browse ads: force loop so the strip keeps moving with a short inventory. */
+    /* Browse ads: force loop (incl. phones) so the strip keeps moving with a short inventory. */
     sc.applyLoopLayout(els.spotlightTrack, section, itemCount, '.premium-card', cardsHtml, {
       loop: browseAdsActive ? true : undefined,
+      loopOnTouch: browseAdsActive === true,
     });
+    if (browseAdsActive && itemCount > 1 && sc.setNavArrowsVisible) {
+      sc.setNavArrowsVisible(section, true);
+    }
   }
 
   function refreshSpotlightLayout() {
@@ -278,6 +290,20 @@
     const wrap = document.querySelector('.spotlight-wrap');
     const prev = document.getElementById('spotlight-prev');
     const next = document.getElementById('spotlight-next');
+    var touchResumeTimer = null;
+
+    function pauseAutoForPointer() {
+      spotlightPointerPaused = true;
+      stopSpotlightAuto();
+    }
+
+    function resumeAutoAfterPointer(delayMs) {
+      spotlightPointerPaused = false;
+      window.clearTimeout(touchResumeTimer);
+      touchResumeTimer = window.setTimeout(function () {
+        startSpotlightAuto();
+      }, delayMs || 0);
+    }
 
     if (prev) {
       prev.addEventListener('click', function () {
@@ -290,8 +316,24 @@
       });
     }
     if (wrap) {
-      wrap.addEventListener('mouseenter', stopSpotlightAuto);
-      wrap.addEventListener('mouseleave', startSpotlightAuto);
+      wrap.addEventListener('mouseenter', pauseAutoForPointer);
+      wrap.addEventListener('mouseleave', function () {
+        resumeAutoAfterPointer(0);
+      });
+      wrap.addEventListener(
+        'touchstart',
+        function () {
+          pauseAutoForPointer();
+        },
+        { passive: true }
+      );
+      wrap.addEventListener(
+        'touchend',
+        function () {
+          resumeAutoAfterPointer(2400);
+        },
+        { passive: true }
+      );
     }
 
     var resizeTimer;
@@ -1204,12 +1246,12 @@
       escapeHtml(href) +
       '">' +
       '<span class="events-ad-card-available-kicker">Available</span>' +
-      '<span class="events-ad-card-available-title">Get your business here</span>' +
+      '<span class="events-ad-card-available-title">Put your logo here for thousands to see each month</span>' +
       '<span class="events-ad-card-available-price">£55 <span>per month + VAT</span></span>' +
       '</a>' +
       '<a class="events-ad-card-cta events-ad-card-cta--available" href="' +
       escapeHtml(href) +
-      '">Advertise here</a></div></article>'
+      '">Book a slot</a></div></article>'
     );
   }
 
@@ -1240,6 +1282,9 @@
       '" alt="' +
       escapeHtml(company) +
       '"></a>' +
+      '<p class="events-ad-card-company">' +
+      escapeHtml(company) +
+      '</p>' +
       '<a class="events-ad-card-cta" href="' +
       escapeHtml(href) +
       '" data-sponsor-placement="events_browse_carousel" data-sponsor-company="' +
@@ -1288,8 +1333,10 @@
     const list = shuffleList((Array.isArray(ads) ? ads : []).slice(0, BROWSE_AD_MAX));
     const section = document.querySelector('.events-browse-ads');
     const showAvailable = list.length < BROWSE_AD_MAX;
-    let html = list.map(browseAdCardHtml).join('');
+    /* Pin the sell card first so open slots stay visible while paid logos shuffle behind. */
+    let html = '';
     if (showAvailable) html += browseAdAvailableCardHtml();
+    html += list.map(browseAdCardHtml).join('');
     const itemCount = list.length + (showAvailable ? 1 : 0);
     browseAdsActive = true;
     browseAdCardsHtml = html;
@@ -1310,8 +1357,15 @@
       });
       els.spotlightTrack.querySelectorAll('.events-ad-card:not(.events-ad-card--available)').forEach(function (card) {
         paintBrowseAdCtaColor(card);
+        const logo = card.querySelector('.events-ad-card-logo');
+        const company = logo && logo.getAttribute('data-sponsor-company');
+        if (logo && window.CmsSponsorFields.trackSponsorImpression) {
+          window.CmsSponsorFields.trackSponsorImpression('events_browse_carousel', company, {
+            el: logo,
+            path: window.location && window.location.pathname,
+          });
+        }
       });
-      /* Logo band colour comes from the saved Dark logo band tick — do not re-sample here. */
     }
     syncSpotlightLoopScroll();
     startSpotlightAuto();

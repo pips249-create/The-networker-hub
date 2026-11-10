@@ -1210,11 +1210,11 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   background: #fff;
   color: var(--charcoal);
   border: 1px solid var(--border-soft);
-  min-height: 132px;
+  min-height: 168px;
 }
 
 .spotlight-track .events-ad-card.premium-card {
-  min-height: 132px;
+  min-height: 168px;
 }
 
 /* Show more advert tiles so the strip can scroll instead of locking to three huge cards */
@@ -1240,16 +1240,17 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-height: 132px;
+  min-height: 168px;
   padding: 0;
   box-sizing: border-box;
 }
 
 .events-ad-card-logo {
   position: relative;
-  flex: 1 1 auto;
+  flex: 0 0 88px;
   display: block;
-  min-height: 72px;
+  height: 88px;
+  min-height: 88px;
   padding: 0;
   border-radius: 0;
   background: #fff;
@@ -1273,19 +1274,32 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   margin: 0;
   padding: 0;
   width: 100%;
-  min-height: 72px;
+  height: 88px;
+  min-height: 88px;
+}
+
+.events-ad-card-company {
+  margin: 0;
+  padding: 6px 10px 0;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  color: var(--charcoal, #2d2636);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .events-ad-card-logo img,
 .events-ad-card-logo .sponsor-logo--full {
   position: absolute;
-  top: 16px;
-  right: 18px;
-  bottom: 16px;
-  left: 18px;
+  top: 14px;
+  left: 16px;
   display: block;
-  width: auto;
-  height: auto;
+  /* Explicit box — width/height:auto with all four insets collapsed many logos to 0×0 */
+  width: calc(100% - 32px);
+  height: calc(100% - 28px);
   max-width: none;
   max-height: none;
   margin: 0;
@@ -1341,7 +1355,7 @@ body.browse-mode-organisers .events-organiser-footnote-link {
 
 .events-ad-card-available-panel {
   flex: 1 1 auto;
-  min-height: 96px;
+  min-height: 112px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1362,10 +1376,11 @@ body.browse-mode-organisers .events-organiser-footnote-link {
 }
 
 .events-ad-card-available-title {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 800;
-  line-height: 1.25;
+  line-height: 1.3;
   color: var(--charcoal, #2d2636);
+  max-width: 12.5em;
 }
 
 .events-ad-card-available-price {
@@ -1432,6 +1447,22 @@ body.browse-mode-organisers .events-organiser-footnote-link {
 .spotlight-nav button:hover {
   border-color: var(--lavender);
   background: var(--lavender-light);
+}
+
+.events-browse-ads-panel .spotlight-nav button {
+  width: 40px;
+  height: 40px;
+  border-width: 1.5px;
+  border-color: rgba(45, 38, 54, 0.28);
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(45, 38, 54, 0.08);
+  font-size: 22px;
+  font-weight: 600;
+}
+.events-browse-ads-panel .spotlight-nav button:hover {
+  border-color: var(--charcoal, #2d2636);
+  background: #fff;
+  color: var(--charcoal, #2d2636);
 }
 .spotlight-view-all {
   font-size: 12px;

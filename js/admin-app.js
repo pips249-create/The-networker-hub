@@ -14143,6 +14143,8 @@
       opportunity_page_carousel_ads: 'Opportunity Page Partner',
       opportunity_page_sidebar_ad: 'Opportunity Page Partner',
       email_mini_sponsors: 'Email mini sponsors',
+      events_browse_carousel: 'Events directory carousel',
+      events_browse_carousel_ads: 'Events directory carousel',
       sponsor_sidebar: 'Sidebar sponsor',
       hub_partner_email: 'Partner emails',
     };
@@ -14183,6 +14185,9 @@
       '<option value="organisers_page_partner">Organiser Page Partner</option>' +
       '<option value="opportunities_page_partner">Opportunity Page Partner</option>' +
       '</optgroup>' +
+      '<optgroup label="Directory carousel">' +
+      '<option value="events_browse_carousel">Events directory carousel</option>' +
+      '</optgroup>' +
       '<optgroup label="Emails">' +
       '<option value="email_mini_sponsors">Page Partner emails</option>' +
       '</optgroup>' +
@@ -14191,9 +14196,10 @@
       '<button type="submit" class="sponsor-pack-btn sponsor-pack-btn--primary">Apply</button>' +
       '<button type="button" id="sponsor-clicks-export" class="sponsor-pack-btn">Export CSV</button>' +
       '<button type="button" id="sponsor-clicks-print" class="sponsor-pack-btn">Download PDF</button>' +
+      '<button type="button" id="sponsor-clicks-email" class="sponsor-pack-btn">Email pack to brand</button>' +
       '</div></form>' +
       '<p id="sponsor-clicks-status" class="sponsor-pack-status">Loading…</p>' +
-      '<p class="sponsor-pack-print-hint no-print">Choose a <strong>brand</strong> and date range, then Apply — the pack shows every part of the site where their logo was seen (page views, clicks, and emails). Optionally narrow with Placement. Download PDF needs a brand selected.</p>' +
+      '<p class="sponsor-pack-print-hint no-print">Choose a <strong>brand</strong> and date range, then Apply — the pack shows every part of the site where their logo was seen (page views, clicks, and emails). Optionally narrow with Placement. Download PDF needs a brand selected. <strong>Email pack to brand</strong> uses the report email on their directory carousel slot.</p>' +
       '</section>' +
       '<div id="sponsor-clicks-body" class="sponsor-pack-sheet"></div></div>';
 
@@ -14206,6 +14212,7 @@
     var form = document.getElementById('sponsor-clicks-filters');
     var exportBtn = document.getElementById('sponsor-clicks-export');
     var printBtn = document.getElementById('sponsor-clicks-print');
+    var emailBtn = document.getElementById('sponsor-clicks-email');
     var lastReport = null;
 
     function setStatus(text, tone) {
@@ -14725,6 +14732,45 @@
           .finally(function () {
             printBtn.disabled = false;
             printBtn.textContent = prevLabel || 'Download PDF';
+          });
+      });
+    }
+    if (emailBtn) {
+      emailBtn.addEventListener('click', function () {
+        var companyFilter = ((document.getElementById('sponsor-clicks-company') || {}).value || '').trim();
+        if (!companyFilter) {
+          window.alert('Pick a brand and click Apply before emailing the pack.');
+          return;
+        }
+        var override = window.prompt(
+          'Send performance pack for “' + companyFilter + '” to this email (leave blank to use the report email on their carousel slot):',
+          ''
+        );
+        if (override === null) return;
+        emailBtn.disabled = true;
+        var prev = emailBtn.textContent;
+        emailBtn.textContent = 'Sending…';
+        setStatus('Emailing pack to brand…');
+        adminPost('/api/admin/sponsor-pack-email', {
+          company: companyFilter,
+          from: (document.getElementById('sponsor-clicks-from') || {}).value || '',
+          to: (document.getElementById('sponsor-clicks-to') || {}).value || '',
+          placement: (document.getElementById('sponsor-clicks-placement') || {}).value || 'events_browse_carousel',
+          toEmail: String(override || '').trim(),
+        })
+          .then(function (data) {
+            if (!data || data.error || !data.ok) {
+              throw new Error((data && data.message) || 'Could not email the pack.');
+            }
+            setStatus('Pack emailed to ' + (data.emailed || 'brand') + '.', 'ok');
+          })
+          .catch(function (err) {
+            setStatus((err && err.message) || 'Could not email the pack.', 'error');
+            window.alert((err && err.message) || 'Could not email the pack.');
+          })
+          .finally(function () {
+            emailBtn.disabled = false;
+            emailBtn.textContent = prev || 'Email pack to brand';
           });
       });
     }
@@ -15946,6 +15992,13 @@
         '<input type="text" class="event-carousel-ad-company w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
         attrEsc(ad.company_name || '') +
         '" placeholder="Plate &amp; Post"></div>' +
+        (isBrowseCarousel
+          ? '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Report email</label>' +
+            '<input type="email" class="event-carousel-ad-contact-email w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
+            attrEsc(ad.contact_email || '') +
+            '" placeholder="ads@company.com">' +
+            '<p class="text-xs text-slate-500 mt-1">Used for monthly performance packs (views + clicks).</p></div>'
+          : '') +
         '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Logo <span class="text-brand-700">*</span></label>' +
         '<input type="text" class="event-carousel-ad-logo-url w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
         attrEsc(pending ? '' : logo) +
@@ -15990,6 +16043,7 @@
       var ctaLabelEl = row ? row.querySelector('.event-carousel-ad-cta-label') : null;
       var ctaColorEl = row ? row.querySelector('.event-carousel-ad-cta-color') : null;
       var companyEl = row ? row.querySelector('.event-carousel-ad-company') : null;
+      var contactEmailEl = row ? row.querySelector('.event-carousel-ad-contact-email') : null;
       var endsAtEl = row ? row.querySelector('.event-carousel-ad-ends-at') : null;
       var activeCheckbox = row ? row.querySelector('.event-carousel-ad-active') : null;
       var darkCheckbox = row ? row.querySelector('.event-carousel-ad-logo-dark') : null;
@@ -16012,6 +16066,11 @@
           ? companyEl.value.trim()
           : existing
             ? existing.company_name || ''
+            : '',
+        contact_email: contactEmailEl
+          ? contactEmailEl.value.trim().toLowerCase()
+          : existing
+            ? existing.contact_email || ''
             : '',
         logo_url: logoUrl,
         cta_url: linkUrlEl ? linkUrlEl.value.trim() : existing ? existing.cta_url || '' : '',
@@ -16437,6 +16496,7 @@
               id: ad.id,
               slot_index: ad.slot_index,
               company_name: ad.company_name || '',
+              contact_email: ad.contact_email || '',
               logo_url: ad.logo_url,
               cta_url: ad.cta_url,
               cta_label: ad.cta_label || '',
@@ -16449,6 +16509,8 @@
               item.logoBase64 = pending.data;
               item.logoMime = pending.mime;
               item.logoFilename = pending.filename;
+              /* Prefer the upload over any leftover homepage / social URL in the text field. */
+              item.logo_url = '';
             }
             return item;
           }),
@@ -16472,12 +16534,17 @@
                 msg = 'Ad slot ' + data.slot + ' is active but missing a valid click-through link.';
               } else if (data.error === 'missing_carousel_cta') {
                 msg = 'Ad slot ' + data.slot + ' is active but missing a valid click-through link.';
-              } else if (/web page/i.test(msg)) {
+              } else if (
+                data.error === 'carousel_logo_not_image' ||
+                data.error === 'carousel_logo_import_failed' ||
+                /web page|homepage|Choose file|not an image/i.test(msg)
+              ) {
                 msg =
-                  'Logo URL must be a direct link to an image file — upload the logo file instead, or use a URL ending in .png / .jpg / .webp.';
+                  msg ||
+                  'Logo must be an image file — use Choose file (PNG/JPG under 2MB). A website homepage link will not work.';
               } else if (/fetch logo/i.test(msg) || /upload failed/i.test(msg)) {
                 msg =
-                  'Could not save the logo — upload the image file directly (max 2MB) rather than linking to a website homepage.';
+                  'Could not save the logo — use Choose file to upload a PNG or JPG (max 2MB). Website homepage links cannot be used as logos.';
               }
                 throw new Error(msg);
               }
