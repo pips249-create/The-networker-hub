@@ -3271,12 +3271,33 @@
     }, METRICS_POLL_MS);
   }
 
+  function looksLikeHtmlResponse(text) {
+    var trimmed = String(text || '')
+      .replace(/^\uFEFF/, '')
+      .trim();
+    return (
+      /^<!DOCTYPE\s+html/i.test(trimmed) ||
+      /^<html[\s>]/i.test(trimmed) ||
+      /<!--\[if\s+lt\s+IE/i.test(trimmed)
+    );
+  }
+
   function parseAdminFetchResponse(r, text) {
     var data = {};
     if (text) {
       try {
         data = JSON.parse(text);
       } catch (_parseErr) {
+        if (looksLikeHtmlResponse(text)) {
+          return {
+            ok: false,
+            error: 'html_response',
+            message:
+              'Server returned an HTML page instead of JSON (HTTP ' +
+              r.status +
+              '). Refresh and try again.',
+          };
+        }
         var snippet = String(text || '')
           .replace(/\s+/g, ' ')
           .trim()
@@ -27949,7 +27970,11 @@
     syncPayBtn.disabled = true;
     adminPost('/api/admin/opportunities', { id: syncId, action: 'sync_listing_payment' })
       .then(function (data) {
-        if (!data.ok) throw new Error(data.message || data.error || 'Could not sync payment');
+        if (!data.ok) {
+          var syncErr = new Error(data.message || data.error || 'Could not sync payment');
+          syncErr.code = data.error || '';
+          throw syncErr;
+        }
         window.alert(
           data.alreadyPaid
             ? 'Listing already marked as paid.'
@@ -27959,9 +27984,17 @@
         return refreshOpportunityCleanupData();
       })
       .catch(function (err) {
-        reportAdminOpportunityError('opportunity_sync_pay_failed', err, {
-          opportunity_id: syncId,
-        });
+        var expectedNoPayment =
+          err &&
+          (err.code === 'no_stripe_payment_found' ||
+            /No completed Stripe checkout found for this listing yet/i.test(
+              String((err && err.message) || '')
+            ));
+        if (!expectedNoPayment) {
+          reportAdminOpportunityError('opportunity_sync_pay_failed', err, {
+            opportunity_id: syncId,
+          });
+        }
         window.alert(err.message || 'Could not sync payment from Stripe.');
         syncPayBtn.disabled = false;
       });

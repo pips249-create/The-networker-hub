@@ -1648,13 +1648,13 @@ module.exports = async function handler(req, res) {
           opportunity: mapOpportunityRow(refreshed),
         });
       } catch (e) {
-        return json(res, 500, {
+        const noPaymentYet = e.code === 'no_stripe_payment_found';
+        return json(res, noPaymentYet ? 404 : 500, {
           ok: false,
           error: e.code || 'sync_listing_payment_failed',
-          message:
-            e.code === 'no_stripe_payment_found'
-              ? 'No completed Stripe checkout found for this listing yet. Wait a minute and try again, or paste the checkout session ID from Stripe.'
-              : e.message || 'Could not sync listing payment.',
+          message: noPaymentYet
+            ? 'No completed Stripe checkout found for this listing yet. Wait a minute and try again, or paste the checkout session ID from Stripe.'
+            : e.message || 'Could not sync listing payment.',
         });
       }
     }

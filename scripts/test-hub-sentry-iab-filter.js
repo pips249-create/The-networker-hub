@@ -57,7 +57,7 @@ for (const msg of sampleMessages) {
 }
 
 assert(!wouldDrop('TypeError: Cannot read properties of null'), 'keeps unrelated TypeError');
-assert(/hub-sentry\.js\?v=20260923sentry9/.test(fs.readFileSync(path.join(__dirname, '../js/hub-compliance-bootstrap.js'), 'utf8')), 'cache-bust sentry asset');
+assert(/hub-sentry\.js\?v=20261111sentry10/.test(fs.readFileSync(path.join(__dirname, '../js/hub-compliance-bootstrap.js'), 'utf8')), 'cache-bust sentry asset');
 
 if (process.exitCode) {
   console.error('Some checks failed');

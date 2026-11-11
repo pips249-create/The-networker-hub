@@ -53,7 +53,7 @@
     var embed = options.embed === true || (options.embed !== false && isEmbedContext());
 
     ensureFontSafety(root);
-    loadAsset(root, 'js/hub-sentry.js?v=20260923sentry9', { defer: false });
+    loadAsset(root, 'js/hub-sentry.js?v=20261111sentry10', { defer: false });
 
     if (embed) {
       window.HubCookieConsent = window.HubCookieConsent || {

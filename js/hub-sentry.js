@@ -124,9 +124,49 @@
     return false;
   }
 
+  /**
+   * Cloudflare / gateway HTML bodies sometimes get thrown as Error(message).
+   * Drop those so weekly digests stay readable; real failures keep a short code.
+   */
+  function isHtmlBodyAsErrorMessage(event, hint) {
+    var msg = exceptionMessage(event, hint).replace(/^\uFEFF/, '').trim();
+    return (
+      /^<!DOCTYPE\s+html/i.test(msg) ||
+      /^<html[\s>]/i.test(msg) ||
+      /<!--\[if\s+lt\s+IE/i.test(msg)
+    );
+  }
+
+  /**
+   * Expected admin UX when syncing listing payment before Stripe webhook lands.
+   */
+  function isExpectedAdminStripeSyncNoise(event, hint) {
+    var msg = exceptionMessage(event, hint);
+    return /No completed Stripe checkout found for this listing yet/i.test(msg);
+  }
+
+  /**
+   * Third-party PDF / canvg stacks (minified `elm.events.push`) — not first-party Hub code.
+   */
+  function isThirdPartyEventsPushNoise(event, hint) {
+    var msg = exceptionMessage(event, hint);
+    if (!/elm\.events\.push is not a function/i.test(msg)) return false;
+    var frames = stackFrames(event);
+    if (!frames.length) return true;
+    for (var i = 0; i < frames.length; i++) {
+      var filename = String((frames[i] && (frames[i].filename || frames[i].abs_path)) || '');
+      if (/jspdf|html2pdf|canvg|pdf\.worker/i.test(filename)) return true;
+    }
+    // Minified vendor often lacks a clear filename; still drop this exact signature.
+    return true;
+  }
+
   function beforeSend(event, hint) {
     if (isFontNetworkError(event, hint)) return null;
     if (isFacebookInAppBrowserNoise(event, hint)) return null;
+    if (isHtmlBodyAsErrorMessage(event, hint)) return null;
+    if (isExpectedAdminStripeSyncNoise(event, hint)) return null;
+    if (isThirdPartyEventsPushNoise(event, hint)) return null;
     return scrubEvent(event);
   }
 
@@ -218,6 +258,13 @@
         // Soft-refresh bootstrap aborts are handled in the organiser dashboard;
         // keep older cached clients from flooding Sentry while immutable JS ages out.
         /Request timed out/i,
+        // Cloudflare/gateway HTML accidentally thrown as Error(message).
+        /^<!DOCTYPE\s+html/i,
+        /<!--\[if\s+lt\s+IE/i,
+        // Expected Command Centre UX while Stripe webhook catches up.
+        /No completed Stripe checkout found for this listing yet/i,
+        // jsPDF / html2pdf / canvg minified hook registry.
+        /elm\.events\.push is not a function/i,
       ],
       denyUrls: [/iabjs:/i, /navigation_performance_logger/i],
       beforeSend: beforeSend,

@@ -4196,6 +4196,18 @@
       try {
         data = text ? JSON.parse(text) : {};
       } catch {
+        const trimmed = String(text || '')
+          .replace(/^\uFEFF/, '')
+          .trim();
+        const looksHtml =
+          /^<!DOCTYPE\s+html/i.test(trimmed) ||
+          /^<html[\s>]/i.test(trimmed) ||
+          /<!--\[if\s+lt\s+IE/i.test(trimmed);
+        if (looksHtml) {
+          throw new Error(
+            'Server returned an HTML page instead of JSON (HTTP ' + res.status + ')'
+          );
+        }
         const snippet = String(text || '')
           .replace(/\s+/g, ' ')
           .trim()
@@ -6302,9 +6314,9 @@
       .then(({ ok, data }) => {
         if (loadGen !== eventsLoadGen) return false;
         if (!ok) throw new Error(data.message || data.error || 'Could not load events');
-        state.events = data.events || [];
-        state.upcomingEvents = data.upcomingEvents || [];
-        state.tickets = data.tickets || [];
+        state.events = Array.isArray(data.events) ? data.events : [];
+        state.upcomingEvents = Array.isArray(data.upcomingEvents) ? data.upcomingEvents : [];
+        state.tickets = Array.isArray(data.tickets) ? data.tickets : [];
         if (data.groups && data.groups.length) {
           state.groups = dedupeGroupsById(data.groups);
         }

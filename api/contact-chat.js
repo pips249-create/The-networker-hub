@@ -79,6 +79,16 @@ async function openAiReply(messages, systemPrompt) {
     const errText = await res.text().catch(function () {
       return '';
     });
+    const trimmed = String(errText || '')
+      .replace(/^\uFEFF/, '')
+      .trim();
+    const looksHtml =
+      /^<!DOCTYPE\s+html/i.test(trimmed) ||
+      /^<html[\s>]/i.test(trimmed) ||
+      /<!--\[if\s+lt\s+IE/i.test(trimmed);
+    if (looksHtml) {
+      throw new Error('openai_' + res.status + ':upstream_html_block');
+    }
     throw new Error('openai_' + res.status + ':' + errText.slice(0, 200));
   }
 
