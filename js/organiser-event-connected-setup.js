@@ -2081,17 +2081,23 @@
     if (devSection) devSection.hidden = linkOutOnly;
     setPageActionsVisible(true);
     bindEmbedDrawerNav();
-    bindEventLinkUi();
     initPlatformPicker();
     restorePlatformSelection();
     bindPlatformChangeControl();
     updatePlatformPickerPresentation();
-    syncEventLinkPanel(selectedIntegrationPlatform());
+    // Link Out is redirect-only — hide Eventbrite/TT registration linking.
+    var eventLinkPanel = qs('ecs-event-link-panel');
+    if (linkOutOnly) {
+      if (eventLinkPanel) eventLinkPanel.hidden = true;
+    } else {
+      bindEventLinkUi();
+      syncEventLinkPanel(selectedIntegrationPlatform());
+    }
     if (slotStatus) {
       if (linkOutOnly) {
         slotStatus.hidden = false;
         slotStatus.textContent =
-          'Link Out (partnership) — buyers go to your booking URL. No webhook sync on this event.';
+          'Link Out — buyers go to your booking URL. No Eventbrite sync needed for this event.';
       } else if (billing.plan) {
         slotStatus.hidden = false;
         slotStatus.textContent =

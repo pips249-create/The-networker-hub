@@ -201,6 +201,7 @@ async function connectedBookingPayloadBlocked(session, body) {
     isConnectedPlanActive,
     accountHasAdminConnectedGrant,
     accountHasLinkOutGrant,
+    linkOutFreeEnabled,
     loadOrganiserAccountForOrganiserId,
   } = require('../connected-booking');
   const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
@@ -216,6 +217,11 @@ async function connectedBookingPayloadBlocked(session, body) {
     Object.prototype.hasOwnProperty.call(body, 'external_booking_note');
   if (!touchesExternal) return null;
   if (connectedBookingAllowedForEmail(session?.email)) return null;
+  // Free Link Out must not depend on Connected preview allow-lists. Connected
+  // mode (external_connected) still requires plan/grant checks below.
+  if (linkOutFreeEnabled() && mode !== CHECKOUT_EXTERNAL) {
+    return null;
+  }
   if (!isSupabaseConfigured()) {
     return {
       status: 403,
