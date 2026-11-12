@@ -2,7 +2,7 @@
 
 Internal checklist for items that cannot be fully automated in code. Review quarterly.
 
-**Last updated:** 28 August 2026  
+**Last updated:** 4 November 2026  
 **Readiness check:** `npm run check:business-ops` (target ~75% before marketing push)
 
 ## Implemented in the platform
@@ -48,7 +48,7 @@ Internal checklist for items that cannot be fully automated in code. Review quar
 | Solicitor review | UK lawyer review `legal-policies.html` before scaling paid ticketing | Catherine | ☑ Done (confirmed 6 Aug 2026) |
 | DPAs | Follow `docs/DPA-SUBPROCESSORS.md`; track in `docs/DPA-REGISTER.md`; run `npm run check:dpas` | Catherine | ☑ Filed 10 Jul 2026 |
 | RoPA | Maintain `docs/RoPA.md` when features or subprocessors change | Catherine | ☑ Updated 28 Aug 2026 (Brevo retired) |
-| Backups / monitoring | `docs/OPS-RELIABILITY.md` — **Free tier today**; upgrade Supabase Pro before scale; UptimeRobot on `/api/health`; run `npm run check:ops` | Catherine | ☑ Health probe live · ☐ UptimeRobot · ☐ Supabase Pro upgrade |
+| Backups / monitoring | `docs/OPS-RELIABILITY.md` — **Supabase Pro** active; confirm Backups screen + UptimeRobot on `/api/health`; run `npm run check:ops` | Catherine | ☑ Health probe live · ☑ Supabase Pro · ☐ UptimeRobot · ☐ Backup retention noted |
 | Breach runbook | Named leads in `docs/DATA-BREACH-RESPONSE.md` | Catherine | ☑ |
 | GDPR requests | `docs/GDPR-SAR-PROCEDURE.md` — hello@ monitored | Catherine / Rosie | ☑ Procedure + owners |
 | Admin access hardening | Set `ADMIN_IP_ALLOWLIST` in Vercel for Command Centre; enable Supabase Auth MFA on admin accounts when ready | Catherine | ☐ Optional IP allowlist · ☐ MFA |

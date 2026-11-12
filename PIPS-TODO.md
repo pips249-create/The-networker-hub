@@ -4,7 +4,7 @@
 
 **Find this file:** search the repo for `PIPS-TODO` or open [`PIPS-TODO.md`](./PIPS-TODO.md) at the project root.
 
-*Last updated: 6 August 2026 (SEO canonical rebuild; gate robots/llms; launch segments; support drafts; Resend/Supabase Pro deferred ~1 week)*
+*Last updated: 4 November 2026 (Supabase Pro confirmed active; Resend Pro still open)*
 
 ---
 
@@ -29,7 +29,7 @@ Ship/verify membership work, then scale readiness before loading more of the alp
 10. ~~Connect destination-charge spot-check~~ — done Jul 2026
 
 ### Scale readiness (catalogue already ~900 events from A–C alone)
-11. Confirm **Supabase Pro** plan / RAM headroom before loading D–Z (nano already noted ~48% with ~1k groups)
+11. ~~Confirm **Supabase Pro** plan / RAM headroom before loading D–Z~~ — **Pro active** (Nov 2026); still watch Dashboard compute/RAM under catalogue load
 12. Spot-check `/api/organisers` and events browse + map pins under current catalogue (unbounded paths fixed 29 Jul — verify latency/payload)
 13. Note Resend free-tier ceiling before July beta send; upgrade if daily sends approach 80–90
 14. Optional: load-test browse + organiser pages (was week-8 item) once D–F groups are in
@@ -63,7 +63,7 @@ Ship/verify membership work, then scale readiness before loading more of the alp
 5. **Email 2 claim wave** — Soft path A + Founding Organiser perks (`docs/SEGMENT-A-EMAIL2.md`, `docs/FOUNDING-ORGANISER.md`); **run migration 241 → deploy → Brevo**
 6. **SEO launch follow-through** — gate off + schema live (Oct 2026); **you still need to submit sitemap + request indexing in GSC** (`docs/SEO-AEO-LAUNCH-PLAN.md`)
 7. **Legacy redirect** — banner path ready; hard `the-networker.co.uk` 301s deferred (~Nov 2026) so equity consolidates cleanly
-8. **Resend Pro + Supabase Pro** — deferred ~1 week (before wider Resend sends / gate-off)
+8. **Resend Pro** — still open before wider Resend sends / gate-off (**Supabase Pro** done Nov 2026)
 
 *Note: events are listed fresh on the platform — we are not migrating or copying events from the old WordPress site.*
 
@@ -172,15 +172,16 @@ Work top-to-bottom within each month. Don't start August emails until July beta 
 
 | Service | When | Cost | Why |
 |---------|------|------|-----|
-| **Resend Pro** | **Before week 10 wider email** (mandatory before 3,500 launch send) — *deferred ~1 week from 6 Aug* | ~$20/mo | Free tier = **100 emails/day** + 3,000/mo — campaigns + crons + bookings exceed that in August/September |
-| **Supabase Pro** | **Before soft launch** (remove site gate) — *deferred ~1 week from 6 Aug* | ~$25/mo | No 7-day pause, daily backups, headroom (~1,000 groups already in DB; RAM ~48% on nano) |
+| **Resend Pro** | **Before week 10 wider email** (mandatory before 3,500 launch send) | ~$20/mo | Free tier = **100 emails/day** + 3,000/mo — campaigns + crons + bookings exceed that |
+| **Supabase Pro** | Done | ~$25/mo | **Active Nov 2026** — no auto-pause, daily backups; still confirm Backups screen + watch compute under catalogue load |
 | **Vercel Pro** | **Only if needed** (Q4 or after launch) | ~$20/mo | Daily crons are OK on Hobby; upgrade if cron timeouts, need Firewall, or more-than-daily jobs |
 
 Monitor Resend dashboard during July beta — if daily sends approach **80–90**, upgrade early.
 
 | Done | Week | Task |
 |:----:|------|------|
-| [ ] | 9 | **Resend Pro** + **Supabase Pro** upgraded (see table above) — deferred ~1 week |
+| [x] | 9 | **Supabase Pro** upgraded — confirmed Nov 2026 |
+| [ ] | 9 | **Resend Pro** upgraded (see table above) — still required before wider sends |
 | [x] | 9 | Redirect plan: the-networker.co.uk → hub (home, browse, organiser slugs, event URLs) — `docs/LEGACY-REDIRECT-MAP.md` |
 | [~] | 9 | Soft Hub banner on co.uk during ~3-month SEO hold — snippet + dev brief ready (`marketing/CO-UK-BANNER-INSTALL-FOR-DEVS.md`); **paste onto co.uk** |
 | [~] | 9 | Hub-side list segments built (`docs/LAUNCH-LIST-SEGMENTS.md`) — merge Brevo 3,500 export when available |
@@ -206,7 +207,7 @@ Monitor Resend dashboard during July beta — if daily sends approach **80–90*
 | [ ] | SEO/AEO — Tab 6 + `docs/SEO-AEO-LAUNCH-PLAN.md` launch-week steps |
 | [x] | `EMAIL_ALLOWLIST_DISABLED=true` on launch (if allowlist was on) |
 | [ ] | `SITE_ACCESS_PASSWORD` removed — public gate off (25 August browse). **Action:** Vercel → remove env var or set `DISABLE_SITE_ACCESS_GATE=true` → redeploy |
-| [ ] | **Supabase Pro** active before gate-off (backups + no auto-pause on live ticketing) |
+| [x] | **Supabase Pro** active (backups + no auto-pause on live ticketing) — confirmed Nov 2026 |
 
 ---
 
