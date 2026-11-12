@@ -374,7 +374,44 @@ module.exports = async function handler(req, res) {
       accountHasAdminConnectedGrant(account) ||
       accountHasLinkOutGrant(account) ||
       isConnectedPlanActive(account);
+    const linkOutFree = linkOutFreeEnabled();
     if (!connectedBookingAllowedForSession(auth.session) && !hasCompAccess) {
+      // Connected preview can still be restricted while Link Out is free for everyone.
+      // Return a Link Out–only payload so Set up tickets can show the booking-URL editor.
+      if (req.method === 'GET' && linkOutFree) {
+        const site = String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
+        return json(res, 200, {
+          ok: true,
+          featureEnabled: true,
+          free: false,
+          linkOutFree: true,
+          canActivateFree: false,
+          plan: null,
+          status: 'inactive',
+          active: false,
+          groupCount: 0,
+          groupLimit: null,
+          hasWebhookSecret: false,
+          webhookUrl: site + '/api/integrations/booking',
+          accountId: account.id,
+          setup: null,
+          billing: {
+            stripeCheckoutConfigured: false,
+            canSubscribe: false,
+            canManageBilling: false,
+            selfServePlans: [],
+          },
+          pricing: null,
+          recentSync: [],
+          slots: { schemaMissing: true, assignedOrganiserIds: [], needsAssignment: false },
+          connectedGranted: false,
+          linkOutGranted: true,
+          navVisible: true,
+          uiMode: 'link_out',
+          previewRestrictedConnected: true,
+          signedInAs: String(auth.session.email || '').trim().toLowerCase(),
+        });
+      }
       return json(res, 403, {
         ok: false,
         error: 'preview_restricted',

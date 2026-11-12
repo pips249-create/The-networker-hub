@@ -1084,6 +1084,7 @@ async function buildEventRow(payload, eventId, mode) {
     accountHasAdminConnectedGrant,
     accountHasLinkOutGrant,
     resolveRequestedCheckoutMode,
+    linkOutFreeEnabled,
   } = require('./connected-booking');
 
   const editorEmail = payload._editorEmail || payload.email || '';
@@ -1107,6 +1108,7 @@ async function buildEventRow(payload, eventId, mode) {
         isConnectedPlanActive(acc) ||
         accountHasAdminConnectedGrant(acc);
       const canLinkOut =
+        linkOutFreeEnabled() ||
         accountHasLinkOutGrant(acc) ||
         isConnectedPlanActive(acc) ||
         connectedBookingAllowedForEmail(editorEmail);

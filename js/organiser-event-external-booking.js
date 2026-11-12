@@ -76,10 +76,23 @@
     return mode === 'external_connected' || mode === 'external_link';
   }
 
+  /** Match public listing: mode OR leftover URL + price label. */
+  function eventUsesExternalBooking(ev) {
+    if (!ev) return false;
+    if (isExternalConnectedEvent(ev)) return true;
+    var url = String(ev.externalBookingUrl || ev.external_booking_url || '').trim();
+    var label = String(ev.externalPriceLabel || ev.external_price_label || '').trim();
+    return Boolean(url && label);
+  }
+
   function shouldShowCard() {
+    // Already-external events must show the booking-link UI even when Connected
+    // preview is restricted (API 403) — otherwise organisers only see Hub tickets
+    // and the Change buttons never offer Link Out.
+    if (eventUsesExternalBooking(loadedEvent)) return true;
     if (!featureEnabled && !linkOutGranted) return false;
     if (billingActive || linkOutGranted) return true;
-    return isExternalConnectedEvent(loadedEvent);
+    return false;
   }
 
   function eventIdsFromQueryArray() {
@@ -502,12 +515,17 @@
 
     refreshCurrentBookingLinkUi();
 
-    if (isExternalConnectedEvent(loadedEvent)) {
+    if (eventUsesExternalBooking(loadedEvent)) {
       card.classList.add('is-active');
       var mode = String((loadedEvent && loadedEvent.checkoutMode) || '').trim();
-      if (linkOutOnly) {
+      if (linkOutOnly || (!billingActive && linkOutGranted)) {
         showStatus(
           'This event sends buyers to your booking link. Open Change booking link / price to paste the correct Eventbrite (or other) URL for this date.',
+          'ok'
+        );
+      } else if (!billingActive && !linkOutGranted) {
+        showStatus(
+          'This listing already has a booking link-out. Open Change booking link / price to update the Eventbrite URL, or ask The Networker UK if the editor is blocked.',
           'ok'
         );
       } else {
