@@ -8,11 +8,14 @@ const {
   findAllOrganiserAccountsByEmail,
 } = require('../api/_lib/connected-booking-grants');
 const {
+  CHECKOUT_HUB,
+  CHECKOUT_EXTERNAL,
   CHECKOUT_LINK_OUT,
   accountHasAdminConnectedGrant,
   accountHasLinkOutGrant,
   isExternalCheckoutEvent,
   isExternalLinkOutEvent,
+  resolveRequestedCheckoutMode,
   connectedBookingFreeEnabled,
   connectedBookingFreeDefaultPlan,
 } = require('../api/_lib/connected-booking-util');
@@ -34,6 +37,23 @@ assert.strictEqual(isExternalLinkOutEvent({ checkout_mode: 'external_link' }), t
 assert.strictEqual(isExternalCheckoutEvent({ checkout_mode: 'external_link' }), true);
 assert.strictEqual(isExternalCheckoutEvent({ checkout_mode: 'external_connected' }), true);
 assert.strictEqual(isExternalCheckoutEvent({ checkout_mode: 'hub' }), false);
+
+assert.strictEqual(
+  resolveRequestedCheckoutMode(CHECKOUT_EXTERNAL, { canConnected: true, canLinkOut: true }),
+  CHECKOUT_EXTERNAL
+);
+assert.strictEqual(
+  resolveRequestedCheckoutMode(CHECKOUT_EXTERNAL, { canConnected: false, canLinkOut: true }),
+  CHECKOUT_LINK_OUT
+);
+assert.strictEqual(
+  resolveRequestedCheckoutMode(CHECKOUT_EXTERNAL, { canConnected: false, canLinkOut: false }),
+  CHECKOUT_HUB
+);
+assert.strictEqual(
+  resolveRequestedCheckoutMode(CHECKOUT_LINK_OUT, { canConnected: false, canLinkOut: true }),
+  CHECKOUT_LINK_OUT
+);
 
 const mapped = mapGrantAccount({
   id: 'acc-1',

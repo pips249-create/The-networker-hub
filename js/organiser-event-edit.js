@@ -2314,7 +2314,37 @@
     applySeriesEditUi(seriesPeers.length > 1 ? seriesPeers : [], ev);
     applyDuplicateDraftUi(rawEv);
     applyLockUi(ev.locked || eventTicketsSoldCount(ev) > 0);
+    syncExternalBookingBanner(rawEv || ev);
     lookupCityFromPostcode();
+  }
+
+  function syncExternalBookingBanner(ev) {
+    const banner = document.getElementById('ee-external-booking-banner');
+    if (!banner) return;
+    const mode = String((ev && (ev.checkoutMode || ev.checkout_mode)) || '').trim();
+    const url = String((ev && (ev.externalBookingUrl || ev.external_booking_url)) || '').trim();
+    const isExternal = mode === 'external_connected' || mode === 'external_link' || Boolean(url);
+    if (!isExternal || !url) {
+      banner.hidden = true;
+      banner.innerHTML = '';
+      return;
+    }
+    const eventId = String((ev && ev.id) || params.get('id') || '').trim();
+    const ticketsHref = eventId
+      ? '/organiser/event-tickets?id=' + encodeURIComponent(eventId)
+      : '/organiser/event-tickets';
+    const setupHref = eventId
+      ? '/organiser/event-connected-setup?id=' + encodeURIComponent(eventId)
+      : '/organiser/event-connected-setup';
+    banner.hidden = false;
+    banner.innerHTML =
+      '<strong>Booking link-out is on for this event.</strong> Image and details edit here. To change the Eventbrite / booking URL that the public “Book on …” button opens, use ' +
+      '<a href="' +
+      escHtml(setupHref) +
+      '">Edit booking link</a> ' +
+      'or open <a href="' +
+      escHtml(ticketsHref) +
+      '">Set up tickets</a>.';
   }
 
   function preserveSeriesLaunchFlags(series) {

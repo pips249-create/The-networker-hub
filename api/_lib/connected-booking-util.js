@@ -145,6 +145,27 @@ function isExternalCheckoutEvent(row) {
   return isExternalConnectedEvent(row) || isExternalLinkOutEvent(row);
 }
 
+/**
+ * Map a requested checkout_mode to what the account is allowed to keep.
+ * If Connected is requested but unavailable, fall back to Link Out (when granted)
+ * instead of hub — otherwise booking-URL edits on mis-tagged external_connected
+ * events silently drop to hub and organisers cannot fix the public CTA.
+ */
+function resolveRequestedCheckoutMode(rawMode, entitlements) {
+  const mode = String(rawMode || CHECKOUT_HUB).trim();
+  const canConnected = Boolean(entitlements && entitlements.canConnected);
+  const canLinkOut = Boolean(entitlements && entitlements.canLinkOut);
+  if (mode === CHECKOUT_EXTERNAL) {
+    if (canConnected) return CHECKOUT_EXTERNAL;
+    if (canLinkOut) return CHECKOUT_LINK_OUT;
+    return CHECKOUT_HUB;
+  }
+  if (mode === CHECKOUT_LINK_OUT) {
+    return canLinkOut || canConnected ? CHECKOUT_LINK_OUT : CHECKOUT_HUB;
+  }
+  return CHECKOUT_HUB;
+}
+
 /** Public listing + attendee checkout (includes rows saved with URL/price but checkout_mode stuck on hub). */
 function publicListingUsesExternalBooking(row) {
   if (!row) return false;
@@ -357,6 +378,7 @@ module.exports = {
   isExternalConnectedEvent,
   isExternalLinkOutEvent,
   isExternalCheckoutEvent,
+  resolveRequestedCheckoutMode,
   publicListingUsesExternalBooking,
   normalizeExternalPriceLabel,
   normalizeExternalBookingNote,

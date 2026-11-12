@@ -18908,6 +18908,26 @@
       '<option value="">—</option>' +
       meetingFormatOptions(ev.meeting_type) +
       '</select></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Checkout mode</label>' +
+      '<select name="checkout_mode" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      '<option value="hub"' +
+      ((ev.checkout_mode || 'hub') === 'hub' ? ' selected' : '') +
+      '>Hub tickets</option>' +
+      '<option value="external_link"' +
+      (ev.checkout_mode === 'external_link' ? ' selected' : '') +
+      '>Link Out (redirect only)</option>' +
+      '<option value="external_connected"' +
+      (ev.checkout_mode === 'external_connected' ? ' selected' : '') +
+      '>Connected booking</option>' +
+      '</select></div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">External booking URL</label>' +
+      '<input type="url" name="external_booking_url" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(ev.external_booking_url || '') +
+      '" placeholder="https://www.eventbrite.co.uk/e/…"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">External price label</label>' +
+      '<input type="text" name="external_price_label" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(ev.external_price_label || '') +
+      '" placeholder="From £22"></div>' +
       eventLocationFieldsHtml(ev) +
       eventPhotoFieldHtml('event-photo-' + ev.id, ev.photo_url || '') +
       '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
@@ -21020,6 +21040,9 @@
             event_type: formFieldVal(form, 'event_type') || null,
             meeting_type: formFieldVal(form, 'meeting_type') || null,
             status: formFieldVal(form, 'status') || null,
+            checkout_mode: formFieldVal(form, 'checkout_mode') || 'hub',
+            external_booking_url: formFieldVal(form, 'external_booking_url').trim(),
+            external_price_label: formFieldVal(form, 'external_price_label').trim(),
           },
           eventDetailsPayloadFromForm(form),
           photoPayload

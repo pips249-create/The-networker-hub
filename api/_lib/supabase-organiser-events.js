@@ -1083,6 +1083,7 @@ async function buildEventRow(payload, eventId, mode) {
     isConnectedPlanActive,
     accountHasAdminConnectedGrant,
     accountHasLinkOutGrant,
+    resolveRequestedCheckoutMode,
   } = require('./connected-booking');
 
   const editorEmail = payload._editorEmail || payload.email || '';
@@ -1099,20 +1100,17 @@ async function buildEventRow(payload, eventId, mode) {
     Object.prototype.hasOwnProperty.call(payload, 'checkout_mode')
   ) {
     const rawMode = String(payload.checkoutMode || payload.checkout_mode || CHECKOUT_HUB).trim();
-    if (rawMode === CHECKOUT_EXTERNAL) {
+    if (rawMode === CHECKOUT_EXTERNAL || rawMode === CHECKOUT_LINK_OUT) {
       const acc = await loadCheckoutAccount();
       const canConnected =
         connectedBookingAllowedForEmail(editorEmail) ||
         isConnectedPlanActive(acc) ||
         accountHasAdminConnectedGrant(acc);
-      row.checkout_mode = canConnected ? CHECKOUT_EXTERNAL : CHECKOUT_HUB;
-    } else if (rawMode === CHECKOUT_LINK_OUT) {
-      const acc = await loadCheckoutAccount();
       const canLinkOut =
         accountHasLinkOutGrant(acc) ||
         isConnectedPlanActive(acc) ||
         connectedBookingAllowedForEmail(editorEmail);
-      row.checkout_mode = canLinkOut ? CHECKOUT_LINK_OUT : CHECKOUT_HUB;
+      row.checkout_mode = resolveRequestedCheckoutMode(rawMode, { canConnected, canLinkOut });
     } else {
       row.checkout_mode = CHECKOUT_HUB;
     }

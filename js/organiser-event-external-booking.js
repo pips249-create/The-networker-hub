@@ -144,9 +144,7 @@
       intro.innerHTML =
         '<p>Buyers stay on The Networker UK listing, then go to <strong>your</strong> booking page. No webhook or attendee sync — just the redirect button.</p>';
     }
-    if (setupLink && on && linkOutOnly) {
-      setupLink.textContent = 'Continue to set booking URL →';
-    }
+    // CTA label is set in refreshCardVisibility (depends on whether a URL exists).
   }
 
   function bindPlanLink() {
@@ -407,6 +405,36 @@
     });
   }
 
+  function refreshCurrentBookingLinkUi() {
+    var wrap = document.getElementById('ee-external-booking-current');
+    var linkEl = document.getElementById('ee-external-booking-current-link');
+    var priceEl = document.getElementById('ee-external-booking-current-price');
+    if (!wrap || !linkEl) return;
+    var url = String(
+      (loadedEvent && (loadedEvent.externalBookingUrl || loadedEvent.external_booking_url)) || ''
+    ).trim();
+    var price = String(
+      (loadedEvent && (loadedEvent.externalPriceLabel || loadedEvent.external_price_label)) || ''
+    ).trim();
+    if (!url) {
+      wrap.hidden = true;
+      linkEl.removeAttribute('href');
+      linkEl.textContent = '';
+      if (priceEl) {
+        priceEl.hidden = true;
+        priceEl.textContent = '';
+      }
+      return;
+    }
+    wrap.hidden = false;
+    linkEl.href = url;
+    linkEl.textContent = url;
+    if (priceEl) {
+      priceEl.hidden = !price;
+      priceEl.textContent = price ? 'Listed price: ' + price : '';
+    }
+  }
+
   function refreshCardVisibility() {
     const show = shouldShowCard();
     card.hidden = !show;
@@ -415,12 +443,14 @@
       document.documentElement.classList.remove('ee-connected-tickets-checking');
       card.classList.remove('is-active');
       showStatus('');
+      refreshCurrentBookingLinkUi();
       return;
     }
 
     const gate = applySlotGateUi();
 
     const eid = resolveEventId();
+    var linkOutOnly = linkOutGranted && !billingActive;
     if (setupLink) {
       var setupHref;
       if (typeof embed.buildEmbedHref === 'function' && eid) {
@@ -436,6 +466,20 @@
           : '/organiser/event-connected-setup';
       }
       setupLink.href = setupHref;
+      var hasBookingUrl = Boolean(
+        String(
+          (loadedEvent && (loadedEvent.externalBookingUrl || loadedEvent.external_booking_url)) || ''
+        ).trim()
+      );
+      if (linkOutOnly) {
+        setupLink.textContent = hasBookingUrl
+          ? 'Change booking link / price →'
+          : 'Continue to set booking URL →';
+      } else if (hasBookingUrl) {
+        setupLink.textContent = 'Edit price & booking link →';
+      } else {
+        setupLink.textContent = 'Continue to Connected setup →';
+      }
       if (eid && setupHref) {
         var pf = document.querySelector('link[data-connected-setup-prefetch]');
         if (!pf) {
@@ -456,15 +500,24 @@
       refreshAccountConnectionStatus();
     }
 
+    refreshCurrentBookingLinkUi();
+
     if (isExternalConnectedEvent(loadedEvent)) {
       card.classList.add('is-active');
       var mode = String((loadedEvent && loadedEvent.checkoutMode) || '').trim();
-      showStatus(
-        mode === 'external_link'
-          ? 'This event uses Link Out. Use Connected event setup to edit the display price and booking link.'
-          : 'This event uses Connected booking. Use Connected event setup to edit price and booking link.',
-        'ok'
-      );
+      if (linkOutOnly) {
+        showStatus(
+          'This event sends buyers to your booking link. Open Change booking link / price to paste the correct Eventbrite (or other) URL for this date.',
+          'ok'
+        );
+      } else {
+        showStatus(
+          mode === 'external_link'
+            ? 'This event uses Link Out. Use Connected event setup to edit the display price and booking link.'
+            : 'This event uses Connected booking. Use Connected event setup to edit price and booking link.',
+          'ok'
+        );
+      }
     } else {
       card.classList.remove('is-active');
       if (!billingActive && !linkOutGranted) {
