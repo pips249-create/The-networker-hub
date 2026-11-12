@@ -2186,11 +2186,10 @@
     setStatus(saveStatus, publish ? 'Publishing…' : 'Saving…');
 
     try {
-      var useLinkOutOnly =
-        billing &&
-        billing.linkOutGranted &&
-        !billing.active &&
-        String((loadedEvent && loadedEvent.checkoutMode) || '') !== 'external_connected';
+      // Link Out–only accounts always save as external_link — including when the
+      // event was previously tagged external_connected (otherwise URL edits fail
+      // Connected entitlement / slot checks and organisers cannot fix a wrong CTA).
+      var useLinkOutOnly = Boolean(billing && billing.linkOutGranted && !billing.active);
 
       // Link Out / own-site redirects do not need a provider event link.
       if (!useLinkOutOnly && !linkOutOnly) {

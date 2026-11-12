@@ -139,6 +139,9 @@ function mapEventRow(row, orgById, commerceStats, cancellationRow) {
     featured_until: row.featured_until || null,
     featuredUntil: row.featured_until || null,
     locked: Boolean(row.locked),
+    checkout_mode: String(row.checkout_mode || 'hub').trim() || 'hub',
+    external_booking_url: String(row.external_booking_url || '').trim(),
+    external_price_label: String(row.external_price_label || '').trim(),
     registration_count: registrationCount,
     paid_booking_count: paidBookingCount,
     cancellation_id: cancellationRow?.id || null,
@@ -179,7 +182,7 @@ async function listEventsForAdmin(query) {
   let dbQuery = sb.from('events').select(
     light
       ? 'id, title, organiser_id, starts_at, event_type, slug, city, featured, featured_until'
-      : 'id, title, description, image_url, photo_url, organiser_id, starts_at, ends_at, event_type, meeting_type, status, approval_status, vat_treatment, slug, city, venue, address, postcode, meeting_link, featured, featured_until, created_at, locked, airtable_id, checkout_mode, external_booking_url',
+      : 'id, title, description, image_url, photo_url, organiser_id, starts_at, ends_at, event_type, meeting_type, status, approval_status, vat_treatment, slug, city, venue, address, postcode, meeting_link, featured, featured_until, created_at, locked, airtable_id, checkout_mode, external_booking_url, external_price_label',
     { count: 'exact' }
   );
 
@@ -420,6 +423,35 @@ async function buildEventPatchFromBody(body) {
       throw err;
     }
     patch.vat_treatment = vat || null;
+  }
+  if (
+    Object.prototype.hasOwnProperty.call(body, 'checkout_mode') ||
+    Object.prototype.hasOwnProperty.call(body, 'checkoutMode')
+  ) {
+    const { CHECKOUT_HUB, CHECKOUT_EXTERNAL, CHECKOUT_LINK_OUT } = require('../connected-booking-util');
+    const mode = String(body.checkout_mode || body.checkoutMode || CHECKOUT_HUB).trim();
+    if (mode && ![CHECKOUT_HUB, CHECKOUT_EXTERNAL, CHECKOUT_LINK_OUT].includes(mode)) {
+      const err = new Error('invalid_checkout_mode');
+      err.status = 400;
+      throw err;
+    }
+    patch.checkout_mode = mode || CHECKOUT_HUB;
+  }
+  if (
+    Object.prototype.hasOwnProperty.call(body, 'external_booking_url') ||
+    Object.prototype.hasOwnProperty.call(body, 'externalBookingUrl')
+  ) {
+    const { normalizeExternalBookingUrl } = require('../connected-booking-util');
+    patch.external_booking_url =
+      normalizeExternalBookingUrl(body.external_booking_url || body.externalBookingUrl) || null;
+  }
+  if (
+    Object.prototype.hasOwnProperty.call(body, 'external_price_label') ||
+    Object.prototype.hasOwnProperty.call(body, 'externalPriceLabel')
+  ) {
+    const { normalizeExternalPriceLabel } = require('../connected-booking-util');
+    patch.external_price_label =
+      normalizeExternalPriceLabel(body.external_price_label || body.externalPriceLabel) || null;
   }
   return patch;
 }

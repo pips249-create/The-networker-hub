@@ -82,6 +82,15 @@
             >
           </p>
           <p class="ee-hint ee-alert-ok" id="ee-connected-account-status" hidden role="status"></p>
+          <div class="ee-hint" id="ee-external-booking-current" hidden role="status">
+            <p class="ee-external-booking-current-label">
+              <strong>Current booking link</strong> (this is what the public “Book on …” button opens)
+            </p>
+            <p class="ee-external-booking-current-url">
+              <a id="ee-external-booking-current-link" href="#" target="_blank" rel="noopener noreferrer"></a>
+            </p>
+            <p class="ee-hint" id="ee-external-booking-current-price" hidden></p>
+          </div>
           <p class="ee-attendance-next">
             <a class="ee-btn ee-btn-gold" id="ee-connected-setup-link" href="/organiser/event-connected-setup"
               >Continue to Connected setup →</a
@@ -769,6 +778,6 @@
     <script src="../js/organiser-launch-setup.js?v=20260820hubreview1" defer></script>
     <script src="../js/organiser-event-tickets.js?v=20260910tickets1" defer></script>
     <script src="../js/organiser-connected-platform.js?v=20261029book1" defer></script>
-    <script src="../js/organiser-event-external-booking.js?v=20261029book1" defer></script>
+    <script src="../js/organiser-event-external-booking.js?v=20261112linkout1" defer></script>
   </body>
 </html>
