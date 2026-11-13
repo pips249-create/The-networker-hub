@@ -611,24 +611,6 @@ a:hover { color: var(--charcoal); }
   align-items: center;
   gap: 4px;
 }
-.nav-actions:has(.nav-auth) .nav-organiser {
-  background: transparent;
-  border-color: rgba(74, 68, 70, 0.28);
-  font-weight: 600;
-  color: var(--charcoal) !important;
-}
-.nav-actions:has(.nav-auth) .nav-organiser:hover,
-.nav-actions:has(.nav-auth) .nav-list-dropdown.is-open .nav-organiser {
-  background: rgba(194, 153, 209, 0.12);
-  border-color: rgba(194, 153, 209, 0.55);
-  color: var(--charcoal) !important;
-}
-.nav-actions:has(.nav-auth) .nav-organiser[aria-current="page"],
-.nav-actions:has(.nav-auth) .nav-organiser.is-active {
-  background: var(--gold-light);
-  border-color: rgba(184, 149, 106, 0.55);
-  color: var(--charcoal) !important;
-}
 
 .nav-signin {
   display: inline-flex !important;

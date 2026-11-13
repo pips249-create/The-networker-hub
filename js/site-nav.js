@@ -120,7 +120,7 @@
  * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260922dash1';
+  var NAV_BUILD = '20261110guestnav1';
   var LOGO_SRC = '/assets/logo-nav-transparent.png?v=20260823uk3';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
@@ -758,7 +758,7 @@
 
   function isMoreNavActive() {
     return (
-      isLinkActive('organisers') ||
+      isLinkActive('for-organisers') ||
       isLinkActive('rankings') ||
       isLinkActive('faq') ||
       isLinkActive('contact')
@@ -767,7 +767,6 @@
 
   function moreNavDropdownHtml(opts) {
     var early = opts && opts.earlyAccess;
-    var organiserActive = isLinkActive('organisers') ? ' aria-current="page"' : '';
     var rankingsActive = isLinkActive('rankings') ? ' aria-current="page"' : '';
     var faqActive = isLinkActive('faq') ? ' aria-current="page"' : '';
     var contactActive = isLinkActive('contact') ? ' aria-current="page"' : '';
@@ -780,10 +779,10 @@
     } else {
       items +=
         '<a role="menuitem" class="nav-dropdown-item" href="' +
-        href('/events/?mode=organisers') +
+        href('/for-organisers') +
         '"' +
-        organiserActive +
-        '>Organisers</a>' +
+        (isLinkActive('for-organisers') ? ' aria-current="page"' : '') +
+        '>For organisers</a>' +
         '<a role="menuitem" class="nav-dropdown-item" href="' +
         href('/rankings') +
         '"' +
@@ -837,12 +836,7 @@
     } else {
       html += link('/events/', 'Events', 'events');
       html += link('/opportunities/', 'Opportunities', 'opportunities');
-      if (!user) {
-        html += link('/for-organisers', 'For organisers', 'for-organisers');
-      }
-      if (user) {
-        html += link('/events/?mode=organisers', 'Organisers', 'organisers');
-      }
+      html += link('/events/?mode=organisers', 'Organisers', 'organisers');
       html += link('/advertising', 'Advertise', 'advertising');
     }
     if (pending && !user) {

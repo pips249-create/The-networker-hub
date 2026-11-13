@@ -41,7 +41,7 @@ assert(/cookie-consent\.css\?v=20261101cookie1/.test(bootstrap), 'bootstrap cach
 assert(/BUILD = '20261101cookie1'/.test(bootstrap), 'bootstrap BUILD matches cookie fix');
 assert(/isAuthChromePage/.test(siteNav), 'site-nav skips redundant Sign in on auth pages');
 assert(/auth\.css\?v=20261101signin1/.test(loginHtml), 'login.html cache-busts auth.css');
-assert(/site-nav\.js\?v=20261101signin1/.test(loginHtml), 'login.html cache-busts site-nav.js');
+assert(/site-nav\.js\?v=20261110guestnav1/.test(loginHtml), 'login.html cache-busts site-nav.js');
 
 if (failed) {
   console.error(failed + ' check(s) failed');
