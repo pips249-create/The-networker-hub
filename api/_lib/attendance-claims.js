@@ -294,12 +294,10 @@ async function sendClaimConfirmedReviewEmail(claim, eventRow, attendee, organise
     .trim()
     .toLowerCase();
   if (!to) return;
-  const reviewUrl =
-    siteUrl +
-    '/account/?route=past&claimReview=' +
-    encodeURIComponent(claim.id) +
-    '&eventId=' +
-    encodeURIComponent(claim.event_id);
+  // Must match attendee-dashboard deep links (?review= / #review/) — claimReview/route=
+  // query params are not read by the account UI.
+  const eventId = encodeURIComponent(String(claim.event_id || '').trim());
+  const reviewUrl = siteUrl + '/account/?review=' + eventId + '#review/' + eventId;
   const organiserName = String(organiser?.name || 'the organiser').trim();
   const eventDate = eventRow?.starts_at
     ? new Date(eventRow.starts_at).toLocaleDateString('en-GB', {
@@ -319,7 +317,7 @@ async function sendClaimConfirmedReviewEmail(claim, eventRow, attendee, organise
       event_date: eventDate,
       organiser_name: organiserName,
       review_url: reviewUrl,
-      dashboard_url: siteUrl + '/account/?route=past',
+      dashboard_url: siteUrl + '/account/#past',
     },
   });
 }

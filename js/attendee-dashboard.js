@@ -1879,6 +1879,11 @@
     for (let i = 0; i < registrations.length; i++) {
       if (String(registrations[i].eventId) === key) return registrations[i];
     }
+    // Claim-only attendance rows live in pastList(), not registrations[].
+    const past = pastList();
+    for (let j = 0; j < past.length; j++) {
+      if (String(past[j].eventId) === key) return past[j];
+    }
     return null;
   }
 
@@ -2096,8 +2101,14 @@
   }
 
   function reviewEventIdFromLocation() {
-    const fromQuery = new URLSearchParams(location.search).get('review');
+    const params = new URLSearchParams(location.search);
+    const fromQuery = params.get('review');
     if (fromQuery) return String(fromQuery).trim();
+    // Legacy claim-confirmed emails used ?claimReview=&eventId= (never wired).
+    const fromLegacyEvent = params.get('eventId');
+    if (fromLegacyEvent && (params.get('claimReview') || params.get('route') === 'past')) {
+      return String(fromLegacyEvent).trim();
+    }
     return reviewEventIdFromHash(location.hash);
   }
 
@@ -2749,6 +2760,9 @@
       const clean = new URL(location.href);
       clean.searchParams.delete('review');
       clean.searchParams.delete('rating');
+      clean.searchParams.delete('claimReview');
+      clean.searchParams.delete('eventId');
+      clean.searchParams.delete('route');
       history.replaceState(null, '', clean.pathname + clean.search + '#reviews-pending');
     } catch {
       history.replaceState(null, '', location.pathname + '#reviews-pending');
