@@ -7,6 +7,11 @@ const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { adminViewFromSession, resolveOrganiserGroupScope } = require('../organiser-api-scope');
 const { jsonPublicError } = require('../public-error');
 const { arePublicTicketSalesOpen } = require('../soft-launch');
+const {
+  listTicketInterestNudgesForEventIds,
+  mapNudgeLead,
+  notifyTicketInterestNudgersSalesOpen,
+} = require('../ticket-sales-nudge-followup');
 
 const EVENT_NOT_OWNED = {
   error: 'event_not_owned',
@@ -14,11 +19,32 @@ const EVENT_NOT_OWNED = {
     'This event is not on the organiser pages for this account. If you are impersonating, impersonate the group that owns the listing, then open tickets from My Events.',
 };
 
-function enableSalesSuccessMessage() {
+function enableSalesSuccessMessage(interestNotified) {
+  const notified = Number(interestNotified) || 0;
+  const notifyBit =
+    notified === 1
+      ? ' We emailed 1 person who asked about tickets.'
+      : notified > 1
+        ? ' We emailed ' + notified + ' people who asked about tickets.'
+        : '';
   if (arePublicTicketSalesOpen()) {
-    return 'Ticket sales are now live on your public event page.';
+    return 'Ticket sales are now live on your public event page.' + notifyBit;
   }
-  return 'Ticket sales are enabled on your listing. Public buying opens at 9am on 1 September 2026 — until then people can browse your event.';
+  return (
+    'Ticket sales are enabled on your listing. Public buying opens at 9am on 1 September 2026 — until then people can browse your event.' +
+    notifyBit
+  );
+}
+
+function parseEventIdsFromQuery(req) {
+  const single = String(req.query?.eventId || '').trim();
+  const multi = String(req.query?.eventIds || '')
+    .split(',')
+    .map((id) => String(id || '').trim())
+    .filter(Boolean);
+  if (multi.length) return [...new Set(multi)];
+  if (single) return [single];
+  return [];
 }
 
 function requestHasPaidTickets(tiers, alumniFastPass) {
@@ -82,14 +108,54 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === 'GET') {
-    const eventId = String(req.query?.eventId || '').trim();
+    const scopedEventIds = parseEventIdsFromQuery(req);
     try {
-      if (eventId) {
+      if (scopedEventIds.length) {
         const { groupIds, adminView } = await ownedEventIds();
-        const ids = await filterOwnedEventIds([eventId], groupIds, adminView);
+        const ids = await filterOwnedEventIds(scopedEventIds, groupIds, adminView);
         if (!ids.length) return json(res, 403, EVENT_NOT_OWNED);
         const tickets = await listTicketsForSession(auth.session, ids);
-        return json(res, 200, { ok: true, tickets });
+        let ticketInterest = [];
+        try {
+          let rows = await listTicketInterestNudgesForEventIds(ids);
+          const pendingEventIds = [
+            ...new Set(
+              rows
+                .filter((row) => !row.notified_at)
+                .map((row) => String(row.event_id || '').trim())
+                .filter(Boolean)
+            ),
+          ];
+          if (pendingEventIds.length && isSupabaseConfigured()) {
+            const sb = getSupabaseAdmin();
+            const { data: salesRows } = await sb
+              .from('events')
+              .select('id, ticket_sales_enabled')
+              .in('id', pendingEventIds)
+              .eq('ticket_sales_enabled', true);
+            for (const row of salesRows || []) {
+              try {
+                await notifyTicketInterestNudgersSalesOpen(row.id);
+              } catch (notifyErr) {
+                console.warn(
+                  '[organiser-tickets] interest heal notify failed',
+                  row.id,
+                  notifyErr && notifyErr.message ? notifyErr.message : notifyErr
+                );
+              }
+            }
+            if ((salesRows || []).length) {
+              rows = await listTicketInterestNudgesForEventIds(ids);
+            }
+          }
+          ticketInterest = rows.map(mapNudgeLead);
+        } catch (interestErr) {
+          console.warn(
+            '[organiser-tickets] ticket interest load failed',
+            interestErr && interestErr.message ? interestErr.message : interestErr
+          );
+        }
+        return json(res, 200, { ok: true, tickets, ticketInterest });
       }
       const { groupIds, adminView } = await ownedEventIds();
       const ids = await listEventIdsForOrganiserGroups(groupIds, false);
@@ -306,10 +372,12 @@ module.exports = async function handler(req, res) {
       const ids = await filterOwnedEventIds([eventId], groupIds, adminView);
       if (!ids.length) return json(res, 403, EVENT_NOT_OWNED);
       const event = await enableTicketSalesForEvent(auth.session, eventId, groupIds);
+      const interestNotified = Number(event && event.interestNotified) || 0;
       return json(res, 200, {
         ok: true,
         event,
-        message: enableSalesSuccessMessage(),
+        interestNotified,
+        message: enableSalesSuccessMessage(interestNotified),
       });
     } catch (e) {
       return jsonPublicError(res, json, e, { code: e.code || 'enable_sales_failed', logLabel: '[organiser-tickets]' });

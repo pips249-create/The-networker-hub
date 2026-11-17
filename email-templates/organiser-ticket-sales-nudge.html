@@ -52,8 +52,20 @@
               <tr><td style="width:52px;height:52px;background:#daeeff;border-radius:50%;text-align:center;vertical-align:middle;font-size:24px;color:#4aa8f0;line-height:52px;">&#127915;</td></tr>
             </table>
             <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#4aa8f0;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Ticket interest</p>
-            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#1c2040;margin:0 0 10px;line-height:1.15;">Someone wants tickets for {{event_name}}</h1>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">Hi {{organiser_name}}, someone tried to get tickets for your event, but ticket sales are not enabled yet.</p>
+            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#1c2040;margin:0 0 10px;line-height:1.15;">{{interest_headline}}</h1>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">Hi {{organiser_name}}, {{interest_summary}} Ticket sales are not enabled yet — turn them on so we can email waiting people a booking link.</p>
+          </td>
+        </tr>
+        <tr>
+          <td class="mobile-pad" style="padding:0 40px 16px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f0f7fc;border-radius:14px;border:1px solid #cfe3f5;">
+              <tr>
+                <td style="padding:18px 20px;text-align:center;">
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:700;color:#1c2040;margin:0 0 4px;line-height:1;">{{interest_count}}</p>
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:14px;font-weight:600;color:#4aa8f0;margin:0;">{{interest_count_label}}</p>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
         <tr>
@@ -63,7 +75,7 @@
         </tr>
         <tr>
           <td class="mobile-pad" style="padding:0 40px 28px;text-align:center;">
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.65;color:#635c5e;margin:0;">You can also <a href="{{dashboard_url}}" style="color:#4aa8f0;text-decoration:none;">open your organiser dashboard</a> and review the event before switching sales on.</p>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.65;color:#635c5e;margin:0;">Names and emails stay on your <a href="{{tickets_url}}" style="color:#4aa8f0;text-decoration:none;">tickets page</a> under Ticket interest. You can also <a href="{{dashboard_url}}" style="color:#4aa8f0;text-decoration:none;">open My Events</a> to see waiting counts on each listing.</p>
           </td>
         </tr>
         <!-- hub-email-layout-v3-purple -->

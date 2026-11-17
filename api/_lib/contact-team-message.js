@@ -7,9 +7,9 @@
  *   so messages are not lost if hi@ is not forwarded yet
  * - also sends a short confirmation to the submitter
  */
-const { sendViaResend } = require('./send-template-email');
+const { sendViaResend, sendTemplatedEmail } = require('./send-template-email');
 const { SUPPORT_EMAIL } = require('./hub-brand');
-const { supportEmail } = require('./hub-email-urls');
+const { supportEmail, contactUrl, emailSiteBase } = require('./hub-email-urls');
 
 const DEFAULT_TEAM_FALLBACKS = [
   'catherine@thenetworkeruk.com',
@@ -115,19 +115,6 @@ function buildStaffEmailHtml(input) {
   );
 }
 
-function buildConfirmationEmailHtml(input) {
-  return (
-    '<div style="font-family:DM Sans,Arial,sans-serif;line-height:1.55;color:#2d2636;max-width:560px;">' +
-    '<p style="margin:0 0 12px;">Hi ' +
-    escHtml(input.name) +
-    ',</p>' +
-    '<p style="margin:0 0 12px;">Thanks for contacting The Networker UK. Rosie and Catherine have your message and will pick it up during office hours (Mon–Fri, 9am–5pm UK).</p>' +
-    '<p style="margin:0 0 12px;">If it is urgent, reply to this email or write to <a href="mailto:hi@thenetworkeruk.com">hi@thenetworkeruk.com</a>.</p>' +
-    '<p style="margin:0;">The Networker UK<br><a href="https://www.thenetworkeruk.com/contact">thenetworkeruk.com/contact</a></p>' +
-    '</div>'
-  );
-}
-
 async function sendStaffNotifications(input, recipients) {
   const subject = 'Contact from ' + input.name;
   const html = buildStaffEmailHtml(input);
@@ -180,13 +167,15 @@ async function submitContactTeamMessage(body) {
   }
 
   try {
-    await sendViaResend({
+    await sendTemplatedEmail({
+      slug: 'contact_team_confirm',
       to: input.email,
-      subject: 'We received your message — The Networker UK',
-      html: buildConfirmationEmailHtml(input),
       replyTo: recipients[0],
-      skipAllowlist: true,
-      tags: [{ name: 'category', value: 'contact_team_confirm' }],
+      skipEmailCheck: true,
+      variables: {
+        contact_name: input.name,
+        contact_url: contactUrl(emailSiteBase(process.env.SITE_URL)),
+      },
     });
   } catch (e) {
     console.error('[contact-team-message-confirm]', e && e.message ? e.message : e);

@@ -242,6 +242,7 @@ async function skipFavouriteSalesAlertIfAlreadyOnSale(sb, favouriteId, eventId) 
 
 module.exports = {
   formatEventDateTime,
+  buildOrganiserAvatarHtml,
   buildSavedEventTicketsOpenVars,
   sendDueFavouriteSalesEmails,
   skipFavouriteSalesAlertIfAlreadyOnSale,

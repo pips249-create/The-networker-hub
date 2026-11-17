@@ -346,7 +346,7 @@
       return data.message || 'That took too long — try Publish again.';
     }
     if (code === 'missing_external_booking_url') {
-      return data.message || 'Enter your booking page URL before publishing.';
+      return data.message || 'Enter a booking page URL or email before publishing.';
     }
     if (code === 'link_out_inactive' || code === 'connected_booking_inactive') {
       return data.message || 'External booking is not enabled on this account yet.';
@@ -611,7 +611,13 @@
     bindEmbedDrawerNav();
 
     if (qs('ecs-price-label')) qs('ecs-price-label').value = ev.externalPriceLabel || ev.external_price_label || '';
-    if (qs('ecs-booking-url')) qs('ecs-booking-url').value = ev.externalBookingUrl || ev.external_booking_url || '';
+    if (qs('ecs-booking-url')) {
+      var loadedUrl = String(ev.externalBookingUrl || ev.external_booking_url || '').trim();
+      if (/^mailto:/i.test(loadedUrl)) {
+        loadedUrl = loadedUrl.replace(/^mailto:/i, '').split('?')[0];
+      }
+      qs('ecs-booking-url').value = loadedUrl;
+    }
     if (qs('ecs-booking-note')) {
       qs('ecs-booking-note').value = ev.externalBookingNote || ev.external_booking_note || '';
     }
@@ -2115,7 +2121,7 @@
     if (platformHint && linkOutOnly) {
       platformHint.hidden = false;
       platformHint.textContent =
-        'Paste your registration / checkout URL. Buyers leave The Networker UK and complete booking on your site — no webhook needed for Link Out.';
+        'Paste a registration / checkout URL, or an email address for “email to book”. Buyers leave The Networker UK to finish booking — no webhook needed for Link Out.';
     }
     var legalHint = document.querySelector('.ee-connected-legal-hint');
     if (legalHint && linkOutOnly) {
@@ -2174,7 +2180,21 @@
       return;
     }
     if (publish && !url) {
-      setStatus(saveStatus, 'Enter your booking page URL before publishing.', 'error');
+      setStatus(saveStatus, 'Enter a booking page URL or email before publishing.', 'error');
+      return;
+    }
+    if (
+      publish &&
+      url &&
+      window.HubExternalBookingUrl &&
+      typeof window.HubExternalBookingUrl.normalizeExternalBookingUrl === 'function' &&
+      !window.HubExternalBookingUrl.normalizeExternalBookingUrl(url)
+    ) {
+      setStatus(
+        saveStatus,
+        'Use a http(s) booking link, or an email address (e.g. book@yourcompany.com).',
+        'error'
+      );
       return;
     }
     var eventDate = loadedEvent && String(loadedEvent.date || loadedEvent.startsAt || '').trim();
@@ -2236,8 +2256,11 @@
       }
       var savedEv = (res.data && res.data.event) || null;
       if (savedEv && savedEv.externalBookingUrl && qs('ecs-booking-url')) {
-        qs('ecs-booking-url').value = savedEv.externalBookingUrl;
-        payload.externalBookingUrl = savedEv.externalBookingUrl;
+        var savedUrl = String(savedEv.externalBookingUrl || '').trim();
+        payload.externalBookingUrl = savedUrl;
+        qs('ecs-booking-url').value = /^mailto:/i.test(savedUrl)
+          ? savedUrl.replace(/^mailto:/i, '').split('?')[0]
+          : savedUrl;
       } else if (
         window.HubExternalBookingUrl &&
         typeof window.HubExternalBookingUrl.toAttendeeBookingUrl === 'function' &&
@@ -2246,8 +2269,10 @@
       ) {
         var attendeeUrl = window.HubExternalBookingUrl.toAttendeeBookingUrl(url);
         if (attendeeUrl && attendeeUrl !== url) {
-          qs('ecs-booking-url').value = attendeeUrl;
           payload.externalBookingUrl = attendeeUrl;
+          qs('ecs-booking-url').value = /^mailto:/i.test(attendeeUrl)
+            ? attendeeUrl.replace(/^mailto:/i, '').split('?')[0]
+            : attendeeUrl;
         }
       }
       // Merge checkout fields only — never let a partial Link Out payload blank

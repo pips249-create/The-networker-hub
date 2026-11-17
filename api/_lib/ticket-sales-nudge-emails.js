@@ -1,9 +1,18 @@
 /**
- * Email organisers when a visitor wants to buy tickets but sales are not enabled yet.
+ * Email organisers when a visitor wants to buy tickets but sales are not enabled yet,
+ * and confirm to the visitor that they are on the wait list.
  */
 const { getSupabaseAdmin } = require('./supabase');
 const { sendTemplatedEmail } = require('./send-template-email');
-const { siteBase } = require('./hub-email-urls');
+const {
+  siteBase,
+  browseEventsUrl,
+  eventPublicUrl,
+  logoNavUrl,
+  logoFooterUrl,
+  legalPolicyUrl,
+  contactUrl,
+} = require('./hub-email-urls');
 const {
   resolveTicketSalesEnabled,
   eventHasTicketsOnSale,
@@ -11,6 +20,8 @@ const {
   isEventPublishedForSale,
 } = require('./ticket-sales');
 const { arePublicTicketSalesOpen, publicTicketSalesClosedMessage } = require('./soft-launch');
+const { formatEventDateTime } = require('./event-timezone');
+const { countWaitingTicketInterestByEventIds } = require('./ticket-sales-nudge-followup');
 
 function organiserRecipientEmail(organiser, account) {
   const candidates = [
@@ -27,12 +38,44 @@ function organiserRecipientEmail(organiser, account) {
   return null;
 }
 
+function firstName(name, email) {
+  const fromName = String(name || '')
+    .trim()
+    .split(/\s+/)[0];
+  if (fromName) return fromName;
+  const local = String(email || '').split('@')[0];
+  return local || 'there';
+}
+
+function interestCopy(waitingCount) {
+  const n = Math.max(1, Number(waitingCount) || 1);
+  if (n === 1) {
+    return {
+      interest_count: '1',
+      interest_count_label: 'person waiting for tickets',
+      interest_headline: 'Someone wants tickets for {{event_name}}',
+      interest_summary:
+        'someone tried to get tickets for your event and is waiting to hear that sales are open.',
+      interest_subject: 'Someone wants tickets for {{event_name}}',
+    };
+  }
+  return {
+    interest_count: String(n),
+    interest_count_label: 'people waiting for tickets',
+    interest_headline: n + ' people want tickets for {{event_name}}',
+    interest_summary:
+      n +
+      ' people have asked about tickets for your event (including this latest request) and are waiting for sales to open.',
+    interest_subject: n + ' people want tickets for {{event_name}}',
+  };
+}
+
 async function loadNudgeContext(eventId) {
   const sb = getSupabaseAdmin();
   const { data: event, error } = await sb
     .from('events')
     .select(
-      'id, title, slug, starts_at, organiser_id, ticket_sales_enabled, status, approval_status, refund_terms_agreed, refund_terms_agreed_at'
+      'id, title, slug, starts_at, organiser_id, ticket_sales_enabled, status, approval_status, refund_terms_agreed, refund_terms_agreed_at, venue, city, location_label'
     )
     .eq('id', eventId)
     .maybeSingle();
@@ -109,18 +152,20 @@ async function recentNudgeExists(eventId, nudgerEmail, hours) {
   return (data || []).length > 0;
 }
 
-async function sendOrganiserTicketSalesNudgeEmail({ event, organiser, to }) {
+async function sendOrganiserTicketSalesNudgeEmail({ event, organiser, to, waitingCount }) {
   const siteUrl = String(process.env.SITE_URL || 'https://the-networker-hub.vercel.app').replace(/\/$/, '');
   const eventTitle = String(event.title || 'your event').trim();
   const organiserName = String(organiser?.name || 'there').trim();
   const ticketsUrl =
-    siteUrl +
+    siteBase(siteUrl) +
     '/organiser/event-tickets?eventId=' +
-    encodeURIComponent(event.id);
-  const dashboardUrl = siteBase(siteUrl) + '/organiser/';
+    encodeURIComponent(event.id) +
+    '#ticket-interest';
+  const dashboardUrl = siteBase(siteUrl) + '/organiser/#events-list';
+  const copy = interestCopy(waitingCount);
 
   // Keep the requester anonymous in the email so organisers enable Hub sales
-  // rather than contacting the visitor off-platform. Name/email stay in DB.
+  // rather than contacting the visitor off-platform. Name/email stay in DB / tickets panel.
   return sendTemplatedEmail({
     slug: 'organiser_ticket_sales_nudge',
     to,
@@ -129,8 +174,46 @@ async function sendOrganiserTicketSalesNudgeEmail({ event, organiser, to }) {
       event_name: eventTitle,
       tickets_url: ticketsUrl,
       dashboard_url: dashboardUrl,
+      ...copy,
+      // Fill subject/headline after event_name is known (templates may nest poorly).
+      interest_headline:
+        Number(waitingCount) > 1
+          ? Number(waitingCount) + ' people want tickets for ' + eventTitle
+          : 'Someone wants tickets for ' + eventTitle,
+      interest_subject:
+        Number(waitingCount) > 1
+          ? Number(waitingCount) + ' people want tickets for ' + eventTitle
+          : 'Someone wants tickets for ' + eventTitle,
     },
     skipEmailCheck: true,
+  });
+}
+
+async function sendVisitorTicketInterestReceivedEmail({ event, organiser, nudgerEmail, nudgerName }) {
+  const siteUrl = String(process.env.SITE_URL || 'https://the-networker-hub.vercel.app').replace(/\/$/, '');
+  const site = siteBase(siteUrl);
+  const { event_date, event_time } = formatEventDateTime(event.starts_at);
+  const eventWhen = [event_date, event_time].filter(Boolean).join(' · ') || 'See event page';
+  const organiserName = String(organiser?.name || 'the organiser').trim();
+
+  return sendTemplatedEmail({
+    slug: 'ticket_interest_received',
+    to: nudgerEmail,
+    skipEmailCheck: true,
+    variables: {
+      attendee_name: firstName(nudgerName, nudgerEmail),
+      event_name: String(event.title || 'Event').trim(),
+      event_when: eventWhen,
+      event_url: eventPublicUrl(event, site),
+      events_url: browseEventsUrl(site),
+      organiser_name: organiserName,
+      site_url: site,
+      logo_url: logoNavUrl(site),
+      logo_footer_url: logoFooterUrl(site),
+      privacy_url: legalPolicyUrl(site, 'privacy'),
+      terms_url: legalPolicyUrl(site, 'terms'),
+      contact_url: contactUrl(site),
+    },
   });
 }
 
@@ -179,12 +262,7 @@ async function nudgeOrganiserForTicketSales({ eventId, nudgerEmail, nudgerName, 
   const note = String(message || '').trim().slice(0, 500);
   const name = String(nudgerName || '').trim().slice(0, 120);
 
-  const emailResult = await sendOrganiserTicketSalesNudgeEmail({
-    event: ctx.event,
-    organiser: ctx.organiser,
-    to: ctx.to,
-  });
-
+  // Record first so the organiser workspace shows the lead even if email sending fails.
   const row = await recordTicketSalesNudge({
     event: ctx.event,
     nudgerEmail: email,
@@ -192,7 +270,41 @@ async function nudgeOrganiserForTicketSales({ eventId, nudgerEmail, nudgerName, 
     message: note,
   });
 
-  return { nudgeId: row.id, emailResult, organiserEmail: ctx.to };
+  let waitingCount = 1;
+  try {
+    const counts = await countWaitingTicketInterestByEventIds([ctx.event.id]);
+    waitingCount = Math.max(1, Number(counts.get(String(ctx.event.id))) || 1);
+  } catch {
+    waitingCount = 1;
+  }
+
+  const emailResult = await sendOrganiserTicketSalesNudgeEmail({
+    event: ctx.event,
+    organiser: ctx.organiser,
+    to: ctx.to,
+    waitingCount,
+  });
+
+  try {
+    await sendVisitorTicketInterestReceivedEmail({
+      event: ctx.event,
+      organiser: ctx.organiser,
+      nudgerEmail: email,
+      nudgerName: name,
+    });
+  } catch (visitorErr) {
+    console.warn(
+      '[ticket-sales-nudge] visitor confirmation failed',
+      visitorErr && visitorErr.message ? visitorErr.message : visitorErr
+    );
+  }
+
+  return {
+    nudgeId: row.id,
+    emailResult,
+    organiserEmail: ctx.to,
+    waitingCount,
+  };
 }
 
 module.exports = {

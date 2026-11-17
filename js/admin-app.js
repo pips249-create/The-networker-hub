@@ -607,6 +607,14 @@
     loading: false,
     selected: {},
     expanded: {},
+    seriesExpanded: {},
+    seriesEditExpanded: {},
+    seriesEditPeers: {},
+  };
+  var eventCreateCalState = {
+    selected: {},
+    year: new Date().getFullYear(),
+    month: new Date().getMonth(),
   };
   var opportunityCleanupState = {
     status: '',
@@ -16725,6 +16733,7 @@
         slug === 'booking_reminder' ||
         slug === 'account_welcome' ||
         slug === 'saved_event_tickets_open' ||
+        slug === 'ticket_interest_sales_open' ||
         slug === 'organiser_new_registration' ||
         slug === 'organiser_new_application' ||
         slug === 'application_received' ||
@@ -16866,7 +16875,11 @@
       else if (slug === 'booking_reminder') applyPreviewReminderFormat();
       else if (slug === 'organiser_new_registration' || slug === 'organiser_new_application') {
         applyPreviewOrganiserFormat();
-      } else if (slug === 'account_welcome' || slug === 'saved_event_tickets_open') {
+      } else if (
+        slug === 'account_welcome' ||
+        slug === 'saved_event_tickets_open' ||
+        slug === 'ticket_interest_sales_open'
+      ) {
         applyPreviewAccountWelcomeFormat();
       } else if (
         slug === 'post_event_review_request' ||
@@ -17109,6 +17122,12 @@
         'Day-10 follow-up if still no booking after the day-3 nudge. Marketing opt-in only; skips organisers. Events directory sponsor.',
       saved_event_tickets_open:
         'When tickets go on sale for an event you saved. Saving an event also follows the group — new listings from that group use a separate email.',
+      ticket_interest_sales_open:
+        'When Hub ticket sales are enabled for an event, emails people who asked to be notified (ticket interest nudge). One email per address; marks the nudge notified.',
+      ticket_interest_received:
+        'Confirmation to the visitor after they ask about tickets on a listing with sales off. Promise: we email again when sales open.',
+      organiser_ticket_sales_nudge:
+        'Organiser alert when someone asks about tickets. Stays anonymous; includes waiting count and deep-link to the tickets interest panel.',
       saved_organiser_new_listing:
         'When a saved/followed group publishes a new event (including groups auto-saved when you save one of their events).',
       saved_opportunity_closing_soon:
@@ -17132,6 +17151,8 @@
       'booking_reminder',
       'account_welcome',
       'saved_event_tickets_open',
+      'ticket_interest_sales_open',
+      'ticket_interest_received',
       'saved_organiser_new_listing',
       'online_join_reminder',
       'meeting_link_added',
@@ -18461,30 +18482,172 @@
     );
   }
 
-  function bindEventCreateDatesSection() {
-    var list = document.getElementById('event-create-dates-list');
-    var addBtn = document.getElementById('event-create-add-date');
-    if (!list || list.dataset.bound === '1') return;
-    list.dataset.bound = '1';
-    if (!list.children.length) {
-      list.innerHTML = eventCreateDateRowHtml('');
+  function eventCreateDateKey(year, monthIndex, day) {
+    return (
+      String(year) +
+      '-' +
+      String(monthIndex + 1).padStart(2, '0') +
+      '-' +
+      String(day).padStart(2, '0')
+    );
+  }
+
+  function eventCreateSelectedDateKeys() {
+    return Object.keys(eventCreateCalState.selected)
+      .filter(function (key) {
+        return eventCreateCalState.selected[key];
+      })
+      .sort();
+  }
+
+  function formatEventCreateSelectedDate(key) {
+    var parts = String(key || '').split('-').map(Number);
+    if (parts.length !== 3 || !parts[0]) return key;
+    var d = new Date(parts[0], parts[1] - 1, parts[2]);
+    if (Number.isNaN(d.getTime())) return key;
+    return d.toLocaleDateString('en-GB', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  }
+
+  function renderEventCreateSelectedDates() {
+    var countEl = document.getElementById('event-create-date-count');
+    var listEl = document.getElementById('event-create-date-list');
+    var keys = eventCreateSelectedDateKeys();
+    if (countEl) countEl.textContent = String(keys.length);
+    if (!listEl) return;
+    listEl.innerHTML = keys
+      .map(function (key) {
+        return (
+          '<li class="flex items-center justify-between gap-2">' +
+          '<span>' +
+          esc(formatEventCreateSelectedDate(key)) +
+          '</span>' +
+          '<button type="button" class="event-create-cal-remove text-[11px] font-semibold text-slate-500 hover:text-brand-800" data-date-key="' +
+          attrEsc(key) +
+          '">Remove</button></li>'
+        );
+      })
+      .join('');
+  }
+
+  function renderEventCreateCalendar() {
+    var grid = document.getElementById('event-create-cal-days');
+    var label = document.getElementById('event-create-cal-month-label');
+    if (!grid) return;
+    var year = eventCreateCalState.year;
+    var month = eventCreateCalState.month;
+    var first = new Date(year, month, 1);
+    if (label) {
+      label.textContent = first.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
     }
-    if (addBtn) {
-      addBtn.addEventListener('click', function () {
-        list.insertAdjacentHTML('beforeend', eventCreateDateRowHtml(''));
+    var startDow = (first.getDay() + 6) % 7;
+    var daysInMonth = new Date(year, month + 1, 0).getDate();
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var html = [];
+    var prevMonthDays = new Date(year, month, 0).getDate();
+    for (var i = 0; i < startDow; i += 1) {
+      html.push(
+        '<button type="button" class="admin-event-cal-day is-other" disabled>' +
+          (prevMonthDays - startDow + i + 1) +
+          '</button>'
+      );
+    }
+    for (var d = 1; d <= daysInMonth; d += 1) {
+      var key = eventCreateDateKey(year, month, d);
+      var cellDate = new Date(year, month, d);
+      var classes = 'admin-event-cal-day';
+      var disabled = '';
+      if (eventCreateCalState.selected[key]) classes += ' is-selected';
+      if (cellDate < today) {
+        classes += ' is-past';
+        disabled = ' disabled';
+      }
+      html.push(
+        '<button type="button" class="' +
+          classes +
+          '" data-date-key="' +
+          attrEsc(key) +
+          '"' +
+          disabled +
+          '>' +
+          d +
+          '</button>'
+      );
+    }
+    var totalCells = startDow + daysInMonth;
+    var trailing = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+    for (var t = 1; t <= trailing; t += 1) {
+      html.push(
+        '<button type="button" class="admin-event-cal-day is-other" disabled>' + t + '</button>'
+      );
+    }
+    grid.innerHTML = html.join('');
+    renderEventCreateSelectedDates();
+  }
+
+  function resetEventCreateCalendarSelection() {
+    eventCreateCalState.selected = {};
+    var now = new Date();
+    eventCreateCalState.year = now.getFullYear();
+    eventCreateCalState.month = now.getMonth();
+    renderEventCreateCalendar();
+  }
+
+  function bindEventCreateDatesSection() {
+    var root = document.getElementById('event-create-calendar');
+    if (!root || root.dataset.bound === '1') return;
+    root.dataset.bound = '1';
+    var prev = document.getElementById('event-create-cal-prev');
+    var next = document.getElementById('event-create-cal-next');
+    var days = document.getElementById('event-create-cal-days');
+    var selectedList = document.getElementById('event-create-date-list');
+    if (prev) {
+      prev.addEventListener('click', function () {
+        eventCreateCalState.month -= 1;
+        if (eventCreateCalState.month < 0) {
+          eventCreateCalState.month = 11;
+          eventCreateCalState.year -= 1;
+        }
+        renderEventCreateCalendar();
       });
     }
-    list.addEventListener('click', function (e) {
-      var removeBtn = e.target.closest('.event-create-remove-date');
-      if (!removeBtn) return;
-      var row = removeBtn.closest('.event-create-date-row');
-      if (!row) return;
-      if (list.querySelectorAll('.event-create-date-row').length <= 1) {
-        row.querySelector('input[type="date"]').value = '';
-        return;
-      }
-      row.remove();
-    });
+    if (next) {
+      next.addEventListener('click', function () {
+        eventCreateCalState.month += 1;
+        if (eventCreateCalState.month > 11) {
+          eventCreateCalState.month = 0;
+          eventCreateCalState.year += 1;
+        }
+        renderEventCreateCalendar();
+      });
+    }
+    if (days) {
+      days.addEventListener('click', function (e) {
+        var btn = e.target.closest('.admin-event-cal-day[data-date-key]');
+        if (!btn || btn.disabled) return;
+        var key = btn.getAttribute('data-date-key');
+        if (!key) return;
+        if (eventCreateCalState.selected[key]) delete eventCreateCalState.selected[key];
+        else eventCreateCalState.selected[key] = true;
+        renderEventCreateCalendar();
+      });
+    }
+    if (selectedList) {
+      selectedList.addEventListener('click', function (e) {
+        var removeBtn = e.target.closest('.event-create-cal-remove[data-date-key]');
+        if (!removeBtn) return;
+        var key = removeBtn.getAttribute('data-date-key');
+        if (!key) return;
+        delete eventCreateCalState.selected[key];
+        renderEventCreateCalendar();
+      });
+    }
+    renderEventCreateCalendar();
   }
 
   function syncEventCreateTicketFields(form) {
@@ -18542,13 +18705,16 @@
   function collectEventCreateOccurrences(form) {
     var startTime = formFieldVal(form, 'start_time') || '10:00';
     var endTime = formFieldVal(form, 'end_time') || defaultEventCreateEndTime(startTime);
-    var dateInputs = form.querySelectorAll('#event-create-dates-list input[type="date"]');
-    var keys = [];
-    dateInputs.forEach(function (input) {
-      var value = String(input.value || '').trim();
-      if (value && keys.indexOf(value) === -1) keys.push(value);
-    });
-    keys.sort();
+    var keys = eventCreateSelectedDateKeys();
+    // Fallback for event-intake create forms that still use stacked date inputs.
+    if (!keys.length && form) {
+      var dateInputs = form.querySelectorAll('.ei-create-dates input[type="date"], #event-create-dates-list input[type="date"]');
+      dateInputs.forEach(function (input) {
+        var value = String(input.value || '').trim();
+        if (value && keys.indexOf(value) === -1) keys.push(value);
+      });
+      keys.sort();
+    }
     return keys.map(function (key) {
       return {
         date: combineEventCreateDateTime(key, startTime),
@@ -18562,10 +18728,7 @@
     form.reset();
     var startTime = formField(form, 'start_time');
     if (startTime) startTime.value = '10:00';
-    var list = document.getElementById('event-create-dates-list');
-    if (list) {
-      list.innerHTML = eventCreateDateRowHtml('');
-    }
+    resetEventCreateCalendarSelection();
     delete adminLogoPending['event-create-photo'];
     var photoPreview = form.querySelector('[data-admin-logo-key="event-create-photo"] .admin-logo-preview');
     var photoPlaceholder = form.querySelector('[data-admin-logo-key="event-create-photo"] .admin-logo-placeholder');
@@ -18868,7 +19031,15 @@
     });
   }
 
-  function eventCleanupEditFormHtml(ev) {
+  function eventCleanupEditFormHtml(ev, opts) {
+    opts = opts || {};
+    var seriesMode = Boolean(opts.seriesMode);
+    var seriesKey = String(opts.seriesKey || '').trim();
+    var seriesIds = Array.isArray(opts.seriesIds) ? opts.seriesIds.filter(Boolean) : [];
+    var seriesCount = seriesIds.length || Number(opts.seriesCount) || 0;
+    var photoKey = seriesMode
+      ? 'event-series-photo-' + (seriesKey || ev.id)
+      : 'event-photo-' + ev.id;
     var orgId = ev.organiser_id || '';
     var orgName = ev.organiser_name || orgId;
     var orgMatch = orgId
@@ -18878,7 +19049,21 @@
     return (
       '<form class="event-cleanup-form grid sm:grid-cols-2 gap-3" data-event-id="' +
       attrEsc(ev.id) +
-      '">' +
+      '"' +
+      (seriesMode
+        ? ' data-series-edit="1" data-series-key="' +
+          attrEsc(seriesKey) +
+          '" data-series-ids="' +
+          attrEsc(seriesIds.join(',')) +
+          '"'
+        : '') +
+      '>' +
+      (seriesMode
+        ? '<div class="sm:col-span-2 rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-xs text-brand-900">' +
+          '<strong>Editing entire series</strong> — title, description, organiser, status, format, Link Out, location, and photo apply to all <strong>' +
+          esc(String(seriesCount || seriesIds.length || '')) +
+          '</strong> dates. Individual dates (day/time) stay as they are — open a single date to change those.</div>'
+        : '') +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
       '<input type="text" name="title" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
       attrEsc(ev.title || '') +
@@ -18919,10 +19104,15 @@
           attrEsc(ev.organiser_email || '') +
           '" placeholder="hello@chapter-leader.com"></div>'
         : '') +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event date</label>' +
-      '<input type="datetime-local" name="starts_at" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
-      attrEsc(toDatetimeLocalValue(ev.starts_at)) +
-      '"></div>' +
+      (seriesMode
+        ? '<div class="sm:col-span-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">' +
+          '<strong class="text-brand-900">Dates stay per occurrence.</strong> ' +
+          esc(eventCleanupSeriesDateRangePlain(opts.seriesMembers || [])) +
+          ' — use <em>Show dates</em> then Edit on one row to change a single day/time.</div>'
+        : '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event date</label>' +
+          '<input type="datetime-local" name="starts_at" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+          attrEsc(toDatetimeLocalValue(ev.starts_at)) +
+          '"></div>') +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Status</label>' +
       '<select name="status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
       eventStatusOptions(ev.status || 'draft', { hideCancelled: eventHasCommerce(ev) }) +
@@ -18957,17 +19147,19 @@
       ((ev.checkout_mode || 'hub') === 'hub' ? ' hidden' : '') +
       '">' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Link Out / Connected booking URL</label>' +
-      '<input type="url" name="external_booking_url" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
-      attrEsc(ev.external_booking_url || '') +
-      '" placeholder="https://www.eventbrite.co.uk/e/…"></div>' +
+      '<input type="text" name="external_booking_url" inputmode="url" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(String(ev.external_booking_url || '').replace(/^mailto:/i, '')) +
+      '" placeholder="https://… or email (book@yourcompany.com)" spellcheck="false"></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">External price label</label>' +
       '<input type="text" name="external_price_label" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
       attrEsc(ev.external_price_label || '') +
       '" placeholder="From £22" maxlength="80"></div></div>' +
       eventLocationFieldsHtml(ev) +
-      eventPhotoFieldHtml('event-photo-' + ev.id, ev.photo_url || '') +
+      eventPhotoFieldHtml(photoKey, ev.photo_url || '') +
       '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
-      '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Save event</button>' +
+      '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">' +
+      (seriesMode ? 'Save all dates' : 'Save event') +
+      '</button>' +
       (ev.organiser_id
         ? '<button type="button" class="rounded-lg border border-slate-300 bg-white text-slate-800 text-sm font-semibold px-4 py-2 hover:bg-slate-50" data-message-organiser-event="' +
           attrEsc(ev.id) +
@@ -18981,33 +19173,47 @@
           attrEsc(ev.title || 'Untitled') +
           '">Email organiser</button>'
         : '<span class="text-xs text-amber-800">Link an organiser before you can email them about this listing.</span>') +
-      (ev.can_reinstate
+      (!seriesMode && ev.can_reinstate
         ? '<button type="button" class="rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-900 text-sm font-semibold px-4 py-2 hover:bg-emerald-100" data-reinstate-event="' +
           attrEsc(ev.id) +
           '" data-reinstate-status="unpublished">Reinstate (unpublished)</button>' +
           '<button type="button" class="rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-900 text-sm font-semibold px-4 py-2 hover:bg-emerald-100" data-reinstate-event="' +
           attrEsc(ev.id) +
           '" data-reinstate-status="published">Reinstate &amp; republish</button>'
-        : ev.status === 'cancelled' && ev.reinstate_blocked_reason
+        : !seriesMode && ev.status === 'cancelled' && ev.reinstate_blocked_reason
           ? '<span class="text-xs text-amber-800">' + esc(ev.reinstate_blocked_reason) + '</span>'
-          : eventHasCommerce(ev)
+          : !seriesMode && eventHasCommerce(ev)
             ? '<button type="button" class="rounded-lg border border-amber-300 bg-amber-50 text-amber-900 text-sm font-semibold px-4 py-2 hover:bg-amber-100" data-unpublish-event="' +
               attrEsc(ev.id) +
               '" data-event-title="' +
               attrEsc(ev.title || 'Untitled') +
               '">Unpublish listing</button>'
-            : '<button type="button" class="rounded-lg border border-red-200 text-red-700 text-sm font-semibold px-4 py-2 hover:bg-red-50" data-delete-event="' +
-              attrEsc(ev.id) +
-              '" data-event-title="' +
-              attrEsc(ev.title || 'Untitled') +
-              '">Delete event</button>') +
+            : !seriesMode
+              ? '<button type="button" class="rounded-lg border border-red-200 text-red-700 text-sm font-semibold px-4 py-2 hover:bg-red-50" data-delete-event="' +
+                attrEsc(ev.id) +
+                '" data-event-title="' +
+                attrEsc(ev.title || 'Untitled') +
+                '">Delete event</button>'
+              : '') +
       '<span class="event-cleanup-msg text-xs"></span></div></form>' +
-      entityActivityPanelHtml({
-        entityType: 'event',
-        entityId: ev.id,
-        organiserId: ev.organiser_id || '',
-      })
+      (seriesMode
+        ? ''
+        : entityActivityPanelHtml({
+            entityType: 'event',
+            entityId: ev.id,
+            organiserId: ev.organiser_id || '',
+          }))
     );
+  }
+
+  function eventCleanupSeriesDateRangePlain(members) {
+    var dated = (members || []).filter(function (ev) {
+      return ev && ev.starts_at;
+    });
+    if (!dated.length) return 'No dates set yet';
+    var first = fmtTime(dated[0].starts_at);
+    if (dated.length === 1) return first;
+    return first + ' → ' + fmtTime(dated[dated.length - 1].starts_at) + ' · ' + dated.length + ' dates';
   }
 
   function readFileAsBase64(file) {
@@ -20110,6 +20316,9 @@
   function goToEventPage(page) {
     eventCleanupState.page = Math.max(0, page);
     eventCleanupState.expanded = {};
+    eventCleanupState.seriesExpanded = {};
+    eventCleanupState.seriesEditExpanded = {};
+    eventCleanupState.seriesEditPeers = {};
     return fetchEventCleanup(eventCleanupState.page)
       .then(applyEventCleanupData)
       .then(function () {
@@ -21054,7 +21263,167 @@
       });
   }
 
+  function eventCleanupSharedPayloadFromForm(form, opts) {
+    opts = opts || {};
+    var payload = Object.assign(
+      {
+        title: formFieldVal(form, 'title'),
+        organiser_id: formFieldVal(form, 'organiser_id') || null,
+        organiser_contact_email: formFieldVal(form, 'organiser_contact_email').trim(),
+        event_type: formFieldVal(form, 'event_type') || null,
+        meeting_type: formFieldVal(form, 'meeting_type') || null,
+        status: formFieldVal(form, 'status') || null,
+        checkout_mode: formFieldVal(form, 'checkout_mode') || 'hub',
+        external_booking_url: formFieldVal(form, 'external_booking_url').trim(),
+        external_price_label: formFieldVal(form, 'external_price_label').trim(),
+      },
+      eventDetailsPayloadFromForm(form)
+    );
+    if (!opts.omitStartsAt) {
+      payload.starts_at = formFieldVal(form, 'starts_at') || null;
+    }
+    return payload;
+  }
+
+  function openEventSeriesEdit(seriesKey) {
+    var group = groupEventCleanupRows(eventCleanupState.items || []).filter(function (g) {
+      return g.key === seriesKey;
+    })[0];
+    if (!group) {
+      renderEventCleanupList();
+      return;
+    }
+    var lead = group.events[0] || {};
+    var seriesGroupId = String(lead.series_group_id || '').trim();
+    var finish = function () {
+      renderEventCleanupList();
+      var panel = main.querySelector(
+        '.event-cleanup-series-panel[data-event-series-panel-for="' + seriesKey + '"]'
+      );
+      if (panel) {
+        bindAdminLogoZones(panel);
+        bindEventFormLocationToggle(panel);
+        bindEventEditOrganiserPickers(panel);
+      }
+    };
+    if (!seriesGroupId || eventCleanupState.seriesEditPeers[seriesKey]) {
+      finish();
+      return;
+    }
+    adminGet(
+      '/api/admin/events?series_group_id=' +
+        encodeURIComponent(seriesGroupId) +
+        '&limit=100&sort=date'
+    )
+      .then(function (data) {
+        var peers = (data && data.events) || [];
+        if (peers.length) {
+          eventCleanupState.seriesEditPeers[seriesKey] = peers.slice().sort(function (a, b) {
+            var ta = a.starts_at ? new Date(a.starts_at).getTime() : Number.POSITIVE_INFINITY;
+            var tb = b.starts_at ? new Date(b.starts_at).getTime() : Number.POSITIVE_INFINITY;
+            return ta - tb;
+          });
+        }
+      })
+      .catch(function () {
+        /* keep page members */
+      })
+      .then(finish);
+  }
+
+  function saveEventSeriesCleanupForm(form) {
+    var seriesKey = form.getAttribute('data-series-key') || '';
+    var ids = String(form.getAttribute('data-series-ids') || '')
+      .split(',')
+      .map(function (id) {
+        return String(id || '').trim();
+      })
+      .filter(Boolean);
+    var msg = form.querySelector('.event-cleanup-msg');
+    var btn = form.querySelector('[type="submit"]');
+    var leadId = ids[0] || form.getAttribute('data-event-id');
+    var photoKey = 'event-series-photo-' + (seriesKey || leadId);
+    if (!ids.length) {
+      if (msg) {
+        msg.textContent = 'No series dates found to update.';
+        msg.className = 'event-cleanup-msg text-xs text-red-700 font-semibold';
+      }
+      return;
+    }
+    if (btn) btn.disabled = true;
+    if (msg) {
+      msg.textContent = 'Saving all ' + ids.length + ' dates…';
+      msg.className = 'event-cleanup-msg text-xs text-slate-500';
+    }
+    var shared = eventCleanupSharedPayloadFromForm(form, { omitStartsAt: true });
+    eventPhotoPayloadForKey(photoKey, form)
+      .then(function (photoPayload) {
+        var leadPayload = Object.assign({ id: leadId }, shared, photoPayload);
+        return adminPost('/api/admin/events', leadPayload).then(function (leadData) {
+          if (!leadData || !leadData.ok) {
+            throw new Error((leadData && (leadData.message || leadData.error)) || 'Save failed');
+          }
+          var rest = ids.filter(function (id) {
+            return String(id) !== String(leadId);
+          });
+          if (!rest.length) return leadData;
+          var photoUrl =
+            (leadData.event && (leadData.event.photo_url || leadData.event.image_url)) ||
+            photoPayload.photo_url ||
+            '';
+          var bulkPayload = Object.assign(
+            {
+              action: 'bulk_update',
+              ids: rest,
+            },
+            shared
+          );
+          delete bulkPayload.organiser_contact_email;
+          if (photoUrl) bulkPayload.photo_url = photoUrl;
+          else if (Object.prototype.hasOwnProperty.call(photoPayload, 'photo_url')) {
+            bulkPayload.photo_url = photoPayload.photo_url;
+          }
+          return adminPost('/api/admin/events', bulkPayload).then(function (bulkData) {
+            if (!bulkData || !bulkData.ok) {
+              throw new Error(
+                (bulkData && (bulkData.message || bulkData.error)) || 'Series update failed'
+              );
+            }
+            if (bulkData.skipped && bulkData.skipped.length) {
+              throw new Error(
+                'Updated some dates, but ' +
+                  bulkData.skipped.length +
+                  ' failed: ' +
+                  (bulkData.skipped[0].reason || 'unknown')
+              );
+            }
+            return bulkData;
+          });
+        });
+      })
+      .then(function () {
+        delete adminLogoPending[photoKey];
+        if (msg) {
+          msg.textContent = 'Saved all ' + ids.length + ' dates.';
+          msg.className = 'event-cleanup-msg text-xs text-emerald-700 font-semibold';
+        }
+        delete eventCleanupState.seriesEditPeers[seriesKey];
+        return refreshEventCleanupPage();
+      })
+      .catch(function (err) {
+        if (msg) {
+          msg.textContent = err.message || 'Could not save series';
+          msg.className = 'event-cleanup-msg text-xs text-red-700 font-semibold';
+        }
+        if (btn) btn.disabled = false;
+      });
+  }
+
   function saveEventCleanupForm(form) {
+    if (form.getAttribute('data-series-edit') === '1') {
+      saveEventSeriesCleanupForm(form);
+      return;
+    }
     var id = form.getAttribute('data-event-id');
     var msg = form.querySelector('.event-cleanup-msg');
     var btn = form.querySelector('[type="submit"]');
@@ -21066,23 +21435,10 @@
     }
     eventPhotoPayloadForKey(photoKey, form)
       .then(function (photoPayload) {
-        return adminPost('/api/admin/events', Object.assign(
-          {
-            id: id,
-            title: formFieldVal(form, 'title'),
-            organiser_id: formFieldVal(form, 'organiser_id') || null,
-            organiser_contact_email: formFieldVal(form, 'organiser_contact_email').trim(),
-            starts_at: formFieldVal(form, 'starts_at') || null,
-            event_type: formFieldVal(form, 'event_type') || null,
-            meeting_type: formFieldVal(form, 'meeting_type') || null,
-            status: formFieldVal(form, 'status') || null,
-            checkout_mode: formFieldVal(form, 'checkout_mode') || 'hub',
-            external_booking_url: formFieldVal(form, 'external_booking_url').trim(),
-            external_price_label: formFieldVal(form, 'external_price_label').trim(),
-          },
-          eventDetailsPayloadFromForm(form),
-          photoPayload
-        ));
+        return adminPost(
+          '/api/admin/events',
+          Object.assign(eventCleanupSharedPayloadFromForm(form), { id: id }, photoPayload)
+        );
       })
       .then(function (data) {
         if (!data.ok) throw new Error(data.message || data.error || 'Save failed');
@@ -21132,7 +21488,7 @@
     if (isLinkOut) {
       if (!externalBookingUrl) {
         if (msg) {
-          msg.textContent = 'Add the Link Out booking URL.';
+          msg.textContent = 'Add the Link Out booking URL or email.';
           msg.className = 'event-create-msg text-xs text-red-700 font-semibold';
         }
         return;
@@ -21836,6 +22192,10 @@
       main.querySelectorAll('.event-select-checkbox').forEach(function (cb) {
         cb.checked = false;
       });
+      main.querySelectorAll('.event-series-select-checkbox').forEach(function (cb) {
+        cb.checked = false;
+        cb.indeterminate = false;
+      });
       var selectPage = document.getElementById('event-cleanup-select-page');
       if (selectPage) selectPage.checked = false;
       updateEventBulkBar();
@@ -22015,6 +22375,33 @@
         });
       return;
     }
+    var seriesToggle = e.target.closest('[data-toggle-event-series]');
+    if (seriesToggle) {
+      var seriesKey = seriesToggle.getAttribute('data-toggle-event-series') || '';
+      if (seriesKey) {
+        if (eventCleanupState.seriesExpanded[seriesKey]) {
+          delete eventCleanupState.seriesExpanded[seriesKey];
+        } else {
+          eventCleanupState.seriesExpanded[seriesKey] = true;
+        }
+        renderEventCleanupList();
+      }
+      return;
+    }
+    var seriesEditToggle = e.target.closest('[data-toggle-event-series-edit]');
+    if (seriesEditToggle) {
+      var seriesEditKey = seriesEditToggle.getAttribute('data-toggle-event-series-edit') || '';
+      if (seriesEditKey) {
+        if (eventCleanupState.seriesEditExpanded[seriesEditKey]) {
+          delete eventCleanupState.seriesEditExpanded[seriesEditKey];
+          renderEventCleanupList();
+        } else {
+          eventCleanupState.seriesEditExpanded[seriesEditKey] = true;
+          openEventSeriesEdit(seriesEditKey);
+        }
+      }
+      return;
+    }
     var toggle = e.target.closest('[data-toggle-event-edit]');
     if (toggle) {
       var row = toggle.closest('[data-event-id-row]');
@@ -22135,6 +22522,31 @@
         } else {
           forgetSelectedEvent(evId);
         }
+        syncEventSeriesSelectCheckboxes();
+        updateEventBulkBar();
+      }
+      if (e.target.classList && e.target.classList.contains('event-series-select-checkbox')) {
+        var seriesKeySel = e.target.getAttribute('data-series-key') || '';
+        var seriesChecked = e.target.checked;
+        var seriesMembers = groupEventCleanupRows(eventCleanupState.items || []).filter(function (g) {
+          return g.key === seriesKeySel;
+        })[0];
+        if (seriesMembers) {
+          seriesMembers.events.forEach(function (ev) {
+            if (seriesChecked) rememberSelectedEvent(ev);
+            else forgetSelectedEvent(ev.id);
+          });
+          main.querySelectorAll('.event-select-checkbox').forEach(function (cb) {
+            if (
+              seriesMembers.events.some(function (ev) {
+                return String(ev.id) === String(cb.value);
+              })
+            ) {
+              cb.checked = seriesChecked;
+            }
+          });
+        }
+        e.target.indeterminate = false;
         updateEventBulkBar();
       }
       if (e.target.id === 'event-cleanup-select-page') {
@@ -22147,6 +22559,7 @@
         main.querySelectorAll('.event-select-checkbox').forEach(function (cb) {
           cb.checked = checked;
         });
+        syncEventSeriesSelectCheckboxes();
         updateEventBulkBar();
       }
     });
@@ -22683,14 +23096,35 @@
     }
     if (main) {
       var selectPage = document.getElementById('event-cleanup-select-page');
-      var pageCbs = main.querySelectorAll('.event-select-checkbox');
-      var allPageChecked = pageCbs.length > 0;
-      pageCbs.forEach(function (cb) {
-        if (!eventCleanupState.selected[cb.value]) allPageChecked = false;
-      });
+      var pageEvents = eventCleanupState.items || [];
+      var allPageChecked =
+        pageEvents.length > 0 &&
+        pageEvents.every(function (ev) {
+          return Boolean(eventCleanupState.selected[ev.id]);
+        });
       if (selectPage) selectPage.checked = allPageChecked;
+      syncEventSeriesSelectCheckboxes();
     }
     applyEventModerationButtonStates('event', rows);
+  }
+
+  function syncEventSeriesSelectCheckboxes() {
+    if (!main) return;
+    var groups = groupEventCleanupRows(eventCleanupState.items || []);
+    var byKey = {};
+    groups.forEach(function (g) {
+      byKey[g.key] = g.events;
+    });
+    main.querySelectorAll('.event-series-select-checkbox').forEach(function (cb) {
+      var key = cb.getAttribute('data-series-key') || '';
+      var members = byKey[key] || [];
+      if (!members.length) return;
+      var selectedCount = members.filter(function (ev) {
+        return eventCleanupState.selected[ev.id];
+      }).length;
+      cb.checked = selectedCount === members.length;
+      cb.indeterminate = selectedCount > 0 && selectedCount < members.length;
+    });
   }
 
   function eventDeleteConfirmMsg(count, force) {
@@ -23308,6 +23742,9 @@
     eventCleanupState.page = 0;
     eventCleanupState.items = [];
     eventCleanupState.expanded = {};
+    eventCleanupState.seriesExpanded = {};
+    eventCleanupState.seriesEditExpanded = {};
+    eventCleanupState.seriesEditPeers = {};
     var status = document.getElementById('event-cleanup-status');
     if (status) status.textContent = 'Loading events…';
     resetEventCleanupScroll();
@@ -23322,8 +23759,68 @@
     return fetchEventCleanup(eventCleanupState.page).then(applyEventCleanupData);
   }
 
-  function eventCleanupRowHtml(ev) {
-    var publicHref = ev.slug ? '../events/' + encodeURIComponent(ev.slug) : '';
+  /** Same bucket rules as public browse: series_group_id, else organiser + title (+ recurrence). */
+  function eventCleanupSeriesKey(ev) {
+    if (!ev) return 'id:';
+    var seriesGroupId = String(ev.series_group_id || '').trim();
+    if (seriesGroupId) return 'sg:' + seriesGroupId;
+    var organiserId = String(ev.organiser_id || '').trim();
+    var title = String(ev.title || '')
+      .trim()
+      .toLowerCase();
+    if (!organiserId || !title) return 'id:' + String(ev.id || '');
+    var pattern = String(ev.recurrence_pattern || '')
+      .trim()
+      .toLowerCase();
+    var endDate = String(ev.recurrence_end_date || '')
+      .trim()
+      .slice(0, 10);
+    if (pattern && endDate) return 'ot:' + organiserId + '\0' + title + '\0' + pattern + '\0' + endDate;
+    if (pattern) return 'ot:' + organiserId + '\0' + title + '\0' + pattern;
+    return 'ot:' + organiserId + '\0' + title;
+  }
+
+  function groupEventCleanupRows(events) {
+    var order = [];
+    var map = {};
+    (events || []).forEach(function (ev) {
+      var key = eventCleanupSeriesKey(ev);
+      if (!map[key]) {
+        map[key] = [];
+        order.push(key);
+      }
+      map[key].push(ev);
+    });
+    return order.map(function (key) {
+      var members = map[key].slice().sort(function (a, b) {
+        var ta = a.starts_at ? new Date(a.starts_at).getTime() : Number.POSITIVE_INFINITY;
+        var tb = b.starts_at ? new Date(b.starts_at).getTime() : Number.POSITIVE_INFINITY;
+        if (ta !== tb) return ta - tb;
+        return String(a.id || '').localeCompare(String(b.id || ''));
+      });
+      return { key: key, events: members };
+    });
+  }
+
+  function eventCleanupSeriesDateRangeLabel(members) {
+    var dated = (members || []).filter(function (ev) {
+      return ev && ev.starts_at;
+    });
+    if (!dated.length) return '<span class="text-slate-400">No date</span>';
+    var first = fmtTime(dated[0].starts_at);
+    if (dated.length === 1) return esc(first);
+    var last = fmtTime(dated[dated.length - 1].starts_at);
+    return (
+      esc(first) +
+      ' <span class="text-slate-400">→</span> ' +
+      esc(last) +
+      '<div class="text-[10px] font-semibold text-brand-800 mt-0.5">' +
+      dated.length +
+      ' dates</div>'
+    );
+  }
+
+  function eventCleanupOrganiserCellHtml(ev) {
     var organiserLabel = ev.organiser_name
       ? esc(ev.organiser_name)
       : '<span class="text-amber-800 font-semibold">Unlinked</span>';
@@ -23336,39 +23833,11 @@
       organiserLabel +=
         '<span class="block text-[10px] text-amber-800 font-semibold mt-0.5">No owner email</span>';
     }
-    var dateLabel = ev.starts_at
-      ? esc(fmtTime(ev.starts_at))
-      : '<span class="text-slate-400">No date</span>';
-    if (eventCleanupState.selected[ev.id]) rememberSelectedEvent(ev);
-    var checked = eventCleanupState.selected[ev.id] ? ' checked' : '';
-    var isOpen = !!eventCleanupState.expanded[ev.id];
+    return organiserLabel;
+  }
+
+  function eventCleanupStatusCellHtml(ev) {
     return (
-      '<tr class="border-b border-slate-100 hover:bg-slate-50/80" data-event-id-row="' +
-      attrEsc(ev.id) +
-      '">' +
-      '<td class="py-2.5 pr-2 w-8">' +
-      '<input type="checkbox" class="event-select-checkbox rounded border-slate-300" value="' +
-      attrEsc(ev.id) +
-      '"' +
-      checked +
-      ' aria-label="Select ' +
-      attrEsc(ev.title || 'event') +
-      '">' +
-      '</td>' +
-      '<td class="py-2.5 pr-3 max-w-[14rem]"><div class="font-semibold text-brand-900 truncate" title="' +
-      attrEsc(ev.title || 'Untitled') +
-      '">' +
-      esc(ev.title || 'Untitled') +
-      '</div>' +
-      (ev.city ? '<div class="text-[11px] text-slate-500 truncate">' + esc(ev.city) + '</div>' : '') +
-      '</td>' +
-      '<td class="py-2.5 pr-3 text-xs text-slate-600 max-w-[10rem]"><span class="block truncate">' +
-      organiserLabel +
-      '</span></td>' +
-      '<td class="py-2.5 pr-3 text-xs text-slate-600 whitespace-nowrap">' +
-      dateLabel +
-      '</td>' +
-      '<td class="py-2.5 pr-3"><div class="flex flex-wrap gap-1">' +
       listingStatusBadge(ev.status) +
       approvalStatusBadge(ev.approval_status) +
       coverageSourceBadge(ev) +
@@ -23378,7 +23847,164 @@
           ' booking' +
           (Number(ev.registration_count) === 1 ? '' : 's') +
           '</span>'
+        : '')
+    );
+  }
+
+  function eventCleanupSeriesParentRowHtml(group) {
+    var members = group.events || [];
+    var lead = members[0] || {};
+    var seriesOpen = !!eventCleanupState.seriesExpanded[group.key];
+    var seriesEditOpen = !!eventCleanupState.seriesEditExpanded[group.key];
+    var selectedCount = members.filter(function (ev) {
+      return eventCleanupState.selected[ev.id];
+    }).length;
+    var allSelected = selectedCount === members.length && members.length > 0;
+    var someSelected = selectedCount > 0 && !allSelected;
+    var statusSeen = {};
+    var statusHtml = members
+      .map(function (ev) {
+        var key = String(ev.status || '') + '|' + String(ev.approval_status || '');
+        if (statusSeen[key]) return '';
+        statusSeen[key] = true;
+        return listingStatusBadge(ev.status) + approvalStatusBadge(ev.approval_status);
+      })
+      .join('');
+    return (
+      '<tr class="border-b border-slate-200 bg-slate-50/90 hover:bg-slate-100/80" data-event-series-row="' +
+      attrEsc(group.key) +
+      '">' +
+      '<td class="py-2.5 pr-2 w-8">' +
+      '<input type="checkbox" class="event-series-select-checkbox rounded border-slate-300" data-series-key="' +
+      attrEsc(group.key) +
+      '"' +
+      (allSelected ? ' checked' : '') +
+      (someSelected ? ' data-indeterminate="1"' : '') +
+      ' aria-label="Select all dates in series">' +
+      '</td>' +
+      '<td class="py-2.5 pr-3 max-w-[14rem]"><div class="font-semibold text-brand-900 truncate" title="' +
+      attrEsc(lead.title || 'Untitled') +
+      '">' +
+      esc(lead.title || 'Untitled') +
+      '</div>' +
+      '<div class="mt-0.5 flex flex-wrap items-center gap-1.5">' +
+      '<span class="inline-flex rounded-full border border-brand-200 bg-brand-50 px-2 py-0.5 text-[10px] font-semibold text-brand-800">Series · ' +
+      members.length +
+      ' dates</span>' +
+      (lead.city
+        ? '<span class="text-[11px] text-slate-500 truncate">' + esc(lead.city) + '</span>'
         : '') +
+      '</div></td>' +
+      '<td class="py-2.5 pr-3 text-xs text-slate-600 max-w-[10rem]"><span class="block truncate">' +
+      eventCleanupOrganiserCellHtml(lead) +
+      '</span></td>' +
+      '<td class="py-2.5 pr-3 text-xs text-slate-600 whitespace-nowrap">' +
+      eventCleanupSeriesDateRangeLabel(members) +
+      '</td>' +
+      '<td class="py-2.5 pr-3"><div class="flex flex-wrap gap-1">' +
+      statusHtml +
+      '</div></td>' +
+      '<td class="py-2.5 text-right whitespace-nowrap">' +
+      '<div class="flex flex-wrap justify-end gap-2">' +
+      '<button type="button" data-toggle-event-series-edit="' +
+      attrEsc(group.key) +
+      '" class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">' +
+      (seriesEditOpen ? 'Close series' : 'Edit series') +
+      '</button>' +
+      '<button type="button" data-toggle-event-series="' +
+      attrEsc(group.key) +
+      '" class="text-xs font-semibold rounded-lg border border-brand-300 bg-white text-brand-800 px-2.5 py-1 hover:bg-brand-50" aria-expanded="' +
+      (seriesOpen ? 'true' : 'false') +
+      '">' +
+      (seriesOpen ? 'Hide dates' : 'Show dates') +
+      '</button></div></td></tr>'
+    );
+  }
+
+  function eventCleanupSeriesMembersForEdit(group) {
+    var cached = eventCleanupState.seriesEditPeers[group.key];
+    if (cached && cached.length) return cached;
+    return group.events || [];
+  }
+
+  function eventCleanupSeriesEditPanelHtml(group) {
+    var members = eventCleanupSeriesMembersForEdit(group);
+    var lead = members[0] || group.events[0] || {};
+    var ids = members
+      .map(function (ev) {
+        return ev.id;
+      })
+      .filter(Boolean);
+    return (
+      '<tr class="event-cleanup-series-panel border-b border-slate-200 bg-slate-50/80" data-event-series-panel-for="' +
+      attrEsc(group.key) +
+      '">' +
+      '<td colspan="6" class="p-4">' +
+      eventCleanupEditFormHtml(lead, {
+        seriesMode: true,
+        seriesKey: group.key,
+        seriesIds: ids,
+        seriesCount: ids.length,
+        seriesMembers: members,
+      }) +
+      '</td></tr>'
+    );
+  }
+
+  function eventCleanupRowHtml(ev, opts) {
+    opts = opts || {};
+    var nested = Boolean(opts.nested);
+    var publicHref = ev.slug ? '../events/' + encodeURIComponent(ev.slug) : '';
+    var dateLabel = ev.starts_at
+      ? esc(fmtTime(ev.starts_at))
+      : '<span class="text-slate-400">No date</span>';
+    if (eventCleanupState.selected[ev.id]) rememberSelectedEvent(ev);
+    var checked = eventCleanupState.selected[ev.id] ? ' checked' : '';
+    var isOpen = !!eventCleanupState.expanded[ev.id];
+    return (
+      '<tr class="border-b border-slate-100 hover:bg-slate-50/80' +
+      (nested ? ' bg-white' : '') +
+      '" data-event-id-row="' +
+      attrEsc(ev.id) +
+      '"' +
+      (opts.seriesKey ? ' data-series-member-of="' + attrEsc(opts.seriesKey) + '"' : '') +
+      '>' +
+      '<td class="py-2.5 pr-2 w-8' +
+      (nested ? ' pl-4' : '') +
+      '">' +
+      '<input type="checkbox" class="event-select-checkbox rounded border-slate-300" value="' +
+      attrEsc(ev.id) +
+      '"' +
+      checked +
+      ' aria-label="Select ' +
+      attrEsc(ev.title || 'event') +
+      '">' +
+      '</td>' +
+      '<td class="py-2.5 pr-3 max-w-[14rem]"><div class="font-semibold text-brand-900 truncate' +
+      (nested ? ' text-slate-800' : '') +
+      '" title="' +
+      attrEsc(ev.title || 'Untitled') +
+      '">' +
+      (nested
+        ? '<span class="text-slate-400 font-normal mr-1" aria-hidden="true">↳</span>'
+        : '') +
+      esc(ev.title || 'Untitled') +
+      '</div>' +
+      (ev.city && !nested
+        ? '<div class="text-[11px] text-slate-500 truncate">' + esc(ev.city) + '</div>'
+        : '') +
+      (nested
+        ? '<div class="text-[10px] text-slate-500 font-semibold uppercase tracking-wide mt-0.5">Series date</div>'
+        : '') +
+      '</td>' +
+      '<td class="py-2.5 pr-3 text-xs text-slate-600 max-w-[10rem]"><span class="block truncate">' +
+      eventCleanupOrganiserCellHtml(ev) +
+      '</span></td>' +
+      '<td class="py-2.5 pr-3 text-xs text-slate-600 whitespace-nowrap">' +
+      dateLabel +
+      '</td>' +
+      '<td class="py-2.5 pr-3"><div class="flex flex-wrap gap-1">' +
+      eventCleanupStatusCellHtml(ev) +
       '</div></td>' +
       '<td class="py-2.5 text-right whitespace-nowrap">' +
       '<div class="flex flex-wrap justify-end gap-2">' +
@@ -23402,6 +24028,30 @@
     );
   }
 
+  function eventCleanupGroupedRowsHtml(events) {
+    return groupEventCleanupRows(events)
+      .map(function (group) {
+        if (group.events.length < 2) {
+          return eventCleanupRowHtml(group.events[0]);
+        }
+        var seriesOpen = !!eventCleanupState.seriesExpanded[group.key];
+        var seriesEditOpen = !!eventCleanupState.seriesEditExpanded[group.key];
+        var html = eventCleanupSeriesParentRowHtml(group);
+        if (seriesEditOpen) {
+          html += eventCleanupSeriesEditPanelHtml(group);
+        }
+        if (seriesOpen) {
+          html += group.events
+            .map(function (ev) {
+              return eventCleanupRowHtml(ev, { nested: true, seriesKey: group.key });
+            })
+            .join('');
+        }
+        return html;
+      })
+      .join('');
+  }
+
   function renderEventCleanupList() {
     var list = document.getElementById('event-cleanup-list');
     var status = document.getElementById('event-cleanup-status');
@@ -23416,6 +24066,10 @@
     var pageStart = shown ? page * EVENT_PAGE_SIZE + 1 : 0;
     var pageEnd = page * EVENT_PAGE_SIZE + shown;
     var pagination = adminPaginationHtml(page, total, EVENT_PAGE_SIZE, 'data-event-page');
+    var groups = groupEventCleanupRows(events);
+    var seriesGroupCount = groups.filter(function (g) {
+      return g.events.length > 1;
+    }).length;
 
     if (status) {
       status.innerHTML =
@@ -23424,6 +24078,11 @@
           ? 'Showing ' + pageStart + '–' + pageEnd + ' of ' + total + ' event' + (total === 1 ? '' : 's')
           : 'No events match your filters') +
         '</span>' +
+        (seriesGroupCount
+          ? ' · <span class="text-slate-600">' +
+            seriesGroupCount +
+            ' series grouped on this page</span>'
+          : '') +
         (data.unlinked_count
           ? ' · <span class="text-amber-800 font-semibold">' +
             data.unlinked_count +
@@ -23433,8 +24092,11 @@
     }
 
     if (hint) {
-      if (total > EVENT_PAGE_SIZE) {
+      if (total > EVENT_PAGE_SIZE || seriesGroupCount) {
         hint.classList.remove('hidden');
+        hint.innerHTML = seriesGroupCount
+          ? 'Recurring / same-title dates are grouped into one series row — use <strong>Show dates</strong> to edit each occurrence. Large catalogue — search by title or city, open More filters, or type a page number below the table to jump ahead.'
+          : 'Large catalogue — search by title or city, open More filters, or type a page number below the table to jump ahead.';
       } else {
         hint.classList.add('hidden');
       }
@@ -23448,12 +24110,6 @@
       return;
     }
 
-    var rows = events
-      .map(function (ev) {
-        return eventCleanupRowHtml(ev);
-      })
-      .join('');
-
     list.innerHTML =
       adminTableScroll(
         '<table class="w-full text-sm text-left border-collapse">' +
@@ -23466,10 +24122,21 @@
           '<th class="py-2 pr-3 font-semibold">Status</th>' +
           '<th class="py-2 font-semibold text-right">Actions</th>' +
           '</tr></thead><tbody>' +
-          rows +
+          eventCleanupGroupedRowsHtml(events) +
           '</tbody></table>'
       ) + pagination;
     bindEventEditOrganiserPickers(list);
+    list.querySelectorAll('.event-cleanup-series-panel').forEach(function (panel) {
+      bindAdminLogoZones(panel);
+      bindEventFormLocationToggle(panel);
+    });
+    list.querySelectorAll('.event-cleanup-panel:not(.hidden)').forEach(function (panel) {
+      bindAdminLogoZones(panel);
+      bindEventFormLocationToggle(panel);
+    });
+    list.querySelectorAll('.event-series-select-checkbox[data-indeterminate="1"]').forEach(function (cb) {
+      cb.indeterminate = true;
+    });
     updateEventBulkBar();
   }
 
@@ -23491,14 +24158,23 @@
       '<div id="event-create-organiser-results" class="hidden absolute left-0 right-0 top-full mt-1 max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg z-20"></div>' +
       '</div></div>' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Dates (optional)</label>' +
-      '<p class="text-xs text-slate-500 mb-2">Add one or more dates. The same UK start and end time applies to each date (Europe/London — stays the same when clocks change). Multiple dates create a linked series.</p>' +
+      '<p class="text-xs text-slate-500 mb-2">Click every date this event runs. The same UK start and end time applies to each date (Europe/London — stays the same when clocks change). Multiple dates create a linked series.</p>' +
       '<div class="grid sm:grid-cols-2 gap-3 mb-3">' +
       '<div><label class="block text-[11px] font-semibold text-slate-500 mb-1">Start time</label>' +
       '<input type="time" name="start_time" value="10:00" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm"></div>' +
       '<div><label class="block text-[11px] font-semibold text-slate-500 mb-1">End time (optional)</label>' +
       '<input type="time" name="end_time" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm"></div></div>' +
-      '<div id="event-create-dates-list" class="space-y-2 mb-2"></div>' +
-      '<button type="button" id="event-create-add-date" class="text-xs font-semibold text-brand-700 hover:underline">+ Add another date</button></div>' +
+      '<div class="admin-event-cal" id="event-create-calendar">' +
+      '<div class="admin-event-cal-header">' +
+      '<button type="button" id="event-create-cal-prev" aria-label="Previous month">‹</button>' +
+      '<span class="admin-event-cal-month" id="event-create-cal-month-label"></span>' +
+      '<button type="button" id="event-create-cal-next" aria-label="Next month">›</button></div>' +
+      '<div class="admin-event-cal-weekdays" aria-hidden="true">' +
+      '<span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>' +
+      '<div class="admin-event-cal-days" id="event-create-cal-days" aria-label="Select event dates"></div></div>' +
+      '<div class="admin-event-cal-selected mt-3">' +
+      '<p class="text-xs font-semibold text-brand-900"><span id="event-create-date-count">0</span> date(s) selected</p>' +
+      '<ul id="event-create-date-list" class="mt-1 space-y-1 text-xs text-slate-600"></ul></div></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event type</label>' +
       '<select name="event_type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
       eventTypeOptions('Meeting') +
@@ -23532,9 +24208,9 @@
       '<input type="number" name="ticket_price" min="0" step="0.01" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="e.g. 25">' +
       '<p class="text-[11px] text-slate-500 mt-1">Organiser still needs Stripe for paid sales to open.</p></div></div>' +
       '<div class="event-create-linkout-fields hidden sm:col-span-2 grid sm:grid-cols-2 gap-3">' +
-      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Link Out booking URL</label>' +
-      '<input type="url" name="external_booking_url" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="https://www.eventbrite.co.uk/e/…">' +
-      '<p class="text-[11px] text-slate-500 mt-1">Visitors book on this page instead of buying Hub tickets.</p></div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Link Out booking URL or email</label>' +
+      '<input type="text" name="external_booking_url" inputmode="url" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="https://… or book@yourcompany.com" spellcheck="false">' +
+      '<p class="text-[11px] text-slate-500 mt-1">Visitors open this link or email to book instead of buying Hub tickets.</p></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Price label on listing</label>' +
       '<input type="text" name="external_price_label" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="From £25 or Free" maxlength="80">' +
       '<p class="text-[11px] text-slate-500 mt-1">Required to publish a Link Out event.</p></div></div></div></div>' +

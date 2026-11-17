@@ -2733,6 +2733,25 @@ async function enableTicketSalesOnPublishedEventsIfReady(sb, eventIds, createdTi
       .update({ ticket_sales_enabled: true })
       .in('id', enableIds);
     if (salesErr) throw new Error(salesErr.message);
+    try {
+      const { notifyTicketInterestNudgersSalesOpen } = require('./ticket-sales-nudge-followup');
+      for (const id of enableIds) {
+        try {
+          await notifyTicketInterestNudgersSalesOpen(id);
+        } catch (notifyErr) {
+          console.warn(
+            '[enableTicketSalesOnPublishedEventsIfReady] interest notify failed',
+            id,
+            notifyErr && notifyErr.message ? notifyErr.message : notifyErr
+          );
+        }
+      }
+    } catch (loadErr) {
+      console.warn(
+        '[enableTicketSalesOnPublishedEventsIfReady] interest notify unavailable',
+        loadErr && loadErr.message ? loadErr.message : loadErr
+      );
+    }
   }
   if (disableIds.length) {
     const { error: salesErr } = await sb
@@ -3196,7 +3215,23 @@ async function enableTicketSalesForEvent(session, eventId, groupIds) {
     .select('*')
     .single();
   if (updateErr) throw new Error(updateErr.message);
-  return rowToEvent(updated);
+
+  let interestNotified = 0;
+  try {
+    const { notifyTicketInterestNudgersSalesOpen } = require('./ticket-sales-nudge-followup');
+    const notifyResult = await notifyTicketInterestNudgersSalesOpen(id);
+    interestNotified = Number(notifyResult && notifyResult.sent) || 0;
+  } catch (notifyErr) {
+    console.warn(
+      '[enableTicketSalesForEvent] interest notify failed',
+      id,
+      notifyErr && notifyErr.message ? notifyErr.message : notifyErr
+    );
+  }
+
+  const eventOut = rowToEvent(updated);
+  eventOut.interestNotified = interestNotified;
+  return eventOut;
 }
 
 async function enrichGroupForDashboard(group, session, adminView) {
@@ -3337,10 +3372,36 @@ async function loadOrganiserEventsPage(session, groups, groupIds, adminView, pag
     }
   }
 
+  let pageEvents = overview.events;
+  let pageUpcoming = upcomingOverview.events;
+  try {
+    const {
+      countWaitingTicketInterestByEventIds,
+      attachTicketInterestWaitingCounts,
+    } = require('./ticket-sales-nudge-followup');
+    const interestIds = [
+      ...new Set(
+        [...(pageEvents || []), ...(pageUpcoming || [])]
+          .map((ev) => String(ev && ev.id ? ev.id : '').trim())
+          .filter(Boolean)
+      ),
+    ];
+    if (interestIds.length) {
+      const interestCounts = await countWaitingTicketInterestByEventIds(interestIds);
+      pageEvents = attachTicketInterestWaitingCounts(pageEvents, interestCounts);
+      pageUpcoming = attachTicketInterestWaitingCounts(pageUpcoming, interestCounts);
+    }
+  } catch (interestErr) {
+    console.warn(
+      '[loadOrganiserEventsPage] ticket interest counts failed',
+      interestErr && interestErr.message ? interestErr.message : interestErr
+    );
+  }
+
   return {
     groups: overview.groups,
-    events: overview.events,
-    upcomingEvents: upcomingOverview.events,
+    events: pageEvents,
+    upcomingEvents: pageUpcoming,
     tickets,
     eventsPagination: {
       total,

@@ -269,6 +269,16 @@ assert.strictEqual(
   'https://www.eventbrite.co.uk/checkout-external?eid=123'
 );
 assert.strictEqual(
+  normalizeExternalBookingUrl('brian@bbnetworking.co.uk'),
+  'mailto:brian@bbnetworking.co.uk'
+);
+assert.strictEqual(
+  normalizeExternalBookingUrl('mailto:Brian@BBNetworking.co.uk'),
+  'mailto:brian@bbnetworking.co.uk'
+);
+assert.strictEqual(normalizeExternalBookingUrl('mailto:not-an-email'), '');
+assert.strictEqual(normalizeExternalBookingUrl('ftp://example.com/book'), '');
+assert.strictEqual(
   guessProviderExternalEventId('eventbrite', 'https://www.eventbrite.co.uk/e/foo-1234567890123'),
   '1234567890123'
 );

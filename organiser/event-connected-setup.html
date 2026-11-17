@@ -151,10 +151,12 @@
         <label class="ee-field">
           <span>Booking / checkout URL <strong>(required to publish)</strong></span>
           <input
-            type="url"
+            type="text"
             id="ecs-booking-url"
-            placeholder="Your checkout page (Eventbrite /e/… or direct checkout link)"
+            inputmode="url"
+            placeholder="Checkout link or email (e.g. book@yourcompany.com)"
             autocomplete="off"
+            spellcheck="false"
           />
         </label>
         <p class="ee-hint ecs-platform-hint" data-connected-platform-hint hidden role="status"></p>
@@ -252,8 +254,8 @@
 
     <script src="../js/organiser-embed-bootstrap.js?v=20260918embed2" defer></script>
     <script src="../js/organiser-page-loading.js?v=20260811claimux2" defer></script>
-    <script src="../js/hub-external-booking-url.js?v=20260918eventlink1" defer></script>
+    <script src="../js/hub-external-booking-url.js?v=20261117mailto1" defer></script>
     <script src="../js/organiser-connected-platform.js?v=20261029book1" defer></script>
-    <script src="../js/organiser-event-connected-setup.js?v=20261112linkout3" defer></script>
+    <script src="../js/organiser-event-connected-setup.js?v=20261117mailto1" defer></script>
   </body>
 </html>

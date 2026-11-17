@@ -161,6 +161,7 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'organiser_hub_warning',
   'organiser_hub_suspended',
   'organiser_ticket_sales_nudge',
+  'ticket_interest_received',
   'application_received',
   'application_approved',
   'application_denied',
@@ -191,6 +192,9 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'opportunity_enquiry_sent',
   'opportunity_open_day_interest_received',
   'opportunity_open_day_interest_sent',
+  'contact_team_confirm',
+  'event_attend_enquiry_received',
+  'event_attend_enquiry_sent',
   'opportunity_listing_expired',
   'opportunity_premium_expired',
   'opportunity_listing_rejected',
@@ -362,6 +366,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
     slug === 'booking_confirmation' ||
     slug === 'booking_reminder' ||
     slug === 'saved_event_tickets_open' ||
+    slug === 'ticket_interest_sales_open' ||
     slug === 'organiser_new_registration' ||
     slug === 'organiser_new_application' ||
     slug === 'application_received' ||
@@ -787,6 +792,7 @@ const MARKETING_EMAIL_SLUGS = new Set([
   'attendee_hubert_event_concierge',
   'hubert_matchmaker_launching',
   'saved_event_tickets_open',
+  'ticket_interest_sales_open',
   'saved_opportunity_closing_soon',
   'opportunity_saved_search_match',
 ]);

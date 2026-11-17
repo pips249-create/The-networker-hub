@@ -1388,9 +1388,26 @@
     return raw;
   }
 
+  function externalBookingIsMailto(ev) {
+    const url = externalBookingUrlForEvent(ev);
+    if (
+      window.HubExternalBookingUrl &&
+      typeof window.HubExternalBookingUrl.isMailtoBookingUrl === 'function'
+    ) {
+      return window.HubExternalBookingUrl.isMailtoBookingUrl(url);
+    }
+    return /^mailto:/i.test(url);
+  }
+
   function openExternalBookingForEvent(ev) {
     const url = externalBookingUrlForEvent(ev);
-    if (url) window.open(url, '_blank', 'noopener,noreferrer');
+    if (!url) return;
+    // mailto: is often blocked by window.open; navigate in-place instead.
+    if (externalBookingIsMailto(ev)) {
+      window.location.href = url;
+      return;
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
   }
 
   function externalBookingOrganiserName(ev) {
@@ -1457,11 +1474,158 @@
 
   function externalBookingBuyLabel(ev, signedIn) {
     const organiserName = externalBookingOrganiserName(ev);
+    if (externalBookingIsMailto(ev)) {
+      return "I'd like to attend";
+    }
     const bookOnSite = 'Book on ' + organiserName + '\u2019s website';
     if (eventHasExternalRegistrationSync(ev)) {
       return signedIn ? bookOnSite : 'Create free account to book';
     }
     return bookOnSite;
+  }
+
+  function openAttendEnquiryModal(ev) {
+    const modal = document.getElementById('attend-enquiry-modal');
+    if (!modal || !ev) return;
+    const lead = document.getElementById('attend-enquiry-lead');
+    if (lead) {
+      lead.textContent =
+        'We\u2019ll email ' +
+        externalBookingOrganiserName(ev) +
+        ' with your details. They reply to you directly \u2014 this is not a confirmed booking.';
+    }
+    const err = document.getElementById('attend-enquiry-error');
+    if (err) {
+      err.hidden = true;
+      err.textContent = '';
+    }
+    const form = document.getElementById('attend-enquiry-form');
+    if (form && form.dataset.prefilled !== '1') {
+      try {
+        const stored = window.localStorage && window.localStorage.getItem('hub_attend_enquiry_profile');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const nameEl = document.getElementById('attend-enquiry-name');
+          const emailEl = document.getElementById('attend-enquiry-email');
+          if (nameEl && parsed && parsed.name) nameEl.value = String(parsed.name);
+          if (emailEl && parsed && parsed.email) emailEl.value = String(parsed.email);
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    modal.hidden = false;
+    document.body.classList.add('hub-modal-open');
+    const nameFocus = document.getElementById('attend-enquiry-name');
+    if (nameFocus && typeof nameFocus.focus === 'function') {
+      try {
+        nameFocus.focus({ preventScroll: true });
+      } catch {
+        nameFocus.focus();
+      }
+    }
+  }
+
+  function closeAttendEnquiryModal() {
+    const modal = document.getElementById('attend-enquiry-modal');
+    if (modal) modal.hidden = true;
+    document.body.classList.remove('hub-modal-open');
+  }
+
+  function bindAttendEnquiryModalOnce() {
+    if (window.__hubAttendEnquiryBound) return;
+    window.__hubAttendEnquiryBound = true;
+    const modal = document.getElementById('attend-enquiry-modal');
+    const form = document.getElementById('attend-enquiry-form');
+    if (!modal || !form) return;
+
+    modal.querySelectorAll('[data-attend-enquiry-close]').forEach(function (el) {
+      el.addEventListener('click', closeAttendEnquiryModal);
+    });
+    const closeBtn = document.getElementById('attend-enquiry-close');
+    if (closeBtn) closeBtn.addEventListener('click', closeAttendEnquiryModal);
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const ev = activeEvent();
+      const err = document.getElementById('attend-enquiry-error');
+      const submitBtn = document.getElementById('attend-enquiry-submit');
+      const name = String(document.getElementById('attend-enquiry-name')?.value || '').trim();
+      const email = String(document.getElementById('attend-enquiry-email')?.value || '').trim();
+      const message = String(document.getElementById('attend-enquiry-message')?.value || '').trim();
+      const website = String(document.getElementById('attend-enquiry-website')?.value || '').trim();
+      if (!ev || !ev.id) {
+        if (err) {
+          err.hidden = false;
+          err.textContent = 'Could not find this event. Refresh and try again.';
+        }
+        return;
+      }
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Sending…';
+      }
+      if (err) {
+        err.hidden = true;
+        err.textContent = '';
+      }
+      try {
+        const res = await fetch('/api/event-attend-enquiry', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            eventId: ev.id,
+            name: name,
+            email: email,
+            message: message,
+            website: website,
+          }),
+        });
+        const data = await res.json().catch(function () {
+          return {};
+        });
+        if (!res.ok || !data.ok) {
+          throw new Error(
+            (data && data.message) || (data && data.error) || 'Could not send your request.'
+          );
+        }
+        try {
+          window.localStorage &&
+            window.localStorage.setItem(
+              'hub_attend_enquiry_profile',
+              JSON.stringify({ name: name, email: email })
+            );
+        } catch {
+          /* ignore */
+        }
+        closeAttendEnquiryModal();
+        form.reset();
+        window.alert(
+          data.message ||
+            'Thanks — we have emailed the organiser. They will reply to you directly.'
+        );
+      } catch (submitErr) {
+        if (err) {
+          err.hidden = false;
+          err.textContent =
+            (submitErr && submitErr.message) || 'Could not send your request. Please try again.';
+        }
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Send request';
+        }
+      }
+    });
+  }
+
+  function openExternalBookingOrAttendEnquiry(ev) {
+    if (externalBookingIsMailto(ev)) {
+      bindAttendEnquiryModalOnce();
+      openAttendEnquiryModal(ev);
+      return;
+    }
+    openExternalBookingForEvent(ev);
   }
 
   function setExternalBookingBuyLabel(ev, signedIn) {
@@ -1486,7 +1650,9 @@
         eventIsExternalConnected(ev) &&
         !registrationIsConfirmedGoing(eventApplicationState)
       ) {
-        jumpOff.textContent = 'Book on organiser site';
+        jumpOff.textContent = externalBookingIsMailto(ev)
+          ? "I'd like to attend"
+          : 'Book on organiser site';
       }
       return;
     }
@@ -1495,7 +1661,11 @@
     setExternalBookingBuyLabel(ev, signedIn);
     const jumpLabel = document.getElementById('ticket-jump-label');
     if (jumpLabel && eventIsExternalConnected(ev) && !registrationIsConfirmedGoing(eventApplicationState)) {
-      jumpLabel.textContent = signedIn ? 'Book on organiser site' : 'Create free account to book';
+      jumpLabel.textContent = externalBookingIsMailto(ev)
+        ? "I'd like to attend"
+        : signedIn
+          ? 'Book on organiser site'
+          : 'Create free account to book';
     }
   }
 
@@ -2492,7 +2662,7 @@
     anotherBtn.addEventListener('click', function () {
       const ev = activeEvent();
       if (eventIsExternalConnected(ev)) {
-        openExternalBookingForEvent(ev);
+        openExternalBookingOrAttendEnquiry(ev);
         return;
       }
       openSeriesDatePickerForAnotherDate();
@@ -5361,9 +5531,11 @@
       else labelText = 'Apply for a seat';
     }
     else if (eventIsExternalConnected(ev)) {
-      labelText = eventHasExternalRegistrationSync(ev)
-        ? 'Create free account to book'
-        : 'Book on organiser site';
+      labelText = externalBookingIsMailto(ev)
+        ? 'Email to book'
+        : eventHasExternalRegistrationSync(ev)
+          ? 'Create free account to book'
+          : 'Book on organiser site';
     }
     else if (ev.priceKey === 'free') labelText = 'Get free ticket';
     else labelText = 'Buy ticket';
@@ -6231,7 +6403,7 @@
           if (!(await requireAccountForExternalBooking(evNow))) {
             return;
           }
-          openExternalBookingForEvent(evNow);
+          openExternalBookingOrAttendEnquiry(evNow);
           return;
         }
         if (registrationIsConfirmedGoing(eventApplicationState)) {
@@ -6473,7 +6645,7 @@
           if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           return;
         }
-        openExternalBookingForEvent(eventForResume);
+        openExternalBookingOrAttendEnquiry(eventForResume);
         return;
       }
 

@@ -5221,10 +5221,12 @@
     let canRequestPayout = false;
     let payoutHeld = false;
 
+    let ticketInterestWaiting = 0;
     sorted.forEach((ev) => {
       ticketsSold += Number(ev.ticketsSold) || 0;
       ticketsCapacity += Number(ev.ticketsCapacity) || 0;
       revenueNum += Number(ev.revenueNum) || 0;
+      ticketInterestWaiting += Number(ev.ticketInterestWaiting) || 0;
       if (ev.needsRefundConfirmation) needsRefundConfirmation = true;
       if (ev.canRequestPayout) canRequestPayout = true;
       if (ev.payoutHeld) payoutHeld = true;
@@ -5251,6 +5253,7 @@
       ticketsSoldLabel: formatTicketsSoldLabel(ticketsSold, ticketsCapacity),
       revenueNum,
       revenueDisplay: formatGbpAmount(revenueNum),
+      ticketInterestWaiting,
       needsRefundConfirmation,
       canRequestPayout,
       payoutHeld,
@@ -5295,6 +5298,25 @@
     return formatDateShort(ev.date);
   }
 
+  function ticketInterestWaitingBadgeHtml(ev) {
+    const n = Number(ev && ev.ticketInterestWaiting) || 0;
+    if (n < 1) return '';
+    const label = n === 1 ? '1 waiting' : n + ' waiting';
+    const title =
+      n === 1
+        ? '1 person asked about tickets — open Set up tickets to enable sales'
+        : n + ' people asked about tickets — open Set up tickets to enable sales';
+    return (
+      '<button type="button" class="org-interest-badge" data-ticket-interest="' +
+      esc(ev.id) +
+      '" title="' +
+      esc(title) +
+      '">' +
+      esc(label) +
+      '</button>'
+    );
+  }
+
   function eventTitleCellHtml(ev) {
     if (ev.isSeries && ev.seriesCount > 1) {
       const key = eventSeriesKeyForRow(ev);
@@ -5310,6 +5332,7 @@
         '<span class="org-series-badge">' +
         esc(String(ev.seriesCount)) +
         ' dates</span></span>' +
+        ticketInterestWaitingBadgeHtml(ev) +
         '<span class="org-series-row-hint">Click row to expand dates — cancel or delete one date at a time</span>' +
         joinLinkWarnHtml(ev)
       );
@@ -5320,6 +5343,7 @@
       '">' +
       esc(ev.title) +
       '</button>' +
+      ticketInterestWaitingBadgeHtml(ev) +
       joinLinkWarnHtml(ev)
     );
   }
@@ -9407,8 +9431,9 @@
     };
   }
 
-  function goToEventTickets(ev) {
+  function goToEventTickets(ev, opts) {
     if (!ev || !ev.id) return;
+    const focusInterest = Boolean(opts && opts.focusInterest);
     let eventIds;
     let seriesEvents;
     if (ev.isSeries && ev.seriesEventIds && ev.seriesEventIds.length) {
@@ -9451,7 +9476,10 @@
     } catch {
       /* ignore */
     }
-    location.href = '/organiser/event-tickets?ids=' + encodeURIComponent(eventIds.join(','));
+    location.href =
+      '/organiser/event-tickets?ids=' +
+      encodeURIComponent(eventIds.join(',')) +
+      (focusInterest ? '#ticket-interest' : '');
   }
 
   function groupEditorUrl(g) {
@@ -10420,6 +10448,21 @@
       const ev = findEventById(eid);
       if (ev) goToEventTickets(ev);
       else if (eid) location.href = '/organiser/event-tickets?ids=' + encodeURIComponent(eid);
+      return true;
+    }
+
+    const interestBadgeBtn = e.target.closest('[data-ticket-interest]');
+    if (interestBadgeBtn && !interestBadgeBtn.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeAllActionMenus();
+      const eid = interestBadgeBtn.getAttribute('data-ticket-interest');
+      const ev = findEventById(eid);
+      if (ev) goToEventTickets(ev, { focusInterest: true });
+      else if (eid) {
+        location.href =
+          '/organiser/event-tickets?ids=' + encodeURIComponent(eid) + '#ticket-interest';
+      }
       return true;
     }
 

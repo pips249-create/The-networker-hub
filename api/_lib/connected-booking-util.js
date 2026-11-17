@@ -289,18 +289,54 @@ function guessProviderExternalEventId(provider, raw) {
   return '';
 }
 
+function looksLikeEmailAddress(raw) {
+  const email = String(raw || '').trim();
+  // Practical check for booking CTAs — not full RFC validation.
+  // Reject protocol prefixes (mailto:foo@bar.com would otherwise match).
+  if (!email || email.includes(':') || /[\s<>]/.test(email)) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+/**
+ * Accept https booking pages, or an email / mailto: for “email to book” Link Out.
+ * Bare emails become mailto:… so the public CTA opens the visitor’s mail app.
+ */
 function normalizeExternalBookingUrl(raw) {
   const url = String(raw || '').trim();
   if (!url) return '';
+
+  if (looksLikeEmailAddress(url)) {
+    return 'mailto:' + url.toLowerCase();
+  }
+
   let parsed;
   try {
     parsed = new URL(url);
   } catch {
     return '';
   }
+
+  if (parsed.protocol === 'mailto:') {
+    const email = decodeURIComponent(
+      String(parsed.pathname || '')
+        .replace(/^\/*/, '')
+        .split('?')[0] ||
+        String(url)
+          .replace(/^mailto:/i, '')
+          .split('?')[0] ||
+        ''
+    ).trim();
+    if (!looksLikeEmailAddress(email)) return '';
+    return 'mailto:' + email.toLowerCase();
+  }
+
   if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return '';
   const normalized = parsed.toString();
   return preferEventbriteCheckoutUrl(normalized);
+}
+
+function isMailtoBookingUrl(raw) {
+  return /^mailto:/i.test(String(raw || '').trim());
 }
 
 function parseExternalPriceLabelToDisplay(label) {
@@ -397,6 +433,8 @@ module.exports = {
   normalizeExternalPriceLabel,
   normalizeExternalBookingNote,
   normalizeExternalBookingUrl,
+  isMailtoBookingUrl,
+  looksLikeEmailAddress,
   parseEventbriteEventIdFromUrl,
   preferEventbriteCheckoutUrl,
   guessProviderExternalEventId,

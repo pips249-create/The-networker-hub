@@ -369,6 +369,7 @@
     "api/public-config.js": { "maxDuration": 5 },
     "api/contact-chat.js": { "maxDuration": 30 },
     "api/contact-message.js": { "maxDuration": 15 },
+    "api/event-attend-enquiry.js": { "maxDuration": 15 },
     "api/partner-enquire.js": { "maxDuration": 15 },
     "api/partner-terms.js": { "maxDuration": 15 },
     "api/event-intake.js": { "maxDuration": 15 },

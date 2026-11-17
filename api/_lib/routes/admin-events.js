@@ -142,6 +142,10 @@ function mapEventRow(row, orgById, commerceStats, cancellationRow) {
     checkout_mode: String(row.checkout_mode || 'hub').trim() || 'hub',
     external_booking_url: String(row.external_booking_url || '').trim(),
     external_price_label: String(row.external_price_label || '').trim(),
+    series_group_id: row.series_group_id || null,
+    recurrence_pattern: row.recurrence_pattern || null,
+    recurrence_end_date: row.recurrence_end_date || null,
+    duplicated_from_event_id: row.duplicated_from_event_id || null,
     registration_count: registrationCount,
     paid_booking_count: paidBookingCount,
     cancellation_id: cancellationRow?.id || null,
@@ -181,8 +185,8 @@ async function listEventsForAdmin(query) {
 
   let dbQuery = sb.from('events').select(
     light
-      ? 'id, title, organiser_id, starts_at, event_type, slug, city, featured, featured_until'
-      : 'id, title, description, image_url, photo_url, organiser_id, starts_at, ends_at, event_type, meeting_type, status, approval_status, vat_treatment, slug, city, venue, address, postcode, meeting_link, featured, featured_until, created_at, locked, airtable_id, checkout_mode, external_booking_url, external_price_label',
+      ? 'id, title, organiser_id, starts_at, event_type, slug, city, featured, featured_until, series_group_id, recurrence_pattern, recurrence_end_date'
+      : 'id, title, description, image_url, photo_url, organiser_id, starts_at, ends_at, event_type, meeting_type, status, approval_status, vat_treatment, slug, city, venue, address, postcode, meeting_link, featured, featured_until, created_at, locked, airtable_id, checkout_mode, external_booking_url, external_price_label, series_group_id, recurrence_pattern, recurrence_end_date, duplicated_from_event_id',
     { count: 'exact' }
   );
 
@@ -200,6 +204,11 @@ async function listEventsForAdmin(query) {
     });
   } else {
     dbQuery = dbQuery.order('created_at', { ascending: false });
+  }
+
+  const seriesGroupId = String(query.series_group_id || '').trim();
+  if (seriesGroupId) {
+    dbQuery = dbQuery.eq('series_group_id', seriesGroupId);
   }
 
   if (unlinked) {

@@ -3894,17 +3894,28 @@
     openAttendeeExtrasIfNeeded();
   }
 
+  function ticketsInterestQuery() {
+    const ids = (eventIds || []).map(function (id) {
+      return String(id || '').trim();
+    }).filter(Boolean);
+    if (ids.length > 1) {
+      return 'eventIds=' + encodeURIComponent(ids.join(','));
+    }
+    const firstId = ids[0] || '';
+    return 'eventId=' + encodeURIComponent(firstId);
+  }
+
   async function loadExistingData() {
     const firstId = eventIds[0];
     const [ticketsRes, eventRes] = await Promise.all([
-      api('/api/organiser/tickets?eventId=' + encodeURIComponent(firstId)),
+      api('/api/organiser/tickets?' + ticketsInterestQuery()),
       api('/api/organiser/events?id=' + encodeURIComponent(firstId)),
     ]);
 
     if (ticketsRes.status === 401 || eventRes.status === 401) {
       const next = encodeURIComponent(location.pathname + location.search);
       location.href = '../login?next=' + next;
-      return { tickets: [], event: null, authFailed: true };
+      return { tickets: [], event: null, ticketInterest: [], authFailed: true };
     }
 
     if (
@@ -3927,13 +3938,27 @@
       const tickets =
         ticketsRes.ok && Array.isArray(ticketsRes.data.tickets) ? ticketsRes.data.tickets : [];
       const event = eventRes.ok && eventRes.data.event ? eventRes.data.event : null;
-      return { tickets: tickets, event: event, authFailed: false, notOwned: true };
+      const ticketInterest =
+        ticketsRes.ok && Array.isArray(ticketsRes.data.ticketInterest)
+          ? ticketsRes.data.ticketInterest
+          : [];
+      return {
+        tickets: tickets,
+        event: event,
+        ticketInterest: ticketInterest,
+        authFailed: false,
+        notOwned: true,
+      };
     }
 
     const tickets =
       ticketsRes.ok && Array.isArray(ticketsRes.data.tickets) ? ticketsRes.data.tickets : [];
     const event = eventRes.ok && eventRes.data.event ? eventRes.data.event : null;
-    return { tickets, event, authFailed: false };
+    const ticketInterest =
+      ticketsRes.ok && Array.isArray(ticketsRes.data.ticketInterest)
+        ? ticketsRes.data.ticketInterest
+        : [];
+    return { tickets, event, ticketInterest, authFailed: false };
   }
 
   /** True when this date already has its own attendance / ticket setup. */
@@ -5107,9 +5132,105 @@
     };
   }
 
-  function renderSalesPendingBanner() {
+  function formatInterestWhen(iso) {
+    if (!iso) return '';
+    try {
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return '';
+      return d.toLocaleString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch {
+      return '';
+    }
+  }
+
+  function renderTicketInterestPanel(leads, salesEnabled) {
+    const panel = document.getElementById('ee-ticket-interest-panel');
+    const listEl = document.getElementById('ee-ticket-interest-list');
+    const leadEl = document.getElementById('ee-ticket-interest-lead');
+    if (!panel || !listEl) return;
+    const rows = Array.isArray(leads) ? leads : [];
+    if (!rows.length) {
+      panel.hidden = true;
+      listEl.innerHTML = '';
+      if (leadEl) leadEl.textContent = '';
+      return;
+    }
+    const pending = rows.filter(function (row) {
+      return !row.notifiedAt;
+    }).length;
+    if (leadEl) {
+      if (salesEnabled) {
+        leadEl.textContent =
+          pending > 0
+            ? 'People who asked about tickets. Waiting contacts are emailed automatically when sales are live.'
+            : 'People who asked about tickets. They have been emailed that sales are open.';
+      } else {
+        leadEl.textContent =
+          rows.length === 1
+            ? '1 person asked to be told when ticket sales open. Enable sales to email them automatically.'
+            : rows.length +
+              ' people asked to be told when ticket sales open. Enable sales to email them automatically.';
+      }
+    }
+    listEl.innerHTML = rows
+      .map(function (row) {
+        const name = String(row.name || '').trim() || 'Visitor';
+        const email = String(row.email || '').trim();
+        const when = formatInterestWhen(row.createdAt);
+        const note = String(row.message || '').trim();
+        const notified = Boolean(row.notifiedAt);
+        return (
+          '<li class="ee-ticket-interest-item">' +
+          '<strong>' +
+          esc(name) +
+          (notified
+            ? '<span class="ee-ticket-interest-badge">Emailed</span>'
+            : '<span class="ee-ticket-interest-badge">Waiting</span>') +
+          '</strong>' +
+          '<div class="ee-ticket-interest-meta">' +
+          (email
+            ? '<a href="mailto:' + esc(email) + '">' + esc(email) + '</a>'
+            : 'No email') +
+          (when ? ' · ' + esc(when) : '') +
+          '</div>' +
+          (note ? '<p class="ee-ticket-interest-note">' + esc(note) + '</p>' : '') +
+          '</li>'
+        );
+      })
+      .join('');
+    panel.hidden = false;
+  }
+
+  async function refreshTicketInterestPanel(salesEnabled) {
+    if (!eventIds[0]) {
+      renderTicketInterestPanel([], salesEnabled);
+      return;
+    }
+    try {
+      const { ok, data } = await api('/api/organiser/tickets?' + ticketsInterestQuery());
+      const leads = ok && Array.isArray(data.ticketInterest) ? data.ticketInterest : [];
+      renderTicketInterestPanel(leads, salesEnabled);
+    } catch {
+      /* keep existing panel */
+    }
+  }
+
+  function renderSalesPendingBanner(ticketInterest) {
     const el = document.getElementById('ee-tickets-alert');
     if (!el || !eventIds[0]) return;
+    const interestCount = Array.isArray(ticketInterest) ? ticketInterest.length : 0;
+    const interestBit =
+      interestCount === 1
+        ? ' 1 person is waiting to hear that sales are open.'
+        : interestCount > 1
+          ? ' ' + interestCount + ' people are waiting to hear that sales are open.'
+          : '';
     el.className = 'ee-alert';
     el.hidden = false;
     el.innerHTML =
@@ -5117,6 +5238,7 @@
       (publicTicketBuyingOpen()
         ? 'visitors see a nudge instead of checkout. Turn sales on when you are ready.'
         : 'public buying opens at 9am on 1 September 2026. You can enable sales now so checkout is ready then; interest alerts to you stay paused until that date.') +
+      interestBit +
       '<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;">' +
       '<button type="button" class="ee-btn ee-btn-primary" id="ee-enable-sales-btn">Enable ticket sales</button>' +
       '</div>';
@@ -5136,6 +5258,8 @@
         el.hidden = true;
         el.innerHTML = '';
         showAlert(data.message || 'Ticket sales are now live.', 'ok');
+        if (anchorEvent) anchorEvent.ticketSalesEnabled = true;
+        refreshTicketInterestPanel(true);
       });
     }
   }
@@ -5253,6 +5377,17 @@
 
       await expandSeriesEventIds(loadedRaw.event);
       await hydrateSeriesEvents(loadedRaw.event);
+      // Interest leads may span sibling dates once the series is expanded.
+      if (eventIds.length > 1 && !loadedRaw.authFailed && !loadedRaw.notOwned) {
+        try {
+          const interestRes = await api('/api/organiser/tickets?' + ticketsInterestQuery());
+          if (interestRes.ok && Array.isArray(interestRes.data.ticketInterest)) {
+            loadedRaw.ticketInterest = interestRes.data.ticketInterest;
+          }
+        } catch {
+          /* keep first-date interest */
+        }
+      }
       const loaded = await inheritTicketSetupFromSeriesSibling(loadedRaw);
 
       // Do not block first paint on payment/roster — refresh UI when they finish.
@@ -5344,8 +5479,24 @@
     setAttendanceMode(attendanceMode);
     renderSeriesSummary();
 
+    renderTicketInterestPanel(
+      loaded.ticketInterest || [],
+      Boolean(loaded.event && loaded.event.ticketSalesEnabled)
+    );
+
     if (loaded.event && loaded.event.status === 'published' && !loaded.event.ticketSalesEnabled) {
-      renderSalesPendingBanner();
+      renderSalesPendingBanner(loaded.ticketInterest || []);
+    }
+
+    if (String(location.hash || '').replace(/^#/, '') === 'ticket-interest') {
+      const interestPanel = document.getElementById('ee-ticket-interest-panel');
+      if (interestPanel && !interestPanel.hidden) {
+        try {
+          interestPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch {
+          /* ignore */
+        }
+      }
     }
 
     const draft = readTicketDraft();

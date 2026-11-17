@@ -64,8 +64,9 @@ module.exports = async function handler(req, res) {
     return json(res, 200, {
       ok: true,
       message:
-        'Thanks — we have emailed the organiser to let them know you want tickets. They can switch sales on from their dashboard.',
+        'Thanks — you are on the list. We have emailed the organiser, and we will email you when ticket sales open.',
       nudgeId: result.nudgeId,
+      waitingCount: result.waitingCount,
     });
   } catch (e) {
     const msg = e.message || String(e);
@@ -73,7 +74,8 @@ module.exports = async function handler(req, res) {
       return json(res, 429, {
         ok: false,
         error: 'nudge_rate_limited',
-        message: 'You already nudged the organiser about this event today. Please check back soon.',
+        message:
+          'You are already on the list for this event. We will email you when ticket sales open.',
       });
     }
     if (msg === 'ticket_sales_platform_closed') {

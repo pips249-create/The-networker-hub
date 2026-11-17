@@ -1780,6 +1780,29 @@
   vertical-align: middle;
 }
 
+.org-interest-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1c4d6e;
+  background: #daeeff;
+  vertical-align: middle;
+  cursor: pointer;
+  line-height: 1.3;
+}
+
+.org-interest-badge:hover,
+.org-interest-badge:focus-visible {
+  background: #c5e3fa;
+  outline: 2px solid #4aa8f0;
+  outline-offset: 1px;
+}
+
 .org-table-loading {
   text-align: center;
   padding: 24px 16px;

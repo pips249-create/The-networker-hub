@@ -105,7 +105,12 @@ const BRANDED_EMAIL_TEMPLATES = {
   organiser_ticket_sales_nudge: {
     file: 'organiser-ticket-sales-nudge.html',
     marker: 'hub-email-layout-v3-purple',
-    subject: 'Someone wants tickets for {{event_name}}',
+    subject: '{{interest_subject}}',
+  },
+  ticket_interest_received: {
+    file: 'ticket-interest-received.html',
+    marker: 'hub-email-layout-v3-purple',
+    subject: "You're on the list for {{event_name}}",
   },
   opportunity_listing_live: {
     file: 'opportunity-listing-live.html',
@@ -296,6 +301,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     file: 'saved-event-tickets-open.html',
     marker: 'hub-email-layout-v3-purple',
     subject: 'Tickets are on sale for {{event_name}}',
+  },
+  ticket_interest_sales_open: {
+    file: 'ticket-interest-sales-open.html',
+    marker: 'hub-email-layout-v3-purple',
+    subject: 'Tickets are now on sale for {{event_name}}',
   },
   saved_opportunity_closing_soon: {
     file: 'saved-opportunity-closing-soon.html',
@@ -491,6 +501,21 @@ const BRANDED_EMAIL_TEMPLATES = {
     file: 'event-intake-listed.html',
     marker: 'hub-email-layout-v3-purple',
     subject: 'Your event is listed — please review it — The Networker UK',
+  },
+  contact_team_confirm: {
+    file: 'contact-team-confirm.html',
+    marker: 'hub-email-layout-v3-purple',
+    subject: 'We received your message — The Networker UK',
+  },
+  event_attend_enquiry_received: {
+    file: 'event-attend-enquiry-received.html',
+    marker: 'hub-email-layout-v3-purple',
+    subject: '{{attendee_name}} wants to attend {{event_name}}',
+  },
+  event_attend_enquiry_sent: {
+    file: 'event-attend-enquiry-sent.html',
+    marker: 'hub-email-layout-v3-purple',
+    subject: 'We sent your request for {{event_name}}',
   },
   partner_programme_invite: {
     file: 'partner-programme-invite.html',

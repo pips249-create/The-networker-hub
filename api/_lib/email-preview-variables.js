@@ -611,7 +611,23 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
   }
 
   if (slug === 'organiser_ticket_sales_nudge') {
-    vars.tickets_url = site + '/organiser/event-tickets?eventId=preview-event';
+    vars.tickets_url = site + '/organiser/event-tickets?eventId=preview-event#ticket-interest';
+    vars.interest_count = vars.interest_count || '3';
+    vars.interest_count_label = vars.interest_count_label || 'people waiting for tickets';
+    vars.interest_headline =
+      vars.interest_headline || '3 people want tickets for ' + (vars.event_name || 'City Connectors Breakfast');
+    vars.interest_summary =
+      vars.interest_summary ||
+      '3 people have asked about tickets for your event (including this latest request) and are waiting for sales to open.';
+    vars.interest_subject =
+      vars.interest_subject || '3 people want tickets for ' + (vars.event_name || 'City Connectors Breakfast');
+  }
+
+  if (slug === 'ticket_interest_received') {
+    vars.attendee_name = vars.attendee_name || 'Alex';
+    vars.event_when = vars.event_when || 'Tue 12 May 2026 · 08:00';
+    vars.organiser_name = vars.organiser_name || 'City Connectors';
+    vars.events_url = vars.events_url || browseEventsUrl(site);
   }
 
   if (slug === 'opportunity_listing_rejected') {
@@ -667,6 +683,44 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.event_dates = vars.event_dates || 'Friday 5 September 2026';
     vars.location_line = vars.location_line || 'Lewes, East Sussex';
     vars.events_url = vars.events_url || site + '/events/';
+  }
+
+  if (slug === 'contact_team_confirm') {
+    vars.contact_name = vars.contact_name || vars.user_name || 'Md Shapon';
+    vars.contact_url = vars.contact_url || site + '/contact';
+  }
+
+  if (slug === 'event_attend_enquiry_received') {
+    vars.organiser_greeting = vars.organiser_greeting || 'Sara';
+    vars.organiser_name = vars.organiser_name || '4N Online';
+    vars.event_name = vars.event_name || '4N Ipswich Brunch';
+    vars.event_when = vars.event_when || 'Thu 27 Nov 2025, 10:00';
+    vars.event_url = vars.event_url || site + '/events/4n-ipswich-brunch';
+    vars.attendee_name = vars.attendee_name || 'Jordan Lee';
+    vars.attendee_first_name = vars.attendee_first_name || 'Jordan';
+    vars.attendee_email = vars.attendee_email || 'jordan@example.com';
+    vars.enquiry_message_html =
+      vars.enquiry_message_html ||
+      'Hi — I found this event on The Networker UK and would like to attend. Please let me know how to book.';
+    vars.reply_mailto_url =
+      vars.reply_mailto_url ||
+      'mailto:jordan@example.com?subject=' + encodeURIComponent('Re: Attending 4N Ipswich Brunch');
+    vars.claim_url =
+      vars.claim_url ||
+      site + '/register?intent=organiser-claim&next=' + encodeURIComponent('/organiser/?onboard=claim');
+    vars.claim_cta_label = vars.claim_cta_label || 'Claim your free profile';
+    vars.claim_prompt_html =
+      vars.claim_prompt_html ||
+      'This listing was added for your group. <strong style="color:#452d5c;">Claim your free Networker UK profile</strong> to edit events and reply to guests.';
+  }
+
+  if (slug === 'event_attend_enquiry_sent') {
+    vars.attendee_name = vars.attendee_name || 'Jordan';
+    vars.event_name = vars.event_name || '4N Ipswich Brunch';
+    vars.event_when = vars.event_when || 'Thu 27 Nov 2025, 10:00';
+    vars.event_url = vars.event_url || site + '/events/4n-ipswich-brunch';
+    vars.events_url = vars.events_url || site + '/events/';
+    vars.organiser_name = vars.organiser_name || '4N Online';
   }
 
   if (slug === 'event_intake_listed') {
@@ -1046,7 +1100,7 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.opportunity_host = vars.opportunity_host || 'Northbridge Network';
   }
 
-  if (slug === 'saved_event_tickets_open') {
+  if (slug === 'saved_event_tickets_open' || slug === 'ticket_interest_sales_open') {
     vars.organiser_name = vars.organiser_name || 'City Connectors';
     vars.organiser_url = vars.organiser_url || organiserPublicUrl({ id: 'preview-org', slug: 'city-connectors', name: 'City Connectors' }, site);
     vars.organiser_avatar_html =
