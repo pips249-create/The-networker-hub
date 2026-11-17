@@ -822,6 +822,27 @@ a:hover {
   display: block;
 }
 
+/* Own pin — OpenStreetMap’s embed marker is unreliable / often missing. */
+.map-embed-pin {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 2;
+  width: 18px;
+  height: 18px;
+  margin: -4px 0 0 -9px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: #2d8a4e;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(45, 38, 54, 0.28);
+  pointer-events: none;
+}
+
+.map-embed-pin[hidden] {
+  display: none !important;
+}
+
 .location-details {
   padding: 20px 24px;
 }
@@ -1893,6 +1914,251 @@ a:hover {
 .ev-ended-banner-actions a.ev-ended-primary {
   border-color: #1e3a5f;
   background: #1e3a5f;
+  color: #fff;
+}
+
+.ev-ended-review-row {
+  margin: 0.85rem 0 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.ev-ended-review-note {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: #334155;
+}
+
+.ev-ended-review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+}
+
+.ev-ended-review-btn,
+.ev-ended-claim-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.25rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 0.55rem;
+  border: 1px solid #b8956a;
+  background: #b8956a;
+  color: #fff;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.ev-ended-review-btn:hover,
+.ev-ended-claim-btn:hover {
+  filter: brightness(0.96);
+}
+
+.ev-ended-review-btn:disabled,
+.ev-ended-claim-btn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.ev-ended-review-secondary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.25rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 0.55rem;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* Leave-a-review modal on ended event pages */
+body.hub-rm-modal-open {
+  overflow: hidden;
+}
+
+.hub-rm-modal[hidden] {
+  display: none !important;
+}
+
+.hub-rm-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.hub-rm-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(45, 27, 94, 0.45);
+}
+
+.hub-rm-modal-panel {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 480px);
+  max-height: min(90vh, 720px);
+  overflow: auto;
+  background: #fff;
+  border-radius: 14px;
+  padding: 28px 24px 24px;
+  box-shadow: 0 20px 50px rgba(45, 27, 94, 0.2);
+}
+
+.hub-rm-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border: none;
+  background: transparent;
+  font-size: 24px;
+  line-height: 1;
+  color: #7a7274;
+  cursor: pointer;
+}
+
+.hub-rm-modal-title {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+  color: #4a4446;
+}
+
+.hub-rm-modal-sub {
+  margin: 0 0 18px;
+  font-size: 14px;
+  color: #635c5e;
+  line-height: 1.5;
+}
+
+.hub-rm-stars-field {
+  border: none;
+  margin: 0 0 16px;
+  padding: 0;
+}
+
+.hub-rm-stars-field legend {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.hub-rm-stars {
+  display: flex;
+  gap: 6px;
+}
+
+.hub-rm-star {
+  border: none;
+  background: transparent;
+  font-size: 28px;
+  line-height: 1;
+  color: #d1c4e0;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.hub-rm-star.is-active {
+  color: #b8956a;
+}
+
+.hub-rm-rating-hint,
+.hub-rm-label-hint {
+  margin: 0.4rem 0 0;
+  font-size: 0.8rem;
+  color: #7a7274;
+}
+
+.hub-rm-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+.hub-rm-feedback-step textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.75rem;
+  font: inherit;
+  resize: vertical;
+}
+
+.hub-rm-name-block {
+  margin-top: 0.85rem;
+}
+
+.hub-rm-name-choices {
+  border: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.hub-rm-choice {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  font-size: 0.85rem;
+}
+
+.hub-rm-change-rating {
+  margin-top: 0.75rem;
+  border: none;
+  background: transparent;
+  color: #452d5c;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.hub-rm-error {
+  margin: 0.75rem 0 0;
+  color: #b42318;
+  font-size: 0.85rem;
+}
+
+.hub-rm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  justify-content: flex-end;
+}
+
+.hub-rm-btn {
+  min-height: 2.35rem;
+  padding: 0.45rem 0.95rem;
+  border-radius: 0.55rem;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.hub-rm-btn--primary {
+  border-color: #b8956a;
+  background: #b8956a;
   color: #fff;
 }
 

@@ -380,7 +380,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   attendee_hubert_event_concierge: {
     file: 'attendee-hubert-event-concierge.html',
     marker: 'hub-email-layout-v3-purple',
-    subject: "TINA's weekly event picks — week of {{week_label}}",
+    subject: "TINA's weekly networking picks",
   },
   hubert_hub_invite: {
     file: 'hubert-hub-invite.html',

@@ -505,6 +505,14 @@
     return n === 5 || n === 15 || n === 25 || n === 50 ? n : 15;
   }
 
+  function setLocationRadiusMiles(miles) {
+    var n = Number(miles);
+    var value = n === 5 || n === 15 || n === 25 || n === 50 ? String(n) : '15';
+    if (locationRadius) locationRadius.value = value;
+    if (nearRadius) nearRadius.value = value;
+    if (nearRadiusMobile) nearRadiusMobile.value = value;
+  }
+
   /** True when the location query has an outcode/city sector list (prefer that over miles). */
   function locationHasOutcodeFilter(pc) {
     return !!(window.hubPrefersOutcodeForLocation && window.hubPrefersOutcodeForLocation(pc));
@@ -1338,6 +1346,11 @@
         if (checkOnline) checkOnline.checked = false;
         if (toggleNearMe) toggleNearMe.checked = false;
         if (toggleNearMeMobile) toggleNearMeMobile.checked = false;
+        /* Edinburgh: tighter mile radius so Fife doesn’t outrank the city.
+           EH postcode sectors still keep Edinburgh listings via metro fallback. */
+        if (String(regional.slug || '').toLowerCase() === 'edinburgh') {
+          setLocationRadiusMiles(5);
+        }
         syncNearRadiusUi();
         return window.hubResolveLocationFilter
           ? window.hubResolveLocationFilter(regional.location)

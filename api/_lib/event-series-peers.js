@@ -107,11 +107,27 @@ function seriesFeaturedUntil(rows) {
   return maxMs != null ? new Date(maxMs).toISOString() : null;
 }
 
+/**
+ * One browse/spotlight card per recurring listing. Prefer series_group_id; otherwise
+ * match organiser + title (+ recurrence meta when present) so title-matched peers
+ * without a group id still collapse onto the soonest date — not the last date added.
+ */
 function seriesSpotlightBucketKey(row) {
   if (!row) return '';
   const seriesGroupId = String(row.series_group_id || '').trim();
   if (seriesGroupId) return 'sg:' + seriesGroupId;
-  return 'id:' + String(row.id || '');
+
+  const organiserId = String(row.organiser_id || '').trim();
+  const title = seriesTitleKey(row);
+  if (!organiserId || !title) return 'id:' + String(row.id || '');
+
+  const pattern = String(row.recurrence_pattern || '').trim().toLowerCase();
+  const endDate = String(row.recurrence_end_date || '')
+    .trim()
+    .slice(0, 10);
+  if (pattern && endDate) return 'ot:' + organiserId + '\0' + title + '\0' + pattern + '\0' + endDate;
+  if (pattern) return 'ot:' + organiserId + '\0' + title + '\0' + pattern;
+  return 'ot:' + organiserId + '\0' + title;
 }
 
 function dedupeFeaturedRowsBySeries(rows) {
@@ -221,9 +237,31 @@ function collapseBrowseSameSlotDuplicates(rows) {
   return out;
 }
 
-/** Rows must already be sorted — keeps the first (best) row per series for the active sort. */
+/**
+ * Rows must already be sorted for listing order. Collapse same-slot clones, keep one
+ * card per series, and always bind that card to the soonest upcoming occurrence so
+ * “Next:” / Soonest never surfaces a far-future sibling as the listing date.
+ */
 function dedupeBrowseRowsBySeries(rows) {
-  return dedupeFeaturedRowsBySeries(collapseBrowseSameSlotDuplicates(rows));
+  const collapsed = collapseBrowseSameSlotDuplicates(rows);
+  const soonestByKey = new Map();
+  for (const row of collapsed) {
+    const key = seriesBrowseBucketKey(row);
+    if (!key) continue;
+    const existing = soonestByKey.get(key);
+    if (!existing || String(row.starts_at || '') < String(existing.starts_at || '')) {
+      soonestByKey.set(key, row);
+    }
+  }
+  const seen = new Set();
+  const out = [];
+  for (const row of collapsed) {
+    const key = seriesBrowseBucketKey(row) || 'id:' + String(row?.id || out.length);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(soonestByKey.get(key) || row);
+  }
+  return out;
 }
 
 function seriesCountForRow(row, seriesCounts) {

@@ -173,29 +173,59 @@ function sectionHeading(text) {
   );
 }
 
-async function buildSignupNudgeEventsHtml(sb, attendeeLocation, countryCode) {
+/** Prefer events starting within N days; fill with later dates only if needed. */
+function preferEventsStartingWithinDays(events, days, limit, now = new Date()) {
+  const list = Array.isArray(events) ? events : [];
+  const cap = Math.max(1, Number(limit) || list.length || 1);
+  const windowDays = Number(days);
+  if (!(windowDays > 0) || !list.length) return list.slice(0, cap);
+  const cutoff = now.getTime() + windowDays * 24 * 60 * 60 * 1000;
+  const near = [];
+  const later = [];
+  for (const ev of list) {
+    const t = new Date(ev && ev.starts_at).getTime();
+    if (!Number.isNaN(t) && t <= cutoff) near.push(ev);
+    else later.push(ev);
+  }
+  return near.concat(later).slice(0, cap);
+}
+
+async function buildSignupNudgeEventsHtml(sb, attendeeLocation, countryCode, options = {}) {
   const siteUrl = siteBase();
   const nearbyLimit = 5;
   const popularLimit = 3;
+  const preferWithinDays = Number(options.preferWithinDays) || 0;
+  const nearbyFetchLimit = preferWithinDays > 0 ? Math.min(nearbyLimit * 3, 12) : nearbyLimit;
+  const popularFetchLimit = preferWithinDays > 0 ? Math.min(popularLimit * 4, 12) : popularLimit;
   const nearbyResult = await fetchNearbyEvents(sb, attendeeLocation, {
-    limit: nearbyLimit,
+    limit: nearbyFetchLimit,
     countryCode: countryCode,
   });
   const partnerEvents = await fetchPartnerSpotlightEvents(sb);
   // Keep partner shows under "nearby" only for generic upcoming fallback — never under
   // "Popular online events" (Business Show / MarTech are in-person at ExCeL).
   // When the member has real nearby events or an online fallback, pin partners into Popular.
-  const nearbyEvents = shouldPrependPartnersToNearbySection(nearbyResult)
-    ? prependPartnerSpotlightEvents(nearbyResult.events, partnerEvents, nearbyLimit)
+  let nearbyEvents = shouldPrependPartnersToNearbySection(nearbyResult)
+    ? prependPartnerSpotlightEvents(nearbyResult.events, partnerEvents, nearbyFetchLimit)
     : nearbyResult.events;
+  if (preferWithinDays > 0) {
+    nearbyEvents = preferEventsStartingWithinDays(nearbyEvents, preferWithinDays, nearbyLimit);
+  } else {
+    nearbyEvents = (nearbyEvents || []).slice(0, nearbyLimit);
+  }
   const nearbyIds = nearbyEvents.map((ev) => ev.id);
   const popularResult = await fetchPopularEvents(sb, {
-    limit: popularLimit,
+    limit: popularFetchLimit,
     excludeEventIds: nearbyIds,
   });
-  const popularEvents = shouldPinPartnersIntoPopularSection(nearbyResult)
-    ? prependPartnerSpotlightEvents(popularResult.events, partnerEvents, popularLimit)
+  let popularEvents = shouldPinPartnersIntoPopularSection(nearbyResult)
+    ? prependPartnerSpotlightEvents(popularResult.events, partnerEvents, popularFetchLimit)
     : popularResult.events;
+  if (preferWithinDays > 0) {
+    popularEvents = preferEventsStartingWithinDays(popularEvents, preferWithinDays, popularLimit);
+  } else {
+    popularEvents = (popularEvents || []).slice(0, popularLimit);
+  }
 
   const nearbyParts = [];
   if (nearbyEvents.length) {
@@ -2013,7 +2043,8 @@ async function sendDueHubertEventConciergeEmails(sb) {
       const eventSections = await buildSignupNudgeEventsHtml(
         sb,
         attendee.location,
-        attendee.country_code
+        attendee.country_code,
+        { preferWithinDays: 7 }
       );
       if (!eventSections.nearby_events_html && !eventSections.popular_events_html) {
         result.skipped += 1;
@@ -2053,7 +2084,7 @@ async function sendDueHubertEventConciergeEmails(sb) {
               attendee.country_code
             ),
           },
-          subject: "TINA's weekly event picks — week of " + weekLabel,
+          subject: "TINA's weekly networking picks",
         });
       } catch (sendErr) {
         await releaseRowTimestamp(sb, {

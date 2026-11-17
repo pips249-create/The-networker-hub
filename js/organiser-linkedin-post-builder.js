@@ -199,35 +199,83 @@
       caption:
         'Curious? Enquire to learn more — send a short note and we will share the details that matter.\n\n{listing}\nOn The Networker UK → {url}',
     },
+  ];
+
+  /** Static badge files — download only (not LinkedIn canvas posts). */
+  var TRUST_BADGE_DOWNLOADS = [
     {
       id: 'verified',
       label: 'Verified organiser',
-      group: 'badges',
-      groupLabel: 'Networker UK trust badges',
-      accent: '#c299d1',
-      kicker: 'TRUST MARK',
-      line1: 'Verified organiser',
-      line2: 'on The Networker UK',
-      line3: 'A small credibility mark for your LinkedIn post',
-      hubEmphasis: true,
-      caption:
-        "We're a verified organiser on The Networker UK — the UK home for networking events and business opportunities.\n\n{name}\n→ {url}",
+      blurb: 'Circular trust seal for websites, email, or posts',
+      href: '/assets/verified-organiser-badge.jpg?v=20261117verified4',
+      filename: 'networker-uk-verified-organiser-badge.jpg',
+      previewClass: 'org-post-badge-card-preview--dark',
     },
     {
       id: 'listed',
       label: 'Listed on The Networker UK',
-      group: 'badges',
-      groupLabel: 'Networker UK trust badges',
-      accent: '#9a7aa8',
-      kicker: 'DIRECTORY',
-      line1: 'Listed on',
-      line2: 'The Networker UK',
-      line3: 'UK networking events and business opportunities',
-      hubEmphasis: true,
-      caption:
-        "You'll find us listed on The Networker UK — UK networking events and business opportunities.\n\n{name}\n→ {url}",
+      blurb: 'Website footer, email signature, or social posts',
+      href: '/assets/organiser-badge.png?v=20261117listed4',
+      filename: 'networker-uk-listed-badge.png',
+      previewClass: 'org-post-badge-card-preview--light',
+    },
+    {
+      id: 'partner-light',
+      label: 'Partner mark — light backgrounds',
+      blurb: 'PNG for pale pages and slides',
+      href: '/assets/logo-networker-uk-partner-light.png?v=20261117badge4',
+      filename: 'networker-uk-partner-light.png',
+      previewClass: 'org-post-badge-card-preview--light',
+    },
+    {
+      id: 'partner-dark',
+      label: 'Partner mark — dark backgrounds',
+      blurb: 'PNG for dark pages and slides',
+      href: '/assets/logo-networker-uk-partner-dark.png?v=20261117badge4',
+      filename: 'networker-uk-partner-dark.png',
+      previewClass: 'org-post-badge-card-preview--dark',
     },
   ];
+
+  function downloadTrustBadgeFile(href, filename, triggerEl) {
+    var label = triggerEl ? String(triggerEl.textContent || 'Download').trim() : 'Download';
+    if (triggerEl) {
+      triggerEl.setAttribute('aria-busy', 'true');
+      triggerEl.textContent = 'Downloading…';
+    }
+    return fetch(href, { credentials: 'same-origin', cache: 'no-cache' })
+      .then(function (res) {
+        if (!res.ok) throw new Error('badge_missing');
+        var type = String(res.headers.get('content-type') || '').toLowerCase();
+        if (type.indexOf('text/html') !== -1) throw new Error('badge_html');
+        return res.blob();
+      })
+      .then(function (blob) {
+        var type = String(blob && blob.type || '').toLowerCase();
+        if (!blob || !blob.size || type.indexOf('text/html') !== -1) {
+          throw new Error('badge_html');
+        }
+        var objectUrl = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = objectUrl;
+        a.download = filename || 'networker-uk-badge';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () {
+          URL.revokeObjectURL(objectUrl);
+        }, 1000);
+      })
+      .catch(function () {
+        window.alert('Could not download that badge. Refresh and try again, or open the image in a new tab.');
+      })
+      .then(function () {
+        if (triggerEl) {
+          triggerEl.removeAttribute('aria-busy');
+          triggerEl.textContent = label || 'Download';
+        }
+      });
+  }
 
   function esc(s) {
     return String(s || '')
@@ -237,20 +285,34 @@
       .replace(/"/g, '&quot;');
   }
 
-  function loadImage(src, useCors) {
+  function loadImage(src, useCors, timeoutMs) {
     return new Promise(function (resolve, reject) {
       if (!src) {
         resolve(null);
         return;
       }
+      var settled = false;
+      var timer = null;
+      var ms = Number(timeoutMs);
+      if (!Number.isFinite(ms) || ms <= 0) ms = 5000;
       var img = new Image();
       if (useCors) img.crossOrigin = 'anonymous';
+      function finish(err, value) {
+        if (settled) return;
+        settled = true;
+        if (timer) clearTimeout(timer);
+        if (err) reject(err);
+        else resolve(value);
+      }
       img.onload = function () {
-        resolve(img);
+        finish(null, img);
       };
       img.onerror = function () {
-        reject(new Error('Could not load image'));
+        finish(new Error('Could not load image'));
       };
+      timer = setTimeout(function () {
+        finish(new Error('Image load timed out'));
+      }, ms);
       img.src = src;
     });
   }
@@ -581,13 +643,19 @@
     var titleFamily = primaryFamily(faces.title);
     var bodyFamily = primaryFamily(faces.body);
     return waitForGoogleFontsStylesheet().then(function () {
-      return Promise.all([
+      var fontsReady = Promise.all([
         document.fonts.load('400 72px "' + titleFamily + '"'),
         document.fonts.load('700 28px "' + bodyFamily + '"'),
         document.fonts.load('400 24px "' + bodyFamily + '"'),
       ]).catch(function () {
         return null;
       });
+      return Promise.race([
+        fontsReady,
+        new Promise(function (resolve) {
+          setTimeout(resolve, 2500);
+        }),
+      ]);
     });
   }
 
@@ -1234,7 +1302,6 @@
     var DEFAULT_TEMPLATE_BY_CATEGORY = {
       events: 'photo_takeover',
       opportunities: 'opportunity',
-      badges: 'verified',
     };
 
     var state = {
@@ -1296,9 +1363,45 @@
       }).join('') +
       '</div>';
 
+    var badgeGalleryHtml =
+      '<div class="org-post-badge-gallery" id="post-badge-gallery" hidden>' +
+      '<p class="org-post-badge-gallery-lead">Download these badges for your website, email signature, or posts. No LinkedIn caption needed.</p>' +
+      '<div class="org-post-badge-grid">' +
+      TRUST_BADGE_DOWNLOADS.map(function (badge) {
+        var previewClass = badge.previewClass
+          ? ' org-post-badge-card-preview ' + badge.previewClass
+          : ' org-post-badge-card-preview';
+        return (
+          '<article class="org-post-badge-card">' +
+          '<div class="' +
+          previewClass.trim() +
+          '">' +
+          '<img src="' +
+          esc(badge.href) +
+          '" alt="' +
+          esc(badge.label) +
+          '" width="220" height="120" decoding="async" />' +
+          '</div>' +
+          '<h3 class="org-post-badge-card-title">' +
+          esc(badge.label) +
+          '</h3>' +
+          '<p class="org-post-badge-card-blurb">' +
+          esc(badge.blurb) +
+          '</p>' +
+          '<button type="button" class="org-btn org-btn-gold org-btn-sm org-post-badge-download" data-badge-href="' +
+          esc(badge.href) +
+          '" data-badge-filename="' +
+          esc(badge.filename) +
+          '">Download</button>' +
+          '</article>'
+        );
+      }).join('') +
+      '</div>' +
+      '<p class="org-post-hint">Need the website embed code instead? Open <a href="#social-partner" data-org-route="social-partner">Organiser badge</a> under More ways to get found.</p>' +
+      '</div>';
+
     root.innerHTML =
       '<div class="org-post-builder">' +
-      '<div class="org-post-workspace">' +
       '<div class="org-post-builder-controls">' +
       '<div class="org-post-field org-post-field--category">' +
       '<span class="org-post-label">What is this post about?</span>' +
@@ -1307,6 +1410,9 @@
       '</div>' +
       '<p class="org-post-gallery-gate" id="post-opp-gate" hidden>Publish a live business opportunity first to unlock these options. <a href="#business-list">List a business opportunity →</a></p>' +
       '</div>' +
+      badgeGalleryHtml +
+      '<div class="org-post-workspace" id="post-linkedin-workspace" data-linkedin-flow="1">' +
+      '<div class="org-post-builder-controls org-post-builder-controls--linkedin">' +
       '<div class="org-post-pick-block">' +
       '<label class="org-post-field">' +
       '<span class="org-post-label">Your organiser page</span>' +
@@ -1382,6 +1488,7 @@
       '" aria-label="LinkedIn post image preview"></canvas>' +
       '</div>' +
       '<p class="org-post-hint">Download the picture, then paste your text when you create a post. The square image works on LinkedIn and Facebook.</p>' +
+      '</div>' +
       '</div>' +
       '</div>' +
       '</div>';
@@ -1492,6 +1599,26 @@
         btn.classList.toggle('is-selected', on);
         btn.setAttribute('aria-selected', on ? 'true' : 'false');
       });
+    }
+
+    function syncBadgeMode() {
+      var badges = state.categoryId === 'badges';
+      var gallery = root.querySelector('#post-badge-gallery');
+      var linkedin = root.querySelector('#post-linkedin-workspace');
+      var catLabel = root.querySelector('.org-post-field--category .org-post-label');
+      if (gallery) {
+        gallery.hidden = !badges;
+        gallery.setAttribute('aria-hidden', badges ? 'false' : 'true');
+      }
+      if (linkedin) {
+        linkedin.hidden = badges;
+        linkedin.setAttribute('aria-hidden', badges ? 'true' : 'false');
+      }
+      if (catLabel) {
+        catLabel.textContent = badges ? 'Download a trust badge' : 'What is this post about?';
+      }
+      if (elOppGate && badges) elOppGate.hidden = true;
+      if (badges) setStatus('');
     }
 
     function styleHintFor(tpl) {
@@ -2174,6 +2301,7 @@
     }
 
     async function renderPreview() {
+      if (state.categoryId === 'badges') return;
       if (state.rendering) {
         state.renderPending = true;
         return;
@@ -2181,9 +2309,14 @@
       state.rendering = true;
       try {
         if (!ctx || !canvas) return;
-        // Always paint a base fill so a failed render never looks like an empty cream box.
-        ctx.fillStyle = '#2c2826';
+        // Soft cream while assets load — charcoal here looked like a broken black preview.
+        ctx.fillStyle = '#faf6ee';
         ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = '#9a7aa8';
+        ctx.font = '600 28px "DM Sans", Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Loading preview…', W / 2, H / 2);
+        ctx.textAlign = 'left';
         var tpl = currentTemplate();
         var hubImg = await ensureHubLogos();
         await ensureOrgLogo();
@@ -2210,9 +2343,9 @@
       } catch (err) {
         console.warn('LinkedIn preview render failed', err);
         if (ctx) {
-          ctx.fillStyle = '#2c2826';
+          ctx.fillStyle = '#faf6ee';
           ctx.fillRect(0, 0, W, H);
-          ctx.fillStyle = '#f7f1e8';
+          ctx.fillStyle = '#4a4446';
           ctx.font = '600 28px "DM Sans", Arial, sans-serif';
           ctx.textAlign = 'center';
           ctx.fillText('Preview unavailable — try another style', W / 2, H / 2);
@@ -2354,6 +2487,11 @@
       state.categoryId = categoryId;
       state.customCaption = false;
       syncCategoryTabs();
+      syncBadgeMode();
+      if (categoryId === 'badges') {
+        setStatus('');
+        return;
+      }
       if (categoryId === 'opportunities' && !hasLiveListings()) {
         var oppTpl = defaultTemplateForCategory('opportunities');
         state.templateId = oppTpl.id;
@@ -2438,6 +2576,16 @@
     }
 
     root.addEventListener('click', function (e) {
+      var downloadBtn = e.target.closest('.org-post-badge-download');
+      if (downloadBtn && root.contains(downloadBtn)) {
+        e.preventDefault();
+        downloadTrustBadgeFile(
+          downloadBtn.getAttribute('data-badge-href') || '',
+          downloadBtn.getAttribute('data-badge-filename') || 'networker-uk-badge',
+          downloadBtn
+        );
+        return;
+      }
       var catBtn = e.target.closest('[data-category-id]');
       if (catBtn && root.contains(catBtn)) {
         selectCategory(catBtn.getAttribute('data-category-id'));
@@ -2533,6 +2681,7 @@
     function hydrate() {
       syncGroupOptions();
       syncCategoryTabs();
+      syncBadgeMode();
       syncOpportunityGate();
       syncListingField();
       syncEventField();

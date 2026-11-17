@@ -33,8 +33,24 @@ assert.ok(!verifyWebhookSignature(secret, body, 'bad'));
 
 const prevPreview = process.env.CONNECTED_BOOKING_PREVIEW_EMAILS;
 const prevEnabled = process.env.CONNECTED_BOOKING_ENABLED;
+const prevPilot = process.env.CONNECTED_BOOKING_PILOT_GRANT_EMAILS;
+
+// Full launch (default / ENABLED=true): everyone can use Connected, preview list ignored.
+process.env.CONNECTED_BOOKING_ENABLED = 'true';
+process.env.CONNECTED_BOOKING_PREVIEW_EMAILS = 'pips249@gmail.com';
+delete require.cache[require.resolve('../api/_lib/connected-booking-util')];
+const utilLive = require('../api/_lib/connected-booking-util');
+assert.strictEqual(
+  utilLive.connectedBookingAllowedForEmail('other@example.com'),
+  true,
+  'ENABLED=true opens Connected for every organiser email'
+);
+assert.strictEqual(utilLive.connectedBookingAllowedForEmail('pips249@gmail.com'), true);
+
+// Kill-switch + preview: only allowlisted / pilot emails.
 process.env.CONNECTED_BOOKING_ENABLED = 'false';
 process.env.CONNECTED_BOOKING_PREVIEW_EMAILS = 'pips249@gmail.com';
+delete process.env.CONNECTED_BOOKING_PILOT_GRANT_EMAILS;
 delete require.cache[require.resolve('../api/_lib/connected-booking-util')];
 const utilPreview = require('../api/_lib/connected-booking-util');
 assert.strictEqual(utilPreview.connectedBookingAllowedForEmail('pips249@gmail.com'), true);
@@ -45,11 +61,14 @@ const utilPilotPreview = require('../api/_lib/connected-booking-util');
 assert.strictEqual(
   utilPilotPreview.connectedBookingAllowedForEmail('pilot@test.com'),
   true,
-  'pilot grant email allowed while preview list is locked'
+  'pilot grant email allowed while Connected is kill-switched'
 );
 assert.strictEqual(utilPilotPreview.connectedBookingAllowedForEmail('other@example.com'), false);
+
 process.env.CONNECTED_BOOKING_PREVIEW_EMAILS = prevPreview || '';
 process.env.CONNECTED_BOOKING_ENABLED = prevEnabled || '';
+if (prevPilot) process.env.CONNECTED_BOOKING_PILOT_GRANT_EMAILS = prevPilot;
+else delete process.env.CONNECTED_BOOKING_PILOT_GRANT_EMAILS;
 delete require.cache[require.resolve('../api/_lib/connected-booking-util')];
 
 process.env.CONNECTED_BOOKING_PILOT_GRANT_EMAILS = 'pilot@test.com';
@@ -57,7 +76,8 @@ delete require.cache[require.resolve('../api/_lib/connected-booking-util')];
 const utilPilot = require('../api/_lib/connected-booking-util');
 assert.strictEqual(utilPilot.connectedBookingPilotGrantEligible('pilot@test.com'), true);
 assert.strictEqual(utilPilot.connectedBookingPilotGrantEligible('other@test.com'), false);
-assert.strictEqual(utilPilot.connectedBookingPilotGrantPlan(), 'starter');
+// Free Connected always uses unlimited (enterprise); starter only when paid mode is forced.
+assert.strictEqual(utilPilot.connectedBookingPilotGrantPlan(), 'enterprise');
 delete process.env.CONNECTED_BOOKING_PILOT_GRANT_EMAILS;
 delete require.cache[require.resolve('../api/_lib/connected-booking-util')];
 

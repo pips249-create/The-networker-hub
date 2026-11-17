@@ -847,6 +847,42 @@ module.exports = async function handler(req, res) {
         const details = eventDetailsFromAdminBody(body);
         const attendanceMode = String(body.attendance_mode || body.attendanceMode || 'tickets').trim();
         const maxAttendeesRaw = body.max_attendees != null ? body.max_attendees : body.maxAttendees;
+        const {
+          CHECKOUT_HUB,
+          CHECKOUT_EXTERNAL,
+          CHECKOUT_LINK_OUT,
+          normalizeExternalBookingUrl,
+          normalizeExternalPriceLabel,
+        } = require('../connected-booking-util');
+        const checkoutModeRaw = String(body.checkout_mode || body.checkoutMode || CHECKOUT_HUB).trim();
+        const checkoutMode = [CHECKOUT_HUB, CHECKOUT_EXTERNAL, CHECKOUT_LINK_OUT].includes(
+          checkoutModeRaw
+        )
+          ? checkoutModeRaw
+          : CHECKOUT_HUB;
+        const externalBookingUrl = normalizeExternalBookingUrl(
+          body.external_booking_url || body.externalBookingUrl
+        );
+        const externalPriceLabel = normalizeExternalPriceLabel(
+          body.external_price_label || body.externalPriceLabel
+        );
+        if (
+          (checkoutMode === CHECKOUT_LINK_OUT || checkoutMode === CHECKOUT_EXTERNAL) &&
+          String(listingStatus || '').toLowerCase() === 'published'
+        ) {
+          if (!externalBookingUrl) {
+            return json(res, 400, {
+              error: 'missing_external_booking_url',
+              message: 'Add the booking page URL before publishing a Link Out event.',
+            });
+          }
+          if (!externalPriceLabel) {
+            return json(res, 400, {
+              error: 'missing_external_price_label',
+              message: 'Add a price label (e.g. Free or From £25) before publishing Link Out.',
+            });
+          }
+        }
         const base = {
           title,
           groupId: organiserId,
@@ -865,6 +901,14 @@ module.exports = async function handler(req, res) {
           onlineLink: String(body.meeting_link || body.onlineLink || '').trim(),
           attendanceMode,
           maxAttendees: maxAttendeesRaw,
+          checkoutMode,
+          checkout_mode: checkoutMode,
+          externalBookingUrl,
+          external_booking_url: externalBookingUrl,
+          externalPriceLabel,
+          external_price_label: externalPriceLabel,
+          _editorEmail: session && session.email,
+          email: session && session.email,
         };
 
         const seriesGroupId = resolveSeriesGroupId(null, occ.length);
@@ -913,9 +957,35 @@ module.exports = async function handler(req, res) {
           console.warn('[admin-events] outreach log', logErr && logErr.message ? logErr.message : logErr);
         }
 
+        // Staff create must keep Link Out / Connected even if organiser entitlements
+        // would have demoted checkout_mode back to hub during createEvent.
+        if (
+          events.length &&
+          (checkoutMode === CHECKOUT_LINK_OUT || checkoutMode === CHECKOUT_EXTERNAL)
+        ) {
+          try {
+            const sb = getSupabaseAdmin();
+            const checkoutPatch = {
+              checkout_mode: checkoutMode,
+              external_booking_url: externalBookingUrl || null,
+              external_price_label: externalPriceLabel || null,
+            };
+            const ids = events.map((ev) => ev.id).filter(Boolean);
+            if (ids.length) {
+              const { error: checkoutErr } = await sb.from('events').update(checkoutPatch).in('id', ids);
+              if (checkoutErr) throw new Error(checkoutErr.message);
+            }
+          } catch (checkoutForceErr) {
+            console.warn(
+              '[admin-events] checkout force',
+              checkoutForceErr && checkoutForceErr.message ? checkoutForceErr.message : checkoutForceErr
+            );
+          }
+        }
+
         let ticketsCreated = 0;
         const ticketPayloads = Array.isArray(body.tickets) ? body.tickets : [];
-        if (ticketPayloads.length && events.length) {
+        if (ticketPayloads.length && events.length && checkoutMode === CHECKOUT_HUB) {
           try {
             const { createTicketsForEvents } = require('../supabase-organiser-events');
             const ticketResult = await createTicketsForEvents({

@@ -218,6 +218,7 @@ function formatDateParts(startsAt) {
   const short = d.toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'short',
+    year: 'numeric',
     timeZone: 'Europe/London',
   });
   return { iso, ts: d.getTime(), display, short, dateOnly, time };
@@ -1374,9 +1375,20 @@ async function fetchEventRowBySlugLoose(sb, slug) {
     return data || null;
   }
 
-  const tableRes = await sb.from('events').select('*').eq('slug', s).maybeSingle();
-  if (tableRes.error) throw new Error(tableRes.error.message);
-  if (tableRes.data) return tableRes.data;
+  // Prefer exact slug matches; avoid maybeSingle — recurring/archived rows can share a slug.
+  const { data: exactRows, error: exactErr } = await sb
+    .from('events')
+    .select('*')
+    .eq('slug', s)
+    .order('starts_at', { ascending: false, nullsFirst: false })
+    .limit(12);
+  if (exactErr) throw new Error(exactErr.message);
+  if (exactRows && exactRows.length) {
+    const approved =
+      exactRows.find((row) => String(row.approval_status || '').trim() === 'Approved') ||
+      exactRows[0];
+    return approved;
+  }
 
   const prefix = s.replace(/-\d+$/, '') || s;
   const { data: candidates, error } = await sb
@@ -1740,6 +1752,7 @@ module.exports = {
   fetchAllPaged,
   fetchPublishedEventRows,
   fetchPublishedEventBySlug,
+  fetchEventRowBySlugLoose,
   fetchEventSeriesDates,
   eventsFromPublishedRows,
   isApprovedPublicEventPayload,

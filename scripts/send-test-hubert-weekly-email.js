@@ -67,7 +67,7 @@ sendTemplatedEmail({
   to,
   variables: vars,
   skipEmailCheck: true,
-  subject: "[Test] TINA's weekly event picks — week of " + weekLabel,
+  subject: "[Test] TINA's weekly networking picks",
 })
   .then(function (result) {
     console.log('Sent TINA weekly digest test to', to);

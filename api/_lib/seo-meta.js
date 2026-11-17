@@ -9,7 +9,13 @@ const {
 } = require('./hubert-seo');
 const { getStaticPageConfig } = require('./seo-static-pages');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
-const { fetchPublishedEventBySlug, rowToEvent, isPublicEvent } = require('./supabase-events');
+const {
+  fetchPublishedEventBySlug,
+  fetchEventRowBySlugLoose,
+  rowToEvent,
+  isPublicEvent,
+  isEventPast,
+} = require('./supabase-events');
 const { getPublicOrganiserForSeo } = require('./supabase-organisers-browse');
 const { publicEventSlug } = require('./event-slug');
 const { publicOrganiserSlug } = require('./organiser-slug');
@@ -347,11 +353,104 @@ function buildOrganiserSchema(org, origin) {
   return schema;
 }
 
+/** Approved listings that were public but are no longer bookable — soft-land instead of HTTP 404. */
+function canSoftLandEventRow(row) {
+  if (!row) return false;
+  if (String(row.approval_status || '').trim() !== 'Approved') return false;
+  const status = String(row.status || '').toLowerCase();
+  if (status === 'draft' || status === 'unpublished') return false;
+  if (status === 'archived' || status === 'cancelled' || status === 'canceled') return true;
+  // Past published rows that failed the published-only slug lookup still deserve a landing.
+  return Boolean(isEventPast(row));
+}
+
+function buildSoftLandingEventMeta(row, organiser, origin) {
+  const titleText = String((row && row.title) || 'Event').trim() || 'Event';
+  const eventSlug =
+    publicEventSlug({ slug: row.slug, title: row.title }) || String(row.slug || '').trim();
+  if (!eventSlug) return null;
+
+  const status = String(row.status || '').toLowerCase();
+  const cancelled = status === 'cancelled' || status === 'canceled';
+  const past = isEventPast(row) || status === 'archived';
+  const endedTitle = cancelled
+    ? 'This event was cancelled'
+    : past
+      ? 'This event has ended'
+      : 'Event unavailable';
+  const description = cancelled
+    ? `${titleText} was cancelled. Browse upcoming networking events on The Networker UK.`
+    : `${titleText} has ended. Attendees can leave a review via their email link or Hub account. Browse upcoming events on The Networker UK.`;
+  const orgName = organiser ? String(organiser.name || '').trim() : '';
+  const orgSlug = organiser ? publicOrganiserSlug(organiser) : '';
+  const canonical = absoluteUrl(origin, '/events/' + encodeURIComponent(eventSlug));
+  const image = absoluteUrl(origin, OG_SHARE_IMAGE);
+  const meta = {
+    title: `${titleText} – The Networker UK`,
+    description: trimText(description, 160),
+    canonical,
+    image,
+    ogType: 'article',
+    robots: 'noindex, follow',
+  };
+  const breadcrumbs = buildBreadcrumbListSchema(
+    [
+      { name: 'Home', path: '/' },
+      { name: 'Events', path: '/events/' },
+      { name: titleText, path: '/events/' + encodeURIComponent(eventSlug) },
+    ],
+    origin
+  );
+
+  return {
+    ok: true,
+    type: 'event',
+    slug: eventSlug,
+    softLanding: true,
+    ...meta,
+    openGraph: buildOpenGraphTags(meta),
+    schema: buildSchemaGraphFromParts([breadcrumbs], origin),
+    breadcrumbs: breadcrumbs.itemListElement,
+    detailSsr: {
+      title: titleText,
+      trail: titleText,
+      date: '',
+      time: '',
+      city: String((row && row.city) || '').trim(),
+      venue: String((row && (row.venue || row.location_label)) || '').trim(),
+      address: '',
+      locationLine: String((row && (row.location_label || row.city)) || '').trim(),
+      price: '',
+      category: '',
+      format: '',
+      about: description,
+      hostName: orgName,
+      hostUrl: orgSlug
+        ? absoluteUrl(origin, '/organisers/' + encodeURIComponent(orgSlug))
+        : '',
+      imageUrl: '',
+      ended: true,
+      endedTitle,
+      endedText: cancelled
+        ? 'This listing is no longer bookable. Explore upcoming events from this organiser or across The Networker UK.'
+        : 'Tickets are no longer available. If you attended, use your review email link or sign in to leave feedback — otherwise browse upcoming events.',
+      browseEventsUrl: absoluteUrl(origin, '/events/'),
+      canonical,
+    },
+  };
+}
+
 async function buildEventMeta(slug, origin) {
   if (!isSupabaseConfigured()) return null;
   const sb = getSupabaseAdmin();
-  const row = await fetchPublishedEventBySlug(sb, slug);
-  if (!row) return null;
+  let row = await fetchPublishedEventBySlug(sb, slug);
+  let softLandingOnly = false;
+  if (!row) {
+    const loose = await fetchEventRowBySlugLoose(sb, slug);
+    if (!canSoftLandEventRow(loose)) return null;
+    row = loose;
+    softLandingOnly = true;
+  }
 
   const [orgRes, ticketsRes] = await Promise.all([
     row.organiser_id
@@ -363,18 +462,28 @@ async function buildEventMeta(slug, origin) {
           .eq('id', row.organiser_id)
           .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
-    sb
-      .from('tickets')
-      .select(
-        'id, event_id, price, quantity, name, ticket_type, description, sale_ends_at, sale_starts_at, status, visibility'
-      )
-      .eq('event_id', row.id),
+    softLandingOnly
+      ? Promise.resolve({ data: [], error: null })
+      : sb
+          .from('tickets')
+          .select(
+            'id, event_id, price, quantity, name, ticket_type, description, sale_ends_at, sale_starts_at, status, visibility'
+          )
+          .eq('event_id', row.id),
   ]);
   if (orgRes.error) throw new Error(orgRes.error.message);
   if (ticketsRes.error) throw new Error(ticketsRes.error.message);
 
   const organiser = orgRes.data || null;
-  if (organiser && !isPublicEvent(row, organiser)) return null;
+  if (softLandingOnly) {
+    return buildSoftLandingEventMeta(row, organiser, origin);
+  }
+  if (organiser && !isPublicEvent(row, organiser)) {
+    if (canSoftLandEventRow(row)) {
+      return buildSoftLandingEventMeta(row, organiser, origin);
+    }
+    return null;
+  }
 
   const tickets = (ticketsRes.data || []).map((t) => ({ ...t, _registrationCount: 0 }));
   const ev = rowToEvent(row, organiser, tickets);
@@ -635,7 +744,7 @@ function buildStaticPageMeta(pageKey, origin) {
 }
 
 /** Cities whose Search Console queries are “business networking events in {city}”. */
-const BUSINESS_NETWORKING_EVENTS_TITLE_SLUGS = new Set(['glasgow', 'bristol']);
+const BUSINESS_NETWORKING_EVENTS_TITLE_SLUGS = new Set(['glasgow', 'bristol', 'edinburgh']);
 
 function usesBusinessNetworkingEventsTitle(slug) {
   return BUSINESS_NETWORKING_EVENTS_TITLE_SLUGS.has(String(slug || '').trim().toLowerCase());

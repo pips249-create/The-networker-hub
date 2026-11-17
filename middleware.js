@@ -479,6 +479,9 @@ function buildHeadTags(meta) {
   if (meta.canonical) {
     tags += '<link rel="canonical" href="' + escapeHtml(meta.canonical) + '" />\n';
   }
+  if (meta.robots) {
+    tags += '<meta name="robots" content="' + escapeHtml(meta.robots) + '" />\n';
+  }
   const og = meta.openGraph || {};
   for (const key of Object.keys(og)) {
     if (!og[key]) continue;
@@ -873,7 +876,7 @@ function injectNetworkingRegionContent(html, meta) {
   const h1Html =
     slug === 'online'
       ? 'Online networking events <span class="accent">' + year + '</span>'
-      : slug === 'glasgow' || slug === 'bristol'
+      : slug === 'glasgow' || slug === 'bristol' || slug === 'edinburgh'
         ? 'Business networking events in <span class="accent">' + name + '</span>'
         : 'Networking in <span class="accent">' + name + '</span>';
 
@@ -1884,7 +1887,7 @@ export default async function middleware(request) {
       'Content-Type': 'text/html; charset=utf-8',
       'Cache-Control': 'public, max-age=300, s-maxage=300',
     };
-    if (siteGated) {
+    if (siteGated || meta.softLanding || (meta.robots && /noindex/i.test(String(meta.robots)))) {
       seoHeaders['X-Robots-Tag'] = NOINDEX_HEADER;
     }
 

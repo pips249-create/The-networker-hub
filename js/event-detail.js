@@ -1818,18 +1818,24 @@
     return '★★★★★'.slice(0, full) + '☆☆☆☆☆'.slice(0, 5 - full);
   }
 
-  function mapEmbedSrc(ev, q) {
+  function eventMapCoords(ev) {
     const lat = ev && ev.lat != null ? Number(ev.lat) : null;
     const lng = ev && ev.lng != null ? Number(ev.lng) : null;
-    if (lat != null && lng != null && !Number.isNaN(lat) && !Number.isNaN(lng)) {
+    if (lat == null || lng == null || Number.isNaN(lat) || Number.isNaN(lng)) return null;
+    return { lat, lng };
+  }
+
+  function mapEmbedSrc(ev, q) {
+    const coords = eventMapCoords(ev);
+    if (coords) {
       const pad = 0.012;
       return (
         'https://www.openstreetmap.org/export/embed.html?bbox=' +
-        [lng - pad, lat - pad, lng + pad, lat + pad].join(',') +
+        [coords.lng - pad, coords.lat - pad, coords.lng + pad, coords.lat + pad].join(',') +
         '&layer=mapnik&marker=' +
-        lat +
+        coords.lat +
         ',' +
-        lng
+        coords.lng
       );
     }
     if (!q) return '';
@@ -1851,16 +1857,21 @@
 
     const iframe = document.getElementById('ev-map-iframe');
     const mapWrap = iframe ? iframe.closest('.map-embed') : null;
+    const pin = document.getElementById('ev-map-pin');
     if (iframe) {
+      const coords = online ? null : eventMapCoords(ev);
       const src = online ? '' : mapEmbedSrc(ev, q);
       if (src) {
         iframe.src = src;
         iframe.hidden = false;
         if (mapWrap) mapWrap.hidden = false;
+        // OSM’s marker param often renders blank; show our centre pin when we own the bbox.
+        if (pin) pin.hidden = !coords;
       } else {
         iframe.removeAttribute('src');
         iframe.hidden = true;
         if (mapWrap) mapWrap.hidden = online;
+        if (pin) pin.hidden = true;
       }
     }
   }
@@ -2565,6 +2576,271 @@
     setSeriesDatePickerOpen(false);
   }
 
+  function reviewTokenFromUrl() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return String(params.get('token') || params.get('review_token') || '').trim();
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function ensureEndedReviewModal() {
+    if (window.HubReviewModal && typeof window.HubReviewModal.init === 'function') {
+      window.HubReviewModal.init({
+        onSubmitted: function () {
+          const note = document.getElementById('ev-ended-review-note');
+          if (note) {
+            note.hidden = false;
+            note.textContent = 'Thanks — your review is live on the organiser profile.';
+          }
+          const reviewBtn = document.getElementById('ev-ended-leave-review');
+          if (reviewBtn) reviewBtn.hidden = true;
+          const claimBtn = document.getElementById('ev-ended-claim-attendance');
+          if (claimBtn) claimBtn.hidden = true;
+        },
+      });
+    }
+  }
+
+  function renderEndedNavLinks(ev, actionsEl) {
+    if (!actionsEl) return;
+    const links = [];
+    const orgHref = organiserProfileHref(ev || {});
+    if (orgHref) {
+      links.push(
+        '<a class="ev-ended-primary" href="' +
+          escapeHtml(orgHref) +
+          '">View organiser page</a>'
+      );
+    }
+    links.push('<a href="/events/">Browse upcoming events</a>');
+    actionsEl.innerHTML = links.join('');
+
+    const city = String((ev && (ev.city || ev.outcode)) || '').trim();
+    if (window.HUB_applyDetailRegionCta && city) {
+      const regionCta = document.getElementById('ev-region-cta');
+      if (regionCta) {
+        window.HUB_applyDetailRegionCta(regionCta, {
+          context: 'events',
+          locationTexts: [ev.postcode, ev.city, ev.outcode, ev.location],
+        });
+        if (!regionCta.hidden) {
+          const clone = regionCta.cloneNode(true);
+          clone.id = '';
+          clone.hidden = false;
+          clone.classList.add('ev-ended-region-link');
+          actionsEl.appendChild(clone);
+        }
+      }
+    }
+  }
+
+  function mountEndedReviewActions(ev, options) {
+    const opts = options || {};
+    const actionsEl = document.getElementById('ev-ended-banner-actions');
+    const textEl = document.getElementById('ev-ended-banner-text');
+    if (!actionsEl) return;
+
+    let reviewRow = document.getElementById('ev-ended-review-row');
+    if (!reviewRow) {
+      reviewRow = document.createElement('div');
+      reviewRow.id = 'ev-ended-review-row';
+      reviewRow.className = 'ev-ended-review-row';
+      actionsEl.parentNode.insertBefore(reviewRow, actionsEl);
+    }
+
+    const eventId = String((ev && ev.id) || opts.eventId || '').trim();
+    const reviewToken = reviewTokenFromUrl();
+    const cancelled = Boolean(opts.cancelled);
+
+    if (cancelled) {
+      reviewRow.hidden = true;
+      reviewRow.innerHTML = '';
+      return;
+    }
+
+    if (reviewToken && eventId) {
+      reviewRow.hidden = false;
+      reviewRow.innerHTML =
+        '<p class="ev-ended-review-note" id="ev-ended-review-note">You have a review invite for this event.</p>' +
+        '<a class="ev-ended-review-btn" id="ev-ended-leave-review" href="/events/leave-review?token=' +
+        encodeURIComponent(reviewToken) +
+        '">Leave a review</a>';
+      return;
+    }
+
+    reviewRow.hidden = false;
+    reviewRow.innerHTML =
+      '<p class="ev-ended-review-note" id="ev-ended-review-note">Checking whether you can leave a review…</p>' +
+      '<div class="ev-ended-review-actions" id="ev-ended-review-actions"></div>';
+
+    const noteEl = document.getElementById('ev-ended-review-note');
+    const reviewActions = document.getElementById('ev-ended-review-actions');
+
+    function showSoftCopy(message) {
+      if (noteEl) {
+        noteEl.textContent =
+          message ||
+          'Attended? Check your email for a review link from The Networker UK.';
+      }
+      if (reviewActions) reviewActions.innerHTML = '';
+      if (textEl && !opts.keepText) {
+        /* keep the ended booking copy; review note sits below */
+      }
+    }
+
+    if (!eventId) {
+      showSoftCopy('Attended? Check your email for a review link from The Networker UK.');
+      return;
+    }
+
+    fetch('/api/auth/reviews?eventId=' + encodeURIComponent(eventId), {
+      credentials: 'include',
+    })
+      .then(function (res) {
+        return res.json().then(function (data) {
+          return { res: res, data: data };
+        });
+      })
+      .then(function (pack) {
+        const data = pack.data || {};
+        const status = String(data.status || '');
+        ensureEndedReviewModal();
+
+        if (data.canReview && status === 'leave_review') {
+          if (noteEl) {
+            noteEl.textContent =
+              data.provenance === 'organiser_confirmed'
+                ? 'The organiser confirmed you attended — leave your review.'
+                : 'You attended this event — leave a verified review.';
+          }
+          if (reviewActions) {
+            reviewActions.innerHTML =
+              '<button type="button" class="ev-ended-review-btn" id="ev-ended-leave-review">Leave a review</button>';
+            const btn = document.getElementById('ev-ended-leave-review');
+            if (btn) {
+              btn.addEventListener('click', function () {
+                if (window.HubReviewModal && typeof window.HubReviewModal.open === 'function') {
+                  window.HubReviewModal.open({
+                    eventId: eventId,
+                    title: (ev && ev.title) || data.eventTitle || 'Event',
+                    organiserName: (ev && ev.organiser) || '',
+                  });
+                } else {
+                  window.location.href =
+                    '/account/?review=' + encodeURIComponent(eventId) + '#review/' + encodeURIComponent(eventId);
+                }
+              });
+            }
+          }
+          return;
+        }
+
+        if (status === 'already_reviewed') {
+          showSoftCopy(data.message || 'Thanks — your review for this event is already live.');
+          return;
+        }
+
+        if (status === 'claim_pending') {
+          showSoftCopy(
+            data.message ||
+              'Waiting for the organiser to confirm you attended. We’ll email you when you can review.'
+          );
+          return;
+        }
+
+        if (data.canClaim && status === 'can_claim') {
+          if (noteEl) {
+            noteEl.textContent =
+              data.message ||
+              'Went without a Hub ticket? Ask the organiser to confirm you attended.';
+          }
+          if (reviewActions) {
+            reviewActions.innerHTML =
+              '<button type="button" class="ev-ended-claim-btn" id="ev-ended-claim-attendance">I attended — ask organiser to confirm</button>' +
+              '<button type="button" class="ev-ended-review-secondary" id="ev-ended-how-reviews">How reviews work</button>';
+            const howBtn = document.getElementById('ev-ended-how-reviews');
+            if (howBtn) {
+              howBtn.addEventListener('click', function () {
+                if (window.HubHowReviewsWork && typeof window.HubHowReviewsWork.open === 'function') {
+                  window.HubHowReviewsWork.open();
+                }
+              });
+            }
+            const claimBtn = document.getElementById('ev-ended-claim-attendance');
+            if (claimBtn) {
+              claimBtn.addEventListener('click', function () {
+                claimBtn.disabled = true;
+                claimBtn.textContent = 'Sending…';
+                fetch('/api/auth/attendance-claims', {
+                  method: 'POST',
+                  credentials: 'include',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ eventId: eventId }),
+                })
+                  .then(function (res) {
+                    return res.json().then(function (body) {
+                      return { res: res, body: body };
+                    });
+                  })
+                  .then(function (pack2) {
+                    const body = pack2.body || {};
+                    if (!pack2.res.ok || !body.ok) {
+                      throw new Error(
+                        body.message ||
+                          (body.error === 'use_verified_review'
+                            ? 'You already have a Hub ticket — leave a verified review instead.'
+                            : body.error || 'Could not send the claim.')
+                      );
+                    }
+                    if (noteEl) {
+                      noteEl.textContent =
+                        'Request sent. We’ll email you when the organiser confirms, then you can leave an organiser-confirmed review.';
+                    }
+                    claimBtn.hidden = true;
+                  })
+                  .catch(function (err) {
+                    claimBtn.disabled = false;
+                    claimBtn.textContent = 'I attended — ask organiser to confirm';
+                    if (noteEl) {
+                      noteEl.textContent =
+                        (err && err.message) || 'Could not send the claim. Try again from My account.';
+                    }
+                  });
+              });
+            }
+          }
+          return;
+        }
+
+        if (status === 'signed_out' || status === 'need_profile') {
+          if (noteEl) {
+            noteEl.textContent =
+              'Attended? Check your email for a review link. If you went without a Hub ticket, sign in to ask the organiser to confirm.';
+          }
+          if (reviewActions) {
+            const next = encodeURIComponent(
+              window.location.pathname + window.location.search + window.location.hash
+            );
+            reviewActions.innerHTML =
+              '<a class="ev-ended-claim-btn" href="/login?next=' +
+              next +
+              '">Sign in to claim attendance</a>' +
+              '<a class="ev-ended-review-secondary" href="/account/#past">My past events</a>';
+          }
+          return;
+        }
+
+        showSoftCopy(
+          data.message || 'Attended? Check your email for a review link from The Networker UK.'
+        );
+      })
+      .catch(function () {
+        showSoftCopy('Attended? Check your email for a review link from The Networker UK.');
+      });
+  }
+
   function applyEndedEventBanner(ev, options) {
     const opts = options || {};
     const banner = document.getElementById('ev-ended-banner');
@@ -2576,6 +2852,11 @@
     const ended = Boolean(opts.force || (ev && ev.isEventPast));
     if (!ended) {
       banner.hidden = true;
+      const reviewRow = document.getElementById('ev-ended-review-row');
+      if (reviewRow) {
+        reviewRow.hidden = true;
+        reviewRow.innerHTML = '';
+      }
       return;
     }
 
@@ -2599,35 +2880,9 @@
     if (titleEl) titleEl.textContent = title;
     if (textEl) textEl.textContent = text;
 
-    const links = [];
-    const orgHref = organiserProfileHref(ev || {});
-    if (orgHref) {
-      links.push(
-        '<a class="ev-ended-primary" href="' +
-          escapeHtml(orgHref) +
-          '">View organiser page</a>'
-      );
-    }
-    links.push('<a href="/events/">Browse upcoming events</a>');
-    if (actionsEl) actionsEl.innerHTML = links.join('');
+    renderEndedNavLinks(ev || {}, actionsEl);
     banner.hidden = false;
-
-    if (window.HUB_applyDetailRegionCta && city) {
-      const regionCta = document.getElementById('ev-region-cta');
-      if (regionCta) {
-        window.HUB_applyDetailRegionCta(regionCta, {
-          context: 'events',
-          locationTexts: [ev.postcode, ev.city, ev.outcode, ev.location],
-        });
-        if (!regionCta.hidden) {
-          const clone = regionCta.cloneNode(true);
-          clone.id = '';
-          clone.hidden = false;
-          clone.classList.add('ev-ended-region-link');
-          if (actionsEl) actionsEl.appendChild(clone);
-        }
-      }
-    }
+    mountEndedReviewActions(ev || {}, opts);
   }
 
   function populateFromEvent(ev) {
@@ -6419,12 +6674,14 @@
     const aboutExtra = document.getElementById('ev-about-extra');
     if (aboutExtra) {
       aboutExtra.hidden = false;
-      aboutExtra.textContent =
-        'Explore upcoming networking from this organiser or across the platform.';
+      aboutExtra.textContent = ended
+        ? 'Attended? Use the review options above if you have a Hub ticket or a confirmation email — or explore upcoming networking from this organiser.'
+        : 'Explore upcoming networking from this organiser or across the platform.';
     }
     applyEndedEventBanner(stub, {
       force: true,
       cancelled: cancelled,
+      eventId: stub.id || '',
       title: cancelled
         ? 'This event was cancelled'
         : ended

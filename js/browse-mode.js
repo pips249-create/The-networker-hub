@@ -178,7 +178,10 @@
     if (regional && regional.name) {
       var year = new Date().getFullYear();
       if (heroBadge) heroBadge.textContent = 'Local networking directory';
-      var eventQueryCity = regional.slug === 'glasgow' || regional.slug === 'bristol';
+      var eventQueryCity =
+        regional.slug === 'glasgow' ||
+        regional.slug === 'bristol' ||
+        regional.slug === 'edinburgh';
       if (heroTitle) {
         if (eventQueryCity && mode !== 'organisers') {
           heroTitle.innerHTML = 'Business networking events in <span class="accent"></span>';
@@ -213,7 +216,9 @@
       if (filterHeading) filterHeading.textContent = c.filterTitle;
       if (filterInboxHeading) filterInboxHeading.textContent = c.filterTitle;
       document.title =
-        regional.slug === 'glasgow' || regional.slug === 'bristol'
+        regional.slug === 'glasgow' ||
+        regional.slug === 'bristol' ||
+        regional.slug === 'edinburgh'
           ? 'Business networking events in ' + regional.name + ' ' + year + ' | The Networker UK'
           : 'Business Networking Events in ' + regional.name + ' ' + year + ' – The Networker UK';
       initSponsorHub(mode);

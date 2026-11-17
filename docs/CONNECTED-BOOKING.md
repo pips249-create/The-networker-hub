@@ -21,20 +21,19 @@ alter table public.organiser_accounts
 
 Also run **`292_external_connected_booking.sql`** if Connected booking columns/tables were never applied. Until 298 is applied, **Manage billing** may not work after subscribe; the page and checkout should still load once app deploys **#66+**.
 
-### Private preview (only you)
+### Launch status
 
-Set on Vercel:
+**Connected booking is live for all signed-in organisers** by default (`CONNECTED_BOOKING_ENABLED` defaults to on). A leftover `CONNECTED_BOOKING_PREVIEW_EMAILS` value on Vercel is ignored while the feature is enabled.
+
+To temporarily lock Connected down again (private allowlist only):
 
 ```text
-CONNECTED_BOOKING_PREVIEW_EMAILS=pips249@gmail.com
+CONNECTED_BOOKING_ENABLED=false
+CONNECTED_BOOKING_PREVIEW_EMAILS=you@example.com
 ```
 
-While this is set, **only that signed-in email** sees `/organiser/connected-booking`, the tickets-page Connected card (when plan active), and can use the APIs/webhooks for their organiser account. Everyone else gets no UI and **403 preview_restricted** / hidden behaviour. You do **not** need `CONNECTED_BOOKING_ENABLED=true` for preview users when the preview list is set.
-
-When ready to launch for all organisers: **remove** `CONNECTED_BOOKING_PREVIEW_EMAILS` and set `CONNECTED_BOOKING_ENABLED=true`.
-
 1. Run migrations `292_external_connected_booking.sql`, `298_connected_booking_stripe_customer.sql`, `297_connected_booking_organiser_slots.sql`, `299_connected_booking_provider_links.sql`, and `300_connected_booking_own_site_provider.sql` (provider webhooks + own booking links).
-2. Set `CONNECTED_BOOKING_ENABLED=true` on Vercel (or use preview emails above until launch).
+2. Prefer clearing `CONNECTED_BOOKING_PREVIEW_EMAILS` on Vercel (optional once enabled for all). Leave `CONNECTED_BOOKING_ENABLED` unset or `true`.
 3. Ensure `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` are set (same webhook endpoint as Hub checkout).
 4. After changing intro prices in `api/_lib/connected-booking-pricing.js`, run `npm run sync-stripe` and update Vercel **`STRIPE_CONNECTED_BOOKING_*_PRICE_ID`** env vars (checkout also works with dynamic line items if price IDs are missing).
 5. Organiser signs in → `/organiser/#connected-booking`. They see an explainer for what Connected is, then click **Enable Connected — free** (POST `activate_free`). That sets `connected_booking_status=active`, plan `enterprise` (or `CONNECTED_BOOKING_FREE_PLAN`), and creates a webhook secret if missing. Opening the page alone does **not** activate.

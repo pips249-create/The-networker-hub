@@ -38,16 +38,18 @@ const {
 const BROWSE_VIEW = 'browse_events_index';
 const MAX_LIMIT = 48;
 const DEFAULT_LIMIT = 12;
+/** When Dates is unset, keep Soonest / Next browse near-term (far series dates stay findable via the Dates filter). */
+const DEFAULT_BROWSE_HORIZON_MONTHS = 12;
 /** Map pins — keep payload under serverless limits as the catalogue grows. */
 const MAX_PINS = 800;
 /** Max bbox candidates pulled into Node for haversine filter. */
 const GEO_MATCH_CAP = 1500;
 const IN_CHUNK = 80;
 const PIN_SELECT =
-  'id, slug, title, city, format_tab, latitude, longitude, starts_at, outcode, min_ticket_price, image_url, photo_url, image_position, event_type, type_tab, featured, featured_until, average_rating, review_count, organiser_id, series_group_id';
+  'id, slug, title, city, format_tab, latitude, longitude, starts_at, outcode, min_ticket_price, image_url, photo_url, image_position, event_type, type_tab, featured, featured_until, average_rating, review_count, organiser_id, series_group_id, recurrence_pattern, recurrence_end_date';
 
 const BROWSE_SLIM_SELECT =
-  'id, organiser_id, title, series_group_id, latitude, longitude, outcode, city, location_label, format_tab, type_tab, starts_at, min_ticket_price, average_rating, review_count, featured, featured_until, created_at';
+  'id, organiser_id, title, series_group_id, recurrence_pattern, recurrence_end_date, latitude, longitude, outcode, city, location_label, format_tab, type_tab, starts_at, min_ticket_price, average_rating, review_count, featured, featured_until, created_at';
 
 const SLIM_RATING_SELECT = BROWSE_SLIM_SELECT;
 
@@ -73,6 +75,22 @@ function dedupeEventsById(events) {
 function applyUpcomingBrowseFilter(query, nowIso) {
   const now = nowIso || new Date().toISOString();
   return query.gt('starts_at', now);
+}
+
+function defaultBrowseDateTo(at) {
+  const d = at instanceof Date ? new Date(at.getTime()) : new Date();
+  if (Number.isNaN(d.getTime())) return null;
+  d.setUTCMonth(d.getUTCMonth() + DEFAULT_BROWSE_HORIZON_MONTHS);
+  return d.toISOString();
+}
+
+/** Soft ceiling for default Soonest / Next browse — skipped when the visitor sets Dates. */
+function withDefaultBrowseHorizon(params, at) {
+  const next = params && typeof params === 'object' ? { ...params } : {};
+  if (next.dateTo) return next;
+  const ceiling = defaultBrowseDateTo(at);
+  if (ceiling) next.dateTo = ceiling;
+  return next;
 }
 
 function parseBrowseQuery(query) {
@@ -592,8 +610,28 @@ function compareRatingDesc(a, b) {
   return rowReviewCount(b) - rowReviewCount(a);
 }
 
-function sortRows(rows, sort) {
+/** Prefer listings whose city/label matches the search place (e.g. Edinburgh over Fife). */
+function locationNameRelevance(row, location) {
+  const loc = String(location || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+  if (!loc || loc.length < 3) return 0;
+  const city = String(row?.city || '')
+    .trim()
+    .toLowerCase();
+  const label = String(row?.location_label || '')
+    .trim()
+    .toLowerCase();
+  if (city === loc || city.startsWith(loc + ' ') || city.startsWith(loc + ',')) return 2;
+  if (label === loc || label.startsWith(loc + ',') || label.includes(', ' + loc)) return 1;
+  if (label.startsWith(loc + ' ')) return 1;
+  return 0;
+}
+
+function sortRows(rows, sort, params) {
   const list = rows.slice();
+  const location = params && params.location;
   list.sort((a, b) => {
     if (sort === 'best-rated' || sort === 'rating-desc') {
       const byRating = compareRatingDesc(a, b);
@@ -622,11 +660,15 @@ function sortRows(rows, sort) {
       return sort === 'price-asc' ? pa - pb : pb - pa;
     }
     if (sort === 'date') {
+      const byLoc = locationNameRelevance(b, location) - locationNameRelevance(a, location);
+      if (byLoc !== 0) return byLoc;
       return new Date(a.starts_at || 0) - new Date(b.starts_at || 0);
     }
     const af = isEventCurrentlyFeatured(a) ? 1 : 0;
     const bf = isEventCurrentlyFeatured(b) ? 1 : 0;
     if (bf !== af) return bf - af;
+    const byLoc = locationNameRelevance(b, location) - locationNameRelevance(a, location);
+    if (byLoc !== 0) return byLoc;
     const byRating = compareRatingDesc(a, b);
     if (byRating !== 0) return byRating;
     return new Date(a.starts_at || 0) - new Date(b.starts_at || 0);
@@ -771,7 +813,12 @@ function rowToBrowsePin(row) {
   const startsAt = row.starts_at ? new Date(row.starts_at) : null;
   const dateLine =
     startsAt && !Number.isNaN(startsAt.getTime())
-      ? startsAt.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+      ? startsAt.toLocaleDateString('en-GB', {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        })
       : 'Date TBC';
   let priceLabel = 'Free';
   let priceKey = 'free';
@@ -918,7 +965,7 @@ async function fetchBrowsePageIds(sb, params) {
   }
 
   const seriesCounts = countBrowseSeriesOccurrences(filtered);
-  const sorted = sortRows(filtered, params.sort);
+  const sorted = sortRows(filtered, params.sort, params);
   const deduped = dedupeBrowseRowsBySeries(sorted);
   const listingTotal = deduped.length;
   // A full 5,000-row scan is a ceiling, not the catalogue size. Don't publish
@@ -950,7 +997,7 @@ async function fetchRowsByIds(sb, ids) {
 }
 
 async function fetchBrowseEventsPage(sb, rawQuery) {
-  const params = await enrichGeoParams(parseBrowseQuery(rawQuery));
+  const params = withDefaultBrowseHorizon(await enrichGeoParams(parseBrowseQuery(rawQuery)));
 
   if (params.mode === 'pins') {
     const pinParams = { ...params, limit: MAX_PINS, offset: 0 };
@@ -972,7 +1019,7 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
       }
     }
     const pinSeriesCounts = countBrowseSeriesOccurrences(slim);
-    const sorted = sortRows(slim, params.sort);
+    const sorted = sortRows(slim, params.sort, pinParams);
     const deduped = dedupeBrowseRowsBySeries(sorted);
     const dateTotal = datesCapped ? deduped.length : sorted.length;
     const pinSlice = deduped.slice(0, MAX_PINS);
@@ -1085,6 +1132,9 @@ module.exports = {
   fetchBrowseEventsPage,
   clearBrowseCatalogueCache,
   rowToBrowsePin,
+  withDefaultBrowseHorizon,
+  defaultBrowseDateTo,
+  DEFAULT_BROWSE_HORIZON_MONTHS,
   BROWSE_VIEW,
   BROWSE_SLIM_SELECT,
 };

@@ -105,13 +105,65 @@ const seriesPeers = [
 ];
 const seriesDeduped = dedupeBrowseRowsBySeries(seriesPeers);
 assert('series still collapses to one card across dates', seriesDeduped.length === 1);
-assert('series keeps the first upcoming date', seriesDeduped[0].id === 's1');
+assert('series keeps the soonest upcoming date', seriesDeduped[0].id === 's1');
+
+const farFirst = dedupeBrowseRowsBySeries([seriesPeers[1], seriesPeers[0]]);
+assert(
+  'series prefers soonest even when a far date sorts first',
+  farFirst.length === 1 && farFirst[0].id === 's1'
+);
+
+const ungroupedPeers = [
+  {
+    id: 'near',
+    organiser_id: organiser,
+    title: 'Milk 1 Sugar – Business Networking',
+    starts_at: '2026-11-21T10:30:00+00:00',
+    series_group_id: null,
+    created_at: '2026-01-01T00:00:00+00:00',
+  },
+  {
+    id: 'last-added-far',
+    organiser_id: organiser,
+    title: 'Milk 1 Sugar – Business Networking',
+    starts_at: '2028-11-10T10:30:00+00:00',
+    series_group_id: null,
+    created_at: '2026-11-17T08:00:00+00:00',
+  },
+];
+const ungroupedNewestFirst = dedupeBrowseRowsBySeries([ungroupedPeers[1], ungroupedPeers[0]]);
+assert(
+  'title-matched peers without series_group_id collapse to one card',
+  ungroupedNewestFirst.length === 1
+);
+assert(
+  'card shows next available date, not last date added',
+  ungroupedNewestFirst[0].id === 'near'
+);
 
 const mixed = dedupeBrowseRowsBySeries([enquireA, enquireB, priced, seriesPeers[0], seriesPeers[1]]);
 assert('same-slot + series both apply', mixed.length === 2);
 assert(
-  'mixed keeps priced same-slot and first series date',
+  'mixed keeps priced same-slot and soonest series date',
   mixed.some((r) => r.id === 'priced') && mixed.some((r) => r.id === 's1')
+);
+
+const {
+  withDefaultBrowseHorizon,
+  DEFAULT_BROWSE_HORIZON_MONTHS,
+} = require('../api/_lib/browse-events-query');
+
+const now = new Date('2026-11-17T08:00:00.000Z');
+const soft = withDefaultBrowseHorizon({ dateFrom: null, dateTo: null }, now);
+assert('default browse applies a soft date ceiling', !!soft.dateTo);
+assert(
+  'soft ceiling is about ' + DEFAULT_BROWSE_HORIZON_MONTHS + ' months out',
+  Math.abs(new Date(soft.dateTo).getTime() - Date.UTC(2027, 10, 17, 8)) < 3 * 24 * 60 * 60 * 1000
+);
+const explicit = withDefaultBrowseHorizon({ dateTo: '2028-11-10T23:59:59.000Z' }, now);
+assert(
+  'explicit Dates filter keeps far-future dates findable',
+  explicit.dateTo === '2028-11-10T23:59:59.000Z'
 );
 
 if (failed) {

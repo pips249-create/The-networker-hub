@@ -20,6 +20,9 @@ function buildHeadTags(meta) {
   if (meta.canonical) {
     tags += '<link rel="canonical" href="' + escapeHtml(meta.canonical) + '" />\n';
   }
+  if (meta.robots) {
+    tags += '<meta name="robots" content="' + escapeHtml(meta.robots) + '" />\n';
+  }
   const og = meta.openGraph || {};
   Object.keys(og).forEach(function (key) {
     if (!og[key]) return;

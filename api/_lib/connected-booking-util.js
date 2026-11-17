@@ -19,12 +19,22 @@ function accountHasLinkOutGrant(account) {
   return Boolean(account && String(account.link_out_granted_at || '').trim());
 }
 
+/**
+ * Connected booking is launched for all organisers by default.
+ * Set CONNECTED_BOOKING_ENABLED=false to kill-switch (optional preview allowlist still works).
+ */
 function connectedBookingFeatureEnabled() {
-  const v = String(process.env.CONNECTED_BOOKING_ENABLED || '').trim().toLowerCase();
+  const raw = process.env.CONNECTED_BOOKING_ENABLED;
+  if (raw == null || String(raw).trim() === '') return true;
+  const v = String(raw).trim().toLowerCase();
+  if (v === '0' || v === 'false' || v === 'no' || v === 'off') return false;
   return v === '1' || v === 'true' || v === 'yes';
 }
 
-/** When set, only these signed-in emails see/use Connected booking (everyone else: feature hidden). */
+/**
+ * Private preview allowlist — only applies when Connected is kill-switched
+ * (CONNECTED_BOOKING_ENABLED=false). Ignored while the feature is live for everyone.
+ */
 function connectedBookingPreviewEmails() {
   const raw = String(process.env.CONNECTED_BOOKING_PREVIEW_EMAILS || '').trim();
   if (!raw) return null;
@@ -99,6 +109,8 @@ function linkOutFreeEnabled() {
 }
 
 function connectedBookingPreviewLocked() {
+  // Preview lock only applies while Connected is kill-switched.
+  if (connectedBookingFeatureEnabled()) return false;
   return Boolean(connectedBookingPreviewEmails()?.length);
 }
 
@@ -112,14 +124,16 @@ function normalizeConnectedBookingEmail(email) {
 function connectedBookingAllowedForEmail(email) {
   const em = normalizeConnectedBookingEmail(email);
   if (!em) return false;
+  // Live for everyone (default). Preview list is ignored while enabled.
+  if (connectedBookingFeatureEnabled()) return true;
+  // Kill-switch: only preview / pilot emails can still use Connected.
   const preview = connectedBookingPreviewEmails();
   if (preview) {
     if (preview.includes(em)) return true;
     // Pilot grant list doubles as preview access — avoid duplicating emails on Vercel.
     if (connectedBookingPilotGrantEligible(email)) return true;
-    return false;
   }
-  return connectedBookingFeatureEnabled();
+  return false;
 }
 
 function connectedBookingAllowedForSession(session) {
@@ -128,8 +142,8 @@ function connectedBookingAllowedForSession(session) {
 
 /** Webhooks & server paths without a session (e.g. integration POST). */
 function connectedBookingOperationsEnabled() {
-  if (connectedBookingPreviewLocked()) return true;
-  return connectedBookingFeatureEnabled();
+  if (connectedBookingFeatureEnabled()) return true;
+  return connectedBookingPreviewLocked();
 }
 
 function isExternalConnectedEvent(row) {

@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="../css/hub-loading.css" />
     <link rel="stylesheet" href="../css/cms-carousel-ad.css?v=20260822adslot" />
   <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706">
-  <link rel="stylesheet" href="../css/event-detail.css?v=20261027series2" />
+  <link rel="stylesheet" href="../css/event-detail.css?v=20261117review1" />
   </head>
   <body class="event-detail-page">
     <div id="hub-site-nav"></div>
@@ -229,6 +229,8 @@
                 allowfullscreen
                 src=""
               ></iframe>
+              <!-- OSM embed often omits its marker; centre pin matches venue lat/lng bbox. -->
+              <span id="ev-map-pin" class="map-embed-pin" hidden aria-hidden="true"></span>
             </div>
             <div class="location-details">
               <strong id="ev-venue-name"></strong>
@@ -603,14 +605,79 @@
     <script src="../js/postcode-outcode.js?v=20260727city"></script>
     <script src="../js/detail-region-cta.js?v=20260727city"></script>
     <script src="../js/how-reviews-work.js?v=20260813noshow1"></script>
+    <script src="../js/hub-review-modal.js?v=20261117review1"></script>
     <script src="../js/hub-public-urls.js?v=20260807fix3b"></script>
     <script src="../js/plain-text-format.js?v=20260728paras1"></script>
     <script src="../js/hub-soft-launch.js?v=20260827nudgepause"></script>
     <script src="../js/hub-profile-industries.js?v=20260902other1"></script>
     <script src="../js/hub-profile-completion.js?v=20260902other1"></script>
     <script src="../js/hub-external-booking-url.js?v=20260918ebcheckout1"></script>
-    <script src="../js/event-detail.js?v=20261027series2"></script>
+    <script src="../js/event-detail.js?v=20261117review1"></script>
     <div id="hub-site-footer"></div>
+
+    <div class="hub-rm-modal" id="hub-rm-modal" hidden>
+      <div class="hub-rm-modal-backdrop" id="hub-rm-backdrop"></div>
+      <div class="hub-rm-modal-panel" role="dialog" aria-modal="true" aria-labelledby="hub-rm-title">
+        <button type="button" class="hub-rm-modal-close" id="hub-rm-close" aria-label="Close">×</button>
+        <h2 class="hub-rm-modal-title" id="hub-rm-title">Leave a review</h2>
+        <p class="hub-rm-modal-sub" id="hub-rm-sub"></p>
+        <div class="hub-rm-pick-step" id="hub-rm-pick-step" hidden>
+          <div class="hub-rm-pick-list" id="hub-rm-pick-list" role="list"></div>
+        </div>
+        <form id="hub-rm-form" class="hub-rm-form" novalidate>
+          <div id="hub-rm-form-step">
+            <input type="hidden" id="hub-rm-event-id" name="eventId" value="" />
+            <fieldset class="hub-rm-stars-field">
+              <legend>Your rating</legend>
+              <div class="hub-rm-stars" id="hub-rm-stars" role="radiogroup" aria-label="Rating out of 5">
+                <button type="button" class="hub-rm-star" data-rating="1" aria-label="1 star">★</button>
+                <button type="button" class="hub-rm-star" data-rating="2" aria-label="2 stars">★</button>
+                <button type="button" class="hub-rm-star" data-rating="3" aria-label="3 stars">★</button>
+                <button type="button" class="hub-rm-star" data-rating="4" aria-label="4 stars">★</button>
+                <button type="button" class="hub-rm-star" data-rating="5" aria-label="5 stars">★</button>
+              </div>
+              <p class="hub-rm-rating-hint" id="hub-rm-rating-hint">Choose a star rating to continue</p>
+            </fieldset>
+            <div class="hub-rm-feedback-step" id="hub-rm-feedback-step" hidden>
+              <label class="hub-rm-label" for="hub-rm-text">
+                Your feedback
+                <span class="hub-rm-label-hint">Optional — shown on the organiser's public profile if you add it</span>
+              </label>
+              <textarea
+                id="hub-rm-text"
+                name="reviewText"
+                rows="4"
+                maxlength="2000"
+                placeholder="What was the host like? Would you attend again?"
+              ></textarea>
+              <div class="hub-rm-name-block">
+                <p class="hub-rm-name-preview-line">
+                  Shown publicly as
+                  <strong id="hub-rm-name-preview">Attendee</strong>
+                </p>
+                <fieldset class="hub-rm-name-choices">
+                  <legend class="hub-rm-label">Name on reviews</legend>
+                  <label class="hub-rm-choice">
+                    <input type="radio" name="reviewNameMode" id="hub-rm-name-mode-name" value="name" checked />
+                    <span>First name + last initial <span class="hub-rm-choice-meta" id="hub-rm-name-example"></span></span>
+                  </label>
+                  <label class="hub-rm-choice">
+                    <input type="radio" name="reviewNameMode" id="hub-rm-name-mode-anonymous" value="anonymous" />
+                    <span>Stay anonymous <span class="hub-rm-choice-meta" id="hub-rm-networker-alias">Networker ####</span></span>
+                  </label>
+                </fieldset>
+              </div>
+              <button type="button" class="hub-rm-change-rating" id="hub-rm-change-rating">Change rating</button>
+            </div>
+          </div>
+          <p class="hub-rm-error" id="hub-rm-error" hidden role="alert"></p>
+          <div class="hub-rm-actions">
+            <button type="button" class="hub-rm-btn" id="hub-rm-cancel">Cancel</button>
+            <button type="submit" class="hub-rm-btn hub-rm-btn--primary" id="hub-rm-submit" hidden>Submit review</button>
+          </div>
+        </form>
+      </div>
+    </div>
 
     <div class="hub-modal application-success-modal" id="application-success-modal" role="dialog" aria-modal="true" aria-labelledby="application-success-title" hidden>
       <div class="hub-modal-backdrop" data-application-success-close></div>

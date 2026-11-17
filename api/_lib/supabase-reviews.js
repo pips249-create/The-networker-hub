@@ -205,6 +205,172 @@ async function submitReview(session, input) {
   return submitReviewForAttendeeId(attendeeId, input);
 }
 
+/**
+ * Ended-event page CTA state: only confirmed attendees (Hub ticket or organiser-confirmed
+ * claim) get a Leave a review action. Everyone else sees soft copy / claim path.
+ */
+async function getEventReviewCtaState(session, eventId) {
+  const id = String(eventId || '').trim();
+  if (!isUuid(id)) {
+    return { ok: true, status: 'missing_event', canReview: false, canClaim: false };
+  }
+  if (!isSupabaseConfigured()) {
+    return { ok: true, status: 'unavailable', canReview: false, canClaim: false };
+  }
+  if (!session) {
+    return {
+      ok: true,
+      status: 'signed_out',
+      canReview: false,
+      canClaim: false,
+      message: 'Attended? Check your email for a review link, or sign in to claim attendance.',
+    };
+  }
+
+  const sb = getSupabaseAdmin();
+  const attendeeId = await resolveAttendeeId(sb, session);
+  if (!attendeeId) {
+    return {
+      ok: true,
+      status: 'need_profile',
+      canReview: false,
+      canClaim: false,
+      message: 'Finish your attendee profile to leave a review or claim attendance.',
+    };
+  }
+
+  const { data: eventRow, error: evErr } = await sb
+    .from('events')
+    .select('id, title, starts_at, ends_at, status, organiser_id')
+    .eq('id', id)
+    .maybeSingle();
+  if (evErr) throw new Error(evErr.message);
+  if (!eventRow?.id) {
+    return { ok: true, status: 'event_not_found', canReview: false, canClaim: false };
+  }
+  if (!eventHasEnded(eventRow)) {
+    return {
+      ok: true,
+      status: 'event_not_finished',
+      canReview: false,
+      canClaim: false,
+      message: 'You can leave a review after the event has finished.',
+    };
+  }
+
+  const { data: existingReview, error: revErr } = await sb
+    .from('reviews')
+    .select('id, provenance')
+    .eq('attendee_id', attendeeId)
+    .eq('event_id', id)
+    .maybeSingle();
+  if (revErr) throw new Error(revErr.message);
+  if (existingReview?.id) {
+    return {
+      ok: true,
+      status: 'already_reviewed',
+      canReview: false,
+      canClaim: false,
+      provenance: existingReview.provenance || 'verified',
+      message: 'Thanks — your review for this event is already live.',
+    };
+  }
+
+  const registration = await findRegistrationForReview(sb, attendeeId, id);
+  if (registration && registration.no_show_at) {
+    return {
+      ok: true,
+      status: 'did_not_attend',
+      canReview: false,
+      canClaim: false,
+      message: 'This booking was marked as did not attend, so a review is not available.',
+    };
+  }
+  if (isEligibleRegistration(registration)) {
+    return {
+      ok: true,
+      status: 'leave_review',
+      canReview: true,
+      canClaim: false,
+      provenance: 'verified',
+      eventId: id,
+      eventTitle: String(eventRow.title || 'Event').trim(),
+      message: 'Leave a verified review for this event.',
+    };
+  }
+
+  const { findConfirmedClaimForReview } = require('./attendance-claims');
+  const claim = await findConfirmedClaimForReview(sb, attendeeId, id);
+  if (claim && !claim.expired) {
+    return {
+      ok: true,
+      status: 'leave_review',
+      canReview: true,
+      canClaim: false,
+      provenance: 'organiser_confirmed',
+      eventId: id,
+      eventTitle: String(eventRow.title || 'Event').trim(),
+      message: 'The organiser confirmed you attended — leave your review.',
+    };
+  }
+  if (claim && claim.reason === 'review_window_expired') {
+    return {
+      ok: true,
+      status: 'claim_review_expired',
+      canReview: false,
+      canClaim: false,
+      message: 'Your review window after the organiser confirmed attendance has ended.',
+    };
+  }
+
+  const { data: pendingClaim } = await sb
+    .from('attendance_claims')
+    .select('id, status, expires_at')
+    .eq('attendee_id', attendeeId)
+    .eq('event_id', id)
+    .eq('status', 'pending')
+    .maybeSingle();
+  if (pendingClaim?.id) {
+    return {
+      ok: true,
+      status: 'claim_pending',
+      canReview: false,
+      canClaim: false,
+      message: 'Waiting for the organiser to confirm you attended. We’ll email you when you can review.',
+    };
+  }
+
+  const eventStatus = String(eventRow.status || '')
+    .trim()
+    .toLowerCase();
+  const claimableStatus = eventStatus === 'published' || eventStatus === 'archived';
+  const endRaw = eventRow.ends_at || eventRow.starts_at;
+  const endMs = endRaw ? new Date(endRaw).getTime() : NaN;
+  const ageDays = Number.isNaN(endMs) ? Infinity : (Date.now() - endMs) / (24 * 60 * 60 * 1000);
+  const withinClaimWindow = ageDays <= 90;
+
+  if (claimableStatus && withinClaimWindow && !isEligibleRegistration(registration)) {
+    return {
+      ok: true,
+      status: 'can_claim',
+      canReview: false,
+      canClaim: true,
+      eventId: id,
+      eventTitle: String(eventRow.title || 'Event').trim(),
+      message:
+        'Went without a Hub ticket? Ask the organiser to confirm you attended, then leave an organiser-confirmed review.',
+    };
+  }
+
+  return {
+    ok: true,
+    status: 'not_eligible',
+    canReview: false,
+    canClaim: false,
+    message: 'Attended? Check your email for a review link from The Networker UK.',
+  };
+}
+
 async function submitReviewFromEmailToken(token, input) {
   const { verifyReviewLinkToken } = require('./review-link-token');
   const payload = verifyReviewLinkToken(token);
@@ -405,6 +571,7 @@ module.exports = {
   submitReview,
   submitReviewForAttendeeId,
   submitReviewFromEmailToken,
+  getEventReviewCtaState,
   replyToReviewAsOrganiser,
   eventHasEnded,
   isEligibleRegistration,

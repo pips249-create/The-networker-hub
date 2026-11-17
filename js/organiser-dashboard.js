@@ -702,7 +702,7 @@
 
   function partnerBadgeSrc() {
     const origin = location.origin || 'https://www.thenetworkeruk.com';
-    return origin + '/assets/organiser-badge.png?v=20261008uk1';
+    return origin + '/assets/organiser-badge.png?v=20261117listed4';
   }
 
   function partnerBadgeEmbedHtml(profileUrl, groupName) {
@@ -791,7 +791,7 @@
       '" style="text-decoration:none;">' +
       '<img src="' +
       partnerBadgeSrc() +
-      '" alt="Listed on The Networker UK" width="180" height="72" style="border:0;display:block;margin-top:8px;" />' +
+      '" alt="Listed on The Networker UK" width="200" height="112" style="border:0;display:block;margin-top:8px;" />' +
       '</a>'
     );
   }
@@ -2147,7 +2147,7 @@
 
   let linkedInPostBuilder = null;
   const deferredAssetPromises = {};
-  const LINKEDIN_POST_BUILDER_SRC = '../js/organiser-linkedin-post-builder.js?v=20260824tnuklogo';
+  const LINKEDIN_POST_BUILDER_SRC = '../js/organiser-linkedin-post-builder.js?v=20261117badges5';
   const MEMBER_ROSTER_SRC = '../js/organiser-member-roster.js?v=20260827fast1';
   const MEMBER_ROSTER_CSS = '../css/organiser-member-roster.css?v=20260812ux2';
   const EVENT_EDIT_CSS = '../css/organiser-event-edit.css?v=20260811claimux2';

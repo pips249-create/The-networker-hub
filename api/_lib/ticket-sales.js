@@ -54,20 +54,16 @@ function earliestTicketSaleStart(tickets, at) {
   return earliest;
 }
 
-const { EVENT_TZ, formatTime, londonDatePartsFromIso } = require('./event-timezone');
+const { EVENT_TZ, formatTime } = require('./event-timezone');
 
-function formatTicketSalesOpensLabel(isoOrDate, at) {
+function formatTicketSalesOpensLabel(isoOrDate) {
   const d = isoOrDate instanceof Date ? isoOrDate : new Date(isoOrDate);
   if (!d || Number.isNaN(d.getTime())) return '';
-  const now = at instanceof Date ? at : new Date();
-  const parts = londonDatePartsFromIso(d.toISOString());
-  const nowParts = londonDatePartsFromIso(now.toISOString());
-  const includeYear = parts && nowParts && parts.year !== nowParts.year;
   const datePart = d.toLocaleDateString('en-GB', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
-    year: includeYear ? 'numeric' : undefined,
+    year: 'numeric',
     timeZone: EVENT_TZ,
   });
   const timePart = formatTime(d.toISOString());
@@ -80,6 +76,7 @@ function formatTicketSalesOpensShort(isoOrDate) {
   return d.toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'short',
+    year: 'numeric',
     timeZone: EVENT_TZ,
   });
 }

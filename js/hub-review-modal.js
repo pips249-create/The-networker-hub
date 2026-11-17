@@ -302,14 +302,16 @@
           if (!data.ok) {
             var msg =
               data.error === 'not_eligible'
-                ? 'Only confirmed ticket holders can leave a review for this event.'
+                ? 'Only people who attended can leave a review. If you went without a Hub ticket, claim attendance from the event page or My account so the organiser can confirm.'
                 : data.error === 'did_not_attend'
                   ? 'This review is only available to people who attended the event.'
                   : data.error === 'review_already_submitted'
                   ? 'You have already reviewed this event.'
                   : data.error === 'event_not_finished'
                     ? 'You can leave a review after the event has finished.'
-                    : data.message || data.error || 'Could not submit review.';
+                    : data.error === 'claim_review_expired'
+                      ? 'Your review window after the organiser confirmed attendance has ended.'
+                      : data.message || data.error || 'Could not submit review.';
             if (err) {
               err.textContent = msg;
               err.hidden = false;

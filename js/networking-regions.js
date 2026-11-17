@@ -54,7 +54,7 @@
         onlineAccent.textContent = String(year);
         if (theme.accentHero) onlineAccent.style.color = theme.accentHero;
       }
-    } else if (slug === 'glasgow' || slug === 'bristol') {
+    } else if (slug === 'glasgow' || slug === 'bristol' || slug === 'edinburgh') {
       heading.innerHTML = 'Business networking events in <span class="accent"></span>';
       var cityAccent = heading.querySelector('.accent');
       if (cityAccent) {

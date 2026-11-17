@@ -18204,9 +18204,33 @@
     results.classList.remove('hidden');
   }
 
+  function syncEventEditLinkOutFields(form) {
+    if (!form) return;
+    var modeSel = form.querySelector('.event-edit-checkout-mode');
+    var fields = form.querySelector('.event-edit-linkout-fields');
+    if (!modeSel || !fields) return;
+    var mode = String(modeSel.value || 'hub').trim();
+    fields.classList.toggle('hidden', mode === 'hub');
+  }
+
+  function bindEventEditCheckoutFields(root) {
+    var scope = root || main;
+    if (!scope) return;
+    scope.querySelectorAll('.event-cleanup-form').forEach(function (form) {
+      var modeSel = form.querySelector('.event-edit-checkout-mode');
+      if (!modeSel || modeSel.dataset.linkOutBound === '1') return;
+      modeSel.dataset.linkOutBound = '1';
+      modeSel.addEventListener('change', function () {
+        syncEventEditLinkOutFields(form);
+      });
+      syncEventEditLinkOutFields(form);
+    });
+  }
+
   function bindEventEditOrganiserPickers(root) {
     var scope = root || main;
     if (!scope) return;
+    bindEventEditCheckoutFields(scope);
     scope.querySelectorAll('.event-edit-organiser-picker').forEach(function (picker) {
       if (picker.dataset.bound === '1') return;
       picker.dataset.bound = '1';
@@ -18468,8 +18492,17 @@
     var pay = String(formFieldVal(form, 'ticket_pay') || '').trim();
     var fields = form.querySelector('.event-create-ticket-fields');
     var priceWrap = form.querySelector('.event-create-ticket-price');
-    if (fields) fields.classList.toggle('hidden', !pay);
+    var linkOutFields = form.querySelector('.event-create-linkout-fields');
+    var doorWrap = form.querySelector('select[name="attendance_door"]');
+    var isLinkOut = pay === 'link_out';
+    var isHubTicket = pay === 'free' || pay === 'paid';
+    if (fields) fields.classList.toggle('hidden', !isHubTicket);
     if (priceWrap) priceWrap.classList.toggle('hidden', pay !== 'paid');
+    if (linkOutFields) linkOutFields.classList.toggle('hidden', !isLinkOut);
+    if (doorWrap) {
+      doorWrap.disabled = isLinkOut;
+      if (isLinkOut) doorWrap.value = 'general';
+    }
   }
 
   function bindEventCreateTicketFields() {
@@ -18909,7 +18942,7 @@
       meetingFormatOptions(ev.meeting_type) +
       '</select></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Checkout mode</label>' +
-      '<select name="checkout_mode" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      '<select name="checkout_mode" class="event-edit-checkout-mode w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
       '<option value="hub"' +
       ((ev.checkout_mode || 'hub') === 'hub' ? ' selected' : '') +
       '>Hub tickets</option>' +
@@ -18920,14 +18953,17 @@
       (ev.checkout_mode === 'external_connected' ? ' selected' : '') +
       '>Connected booking</option>' +
       '</select></div>' +
-      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">External booking URL</label>' +
+      '<div class="event-edit-linkout-fields sm:col-span-2 grid sm:grid-cols-2 gap-3' +
+      ((ev.checkout_mode || 'hub') === 'hub' ? ' hidden' : '') +
+      '">' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Link Out / Connected booking URL</label>' +
       '<input type="url" name="external_booking_url" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
       attrEsc(ev.external_booking_url || '') +
       '" placeholder="https://www.eventbrite.co.uk/e/…"></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">External price label</label>' +
       '<input type="text" name="external_price_label" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
       attrEsc(ev.external_price_label || '') +
-      '" placeholder="From £22"></div>' +
+      '" placeholder="From £22" maxlength="80"></div></div>' +
       eventLocationFieldsHtml(ev) +
       eventPhotoFieldHtml('event-photo-' + ev.id, ev.photo_url || '') +
       '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
@@ -21075,6 +21111,9 @@
     var ticketPay = String(formFieldVal(form, 'ticket_pay') || '').trim();
     var door = formFieldVal(form, 'attendance_door') || 'general';
     var maxPlaces = formFieldVal(form, 'max_places');
+    var isLinkOut = ticketPay === 'link_out';
+    var externalBookingUrl = formFieldVal(form, 'external_booking_url').trim();
+    var externalPriceLabel = formFieldVal(form, 'external_price_label').trim();
     var tickets = [];
     if (!organiserId) {
       if (msg) {
@@ -21089,6 +21128,22 @@
         msg.className = 'event-create-msg text-xs text-red-700 font-semibold';
       }
       return;
+    }
+    if (isLinkOut) {
+      if (!externalBookingUrl) {
+        if (msg) {
+          msg.textContent = 'Add the Link Out booking URL.';
+          msg.className = 'event-create-msg text-xs text-red-700 font-semibold';
+        }
+        return;
+      }
+      if (status !== 'draft' && !externalPriceLabel) {
+        if (msg) {
+          msg.textContent = 'Add a price label (e.g. Free or From £25) before publishing Link Out.';
+          msg.className = 'event-create-msg text-xs text-red-700 font-semibold';
+        }
+        return;
+      }
     }
     if (ticketPay === 'free' || ticketPay === 'paid') {
       var paid = ticketPay === 'paid';
@@ -21119,25 +21174,29 @@
     }
     eventPhotoPayloadForKey('event-create-photo', form)
       .then(function (photoPayload) {
-        return adminPost(
-          '/api/admin/events',
-          Object.assign(
-            {
-              action: 'create',
-              title: formFieldVal(form, 'title'),
-              organiser_id: organiserId,
-              occurrences: occurrences,
-              event_type: formFieldVal(form, 'event_type') || 'Meeting',
-              meeting_type: formFieldVal(form, 'meeting_type') || 'In person',
-              status: status,
-              attendance_mode: door === 'category_exclusivity' ? 'category_exclusivity' : 'tickets',
-              max_attendees: maxPlaces || undefined,
-              tickets: tickets.length ? tickets : undefined,
-            },
-            eventDetailsPayloadFromForm(form),
-            photoPayload
-          )
+        var payload = Object.assign(
+          {
+            action: 'create',
+            title: formFieldVal(form, 'title'),
+            organiser_id: organiserId,
+            occurrences: occurrences,
+            event_type: formFieldVal(form, 'event_type') || 'Meeting',
+            meeting_type: formFieldVal(form, 'meeting_type') || 'In person',
+            status: status,
+            attendance_mode:
+              !isLinkOut && door === 'category_exclusivity' ? 'category_exclusivity' : 'tickets',
+            max_attendees: !isLinkOut && maxPlaces ? maxPlaces : undefined,
+            tickets: tickets.length ? tickets : undefined,
+            checkout_mode: isLinkOut ? 'external_link' : 'hub',
+          },
+          eventDetailsPayloadFromForm(form),
+          photoPayload
         );
+        if (isLinkOut) {
+          payload.external_booking_url = externalBookingUrl;
+          payload.external_price_label = externalPriceLabel;
+        }
+        return adminPost('/api/admin/events', payload);
       })
       .then(function (data) {
         if (!data.ok) throw new Error(data.message || data.error || 'Create failed');
@@ -21145,7 +21204,9 @@
         var ticketNote =
           data.ticketsCreated > 0
             ? ' Ticket type added (sales stay closed until the organiser confirms).'
-            : '';
+            : isLinkOut
+              ? ' Link Out booking URL saved.'
+              : '';
         if (msg) {
           msg.textContent =
             (count > 1
@@ -23450,13 +23511,14 @@
       eventPhotoFieldHtml('event-create-photo', '') +
       '<div class="sm:col-span-2 rounded-lg border border-slate-200 bg-white p-3 space-y-3">' +
       '<p class="text-xs font-semibold text-brand-900">Tickets (optional)</p>' +
-      '<p class="text-[11px] text-slate-500">Skip to publish a listing-only event. Visitors can nudge the organiser to add tickets later.</p>' +
+      '<p class="text-[11px] text-slate-500">Skip for a listing-only event, add Hub tickets, or Link Out to the organiser’s own booking page.</p>' +
       '<div class="grid sm:grid-cols-2 gap-3">' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Ticket type</label>' +
       '<select name="ticket_pay" id="event-create-ticket-pay" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
       '<option value="">No ticket yet</option>' +
-      '<option value="free">Free ticket</option>' +
-      '<option value="paid">Paid ticket</option></select></div>' +
+      '<option value="free">Free ticket (Hub)</option>' +
+      '<option value="paid">Paid ticket (Hub)</option>' +
+      '<option value="link_out">Link Out (external tickets)</option></select></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">How people get in</label>' +
       '<select name="attendance_door" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
       '<option value="general">General ticketing</option>' +
@@ -23468,7 +23530,14 @@
       '<input type="number" name="max_places" min="1" step="1" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Optional"></div>' +
       '<div class="event-create-ticket-price hidden"><label class="block text-xs font-semibold text-slate-500 mb-1">Ticket price (£)</label>' +
       '<input type="number" name="ticket_price" min="0" step="0.01" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="e.g. 25">' +
-      '<p class="text-[11px] text-slate-500 mt-1">Organiser still needs Stripe for paid sales to open.</p></div></div></div></div>' +
+      '<p class="text-[11px] text-slate-500 mt-1">Organiser still needs Stripe for paid sales to open.</p></div></div>' +
+      '<div class="event-create-linkout-fields hidden sm:col-span-2 grid sm:grid-cols-2 gap-3">' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Link Out booking URL</label>' +
+      '<input type="url" name="external_booking_url" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="https://www.eventbrite.co.uk/e/…">' +
+      '<p class="text-[11px] text-slate-500 mt-1">Visitors book on this page instead of buying Hub tickets.</p></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Price label on listing</label>' +
+      '<input type="text" name="external_price_label" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="From £25 or Free" maxlength="80">' +
+      '<p class="text-[11px] text-slate-500 mt-1">Required to publish a Link Out event.</p></div></div></div></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Status</label>' +
       '<select name="status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
       eventStatusOptions('published') +
