@@ -122,9 +122,9 @@
               ? ' <span class="networking-region-suggest-type">County</span>'
               : '') +
             '</span>' +
-            '<span class="networking-region-suggest-hint">' +
-            (item.areaType === 'county' ? 'View county hub →' : 'View networking hub →') +
-            '</span>' +
+            '<span class="networking-region-suggest-hint">Networking in ' +
+            escAttr(item.name) +
+            ' →</span>' +
             '</li>'
           );
         })

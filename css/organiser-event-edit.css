@@ -5760,6 +5760,20 @@ a.ee-btn.ee-btn-primary {
   box-shadow: 0 6px 22px rgba(13, 110, 122, 0.12);
 }
 
+.ee-hub-tickets-choice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  margin: 14px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid rgba(28, 32, 64, 0.08);
+}
+
+.ee-hub-tickets-choice .ee-btn {
+  flex: 0 0 auto;
+}
+
 body.ee-connected-tickets-only .ee-lock-banner,
 body.ee-connected-tickets-checking .ee-lock-banner {
   margin-bottom: 0;

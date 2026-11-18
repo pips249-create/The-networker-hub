@@ -2,7 +2,19 @@
 
 **Why this exists:** Weekly usage hit ~**414 Build CPU hours (~$87)** almost entirely from **Build & Deploy**. Runtime (Functions, CDN, Analytics) was only a few dollars.
 
-**Root cause:** Every push to every branch (especially Cursor agent `cursor/**` PRs) triggered a full Vercel preview build.
+**Root cause (historical):** Every push to every branch (especially Cursor agent `cursor/**` PRs) triggered a full Vercel preview build.
+
+**Root cause (current doubles on `main`):** Confirmed Nov 2026 from Vercel deployment metadata — the same commit often builds **twice or more**:
+
+| Source | What Vercel records | Typical UI tooltip |
+|--------|---------------------|--------------------|
+| GitHub push to `main` | `source: git` | “Deployed from a Git commit” |
+| Cursor / local CLI | `source: cli`, `actor: cursor-cli`, often `gitDirty: 1` | “Based on commit … with additional modifications” |
+| Dashboard Redeploy | `action: redeploy` | “Redeploy of …” |
+
+Pushing to `main` already triggers production. Running `npx vercel --prod` / `npm run deploy` after that (or mid-work with a dirty tree) starts **extra** production builds and burns Build CPU again. Do **not** CLI-deploy production after a `main` push unless Git deploy failed.
+
+**Cost multiplier:** builds are currently assigned **Enhanced / 8 vCPU**. ~4 wall-clock minutes ≈ **32 CPU minutes** billed per deploy. Prefer **Basic** unless builds OOM.
 
 ## Rule: only `main` deploys
 

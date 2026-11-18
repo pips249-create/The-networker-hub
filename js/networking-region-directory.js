@@ -71,6 +71,38 @@
     'east riding': 'yorkshire',
   };
 
+  // Keep in sync with api/_lib/networking-city-counties.js
+  var CITY_NEARBY_COUNTIES = {
+    manchester: ['lancashire', 'cheshire'],
+    birmingham: ['warwickshire', 'staffordshire'],
+    leeds: ['yorkshire'],
+    sheffield: ['yorkshire'],
+    liverpool: ['lancashire', 'cheshire'],
+    brighton: ['sussex'],
+    cambridge: ['cambridgeshire'],
+    oxford: ['oxfordshire'],
+    chester: ['cheshire'],
+    reading: ['berkshire'],
+    bournemouth: ['dorset'],
+  };
+
+  function nearbyCountiesForCity(slug) {
+    var key = normalize(slug);
+    var list = CITY_NEARBY_COUNTIES[key];
+    if (!list || !list.length) return [];
+    return list
+      .map(function (countySlug) {
+        var region = getRegion(countySlug);
+        if (!region) return null;
+        return {
+          slug: countySlug,
+          name: region.name,
+          path: regionPath(countySlug),
+        };
+      })
+      .filter(Boolean);
+  }
+
   function normalize(raw) {
     return String(raw || '')
       .trim()
@@ -86,6 +118,15 @@
   function isCounty(slug) {
     var region = getRegion(slug);
     return Boolean(region && region.areaType === 'county');
+  }
+
+  /** Strip “networking events” etc so “manchester networking” resolves to Manchester. */
+  function stripPlaceQueryNoise(raw) {
+    return normalize(raw)
+      .replace(/\b(business\s+)?networking(\s+events?)?\b/g, ' ')
+      .replace(/\b(events?|hub|directory|groups?|meetings?)\b/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   function resolveSlug(query) {
@@ -117,22 +158,47 @@
     for (var i = 0; i < names.length; i++) {
       if (names[i].name === q) return names[i].slug;
     }
+
+    var stripped = stripPlaceQueryNoise(q);
+    if (stripped && stripped !== q) {
+      if (ALIASES[stripped]) return ALIASES[stripped];
+      for (var j = 0; j < names.length; j++) {
+        if (names[j].name === stripped) return names[j].slug;
+      }
+    }
     return '';
   }
 
   function search(query, limit) {
     var q = normalize(query);
     if (!q || q.length < 2) return [];
+    var stripped = stripPlaceQueryNoise(q);
+    var needles = stripped && stripped !== q ? [q, stripped] : [q];
 
     var max = typeof limit === 'number' ? limit : 8;
     var matches = [];
+    var seen = {};
     var slug;
 
     for (slug in REGIONS) {
       if (!Object.prototype.hasOwnProperty.call(REGIONS, slug)) continue;
       var region = REGIONS[slug];
       var name = normalize(region.name);
-      if (name.indexOf(q) === 0 || name.indexOf(q) !== -1 || q.indexOf(name) !== -1) {
+      var hit = false;
+      for (var n = 0; n < needles.length; n++) {
+        var needle = needles[n];
+        // Avoid “manchester” matching “chester” via substring-in-query.
+        if (name === needle || name.indexOf(needle) === 0 || name.indexOf(' ' + needle) !== -1) {
+          hit = true;
+          break;
+        }
+        if (needle.indexOf(name) === 0) {
+          hit = true;
+          break;
+        }
+      }
+      if (hit && !seen[slug]) {
+        seen[slug] = true;
         matches.push({
           slug: slug,
           name: region.name,
@@ -167,6 +233,7 @@
   global.HUB_networkingRegionPath = regionPath;
   global.HUB_getNetworkingRegion = getRegion;
   global.HUB_isNetworkingCounty = isCounty;
+  global.HUB_nearbyCountiesForCity = nearbyCountiesForCity;
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /**

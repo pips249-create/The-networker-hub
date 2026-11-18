@@ -1,20 +1,14 @@
 /**
- * Contact page — message Rosie & Catherine via Resend.
+ * Contact page — staff notification + submitter confirmation via Resend.
  *
  * Delivery:
- * - CONTACT_TEAM_EMAIL (comma-separated) overrides recipients when set
- * - otherwise SUPPORT_EMAIL env / brand support inbox, plus Catherine & Rosie
- *   so messages are not lost if hi@ is not forwarded yet
- * - also sends a short confirmation to the submitter
+ * - Staff copy goes to hi@ (SUPPORT_EMAIL / supportEmail), unless
+ *   CONTACT_TEAM_EMAIL is set (comma-separated override)
+ * - Also sends a short confirmation to the submitter
  */
 const { sendViaResend, sendTemplatedEmail } = require('./send-template-email');
 const { SUPPORT_EMAIL } = require('./hub-brand');
 const { supportEmail, contactUrl, emailSiteBase } = require('./hub-email-urls');
-
-const DEFAULT_TEAM_FALLBACKS = [
-  'catherine@thenetworkeruk.com',
-  'rosie@thenetworkeruk.com',
-];
 
 function normalizeEmail(raw) {
   return String(raw || '')
@@ -55,14 +49,14 @@ function uniqueEmails(emails) {
 
 /**
  * Who receives contact-form staff notifications.
- * Prefer CONTACT_TEAM_EMAIL when set; otherwise support inbox + directors.
+ * Prefer CONTACT_TEAM_EMAIL when set; otherwise hi@ only.
  */
 function resolveTeamRecipients() {
   const fromEnv = parseRecipientList(process.env.CONTACT_TEAM_EMAIL);
   if (fromEnv.length) return fromEnv;
 
   const primary = normalizeEmail(supportEmail() || SUPPORT_EMAIL || 'hi@thenetworkeruk.com');
-  return uniqueEmails([primary].concat(DEFAULT_TEAM_FALLBACKS));
+  return primary ? [primary] : [];
 }
 
 function normalizeInput(body) {
@@ -183,7 +177,7 @@ async function submitContactTeamMessage(body) {
 
   return {
     ok: true,
-    message: 'Thanks — Rosie and Catherine will pick this up during office hours.',
+    message: 'Thanks — the team will pick this up during office hours.',
   };
 }
 

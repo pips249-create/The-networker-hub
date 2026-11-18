@@ -19212,8 +19212,9 @@
     });
     if (!dated.length) return 'No dates set yet';
     var first = fmtTime(dated[0].starts_at);
-    if (dated.length === 1) return first;
-    return first + ' → ' + fmtTime(dated[dated.length - 1].starts_at) + ' · ' + dated.length + ' dates';
+    var totalDates = eventCleanupSeriesDateCount(members);
+    if (dated.length === 1 && totalDates <= 1) return first;
+    return first + ' → ' + fmtTime(dated[dated.length - 1].starts_at) + ' · ' + totalDates + ' dates';
   }
 
   function readFileAsBase64(file) {
@@ -23808,14 +23809,15 @@
     });
     if (!dated.length) return '<span class="text-slate-400">No date</span>';
     var first = fmtTime(dated[0].starts_at);
-    if (dated.length === 1) return esc(first);
+    var totalDates = eventCleanupSeriesDateCount(members);
+    if (dated.length === 1 && totalDates <= 1) return esc(first);
     var last = fmtTime(dated[dated.length - 1].starts_at);
     return (
       esc(first) +
       ' <span class="text-slate-400">→</span> ' +
       esc(last) +
       '<div class="text-[10px] font-semibold text-brand-800 mt-0.5">' +
-      dated.length +
+      totalDates +
       ' dates</div>'
     );
   }
@@ -23849,6 +23851,16 @@
           '</span>'
         : '')
     );
+  }
+
+  function eventCleanupSeriesDateCount(members) {
+    var list = members || [];
+    var fromApi = 0;
+    list.forEach(function (ev) {
+      var n = Number(ev && ev.series_date_count);
+      if (Number.isFinite(n) && n > fromApi) fromApi = n;
+    });
+    return fromApi > 0 ? fromApi : list.length;
   }
 
   function eventCleanupSeriesParentRowHtml(group) {
@@ -23889,7 +23901,7 @@
       '</div>' +
       '<div class="mt-0.5 flex flex-wrap items-center gap-1.5">' +
       '<span class="inline-flex rounded-full border border-brand-200 bg-brand-50 px-2 py-0.5 text-[10px] font-semibold text-brand-800">Series · ' +
-      members.length +
+      eventCleanupSeriesDateCount(members) +
       ' dates</span>' +
       (lead.city
         ? '<span class="text-[11px] text-slate-500 truncate">' + esc(lead.city) + '</span>'

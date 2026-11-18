@@ -112,6 +112,8 @@ async function main() {
   assert(html.indexOf('three days ago') !== -1, 'says when the page was built');
   assert(html.indexOf('draft page ready') !== -1, 'frames the page as ready to preview');
   assert(html.indexOf('under a minute') !== -1, 'says the look takes under a minute');
+  assert(html.indexOf('already listed') !== -1, 'mentions editing any dates already listed');
+  assert(html.indexOf('Eventbrite') !== -1, 'mentions linking an existing booking site');
   assert(html.indexOf('unclaimed') === -1, 'does not call the page unclaimed');
   assert(html.indexOf('See your page') !== -1, 'one page button');
   assert(html.indexOf('Browse the events directory') === -1, 'no second button');
@@ -132,6 +134,7 @@ async function main() {
   assert(day7Html.indexOf('17,000') !== -1, 'day 7 uses the directory audience');
   assert(day7Html.indexOf('first-time guests') !== -1, 'day 7 mentions first-time guests');
   assert(day7Html.indexOf('no hidden fees') !== -1, 'day 7 says listing is free');
+  assert(day7Html.indexOf('booking system you already use') !== -1, 'day 7 mentions linking existing booking');
   assert(day7Html.indexOf('Claim your free page') !== -1, 'day 7 has one claim button');
   assert(day7Html.indexOf('unclaimed') === -1, 'day 7 does not call the page unclaimed');
   assert(day7Html.indexOf('{{') === -1, 'day 7 has no unresolved placeholders');
@@ -148,6 +151,8 @@ async function main() {
   assert(day21Html.indexOf('Hope you\'re having a great week') !== -1, 'day 21 opens with the week');
   assert(day21Html.indexOf('Top Clubs and Harbour &amp; City Hosts') !== -1, 'day 21 names two hosts');
   assert(day21Html.indexOf('Zero extra cost') !== -1, 'day 21 mentions keeping ticket sales');
+  assert(day21Html.indexOf('Keep your booking site') !== -1, 'day 21 mentions linking Eventbrite or Ticket Tailor');
+  assert(day21Html.indexOf('already listed') !== -1, 'day 21 mentions editing meetings already listed');
   assert(day21Html.indexOf('draft page for') !== -1, 'day 21 says the draft is saved');
   assert(day21Html.indexOf('See your page') !== -1, 'day 21 has one page button');
   assert(day21Html.indexOf('unclaimed') === -1, 'day 21 does not call the page unclaimed');
@@ -166,6 +171,7 @@ async function main() {
   assert(day35Html.indexOf('co-organisers') !== -1, 'day 35 uses British spelling');
   assert(day35Html.indexOf('Take a look at your page') !== -1, 'day 35 has one page button');
   assert(day35Html.indexOf('Send us the details') !== -1, 'day 35 offers the event form');
+  assert(day35Html.indexOf('link the booking site you already use') !== -1, 'day 35 mentions linking booking');
   assert(day35Html.indexOf('/add-your-event') !== -1, 'day 35 links to the event form');
   assert(day35Html.indexOf('unclaimed') === -1, 'day 35 does not call the page unclaimed');
   assert(day35Html.indexOf('{{') === -1, 'day 35 has no unresolved placeholders');

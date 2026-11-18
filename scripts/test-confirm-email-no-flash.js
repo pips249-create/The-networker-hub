@@ -45,10 +45,15 @@ assert.doesNotMatch(
   /window\.location\.(href|replace)\s*=\s*['"`]\/login\?next=['"`]\s*\+\s*encodeURIComponent\(\s*(returnTo|window\.location)/,
   'REGRESSION: confirm page must not auto-bounce signed-out visitors to /login'
 );
-assert.match(
+assert.doesNotMatch(
   verifyJs,
   /await submitCode\(urlCode\)/,
-  'REGRESSION: signed-in inbox opens must POST the code so the email button finishes'
+  'REGRESSION: confirm page must not auto-POST on load — Welcome was firing without a Confirm tap'
+);
+assert.match(
+  verifyJs,
+  /showReadyToConfirmUi\(urlCode\.length === 6\)/,
+  'REGRESSION: inbox codes prefill and wait for an explicit Confirm tap'
 );
 assert.match(
   verifyJs,

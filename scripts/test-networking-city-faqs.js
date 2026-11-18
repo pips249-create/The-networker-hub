@@ -90,10 +90,40 @@ NETWORKING_COUNTY_SLUGS.forEach(function (slug) {
   );
 });
 
-const manchester = getCityNetworkingFaqs('manchester', 9, 86);
-assert.ok(/Networking in Manchester/.test(manchester[0].answer));
+const manchester = getCityNetworkingFaqs(
+  'manchester',
+  9,
+  86,
+  ['Colony Networking', 'Hustle Entrepreneur Networking', 'Pro 5 Networking Manchester'],
+  'Manchester'
+);
+assert.ok(/The Networker UK lists active business networking/.test(manchester[0].answer));
 assert.ok(/Northern Quarter/.test(manchester[1].answer));
-assert.ok(/breakfast networking in Manchester/i.test(manchester[2].question + manchester[2].answer));
+assert.ok(/Which networking groups meet in Manchester/.test(manchester[2].question));
+assert.ok(/Colony Networking/.test(manchester[2].answer));
+assert.ok(/£15–£30|£15-£30/.test(manchester[3].answer));
+assert.ok(/guest visit/i.test(manchester[4].answer));
+assert.ok(
+  !manchester.some(function (item) {
+    return /breakfast networking/i.test(item.question);
+  }),
+  'Manchester should not ask about breakfast networking'
+);
+assert.strictEqual(
+  getCityNetworkingFaqs('manchester', 9, 86, null, 'Manchester').some(function (item) {
+    return /Which networking groups/.test(item.question);
+  }),
+  false,
+  'groups FAQ omits when no live organiser names'
+);
+
+const birminghamBranded = getCityNetworkingFaqs('birmingham', 4, 12, ['Demo Group'], 'Birmingham');
+assert.ok(/The Networker UK/.test(birminghamBranded[0].answer));
+assert.ok(
+  birminghamBranded.some(function (item) {
+    return /Which networking groups meet in Birmingham/.test(item.question);
+  })
+);
 
 const birmingham = getCityNetworkingFaqs('birmingham', 28, 131);
 assert.ok(/Digbeth/.test(birmingham.map(function (item) { return item.answer; }).join(' ')));

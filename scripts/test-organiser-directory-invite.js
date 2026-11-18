@@ -86,6 +86,8 @@ async function main() {
   assert(html.indexOf('Zero fees') !== -1, 'says listing keeps the ticket price');
   assert(html.indexOf('Smart attendee tracking') !== -1, 'mentions visit tracking');
   assert(html.indexOf('Automated reminders') !== -1, 'mentions reminders');
+  assert(html.indexOf('Already sell tickets elsewhere') !== -1, 'mentions linking an existing booking site');
+  assert(html.indexOf('already listed') !== -1, 'mentions editing any meetings already listed');
   assert(html.indexOf('meetings and workshops') !== -1, 'mentions meetings and workshops');
   assert(html.indexOf('book a short tour') !== -1, 'offers a tour');
   assert(html.indexOf('Browse the events directory') === -1, 'no second directory button');

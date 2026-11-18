@@ -204,14 +204,18 @@
         .map(function (item) {
           return (
             '<details class="networking-region-faq-item">' +
-            '<summary class="networking-region-faq-q"></summary>' +
+            '<summary class="networking-region-faq-q">' +
+            '<span class="networking-region-faq-q-text"></span>' +
+            '</summary>' +
+            '<div class="networking-region-faq-a-wrap">' +
             '<p class="networking-region-faq-a"></p>' +
+            '</div>' +
             '</details>'
           );
         })
         .join('');
       Array.prototype.forEach.call(faqList.querySelectorAll('.networking-region-faq-item'), function (el, i) {
-        var q = el.querySelector('.networking-region-faq-q');
+        var q = el.querySelector('.networking-region-faq-q-text') || el.querySelector('.networking-region-faq-q');
         var a = el.querySelector('.networking-region-faq-a');
         if (q) q.textContent = faqs[i].q;
         if (a) a.textContent = faqs[i].a;
@@ -252,6 +256,36 @@
     var organiserLink = document.getElementById('networking-region-organiser-link');
     if (organiserLink) organiserLink.hidden = false;
   }
+
+  function fillCountyFurtherAfieldLink() {
+    var el = document.getElementById('networking-region-county-link');
+    if (!el) return;
+    if (region.areaType === 'county') {
+      el.hidden = true;
+      el.textContent = '';
+      return;
+    }
+    if (el.getAttribute('data-hub-ssr-county') === '1' && el.innerHTML) {
+      el.hidden = false;
+      return;
+    }
+    var nearby =
+      window.HUB_nearbyCountiesForCity && window.HUB_nearbyCountiesForCity(slug);
+    if (!nearby || !nearby.length) {
+      el.hidden = true;
+      el.textContent = '';
+      return;
+    }
+    var parts = nearby.map(function (county) {
+      return '<a href="' + county.path + '">' + county.name + '</a>';
+    });
+    var links =
+      parts.length === 2 ? parts[0] + ' or ' + parts[1] : parts.join(', ');
+    el.innerHTML = 'Looking for events further afield? Browse ' + links + ' networking.';
+    el.hidden = false;
+  }
+
+  fillCountyFurtherAfieldLink();
 
   var partnerShell = document.getElementById('networking-region-city-partner');
   var partnerSlot =

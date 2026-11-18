@@ -876,7 +876,10 @@ function injectNetworkingRegionContent(html, meta) {
   const h1Html =
     slug === 'online'
       ? 'Online networking events <span class="accent">' + year + '</span>'
-      : slug === 'glasgow' || slug === 'bristol' || slug === 'edinburgh'
+      : slug === 'glasgow' ||
+          slug === 'bristol' ||
+          slug === 'edinburgh' ||
+          slug === 'manchester'
         ? 'Business networking events in <span class="accent">' + name + '</span>'
         : 'Networking in <span class="accent">' + name + '</span>';
 
@@ -896,9 +899,11 @@ function injectNetworkingRegionContent(html, meta) {
     /<script[^>]+src=["'][^"']*hub-seo-schema\.js[^"']*["'][^>]*><\/script>\s*/gi,
     ''
   );
-  // Remove the generic /events/ CollectionPage JSON-LD so only region schema remains.
+  // Remove the template /events/ CollectionPage JSON-LD only (static hubert block).
+  // Do not match freshly injected region schema — that also contains CollectionPage
+  // and was being stripped after injectSeoIntoHtml ran first.
   out = out.replace(
-    /<script\s+type=["']application\/ld\+json["']\s*>\s*\{[\s\S]*?"@type"\s*:\s*"CollectionPage"[\s\S]*?\}\s*<\/script>\s*/i,
+    /<script\s+type=["']application\/ld\+json["'][^>]*data-hubert-seo=["']static["'][^>]*>[\s\S]*?<\/script>\s*/i,
     ''
   );
   out = out.replace(
@@ -1016,6 +1021,29 @@ function injectNetworkingRegionContent(html, meta) {
     }
   }
 
+  const nearby = Array.isArray(meta.nearbyCounties) ? meta.nearbyCounties : [];
+  if (nearby.length) {
+    const links = nearby
+      .map(function (county) {
+        return (
+          '<a href="' +
+          escapeHtml(county.path || '/networking/' + county.slug) +
+          '">' +
+          escapeHtml(county.name) +
+          '</a>'
+        );
+      })
+      .join(nearby.length === 2 ? ' or ' : ', ');
+    const countyHtml =
+      'Looking for events further afield? Browse ' + links + ' networking.';
+    out = out.replace(
+      /<p class="networking-region-county-link"[^>]*id="networking-region-county-link"[^>]*>[\s\S]*?<\/p>/i,
+      '<p class="networking-region-county-link" id="networking-region-county-link" data-hub-ssr-county="1">' +
+        countyHtml +
+        '</p>'
+    );
+  }
+
   return out;
 }
 
@@ -1041,9 +1069,9 @@ function injectOpportunityIndustryContent(html, meta) {
     /<script[^>]+src=["'][^"']*hub-seo-schema\.js[^"']*["'][^>]*><\/script>\s*/gi,
     ''
   );
-  // Remove the generic /opportunities/ CollectionPage JSON-LD so industry schema remains.
+  // Remove the template /opportunities/ CollectionPage JSON-LD only (static hubert block).
   out = out.replace(
-    /<script\s+type=["']application\/ld\+json["']\s*>\s*\{[\s\S]*?"@type"\s*:\s*"CollectionPage"[\s\S]*?\}\s*<\/script>\s*/i,
+    /<script\s+type=["']application\/ld\+json["'][^>]*data-hubert-seo=["']static["'][^>]*>[\s\S]*?<\/script>\s*/i,
     ''
   );
   out = out.replace(
@@ -1871,7 +1899,9 @@ export default async function middleware(request) {
 
     if (!htmlRes.ok) return passThroughIfGated(siteGated);
 
-    let html = injectSeoIntoHtml(await htmlRes.text(), meta);
+    // Region/industry injectors strip template JSON-LD — run them before SEO head
+    // injection so FAQPage / ItemList / CollectionPage schema is not removed.
+    let html = await htmlRes.text();
     if (type === 'event') {
       html = injectEventDetailContent(html, meta);
     } else if (type === 'organiser') {
@@ -1881,6 +1911,7 @@ export default async function middleware(request) {
     } else if (type === 'opportunity-industry') {
       html = injectOpportunityIndustryContent(html, meta);
     }
+    html = injectSeoIntoHtml(html, meta);
     html = absolutizeDirectoryTemplateAssets(html);
 
     const seoHeaders = {

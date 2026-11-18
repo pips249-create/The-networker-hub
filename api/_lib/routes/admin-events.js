@@ -279,6 +279,37 @@ async function listEventsForAdmin(query) {
   );
   const total = eventsRes.count != null ? eventsRes.count : rows.length;
 
+  // Full series length (not just dates on this page) so admin “Series · N dates” is accurate.
+  const seriesIds = Array.from(
+    new Set(
+      events
+        .map(function (ev) {
+          return String(ev.series_group_id || '').trim();
+        })
+        .filter(Boolean)
+    )
+  );
+  if (seriesIds.length) {
+    let seriesCountQuery = sb.from('events').select('series_group_id').in('series_group_id', seriesIds);
+    if (when === 'upcoming') seriesCountQuery = seriesCountQuery.gt('starts_at', nowIso);
+    else if (when === 'past') seriesCountQuery = seriesCountQuery.lte('starts_at', nowIso);
+    if (status) seriesCountQuery = seriesCountQuery.eq('status', status);
+    if (approvalStatus) seriesCountQuery = seriesCountQuery.eq('approval_status', approvalStatus);
+    const seriesCountRes = await seriesCountQuery;
+    if (!seriesCountRes.error) {
+      const counts = new Map();
+      (seriesCountRes.data || []).forEach(function (row) {
+        const id = String(row.series_group_id || '').trim();
+        if (!id) return;
+        counts.set(id, (counts.get(id) || 0) + 1);
+      });
+      events.forEach(function (ev) {
+        const id = String(ev.series_group_id || '').trim();
+        if (id && counts.has(id)) ev.series_date_count = counts.get(id);
+      });
+    }
+  }
+
   let unlinkedCount = 0;
   if (!light) {
     const unlinkedCountRes = await sb

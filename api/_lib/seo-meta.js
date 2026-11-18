@@ -744,7 +744,12 @@ function buildStaticPageMeta(pageKey, origin) {
 }
 
 /** Cities whose Search Console queries are “business networking events in {city}”. */
-const BUSINESS_NETWORKING_EVENTS_TITLE_SLUGS = new Set(['glasgow', 'bristol', 'edinburgh']);
+const BUSINESS_NETWORKING_EVENTS_TITLE_SLUGS = new Set([
+  'glasgow',
+  'bristol',
+  'edinburgh',
+  'manchester',
+]);
 
 function usesBusinessNetworkingEventsTitle(slug) {
   return BUSINESS_NETWORKING_EVENTS_TITLE_SLUGS.has(String(slug || '').trim().toLowerCase());
@@ -776,7 +781,22 @@ async function buildNetworkingRegionMeta(slug, origin) {
   const ssr = await buildNetworkingRegionSsr(slug, origin);
   const eventCount = Number(ssr.total) || 0;
   const dateCount = Number(ssr.dateTotal) || eventCount;
-  const copy = buildNetworkingRegionSeoCopy(region, eventCount, dateCount);
+  const copy = buildNetworkingRegionSeoCopy(
+    region,
+    eventCount,
+    dateCount,
+    ssr.organiserNames || []
+  );
+  const { getNearbyCountiesForCity } = require('./networking-city-counties');
+  const nearbyCountySlugs =
+    region.areaType === 'city' || region.areaType === 'London area'
+      ? getNearbyCountiesForCity(region.slug)
+      : [];
+  const nearbyCounties = nearbyCountySlugs
+    .map(function (countySlug) {
+      return getNetworkingRegion(countySlug);
+    })
+    .filter(Boolean);
   const datesBeyondListings = dateCount > eventCount && eventCount > 0;
   const countBit = datesBeyondListings
     ? `${eventCount} ${eventCount === 1 ? 'listing' : 'listings'} covering ${dateCount} dates`
@@ -871,6 +891,9 @@ async function buildNetworkingRegionMeta(slug, origin) {
     dateTotal: dateCount,
     answerText: copy.answerText,
     faqHtml: copy.faqHtml,
+    nearbyCounties: nearbyCounties.map(function (county) {
+      return { slug: county.slug, name: county.name, path: county.path };
+    }),
     ...meta,
     openGraph: buildOpenGraphTags(meta),
     schema: buildSchemaGraphFromParts(schemaParts, origin),

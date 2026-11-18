@@ -2131,6 +2131,21 @@
 
     var hubNote = qs('ecs-hub-tickets-note');
     if (hubNote) hubNote.hidden = false;
+    var hubLink = qs('ecs-hub-tickets-link');
+    if (hubLink) {
+      var hubIds = eventIdsForNavigation();
+      var hubHref =
+        '/organiser/event-tickets?preferHub=1' +
+        (hubIds.length ? '&ids=' + encodeURIComponent(hubIds.join(',')) : '');
+      if (typeof embed.buildEmbedHref === 'function' && hubIds.length) {
+        hubHref = embed.buildEmbedHref('/organiser/event-tickets', {
+          preferHub: true,
+          eventIds: hubIds,
+          idsParam: 'ids',
+        });
+      }
+      hubLink.href = hubHref;
+    }
 
     if (!linkOutOnly) applyWebhookMeta();
 

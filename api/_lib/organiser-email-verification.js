@@ -171,9 +171,10 @@ async function sendOrganiserEmailVerification({ userId, email, name, revealCode,
   const code = newVerifyCode();
   await storeVerifyToken(userId, code, { onlyIfUnverified: reminderSend });
 
-  // Inbox CTA opens the confirm screen with the code prefilled. People type or
-  // tap Confirm — GET never verifies (mail scanners cannot finish). Signed-out
-  // visitors stay on that screen and sign in before Confirm succeeds.
+  // Inbox CTA opens the confirm screen with the code prefilled. People must
+  // type or tap Confirm — never auto-submit on load (that was sending Welcome
+  // before a deliberate confirm). GET never verifies. Signed-out visitors stay
+  // on that screen and sign in before Confirm succeeds.
   const emailVerifyPath = buildOrganiserVerifyEmailPath(code, address);
   const verifyUrl = siteHost() + emailVerifyPath;
   // In-app redirects stay code-free; only the inbox link carries the digits.

@@ -3,8 +3,8 @@
  *
  * Questions follow how people search ("networking in Manchester",
  * "business networking events in Glasgow"). Answers name the districts
- * this directory already covers. They do not promise a live meeting in
- * every neighbourhood, or name groups and venues we do not run.
+ * this directory already covers. Group names only appear via {groups}
+ * when live organiser names are passed in from SSR.
  *
  * Counties and /networking/online keep the shared template in
  * networking-region-content.js. {inventory} is filled from the live counts.
@@ -31,9 +31,28 @@ function inventorySentence(listingCount, dateCount) {
   return 'There are currently ' + listings + ' upcoming ' + listingWord + '.';
 }
 
-function fillInventory(text, listingCount, dateCount) {
+function formatGroupsPhrase(groupNames) {
+  const names = [];
+  const seen = new Set();
+  (groupNames || []).forEach(function (raw) {
+    const name = String(raw || '').trim();
+    if (!name) return;
+    const key = name.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    names.push(name);
+  });
+  const capped = names.slice(0, 6);
+  if (!capped.length) return '';
+  if (capped.length === 1) return capped[0];
+  if (capped.length === 2) return capped[0] + ' and ' + capped[1];
+  return capped.slice(0, -1).join(', ') + ' and ' + capped[capped.length - 1];
+}
+
+function fillFaqTokens(text, listingCount, dateCount, groupsPhrase) {
   return String(text || '')
     .replace(/\{inventory\}/g, inventorySentence(listingCount, dateCount))
+    .replace(/\{groups\}/g, groupsPhrase || '')
     .replace(/[ \t]{2,}/g, ' ')
     .trim();
 }
@@ -45,22 +64,28 @@ const CITY_FAQS = {
       {
         question: 'Where can I find networking in Manchester?',
         answer:
-          'Networking in Manchester is listed on this page. {inventory} Coverage runs from the Northern Quarter and Deansgate to Spinningfields and Salford Quays. Listings include breakfast meetings, evening mixers, workshops and industry groups. Open an event for the date and price, or an organiser page for that group’s next meetings.',
+          'The Networker UK lists active business networking events across Manchester. {inventory} Browse breakfast meetings, evening mixers, workshops and industry groups, then filter by date, format and price. Open a listing to book, or visit an organiser page for that group’s next meetings.',
       },
       {
         question: 'Where do business networking groups meet in Manchester?',
         answer:
-          'Business networking groups in Manchester are listed across the city rather than in a single room. This page covers Deansgate, Spinningfields, the Northern Quarter and Salford Quays, including MediaCity. The venue is on each listing, so you can compare a city-centre meeting with a Salford one before you book.',
+          'Groups meet across the city rather than in one fixed room. Popular areas on The Networker UK include Deansgate, Spinningfields, the Northern Quarter and Salford Quays (including MediaCity) — often hotels, coworking spaces and riverside venues. Each listing shows the venue so you can compare a city-centre meeting with a Salford one before you book.',
       },
       {
-        question: 'Is there breakfast networking in Manchester?',
+        question: 'Which networking groups meet in Manchester?',
         answer:
-          'Breakfast networking in Manchester is listed whenever an organiser publishes a morning meeting. You will also see lunch and after-work events on the same page. Many groups offer a guest visit, so you can try the room before you join. Filter by date, then check the start time and ticket on the event page.',
+          'Upcoming Manchester-area listings on The Networker UK currently include groups such as {groups}. More groups appear as they publish. Open a group’s organiser page for their next dates, formats and tickets.',
+        requiresGroups: true,
       },
       {
         question: 'Are there free networking events in Manchester?',
         answer:
-          'Free networking events in Manchester appear here when an organiser publishes a free ticket or a guest visit. Paid breakfasts and mixers stay on the same list. Use the price filter to show free and low-cost meetings, then open the listing to confirm the ticket is still available.',
+          'Yes. Free networking and guest visits appear on The Networker UK when an organiser publishes them. Typical tickets range from free drop-in mixers to about £15–£30 for structured breakfasts, with some dinners and specialist rooms priced higher. Use the price filter for free and low-cost meetings, then confirm the ticket on the event page.',
+      },
+      {
+        question: 'Can I visit a Manchester networking event before I join a group?',
+        answer:
+          'Often yes. Many listings on The Networker UK offer a one-off ticket or guest visit, so you can try a room without committing to membership. Open the event for the ticket type and price, or the organiser page for that group’s next dates.',
       },
     ],
   },
@@ -641,15 +666,84 @@ const CITY_FAQS = {
   },
 };
 
-function getCityNetworkingFaqs(slug, listingCount, dateCount) {
-  const entry = CITY_FAQS[String(slug || '').trim().toLowerCase()];
-  if (!entry || !entry.faqs) return null;
-  return entry.faqs.map(function (item) {
-    return {
-      question: item.question,
-      answer: fillInventory(item.answer, listingCount, dateCount),
-    };
+function brandCityFaqAnswer(answer) {
+  return String(answer || '')
+    .replace(
+      /^Networking in (.+?) is listed on this page\./,
+      'The Networker UK lists active business networking events across $1.'
+    )
+    .replace(
+      /^Networking events in (.+?) are listed on this page\./,
+      'The Networker UK lists active networking events across $1.'
+    )
+    .replace(
+      /^Business networking events in (.+?) are listed on this page\./,
+      'The Networker UK lists active business networking events across $1.'
+    )
+    .replace(
+      /^Business networking in (.+?) is listed on this page\./,
+      'The Networker UK lists active business networking across $1.'
+    )
+    .replace(/\bon this page\b/gi, 'on The Networker UK')
+    .replace(/\bon the same page\b/gi, 'on The Networker UK')
+    .replace(/\bon the same list\b/gi, 'on The Networker UK')
+    .replace(/\bon the same calendar\b/gi, 'on The Networker UK');
+}
+
+function ensureFreeFaqPricing(question, answer) {
+  if (!/free/i.test(String(question || ''))) return answer;
+  if (/£\d/.test(String(answer || ''))) return answer;
+  return (
+    String(answer || '').replace(/\s*$/, '') +
+    ' Typical tickets range from free guest visits to about £15–£30 for structured breakfasts, with some dinners and specialist rooms priced higher.'
+  );
+}
+
+function insertGroupsFaq(faqs, cityName, groupsPhrase, slug) {
+  if (!groupsPhrase || !faqs || !faqs.length) return faqs || [];
+  const already = faqs.some(function (item) {
+    return /which networking groups meet/i.test(item.question || '');
   });
+  if (already) return faqs;
+  const groupsFaq = {
+    question: 'Which networking groups meet in ' + cityName + '?',
+    answer:
+      'Upcoming ' +
+      cityName +
+      ' listings on The Networker UK currently include groups such as ' +
+      groupsPhrase +
+      '. More organisers appear as they publish. Open a group’s organiser page for their next dates, formats and tickets.',
+  };
+  const out = faqs.slice();
+  const insertAt = Math.min(2, out.length);
+  out.splice(insertAt, 0, groupsFaq);
+  return out;
+}
+
+function getCityNetworkingFaqs(slug, listingCount, dateCount, groupNames, displayName) {
+  const key = String(slug || '').trim().toLowerCase();
+  const entry = CITY_FAQS[key];
+  if (!entry || !entry.faqs) return null;
+  const groupsPhrase = formatGroupsPhrase(groupNames);
+  const cityLabel = String(displayName || '').trim() || key;
+
+  const base = entry.faqs
+    .filter(function (item) {
+      if (item.requiresGroups && !groupsPhrase) return false;
+      if (/\{groups\}/.test(item.answer || '') && !groupsPhrase) return false;
+      return true;
+    })
+    .map(function (item) {
+      let answer = fillFaqTokens(item.answer, listingCount, dateCount, groupsPhrase);
+      answer = brandCityFaqAnswer(answer);
+      answer = ensureFreeFaqPricing(item.question, answer);
+      return {
+        question: item.question,
+        answer: answer,
+      };
+    });
+
+  return insertGroupsFaq(base, cityLabel, groupsPhrase, key);
 }
 
 function getCityFaqLocalTerms(slug) {
@@ -663,4 +757,5 @@ module.exports = {
   getCityNetworkingFaqs,
   getCityFaqLocalTerms,
   inventorySentence,
+  formatGroupsPhrase,
 };

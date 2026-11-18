@@ -159,10 +159,15 @@ const verifyPageSrc = fs.readFileSync(
   path.join(__dirname, '../js/organiser-verify-email.js'),
   'utf8'
 );
-assert.match(
+assert.doesNotMatch(
   verifyPageSrc,
   /await submitCode\(urlCode\)/,
-  'signed-in inbox opens must POST the prefilled code so the email button finishes'
+  'confirm page must not auto-POST the prefilled code — people tap Confirm'
+);
+assert.match(
+  verifyPageSrc,
+  /showReadyToConfirmUi\(urlCode\.length === 6\)/,
+  'inbox codes must prefill and leave people on the Confirm screen'
 );
 assert.match(
   verifyPageSrc,

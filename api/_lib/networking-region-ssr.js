@@ -110,10 +110,39 @@ function buildItemListSchema(events, origin, canonical) {
   };
 }
 
+/** Unique organiser names from browse rows (for city FAQ “which groups” answers). */
+function organiserNamesFromEvents(events) {
+  const seen = new Set();
+  const out = [];
+  (events || []).forEach(function (ev) {
+    const name = String(
+      (ev &&
+        (ev.organiser ||
+          ev.organiser_name ||
+          ev.organiserName ||
+          ev.host_name ||
+          (ev.organiserProfile && ev.organiserProfile.name))) ||
+        ''
+    ).trim();
+    if (!name) return;
+    const key = name.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push(name);
+  });
+  return out;
+}
+
 async function buildNetworkingRegionSsr(slug, origin) {
   const region = getNetworkingRegion(slug);
   if (!region) {
-    return { listingsHtml: '', total: 0, dateTotal: 0, itemList: null };
+    return {
+      listingsHtml: '',
+      total: 0,
+      dateTotal: 0,
+      itemList: null,
+      organiserNames: [],
+    };
   }
 
   if (!isSupabaseConfigured()) {
@@ -122,6 +151,7 @@ async function buildNetworkingRegionSsr(slug, origin) {
       total: 0,
       dateTotal: 0,
       itemList: null,
+      organiserNames: [],
     };
   }
 
@@ -155,6 +185,7 @@ async function buildNetworkingRegionSsr(slug, origin) {
       total,
       dateTotal,
       itemList: buildItemListSchema(events, origin, canonical),
+      organiserNames: organiserNamesFromEvents(events),
     };
   } catch (e) {
     console.error('networking_region_ssr_failed', e && e.message ? e.message : e);
@@ -163,6 +194,7 @@ async function buildNetworkingRegionSsr(slug, origin) {
       total: 0,
       dateTotal: 0,
       itemList: null,
+      organiserNames: [],
     };
   }
 }
@@ -172,4 +204,5 @@ module.exports = {
   buildNetworkingRegionSsr,
   buildListingsHtml,
   buildItemListSchema,
+  organiserNamesFromEvents,
 };

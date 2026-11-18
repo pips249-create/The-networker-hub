@@ -43,7 +43,7 @@ Works while the site gate is on (bypassed in middleware).
 
 Also in Vercel: **Project → Settings → Notifications** — enable deployment failure emails for the team.
 
-**Build costs:** only `main` auto-deploys — see `docs/VERCEL-BUILD-COSTS.md` (merge PR → one production build).
+**Build costs:** only `main` auto-deploys — see `docs/VERCEL-BUILD-COSTS.md` (merge PR → one production build). Do **not** also run `npx vercel --prod` / `npm run deploy` after push (that caused the double Production rows for the same SHA).
 
 ### Error monitoring (Sentry)
 

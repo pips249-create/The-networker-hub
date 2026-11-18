@@ -10,7 +10,7 @@
     "dev:fast": "node scripts/dev-fast.js",
     "dev:all": "node scripts/dev-fast.js --with-api",
     "sync-stripe": "node scripts/sync-stripe-pricing.js",
-    "deploy": "npx vercel --prod",
+    "deploy": "node scripts/vercel-prod-guard.js",
     "check:api": "node scripts/smoke-test-api.js",
     "check:stripe-webhook": "node scripts/test-stripe-webhook-signature.js && node scripts/test-stripe-webhook-raw-body.js && node scripts/test-stripe-invoice-parent.js && node scripts/smoke-test-stripe-webhook.js",
     "test:stripe-webhook-signature": "node scripts/test-stripe-webhook-signature.js",

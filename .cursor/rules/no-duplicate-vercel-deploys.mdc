@@ -1,0 +1,22 @@
+---
+description: Prevent duplicate Vercel Production builds (git push + CLI)
+alwaysApply: true
+---
+
+# No duplicate Vercel production deploys
+
+Pushing to `main` already triggers **one** Production deploy via GitHub → Vercel.
+
+## Do not
+
+- Run `npx vercel --prod`, `vercel --prod --yes`, or `npm run deploy` after `git push` to `main`
+- Redeploy the same commit from the Vercel dashboard “just to be sure”
+- CLI-deploy with a dirty working tree (`gitDirty`) — that creates “Based on commit … with additional modifications” builds
+
+## Do
+
+- After commit + push to `main`, wait for the Git-triggered deploy to finish
+- Only use CLI production deploy if the user explicitly asks **and** the Git deploy failed or never started
+- Prefer `git push` alone for shipping; see `docs/VERCEL-BUILD-COSTS.md`
+
+Each extra Production build bills Build CPU (currently Enhanced 8 vCPU — wall time × 8).

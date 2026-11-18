@@ -109,12 +109,12 @@
     signedIn = false;
     if (ledeEl) {
       ledeEl.innerHTML = hasCode
-        ? 'Sign in with the same email to finish — your confirmation code is ready and we apply it as soon as you are signed in.'
+        ? 'Your confirmation code is ready below. Sign in with the same email, then tap <strong>Confirm your email</strong> to finish.'
         : 'Sign in with the same email, then type the 6-digit code from your inbox and tap Confirm your email. Check spam/junk if it is not there yet.';
     }
     showStatus(
       hasCode
-        ? 'Code ready — sign in to confirm your email.'
+        ? 'Code ready — sign in, then confirm to continue.'
         : 'Sign in first, then enter your confirmation code.',
       true
     );
@@ -286,23 +286,17 @@
       return;
     }
 
-    // Inbox CTA (?code= / legacy ?token=): prefill, scrub the address bar, then
-    // finish with a signed-in POST so the email button actually confirms.
-    // Mail scanners that GET without a session never reach here (signed-out UI).
+    // Prefill from the inbox CTA (?code= / legacy ?token=) but never auto-submit.
+    // People must type or tap Confirm — otherwise Welcome fires before a real confirm
+    // (signed-in inbox opens / link previews were confirming in the background).
     if (urlCode && codeEl) {
       codeEl.value = urlCode;
-      showStatus('Confirming your email…', true);
     }
     scrubCodeFromAddressBar();
+    showReadyToConfirmUi(urlCode.length === 6);
 
-    if (urlCode) {
-      await submitCode(urlCode);
-      return;
-    }
-
-    showReadyToConfirmUi(false);
     // Do not resend after a prefilled inbox code — a fresh code would invalidate it.
-    await maybeAutoSendVerificationCode();
+    if (!urlCode) await maybeAutoSendVerificationCode();
     if (codeEl) codeEl.focus();
   }
 

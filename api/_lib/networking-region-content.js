@@ -70,8 +70,14 @@ function buildNetworkingRegionAnswer(region, eventCount, tagline, dateCount) {
   );
 }
 
-function buildNetworkingRegionFaqs(region, eventCount, tagline, dateCount) {
-  const cityFaqs = getCityNetworkingFaqs(region && region.slug, eventCount, dateCount);
+function buildNetworkingRegionFaqs(region, eventCount, tagline, dateCount, groupNames) {
+  const cityFaqs = getCityNetworkingFaqs(
+    region && region.slug,
+    eventCount,
+    dateCount,
+    groupNames,
+    region && region.name
+  );
   if (cityFaqs && cityFaqs.length) return cityFaqs;
 
   const name = region.name;
@@ -183,11 +189,15 @@ function buildNetworkingRegionFaqHtml(faqs, region) {
       return (
         '<details class="networking-region-faq-item">' +
         '<summary class="networking-region-faq-q">' +
+        '<span class="networking-region-faq-q-text">' +
         escapeHtml(item.question) +
+        '</span>' +
         '</summary>' +
+        '<div class="networking-region-faq-a-wrap">' +
         '<p class="networking-region-faq-a">' +
         escapeHtml(item.answer) +
         '</p>' +
+        '</div>' +
         '</details>'
       );
     })
@@ -197,6 +207,7 @@ function buildNetworkingRegionFaqHtml(faqs, region) {
     '<section class="networking-region-faq" id="networking-region-faq" data-hub-ssr-faq="1" aria-labelledby="networking-region-faq-heading">' +
     '<div class="networking-region-faq-inner">' +
     '<div class="networking-region-faq-head">' +
+    '<p class="networking-region-kicker">Common questions</p>' +
     '<h2 id="networking-region-faq-heading">' +
     heading +
     '</h2>' +
@@ -209,11 +220,17 @@ function buildNetworkingRegionFaqHtml(faqs, region) {
   );
 }
 
-function buildNetworkingRegionSeoCopy(region, eventCount, dateCount) {
+function buildNetworkingRegionSeoCopy(region, eventCount, dateCount, groupNames) {
   const theme = getRegionTheme(region.slug) || {};
   const tagline = theme.tagline || '';
   const answerText = buildNetworkingRegionAnswer(region, eventCount, tagline, dateCount);
-  const faqs = buildNetworkingRegionFaqs(region, eventCount, tagline, dateCount);
+  const faqs = buildNetworkingRegionFaqs(
+    region,
+    eventCount,
+    tagline,
+    dateCount,
+    groupNames
+  );
   return {
     tagline: tagline,
     answerText: answerText,

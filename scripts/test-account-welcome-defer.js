@@ -5,7 +5,7 @@
  * Organiser workspace access is also deferred until that typed code succeeds.
  * Self-serve signup clears staff-provisioned verify flags.
  * Pending-claim bootstrap must not mark the email confirmed or grant access_at.
- * The confirm page prefills inbox codes and finishes via POST once signed in.
+ * The confirm page prefills inbox codes but never auto-submits — tap Confirm.
  * The organiser auth gate must redirect unverified users to confirm-email.
  */
 const assert = require('assert');
@@ -123,20 +123,25 @@ assert.doesNotMatch(
   /await verifyToken\(legacyToken\)/,
   'confirm page must not call verifyToken directly with a legacy token helper'
 );
-assert.match(
+assert.doesNotMatch(
   verifyPageSrc,
   /await submitCode\(urlCode\)/,
-  'signed-in inbox opens must POST the prefilled code (GET never verifies)'
+  'confirm page must not auto-POST the prefilled code on load'
 );
 assert.match(
   verifyPageSrc,
-  /mail scanners that GET|without a session never reach here/i,
-  'confirm page must document that scanners without a session cannot finish confirm'
+  /never auto-submit|must type or tap Confirm/i,
+  'confirm page must require an explicit Confirm tap'
 );
 assert.match(
   verifyPageSrc,
   /codeEl\.value\s*=\s*urlCode/,
   'confirm page should prefill the code from the inbox CTA'
+);
+assert.match(
+  verifyPageSrc,
+  /showReadyToConfirmUi\(urlCode\.length === 6\)/,
+  'prefilled inbox codes should leave people on the Confirm screen'
 );
 assert.match(
   verificationSrc,

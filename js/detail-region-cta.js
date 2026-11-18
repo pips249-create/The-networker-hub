@@ -29,7 +29,7 @@
     if (context === 'events') return 'More events in ' + name + ' →';
     if (context === 'organisers') return 'More networking groups in ' + name + ' →';
     if (context === 'opportunities') return 'More opportunities in ' + name + ' →';
-    return 'View ' + name + ' networking hub →';
+    return 'Networking in ' + name + ' →';
   }
 
   function applyDetailRegionCta(el, options) {

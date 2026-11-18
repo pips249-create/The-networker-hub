@@ -913,7 +913,7 @@
     cityPageCta.href = window.HUB_networkingRegionPath
       ? window.HUB_networkingRegionPath(slug)
       : '/networking/' + encodeURIComponent(slug);
-    cityPageCta.textContent = 'View ' + meta.name + ' networking hub →';
+    cityPageCta.textContent = 'Networking in ' + meta.name + ' →';
     cityPageCta.hidden = false;
   }
 
