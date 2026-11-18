@@ -228,6 +228,15 @@
     }
     var emailEl = document.getElementById('email');
     if (queryEmail && emailEl && !emailEl.value) emailEl.value = queryEmail;
+    // Browse weekly-picks rail: email already opted in — tick marketing on create-account.
+    var marketingEl = document.getElementById('register-marketing');
+    if (
+      marketingEl &&
+      !marketingEl.checked &&
+      (params.get('marketing') === '1' || params.get('marketing') === 'true')
+    ) {
+      marketingEl.checked = true;
+    }
   }
 
   prefillEmailFromQuery();

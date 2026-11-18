@@ -29,6 +29,11 @@
     areaType: region.areaType || 'city',
     accent: theme.accent || '',
   };
+  try {
+    document.dispatchEvent(new CustomEvent('hub:regional-landing'));
+  } catch (e) {
+    /* ignore */
+  }
   document.body.classList.add('networking-region-page');
   document.body.setAttribute('data-region', slug);
   if (region.areaType === 'county') {
@@ -82,12 +87,7 @@
         '.<br>Filter by online/in person, date, location and price.';
     }
   }
-  setText(
-    'all-heading',
-    slug === 'online'
-      ? 'Upcoming online networking events'
-      : 'Upcoming networking events in ' + region.name
-  );
+  // Keep listings h2 as "All listings" — city is already in the hero.
 
   var intro = document.getElementById('networking-region-intro');
   if (intro) {

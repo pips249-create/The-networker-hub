@@ -6,8 +6,42 @@ const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { fetchBrowseEventsPage } = require('./browse-events-query');
 const { publicEventSlug } = require('./event-slug');
 const { siteOrigin } = require('./hubert-seo');
+const { cityRegionFromInput, isMetroRadiusRegion } = require('./uk-outcode');
 
 const SSR_LIMIT = 24;
+
+/**
+ * Match city/county landing browse filters (js/networking-regions + events-filters):
+ * local in-person by default; metro cities use the mile radius so suburb listings count.
+ */
+function browseQueryForRegion(region, slug) {
+  const location = String((region && (region.location || region.name)) || '').trim();
+  const query = {
+    location,
+    limit: SSR_LIMIT,
+    page: 1,
+    meta: '0',
+    sort: 'date',
+  };
+
+  if (String(slug || '').toLowerCase() === 'online') {
+    query.inPerson = '0';
+    query.online = '1';
+    return query;
+  }
+
+  // Same as restoreFilterPrefs on /networking/:city — Online off so UK-wide
+  // webinars do not inflate (or dilute) the local listing total.
+  query.inPerson = '1';
+  query.online = '0';
+
+  const cityKey = cityRegionFromInput(location);
+  if (cityKey && isMetroRadiusRegion(cityKey)) {
+    query.radius = String(slug || '').toLowerCase() === 'edinburgh' ? '5' : '15';
+  }
+
+  return query;
+}
 
 function escapeHtml(text) {
   return String(text || '')
@@ -157,13 +191,7 @@ async function buildNetworkingRegionSsr(slug, origin) {
 
   try {
     const sb = getSupabaseAdmin();
-    const payload = await fetchBrowseEventsPage(sb, {
-      location: region.location || region.name,
-      limit: SSR_LIMIT,
-      page: 1,
-      meta: '0',
-      sort: 'date',
-    });
+    const payload = await fetchBrowseEventsPage(sb, browseQueryForRegion(region, slug));
     const events = (payload.events || []).slice();
     const pagination = payload.pagination || {};
     // pagination.total counts every date in a series. The browse grid and
@@ -205,4 +233,5 @@ module.exports = {
   buildListingsHtml,
   buildItemListSchema,
   organiserNamesFromEvents,
+  browseQueryForRegion,
 };

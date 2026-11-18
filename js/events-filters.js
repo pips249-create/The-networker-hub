@@ -1849,24 +1849,22 @@
           applyFilters();
           return;
         }
+        // One date = from that day onwards. Two dates = inclusive range.
         dateFromTs = selectedDates[0].getTime();
         if (selectedDates.length > 1) {
           var end = new Date(selectedDates[1]);
           end.setHours(23, 59, 59, 999);
           dateToTs = end.getTime();
         } else {
-          var endOne = new Date(selectedDates[0]);
-          endOne.setHours(23, 59, 59, 999);
-          dateToTs = endOne.getTime();
+          dateToTs = null;
         }
         syncBrowseDateParams();
         applyFilters();
       },
       onClose: function (selectedDates) {
-        if (selectedDates.length === 1) {
-          var end = new Date(selectedDates[0]);
-          end.setHours(23, 59, 59, 999);
-          dateToTs = end.getTime();
+        // Keep a lone start date open-ended (no same-day end clamp).
+        if (selectedDates.length === 1 && dateToTs != null) {
+          dateToTs = null;
           syncBrowseDateParams();
           applyFilters();
         }

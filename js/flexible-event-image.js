@@ -1,7 +1,10 @@
 /**
  * Event card images: event photo → organiser logo → type-based Unsplash placeholder.
+ * Hard load failures: organiser logo → local SVG (never leave a broken img + title alt).
  */
 (function () {
+  var LOCAL_PLACEHOLDER = '/assets/placeholders/default.svg';
+
   var PLACEMENT_IMAGES = [
     'https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=800&auto=format&fit=crop',
     'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800&auto=format&fit=crop',
@@ -130,8 +133,53 @@
   window.getEventPlacementImage = function (eventId, eventType, title) {
     return placementForEvent(eventId, eventType, title);
   };
+  /** Same-origin SVG for onerror — Unsplash is only for empty-photo placement. */
   window.getDefaultEventPlaceholder = function () {
-    return DEFAULT_PLACEHOLDER;
+    return LOCAL_PLACEHOLDER;
+  };
+  window.getLocalEventPlaceholder = function () {
+    return LOCAL_PLACEHOLDER;
+  };
+
+  function sameCoverUrl(a, b) {
+    return String(a || '').trim() === String(b || '').trim();
+  }
+
+  /**
+   * Cascade dead covers: logo → local SVG → hide (lavender media shows through).
+   * Keep this handler until the final step so a failed logo still recovers.
+   */
+  window.hubEventCoverError = function (img) {
+    if (!img) return;
+    var stage = img.getAttribute('data-cover-stage') || '';
+    var logo = String(img.getAttribute('data-cover-logo') || '').trim();
+    var local =
+      String(img.getAttribute('data-cover-fallback') || '').trim() || LOCAL_PLACEHOLDER;
+    var current = String(img.currentSrc || img.getAttribute('src') || '').trim();
+
+    if (stage !== 'logo' && stage !== 'local' && logo && !sameCoverUrl(logo, current)) {
+      img.setAttribute('data-cover-stage', 'logo');
+      img.classList.add('is-logo-cover');
+      img.classList.remove('is-placeholder');
+      img.style.objectPosition = '';
+      img.src = logo;
+      return;
+    }
+
+    if (stage !== 'local' && !sameCoverUrl(local, current)) {
+      img.setAttribute('data-cover-stage', 'local');
+      img.classList.add('is-placeholder');
+      img.classList.remove('is-logo-cover');
+      img.style.objectPosition = '';
+      img.src = local;
+      return;
+    }
+
+    img.onerror = null;
+    img.removeAttribute('src');
+    img.alt = '';
+    img.style.display = 'none';
+    img.classList.add('is-cover-failed');
   };
 
   /** Group logos and small assets — use contain on browse cards, not cover stretch. */

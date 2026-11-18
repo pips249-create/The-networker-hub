@@ -160,9 +160,61 @@ function tokenEqualsTerm(token, term) {
   return false;
 }
 
+/** Token spans inside the collapsed alphanumeric string (tokens already folded). */
+function collapsedTokenRanges(tokens) {
+  const ranges = [];
+  let pos = 0;
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i];
+    ranges.push({ start: pos, end: pos + token.length, token: token });
+    pos += token.length;
+  }
+  return ranges;
+}
+
+/**
+ * Collapsed substring hits for obfuscation (n.i.g.g.e.r / n i g g e r).
+ * Skip: longer clean words (therapist → rapist) and cross-word joins
+ * ("Gulnaz is" → gulnazis → nazis).
+ */
+function collapsedObfuscationMatch(collapsed, tokens, term) {
+  if (term.length < 5 || !collapsed.includes(term)) return false;
+  if (collapsed === term) return true;
+
+  const ranges = collapsedTokenRanges(tokens);
+  let idx = 0;
+  while ((idx = collapsed.indexOf(term, idx)) !== -1) {
+    const end = idx + term.length;
+    const covering = ranges.filter((r) => r.start < end && r.end > idx);
+
+    const embeddedInLongerWord =
+      covering.length === 1 &&
+      covering[0].token.length > term.length &&
+      covering[0].token.includes(term) &&
+      !tokenEqualsTerm(covering[0].token, term);
+    if (embeddedInLongerWord) {
+      idx += 1;
+      continue;
+    }
+
+    // Real words glued across a space must not invent a slur.
+    const crossWordFalsePositive =
+      covering.length >= 2 &&
+      covering.some((r) => r.token.length >= 4 && !tokenEqualsTerm(r.token, term));
+    if (crossWordFalsePositive) {
+      idx += 1;
+      continue;
+    }
+
+    return true;
+  }
+  return false;
+}
+
 /**
  * Whole-token matches, plus obfuscation like n.i.g.g.e.r after collapse.
- * Do NOT use naive collapsed.includes — that flags "therapist" as "rapist".
+ * Do NOT use naive collapsed.includes — that flags "therapist" as "rapist"
+ * and "Gulnaz is" as "nazis".
  */
 function matchesTokenList(collapsed, tokens, list) {
   const hits = new Set();
@@ -177,13 +229,7 @@ function matchesTokenList(collapsed, tokens, list) {
       hits.add(term);
       continue;
     }
-    // Obfuscated slur across punctuation/spaces only when no longer clean
-    // word already contains the term (avoids therapist → rapist).
-    if (term.length < 5 || !collapsed.includes(term)) continue;
-    const embeddedInLongerWord = tokens.some(
-      (t) => t.length > term.length && t.includes(term) && !tokenEqualsTerm(t, term)
-    );
-    if (!embeddedInLongerWord) hits.add(term);
+    if (collapsedObfuscationMatch(collapsed, tokens, term)) hits.add(term);
   }
   return [...hits];
 }
@@ -229,13 +275,15 @@ function scanListingLanguage(text) {
   if (!profanity.length && !hateUnique.length) {
     for (let i = 0; i < PROFANITY_TOKENS.length; i++) {
       const term = PROFANITY_TOKENS[i];
-      if (term.length < 4 || !collapsed.includes(term)) continue;
-      const embeddedInLongerWord = tokens.some(
-        (t) => t.length > term.length && t.includes(term) && !tokenEqualsTerm(t, term)
-      );
-      if (embeddedInLongerWord) continue;
-      profanity.push(term);
-      break;
+      if (term.length < 4) continue;
+      if (term.length >= 4 && collapsed === term) {
+        profanity.push(term);
+        break;
+      }
+      if (collapsedObfuscationMatch(collapsed, tokens, term)) {
+        profanity.push(term);
+        break;
+      }
     }
   }
 

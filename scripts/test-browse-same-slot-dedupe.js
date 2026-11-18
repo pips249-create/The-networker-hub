@@ -165,6 +165,11 @@ assert(
   'explicit Dates filter keeps far-future dates findable',
   explicit.dateTo === '2028-11-10T23:59:59.000Z'
 );
+const fromOnly = withDefaultBrowseHorizon({ dateFrom: '2026-12-01T00:00:00.000Z', dateTo: null }, now);
+assert(
+  'lone start date stays open-ended (no soft horizon dateTo)',
+  fromOnly.dateFrom === '2026-12-01T00:00:00.000Z' && !fromOnly.dateTo
+);
 
 if (failed) {
   console.error('\n' + failed + ' failed');

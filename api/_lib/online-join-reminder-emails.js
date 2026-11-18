@@ -8,8 +8,6 @@ const {
 const { enrichBookingReminderVars } = require('./booking-email-sections');
 const { getEmailSponsorVars } = require('./email-sponsor-sections');
 const { normalizeMeetingLink } = require('./meeting-link');
-const { resolveOrganiserBcc } = require('./organiser-email-bcc');
-
 const REMINDER_HOURS = 1;
 const REMINDER_WINDOW_HOURS = 1;
 // Last-chance catch-up if an hourly cron run was missed.
@@ -131,8 +129,6 @@ async function sendDueOnlineJoinReminders(sb) {
       if (orgRes.error) throw new Error(orgRes.error.message);
       organiserName = String(orgRes.data?.name || '').trim();
     }
-    const organiserBcc = await resolveOrganiserBcc(sb, eventRow.organiser_id, attendeeEmail);
-
     const vars = enrichBookingReminderVars(
       buildAttendeeEmailVars({
         registration,
@@ -173,7 +169,6 @@ async function sendDueOnlineJoinReminders(sb) {
           to: attendeeEmail,
           variables: emailVars,
           subject: 'Join online in 1 hour — ' + String(eventRow.title || 'your event').trim(),
-          bcc: organiserBcc,
         });
       } catch (sendErr) {
         await releaseRowTimestamp(sb, {

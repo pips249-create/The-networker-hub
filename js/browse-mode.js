@@ -205,10 +205,8 @@
               '.<br>Filter by online/in person, date, location and price.';
       }
       if (listingsHeader) {
-        listingsHeader.textContent =
-          mode === 'organisers'
-            ? 'Networking groups in ' + regional.name
-            : 'Upcoming networking events in ' + regional.name;
+        // Same quiet headings as national browse — place name lives in the hero.
+        listingsHeader.textContent = c.heading;
       }
       if (searchInput) searchInput.placeholder = c.searchPlaceholder;
       if (searchLabel) searchLabel.textContent = c.searchLabel;

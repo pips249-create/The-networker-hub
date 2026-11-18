@@ -62,6 +62,12 @@ assert.deepStrictEqual(scanListingLanguage('book a therapist').hate, []);
 assert.deepStrictEqual(scanListingLanguage('our therapists').hate, []);
 ok('therapist is not matched as rapist');
 
+assert.deepStrictEqual(scanListingLanguage('Gulnaz is hosting').hate, []);
+assert.deepStrictEqual(scanListingLanguage('Gulnaz is').hate, []);
+assert.deepStrictEqual(scanListingLanguage('Meet Gulnaz').hate, []);
+ok('the name Gulnaz is not matched as nazis via Gulnaz+is');
+
+assert.ok(scanListingLanguage('the nazis').hate.includes('nazis'));
 assert.deepStrictEqual(scanListingLanguage('n.i.g.g.e.r').hate, ['nigger']);
 ok('obfuscated slurs still block');
 

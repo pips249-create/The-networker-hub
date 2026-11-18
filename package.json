@@ -3,8 +3,9 @@
   "private": true,
   "description": "The Networker UK — static site + Vercel serverless API",
   "scripts": {
-    "prestart": "node scripts/sync-local-env.js",
+    "prestart": "node scripts/clean-local-dev.js && node scripts/sync-local-env.js",
     "sync-env": "node scripts/sync-local-env.js",
+    "clean:local": "node scripts/clean-local-dev.js",
     "start": "npx vercel dev",
     "dev:api": "DISABLE_SITE_ACCESS_GATE=true npx vercel dev --listen 3001",
     "dev:fast": "node scripts/dev-fast.js",

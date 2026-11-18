@@ -19052,7 +19052,7 @@
       '"' +
       (seriesMode
         ? ' data-series-edit="1" data-series-key="' +
-          attrEsc(seriesKey) +
+          attrEsc(eventCleanupSeriesKeyAttr(seriesKey)) +
           '" data-series-ids="' +
           attrEsc(seriesIds.join(',')) +
           '"'
@@ -20648,95 +20648,6 @@
       });
   }
 
-  function emailStaleUnclaimedGroups(triggerBtn) {
-    var msg = document.getElementById('group-email-stale-unclaimed-msg');
-    var defaultLabel = triggerBtn ? triggerBtn.textContent : '';
-    if (triggerBtn) {
-      triggerBtn.disabled = true;
-      triggerBtn.textContent = 'Checking…';
-    }
-    if (msg) {
-      msg.textContent =
-        'Finding browse-page groups that have not claimed and have not been contacted in the last 7 days…';
-      msg.className = 'text-xs text-slate-500';
-    }
-    adminPost('/api/admin/organisers', { action: 'list_unclaimed_stale_reminders' })
-      .then(function (data) {
-        if (!data || !data.ok) throw new Error((data && (data.message || data.error)) || 'Could not list groups');
-        var ids = data.ids || [];
-        if (!ids.length) {
-          if (msg) {
-            msg.textContent =
-              'No groups to email. Browse-page groups that have not claimed were contacted in the last 7 days, or have no email.';
-            msg.className = 'text-xs text-slate-600';
-          }
-          return null;
-        }
-        if (
-          !window.confirm(
-            'Email the unclaimed-page reminder to ' +
-              ids.length +
-              ' group' +
-              (ids.length === 1 ? '' : 's') +
-              ' on the browse page that have not claimed and have not been contacted in the last 7 days?'
-          )
-        ) {
-          if (msg) msg.textContent = '';
-          return null;
-        }
-        var sent = 0;
-        var failed = 0;
-        var index = 0;
-        function nextChunk() {
-          if (index >= ids.length) {
-            var text =
-              'Reminder emailed to ' +
-              sent +
-              ' group' +
-              (sent === 1 ? '' : 's') +
-              (failed ? '. ' + failed + ' failed.' : '.');
-            groupCleanupState.flash = { text: text, tone: failed ? 'warn' : 'ok' };
-            if (msg) {
-              msg.textContent = text;
-              msg.className = failed
-                ? 'text-xs text-amber-800 font-semibold'
-                : 'text-xs text-emerald-700 font-semibold';
-            }
-            return refreshGroupCleanupPage();
-          }
-          var chunk = ids.slice(index, index + 20);
-          index += chunk.length;
-          if (triggerBtn) triggerBtn.textContent = 'Sending ' + Math.min(index, ids.length) + ' / ' + ids.length;
-          if (msg) {
-            msg.textContent = 'Sending reminders… ' + Math.min(index, ids.length) + ' of ' + ids.length;
-            msg.className = 'text-xs text-slate-500';
-          }
-          return adminPost('/api/admin/organisers', {
-            action: 'send_unclaimed_followup',
-            ids: chunk,
-          }).then(function (batch) {
-            if (!batch || !batch.ok) throw new Error((batch && (batch.message || batch.error)) || 'Could not send reminder');
-            sent += (batch.sent && batch.sent.length) || 0;
-            failed += (batch.failed && batch.failed.length) || 0;
-            return nextChunk();
-          });
-        }
-        return nextChunk();
-      })
-      .catch(function (err) {
-        window.alert(err.message || 'Could not send reminders.');
-        if (msg) {
-          msg.textContent = err.message || 'Could not send reminders.';
-          msg.className = 'text-xs text-red-700 font-semibold';
-        }
-      })
-      .finally(function () {
-        if (!triggerBtn) return;
-        triggerBtn.disabled = false;
-        triggerBtn.textContent = defaultLabel || 'Email browse groups not contacted in 7 days';
-      });
-  }
-
   function saveGroupCleanupForm(form) {
     var id = form.getAttribute('data-organiser-id');
     var msg = form.querySelector('.group-cleanup-msg');
@@ -21287,7 +21198,7 @@
   }
 
   function openEventSeriesEdit(seriesKey) {
-    var group = groupEventCleanupRows(eventCleanupState.items || []).filter(function (g) {
+    var group = groupEventCleanupRows(eventCleanupListEvents()).filter(function (g) {
       return g.key === seriesKey;
     })[0];
     if (!group) {
@@ -21298,9 +21209,11 @@
     var seriesGroupId = String(lead.series_group_id || '').trim();
     var finish = function () {
       renderEventCleanupList();
-      var panel = main.querySelector(
-        '.event-cleanup-series-panel[data-event-series-panel-for="' + seriesKey + '"]'
-      );
+      var panel = null;
+      var wantAttr = eventCleanupSeriesKeyAttr(seriesKey);
+      main.querySelectorAll('.event-cleanup-series-panel').forEach(function (el) {
+        if (el.getAttribute('data-event-series-panel-for') === wantAttr) panel = el;
+      });
       if (panel) {
         bindAdminLogoZones(panel);
         bindEventFormLocationToggle(panel);
@@ -21333,7 +21246,7 @@
   }
 
   function saveEventSeriesCleanupForm(form) {
-    var seriesKey = form.getAttribute('data-series-key') || '';
+    var seriesKey = eventCleanupSeriesKeyFromAttr(form.getAttribute('data-series-key'));
     var ids = String(form.getAttribute('data-series-ids') || '')
       .split(',')
       .map(function (id) {
@@ -22376,22 +22289,11 @@
         });
       return;
     }
-    var seriesToggle = e.target.closest('[data-toggle-event-series]');
-    if (seriesToggle) {
-      var seriesKey = seriesToggle.getAttribute('data-toggle-event-series') || '';
-      if (seriesKey) {
-        if (eventCleanupState.seriesExpanded[seriesKey]) {
-          delete eventCleanupState.seriesExpanded[seriesKey];
-        } else {
-          eventCleanupState.seriesExpanded[seriesKey] = true;
-        }
-        renderEventCleanupList();
-      }
-      return;
-    }
     var seriesEditToggle = e.target.closest('[data-toggle-event-series-edit]');
     if (seriesEditToggle) {
-      var seriesEditKey = seriesEditToggle.getAttribute('data-toggle-event-series-edit') || '';
+      var seriesEditKey = eventCleanupSeriesKeyFromAttr(
+        seriesEditToggle.getAttribute('data-toggle-event-series-edit')
+      );
       if (seriesEditKey) {
         if (eventCleanupState.seriesEditExpanded[seriesEditKey]) {
           delete eventCleanupState.seriesEditExpanded[seriesEditKey];
@@ -22400,6 +22302,21 @@
           eventCleanupState.seriesEditExpanded[seriesEditKey] = true;
           openEventSeriesEdit(seriesEditKey);
         }
+      }
+      return;
+    }
+    var seriesToggle = e.target.closest('[data-toggle-event-series]');
+    if (seriesToggle) {
+      var seriesKey = eventCleanupSeriesKeyFromAttr(
+        seriesToggle.getAttribute('data-toggle-event-series')
+      );
+      if (seriesKey) {
+        if (eventCleanupState.seriesExpanded[seriesKey]) {
+          delete eventCleanupState.seriesExpanded[seriesKey];
+        } else {
+          eventCleanupState.seriesExpanded[seriesKey] = true;
+        }
+        renderEventCleanupList();
       }
       return;
     }
@@ -22527,9 +22444,9 @@
         updateEventBulkBar();
       }
       if (e.target.classList && e.target.classList.contains('event-series-select-checkbox')) {
-        var seriesKeySel = e.target.getAttribute('data-series-key') || '';
+        var seriesKeySel = eventCleanupSeriesKeyFromAttr(e.target.getAttribute('data-series-key'));
         var seriesChecked = e.target.checked;
-        var seriesMembers = groupEventCleanupRows(eventCleanupState.items || []).filter(function (g) {
+        var seriesMembers = groupEventCleanupRows(eventCleanupListEvents()).filter(function (g) {
           return g.key === seriesKeySel;
         })[0];
         if (seriesMembers) {
@@ -22769,12 +22686,6 @@
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1" for="group-create-website">Website <span class="font-normal text-slate-400">(optional)</span></label>' +
       '<input type="url" id="group-create-website" name="website" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="https://…"></div>' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1" for="group-create-description">Description <span class="font-normal text-slate-400">(optional)</span></label>' +
-      '<textarea id="group-create-description" name="description" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Short intro for this networking group"></textarea></div>' +
-      '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
-      '<button type="submit" class="rounded-lg border border-slate-300 bg-white text-slate-800 text-sm font-semibold px-4 py-2 hover:bg-slate-50">Create group</button>' +
-      '<button type="submit" data-email-group="1" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Email this group</button>' +
-      '<span id="group-create-msg" class="text-xs"></span></div></form></div>' +
-      '<section class="rounded-xl border border-violet-200 bg-white p-4 shadow-sm space-y-2">' +
       '<h3 class="text-sm font-semibold text-brand-900">Unclaimed reminders</h3>' +
       '<p class="text-xs text-slate-600">Emails the reminder to every group on the browse page that has not claimed their page and has not been contacted in the last 7 days. Claimed, disputed, hidden, off-browse, and opted-out groups are left out.</p>' +
       '<div class="flex flex-wrap items-center gap-3">' +
@@ -23111,13 +23022,13 @@
 
   function syncEventSeriesSelectCheckboxes() {
     if (!main) return;
-    var groups = groupEventCleanupRows(eventCleanupState.items || []);
+    var groups = groupEventCleanupRows(eventCleanupListEvents());
     var byKey = {};
     groups.forEach(function (g) {
       byKey[g.key] = g.events;
     });
     main.querySelectorAll('.event-series-select-checkbox').forEach(function (cb) {
-      var key = cb.getAttribute('data-series-key') || '';
+      var key = eventCleanupSeriesKeyFromAttr(cb.getAttribute('data-series-key'));
       var members = byKey[key] || [];
       if (!members.length) return;
       var selectedCount = members.filter(function (ev) {
@@ -23760,6 +23671,30 @@
     return fetchEventCleanup(eventCleanupState.page).then(applyEventCleanupData);
   }
 
+  /**
+   * Series keys may contain U+0000 (same as public browse). HTML attributes cannot
+   * round-trip null bytes (parser substitutes U+FFFD), so encode before writing to
+   * the DOM and decode when reading click/checkbox handlers.
+   */
+  function eventCleanupSeriesKeyAttr(key) {
+    return encodeURIComponent(String(key == null ? '' : key));
+  }
+
+  function eventCleanupSeriesKeyFromAttr(value) {
+    var raw = String(value == null ? '' : value);
+    if (!raw) return '';
+    try {
+      return decodeURIComponent(raw);
+    } catch (err) {
+      return raw;
+    }
+  }
+
+  function eventCleanupListEvents() {
+    if (eventCleanupState.items && eventCleanupState.items.length) return eventCleanupState.items;
+    return (eventCleanupCache && eventCleanupCache.events) || [];
+  }
+
   /** Same bucket rules as public browse: series_group_id, else organiser + title (+ recurrence). */
   function eventCleanupSeriesKey(ev) {
     if (!ev) return 'id:';
@@ -23776,9 +23711,11 @@
     var endDate = String(ev.recurrence_end_date || '')
       .trim()
       .slice(0, 10);
-    if (pattern && endDate) return 'ot:' + organiserId + '\0' + title + '\0' + pattern + '\0' + endDate;
-    if (pattern) return 'ot:' + organiserId + '\0' + title + '\0' + pattern;
-    return 'ot:' + organiserId + '\0' + title;
+    // Use a printable separator — U+0000 cannot round-trip through HTML attributes.
+    var sep = '\u001e';
+    if (pattern && endDate) return 'ot:' + organiserId + sep + title + sep + pattern + sep + endDate;
+    if (pattern) return 'ot:' + organiserId + sep + title + sep + pattern;
+    return 'ot:' + organiserId + sep + title;
   }
 
   function groupEventCleanupRows(events) {
@@ -23882,13 +23819,14 @@
         return listingStatusBadge(ev.status) + approvalStatusBadge(ev.approval_status);
       })
       .join('');
+    var seriesKeyAttr = eventCleanupSeriesKeyAttr(group.key);
     return (
       '<tr class="border-b border-slate-200 bg-slate-50/90 hover:bg-slate-100/80" data-event-series-row="' +
-      attrEsc(group.key) +
+      attrEsc(seriesKeyAttr) +
       '">' +
       '<td class="py-2.5 pr-2 w-8">' +
       '<input type="checkbox" class="event-series-select-checkbox rounded border-slate-300" data-series-key="' +
-      attrEsc(group.key) +
+      attrEsc(seriesKeyAttr) +
       '"' +
       (allSelected ? ' checked' : '') +
       (someSelected ? ' data-indeterminate="1"' : '') +
@@ -23919,12 +23857,12 @@
       '<td class="py-2.5 text-right whitespace-nowrap">' +
       '<div class="flex flex-wrap justify-end gap-2">' +
       '<button type="button" data-toggle-event-series-edit="' +
-      attrEsc(group.key) +
+      attrEsc(seriesKeyAttr) +
       '" class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">' +
       (seriesEditOpen ? 'Close series' : 'Edit series') +
       '</button>' +
       '<button type="button" data-toggle-event-series="' +
-      attrEsc(group.key) +
+      attrEsc(seriesKeyAttr) +
       '" class="text-xs font-semibold rounded-lg border border-brand-300 bg-white text-brand-800 px-2.5 py-1 hover:bg-brand-50" aria-expanded="' +
       (seriesOpen ? 'true' : 'false') +
       '">' +
@@ -23949,7 +23887,7 @@
       .filter(Boolean);
     return (
       '<tr class="event-cleanup-series-panel border-b border-slate-200 bg-slate-50/80" data-event-series-panel-for="' +
-      attrEsc(group.key) +
+      attrEsc(eventCleanupSeriesKeyAttr(group.key)) +
       '">' +
       '<td colspan="6" class="p-4">' +
       eventCleanupEditFormHtml(lead, {
@@ -23979,7 +23917,9 @@
       '" data-event-id-row="' +
       attrEsc(ev.id) +
       '"' +
-      (opts.seriesKey ? ' data-series-member-of="' + attrEsc(opts.seriesKey) + '"' : '') +
+      (opts.seriesKey
+        ? ' data-series-member-of="' + attrEsc(eventCleanupSeriesKeyAttr(opts.seriesKey)) + '"'
+        : '') +
       '>' +
       '<td class="py-2.5 pr-2 w-8' +
       (nested ? ' pl-4' : '') +

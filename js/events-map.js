@@ -608,7 +608,13 @@
       pos && /^\d{1,3}% \d{1,3}%$/.test(pos) && String(ev.photo || '').trim() === resolved
         ? ' style="object-position:' + pos + '"'
         : '';
-    var errorFallback = defaultMapPlaceholder().replace(/\\/g, '\\\\').replace(/'/g, '\\\'');
+    var logoRaw = String(ev.organiserLogo || '').trim();
+    var logoAttr =
+      logoRaw && logoRaw !== String(resolved || '').trim()
+        ? ' data-cover-logo="' + escapeHtml(logoRaw) + '"'
+        : '';
+    var fallbackAttr =
+      ' data-cover-fallback="' + escapeHtml(defaultMapPlaceholder()) + '"';
     return (
       '<div class="map-event-card-media">' +
       '<img class="map-event-card-img' +
@@ -616,14 +622,12 @@
       placeholderClass +
       '"' +
       posStyle +
+      logoAttr +
+      fallbackAttr +
       ' src="' +
       escapeHtml(resolved) +
-      '" alt="' +
-      escapeHtml(ev.title || 'Event cover') +
-      '" loading="lazy" decoding="async" referrerpolicy="no-referrer" ' +
-      'onerror="this.onerror=null;this.src=\'' +
-      errorFallback +
-      '\';this.classList.add(\'is-placeholder\');this.style.objectPosition=\'\'">' +
+      '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" ' +
+      'onerror="window.hubEventCoverError&&window.hubEventCoverError(this)">' +
       '</div>'
     );
   }

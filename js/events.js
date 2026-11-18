@@ -362,11 +362,6 @@
       .replace(/</g, '&lt;');
   }
 
-  function jsPhotoUrl(url) {
-    if (!url) return '';
-    return String(url).replace(/\\/g, '\\\\').replace(/'/g, '\\\'');
-  }
-
   function eventImageSrc(ev) {
     if (window.getEventBrowseImage) return window.getEventBrowseImage(ev);
     if (window.getEventImage) return window.getEventImage(ev);
@@ -377,6 +372,7 @@
   }
 
   function defaultPlaceholder() {
+    if (window.getLocalEventPlaceholder) return window.getLocalEventPlaceholder();
     if (window.getDefaultEventPlaceholder) return window.getDefaultEventPlaceholder();
     return '/assets/placeholders/default.svg';
   }
@@ -410,14 +406,21 @@
           : '') || defaultPlaceholder();
     const resolved = url || fallbackRaw;
     const src = safePhotoUrl(resolved);
-    const errorFallback = jsPhotoUrl(defaultPlaceholder());
+    const logoRaw = ev && ev.organiserLogo ? String(ev.organiserLogo).trim() : '';
+    const logoAttr =
+      logoRaw && logoRaw !== String(resolved || '').trim()
+        ? ` data-cover-logo="${safePhotoUrl(logoRaw)}"`
+        : '';
+    const fallbackAttr = ` data-cover-fallback="${safePhotoUrl(defaultPlaceholder())}"`;
     const placeholderClass = isPlaceholderSrc(resolved) ? ' is-placeholder' : '';
     const logoCoverClass = isLogoStyleCover(ev, resolved) ? ' is-logo-cover' : '';
     const positionStyle = photoPositionStyle(ev, resolved);
+    // Decorative cover — title lives on the card link aria-label; empty alt avoids
+    // broken-image chrome printing the event name over the Events badge.
     return (
-      `<img class="${className}${placeholderClass}${logoCoverClass}"${positionStyle} src="${src}" alt="${escapeHtml(eventTitle || 'Event cover')}" loading="lazy" decoding="async" referrerpolicy="no-referrer" ` +
+      `<img class="${className}${placeholderClass}${logoCoverClass}"${positionStyle}${logoAttr}${fallbackAttr} src="${src}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" ` +
       `onload="window.hubMarkSmallEventCover&&window.hubMarkSmallEventCover(this)" ` +
-      `onerror="this.onerror=null;this.src='${errorFallback}';this.classList.add('is-placeholder');this.style.objectPosition=''">`
+      `onerror="window.hubEventCoverError&&window.hubEventCoverError(this)">`
     );
   }
 

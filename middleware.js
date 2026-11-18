@@ -926,11 +926,7 @@ function injectNetworkingRegionContent(html, meta) {
   );
   out = out.replace(
     /<h2 class="listings-header" id="all-heading">[\s\S]*?<\/h2>/i,
-    '<h2 class="listings-header" id="all-heading">' +
-      (slug === 'online'
-        ? 'Upcoming online networking events'
-        : 'Upcoming networking events in ' + name) +
-      '</h2>'
+    '<h2 class="listings-header" id="all-heading">All listings</h2>'
   );
   out = out.replace(
     /<section class="networking-region-intro"[^>]*id="networking-region-intro"[^>]*>/i,

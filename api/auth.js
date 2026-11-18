@@ -61,6 +61,7 @@ const routes = {
   'member-offer-enquire': require('./_lib/routes/auth-member-offer-enquire'),
   'hubert-matchmaker': require('./_lib/routes/auth-hubert-matchmaker'),
   'site-access': require('./_lib/routes/site-access'),
+  'weekly-picks-signup': require('./_lib/routes/auth-weekly-picks-signup'),
 };
 
 module.exports = wrapHandler(async function handler(req, res) {

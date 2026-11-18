@@ -84,10 +84,14 @@ function defaultBrowseDateTo(at) {
   return d.toISOString();
 }
 
-/** Soft ceiling for default Soonest / Next browse — skipped when the visitor sets Dates. */
+/**
+ * Soft ceiling for default Soonest / Next browse.
+ * Skipped when the visitor sets Dates (from and/or to) — a lone start date means
+ * “from then onwards”, not “that day only” and not the soft horizon.
+ */
 function withDefaultBrowseHorizon(params, at) {
   const next = params && typeof params === 'object' ? { ...params } : {};
-  if (next.dateTo) return next;
+  if (next.dateTo || next.dateFrom) return next;
   const ceiling = defaultBrowseDateTo(at);
   if (ceiling) next.dateTo = ceiling;
   return next;

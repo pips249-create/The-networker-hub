@@ -3055,8 +3055,31 @@
     mountEndedReviewActions(ev || {}, opts);
   }
 
+  function syncWeeklyPicksContext(ev) {
+    const city = String((ev && (ev.city || ev.locationShort || ev.location)) || '')
+      .trim()
+      .split(',')[0]
+      .trim();
+    const online =
+      String((ev && (ev.formatSlug || ev.format || ev.meetingType || '')) || '')
+        .toLowerCase()
+        .indexOf('online') !== -1;
+    const label = city || (online ? 'Online' : '');
+    window.hubWeeklyPicksContext = {
+      location: city || label,
+      label: label || 'the UK',
+      slug: '',
+    };
+    try {
+      document.dispatchEvent(new CustomEvent('hub:weekly-picks-context'));
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
   function populateFromEvent(ev) {
     currentEvent = ev;
+    syncWeeklyPicksContext(ev);
     document.title = ev.title + ' – The Networker UK';
     document.body.setAttribute('data-event-id', ev.id);
     setText('ev-title', ev.title);

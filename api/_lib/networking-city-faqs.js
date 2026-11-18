@@ -373,9 +373,9 @@ const CITY_FAQS = {
           'Networking events in Cambridge are listed on this page. {inventory} Coverage runs from the science park and the city centre to the wider Cambridgeshire network. Open a listing for the date, venue and price.',
       },
       {
-        question: 'Is there networking at Cambridge Science Park and in the city centre?',
+        question: 'Are Cambridge Science Park and city-centre events both listed here?',
         answer:
-          'Both are in scope for this page. Science-park networking in Cambridge is listed when the venue is on the park or the group describes itself that way. City-centre meetings are listed separately. The venue line shows which you are booking, which matters if you are travelling from the station.',
+          'Yes. Meetings at Cambridge Science Park and in the city centre both show on this page. Check the venue on each listing so you know which area you are going to — useful if you are coming from the station.',
       },
       {
         question: 'What networking suits founders in Cambridge?',

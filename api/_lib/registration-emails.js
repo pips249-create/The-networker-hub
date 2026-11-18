@@ -23,7 +23,6 @@ const { attendeeInitial } = require('./organiser-email-sections');
 const { resolveOrganiserNotificationEmail } = require('./organiser-notification-email');
 const { formatEventDateTime } = require('./event-timezone');
 const { normalizeMeetingLink, meetingLinkHref } = require('./meeting-link');
-const { resolveOrganiserBcc } = require('./organiser-email-bcc');
 const {
   shouldSkipOrganiserNewRegistrationNotify,
 } = require('./organiser-registration-notify-guard');
@@ -658,13 +657,11 @@ async function sendMeetingLinkAddedEmails(sb, eventId, { previousLink, newLink }
     vars.meeting_link_section = buildMeetingLinkEmailSection(next);
 
     try {
-      const organiserBcc = await resolveOrganiserBcc(sb, eventRow.organiser_id, attendeeEmail);
       await sendTemplatedEmail({
         slug: 'meeting_link_added',
         to: attendeeEmail,
         variables: vars,
         subject: 'Join link for ' + eventName,
-        bcc: organiserBcc,
       });
       result.sent += 1;
     } catch (e) {

@@ -1,0 +1,179 @@
+/* Weekly picks — event detail signup band */
+.weekly-picks-rail--detail {
+  position: relative;
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(240px, 0.9fr);
+  gap: 20px 28px;
+  align-items: end;
+  margin: 8px 0 0;
+  padding: 22px 24px 20px;
+  border-radius: 16px;
+  background: #1c2040;
+  color: #f4f2ef;
+  box-shadow: 0 2px 12px rgba(45, 38, 54, 0.06);
+}
+
+.weekly-picks-rail--detail[hidden] {
+  display: none !important;
+}
+
+.weekly-picks-rail-dismiss {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(244, 242, 239, 0.55);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.weekly-picks-rail-dismiss:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.weekly-picks-rail-kicker {
+  margin: 0 0 8px;
+  padding-right: 28px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9fd4b5;
+}
+
+.weekly-picks-rail-headline {
+  margin: 0;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.weekly-picks-rail-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(244, 242, 239, 0.7);
+}
+
+.weekly-picks-rail-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.weekly-picks-rail-input {
+  flex: 1 1 180px;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid rgba(244, 242, 239, 0.22);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+}
+
+.weekly-picks-rail-input::placeholder {
+  color: rgba(244, 242, 239, 0.4);
+}
+
+.weekly-picks-rail-input:focus {
+  outline: 2px solid #9fd4b5;
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+.weekly-picks-rail-submit {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 10px;
+  background: #2d6a4f;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.weekly-picks-rail-submit:hover {
+  background: #245a43;
+}
+
+.weekly-picks-rail-submit:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.weekly-picks-rail-fine {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: rgba(244, 242, 239, 0.55);
+}
+
+.weekly-picks-rail-fine a {
+  color: #9fd4b5;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.weekly-picks-rail-status {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: rgba(244, 242, 239, 0.8);
+}
+
+.weekly-picks-rail-status.is-ok {
+  color: #9fd4b5;
+}
+
+.weekly-picks-rail-status.is-error {
+  color: #f5b7b1;
+}
+
+.weekly-picks-rail-done-copy {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.weekly-picks-rail-account {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #9fd4b5;
+  text-decoration: none;
+}
+
+.weekly-picks-rail-account:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 820px) {
+  .weekly-picks-rail--detail {
+    grid-template-columns: 1fr;
+    padding: 20px 18px 18px;
+  }
+
+  .weekly-picks-rail-submit {
+    width: 100%;
+  }
+}
