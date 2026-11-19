@@ -17,6 +17,27 @@
     return document.getElementById(id);
   }
 
+  async function readJsonResponse(res) {
+    var text = '';
+    try {
+      text = await res.text();
+    } catch (e) {
+      throw new Error('Could not read the server response. Please try again.');
+    }
+    if (!text) {
+      throw new Error('Empty response from server (HTTP ' + res.status + '). Please try again.');
+    }
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      throw new Error(
+        'Could not submit review (HTTP ' +
+          res.status +
+          '). Please refresh and try again.'
+      );
+    }
+  }
+
   function selectedReviewNameMode() {
     var checked = document.querySelector('#hub-rm-form input[name="reviewNameMode"]:checked');
     return checked && checked.value === 'anonymous' ? 'anonymous' : 'name';
@@ -83,7 +104,7 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reviewNameMode: next }),
     });
-    var data = await res.json();
+    var data = await readJsonResponse(res);
     if (!data.ok) {
       throw new Error(data.message || data.error || 'Could not save review name preference.');
     }
@@ -298,7 +319,7 @@
               reviewText: reviewText,
             }),
           });
-          var data = await res.json();
+          var data = await readJsonResponse(res);
           if (!data.ok) {
             var msg =
               data.error === 'not_eligible'

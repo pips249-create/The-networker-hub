@@ -147,7 +147,15 @@ module.exports = async function handler(req, res) {
       max: 12,
       windowMs: 300_000,
     });
-    if (limited) return;
+    /* enforceRateLimitAsync always returns an object — only bail when not allowed. */
+    if (!limited.allowed) {
+      return json(res, 429, {
+        ok: false,
+        error: 'rate_limited',
+        message: 'Too many review attempts. Please wait a few minutes and try again.',
+        retryAfterSec: limited.retryAfterSec,
+      });
+    }
 
     const body = parseBody(req);
     const token = String(body.token || '').trim();

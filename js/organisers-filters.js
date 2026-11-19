@@ -187,6 +187,16 @@
   }
 
   function resetFilters() {
+    var regional = window.hubRegionalLanding;
+    // City landings (Brighton FAQ/intro, locked location) are the location filter.
+    // Clear must leave the landing — same idea as events browse.
+    if (regional && regional.location) {
+      var base = window.hubBrowseAllEventsHref || '/events/?browse=all';
+      window.location.href =
+        base.indexOf('?') >= 0 ? base + '&mode=organisers' : base + '?mode=organisers';
+      return;
+    }
+
     if (searchInput) searchInput.value = '';
     if (sortSelect) sortSelect.value = 'recommended';
     if (hasListings) hasListings.checked = false;

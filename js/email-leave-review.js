@@ -165,17 +165,27 @@
               reviewText: qs('lr-text') ? qs('lr-text').value.trim() : '',
             }),
           });
-          var data = await res.json();
-          if (!data.ok) {
+          var raw = await res.text();
+          var data;
+          try {
+            data = raw ? JSON.parse(raw) : null;
+          } catch (parseErr) {
+            throw new Error(
+              'Could not submit review (HTTP ' + res.status + '). Please refresh and try again.'
+            );
+          }
+          if (!data || !data.ok) {
+            var errCode = data && data.error;
             var msg =
-              data.error === 'review_already_submitted'
+              errCode === 'review_already_submitted'
                 ? 'You have already reviewed this event.'
-                : data.error === 'event_not_finished'
+                : errCode === 'event_not_finished'
                   ? 'You can leave a review after the event has finished.'
-                  : data.error === 'not_eligible' || data.error === 'did_not_attend'
+                  : errCode === 'not_eligible' || errCode === 'did_not_attend'
                     ? 'This review link is only for confirmed attendees.'
-                    : data.message || data.error || 'Could not submit review.';
-            if (data.error === 'review_already_submitted') {
+                    : (data && (data.message || data.error)) ||
+                      'Could not submit review.';
+            if (errCode === 'review_already_submitted') {
               showAlreadyReviewed(data);
               return;
             }
