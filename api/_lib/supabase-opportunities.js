@@ -881,7 +881,7 @@ async function activateOpportunityListingPayment(opportunityId, monthsOrOpts, se
       periodEndIso: periodEnd && !Number.isNaN(periodEnd.getTime()) ? periodEnd.toISOString() : '',
     })
   ) {
-    return rowToListing(existing);
+    return { listing: rowToListing(existing), alreadyApplied: true };
   }
 
   const now = new Date();
@@ -934,7 +934,7 @@ async function activateOpportunityListingPayment(opportunityId, monthsOrOpts, se
 
   const autoReject = await maybeAutoRejectOpportunity(data);
   if (autoReject.rejected) {
-    return autoReject.listing;
+    return { listing: autoReject.listing, alreadyApplied: false };
   }
 
   const listing = rowToListing(data);
@@ -951,7 +951,7 @@ async function activateOpportunityListingPayment(opportunityId, monthsOrOpts, se
     }
   }
 
-  return listing;
+  return { listing, alreadyApplied: false };
 }
 
 async function listPublishedOpportunities() {
@@ -1991,48 +1991,56 @@ async function handleOpportunityListingCheckout(session) {
     }
   }
 
-  const opportunity = await activateOpportunityListingPayment(opportunityId, {
+  const activated = await activateOpportunityListingPayment(opportunityId, {
     months: 1,
     sessionId: session.id,
     subscriptionId,
     periodEndIso: periodEnd,
   });
+  const opportunity = activated && activated.listing ? activated.listing : activated;
+  const alreadyApplied = !!(activated && activated.alreadyApplied);
 
   let receiptEmail = { skipped: true, reason: 'not_sent' };
-  try {
-    const { formatGbpFromAmountTotal, getStripeClient } = require('./stripe-checkout');
-    const { resolveOpportunityListingInvoice } = require('./opportunity-listing-vat-receipt');
-    const { sendOpportunityListingPaymentReceipt } = require('./opportunity-emails');
-    let invoice = null;
+  // Success-page confirm + Stripe webhook both call this handler. Live email is
+  // already gated; skip a second first-payment VAT receipt on the no-op retry.
+  if (alreadyApplied) {
+    receiptEmail = { skipped: true, reason: 'already_activated' };
+  } else {
     try {
-      invoice = await resolveOpportunityListingInvoice(getStripeClient(), {
+      const { formatGbpFromAmountTotal, getStripeClient } = require('./stripe-checkout');
+      const { resolveOpportunityListingInvoice } = require('./opportunity-listing-vat-receipt');
+      const { sendOpportunityListingPaymentReceipt } = require('./opportunity-emails');
+      let invoice = null;
+      try {
+        invoice = await resolveOpportunityListingInvoice(getStripeClient(), {
+          session,
+          subscriptionId,
+        });
+      } catch {
+        invoice = null;
+      }
+      receiptEmail = await sendOpportunityListingPaymentReceipt(opportunity, {
+        email:
+          session.customer_details?.email ||
+          session.customer_email ||
+          metadata.owner_email ||
+          '',
+        amountPaid: formatGbpFromAmountTotal(
+          invoice?.amount_paid != null ? invoice.amount_paid : session.amount_total
+        ),
+        amountPaidPence:
+          invoice?.amount_paid != null ? invoice.amount_paid : session.amount_total,
+        invoice,
         session,
         subscriptionId,
+        isRenewal: false,
       });
-    } catch {
-      invoice = null;
+    } catch (emailErr) {
+      receiptEmail = {
+        ok: false,
+        error: emailErr && emailErr.message ? emailErr.message : String(emailErr),
+      };
     }
-    receiptEmail = await sendOpportunityListingPaymentReceipt(opportunity, {
-      email:
-        session.customer_details?.email ||
-        session.customer_email ||
-        metadata.owner_email ||
-        '',
-      amountPaid: formatGbpFromAmountTotal(
-        invoice?.amount_paid != null ? invoice.amount_paid : session.amount_total
-      ),
-      amountPaidPence:
-        invoice?.amount_paid != null ? invoice.amount_paid : session.amount_total,
-      invoice,
-      session,
-      subscriptionId,
-      isRenewal: false,
-    });
-  } catch (emailErr) {
-    receiptEmail = {
-      ok: false,
-      error: emailErr && emailErr.message ? emailErr.message : String(emailErr),
-    };
   }
 
   return {
@@ -2042,6 +2050,7 @@ async function handleOpportunityListingCheckout(session) {
     listingMonths: opportunity.listingMonths,
     subscriptionId: subscriptionId || null,
     receiptEmail,
+    alreadyApplied,
   };
 }
 

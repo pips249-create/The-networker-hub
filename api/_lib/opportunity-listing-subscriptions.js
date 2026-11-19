@@ -132,17 +132,19 @@ async function syncListingFromSubscription(subscription, options) {
     }
   }
 
-  const listing = await activateOpportunityListingPayment(id, {
+  const activated = await activateOpportunityListingPayment(id, {
     sessionId: sessionId || null,
     subscriptionId,
     periodEndIso: periodEnd,
   });
+  const listing = activated && activated.listing ? activated.listing : activated;
 
   return {
     ok: true,
     opportunityId: id,
     listingExpiresAt: listing.listingExpiresAt,
     subscriptionId,
+    alreadyApplied: !!(activated && activated.alreadyApplied),
   };
 }
 

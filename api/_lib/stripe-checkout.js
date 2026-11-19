@@ -256,9 +256,9 @@ async function createOpportunityPremiumCheckoutSession(opts) {
           product_data: {
             name: 'Premium business opportunity listing',
             description:
-              'One-time Premium Spotlight for "' +
+              'Featured Opportunity Boost for "' +
               title +
-              '" — up to 30 days on the opportunities browse page',
+              '" — Premium badge in the opportunities grid for up to 30 days',
           },
           unit_amount: amountPence,
         },

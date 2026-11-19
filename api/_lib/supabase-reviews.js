@@ -3,6 +3,7 @@ const { resolveAttendeeId } = require('./supabase-favourites');
 const { resolveOrganiserAccess } = require('./supabase-organiser-access');
 const { reviewerDisplayName, reviewerInitials } = require('./reviewer-display-name');
 const { buildReviewerReward, reviewerRewardToastMessage } = require('./reviewer-reward');
+const { isEventPast } = require('./event-timezone');
 const { isUuid } = require('./uuid');
 
 const MAX_ORGANISER_REPLY = 2000;
@@ -20,11 +21,13 @@ function sanitizeReviewPlainText(raw, maxLen) {
 
 const ELIGIBLE_PAYMENT = new Set(['Paid', 'Free']);
 
-function eventHasEnded(ev) {
-  const endRaw = ev?.ends_at || ev?.starts_at || null;
-  if (!endRaw) return false;
-  const d = new Date(endRaw);
-  return !Number.isNaN(d.getTime()) && d < new Date();
+/**
+ * Match browse/detail past detection: ignore absurd multi-day ends_at (series/bad
+ * data) and treat the event as finished ~2h after start when needed. Otherwise
+ * review CTAs unlock while submit still returns event_not_finished.
+ */
+function eventHasEnded(ev, at) {
+  return isEventPast(ev, at);
 }
 
 function isEligibleRegistration(reg) {
@@ -37,26 +40,30 @@ function isEligibleRegistration(reg) {
 async function findRegistrationForReview(sb, attendeeId, eventId) {
   let res = await sb
     .from('registrations')
-    .select('id, payment_status, application_status, no_show_at')
+    .select('id, payment_status, application_status, no_show_at, created_at')
     .eq('attendee_id', attendeeId)
     .eq('event_id', eventId)
     .neq('payment_status', 'Refunded')
     .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .limit(10);
   if (res.error && /no_show_at|column/i.test(res.error.message || '')) {
     res = await sb
       .from('registrations')
-      .select('id, payment_status, application_status')
+      .select('id, payment_status, application_status, created_at')
       .eq('attendee_id', attendeeId)
       .eq('event_id', eventId)
       .neq('payment_status', 'Refunded')
       .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .limit(10);
   }
   if (res.error) throw new Error(res.error.message);
-  return res.data;
+  const rows = Array.isArray(res.data) ? res.data : [];
+  if (!rows.length) return null;
+  // Prefer a Paid/Free (approved) booking over a newer Pending enquiry row.
+  const eligible = rows.find(function (row) {
+    return isEligibleRegistration(row);
+  });
+  return eligible || rows[0];
 }
 
 async function submitReviewForAttendeeId(attendeeId, input) {

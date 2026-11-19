@@ -112,6 +112,19 @@ assert(
   }) === false
 );
 
+assert(
+  'same checkout session retry is already-applied (skips second VAT receipt)',
+  listingActivationAlreadyApplied(
+    {
+      ...renewal,
+      listing_expires_at: future,
+      status: 'published',
+      listing_stripe_session_id: 'cs_live_gail',
+    },
+    { sessionId: 'cs_live_gail', periodEndIso: future }
+  ) === true
+);
+
 if (failed) {
   console.error(failed + ' failed');
   process.exit(1);

@@ -421,8 +421,8 @@
       title: 'How to feature events',
       steps: [
         'Upcoming events load by default — switch filters if you need past dates.',
-        'Use Active in carousel to see only placements that can show on /events/ right now.',
-        'Toggle Featured and set an end date (or leave with no end date).',
+        'Use Active in carousel to see only placements that show in the /events/ grid right now.',
+        'Toggle Featured and set an end date (or leave with no end date) — featured events sort first with a Premium badge.',
         'Paid placements and admin grants both show under Expires — change the date any time.',
       ],
     },
@@ -430,16 +430,16 @@
       title: 'How to feature organisers',
       steps: [
         'Find the networking group you want to highlight.',
-        'Toggle Featured and set how long they stay in the carousel.',
+        'Toggle Featured and set how long they stay featured in the organisers grid (Premium badge).',
         'Change or clear the end date under Expires, or untick Featured to remove them.',
       ],
     },
     'spotlight-opportunities': {
       title: 'How to feature opportunities',
       steps: [
-        'Only approved live listings can appear in the public carousel.',
-        'Toggle Featured and set an end date for the /opportunities/ carousel.',
-        'Network marketing listings never show in Premium Spotlight — clear them if they still count as featured.',
+        'Only approved live listings can appear as featured in the /opportunities/ grid.',
+        'Toggle Featured and set an end date — featured opportunities sort first with a Premium badge.',
+        'Network marketing listings never show as featured — clear them if they still count as featured.',
         'Use Active in carousel to match what visitors see on /opportunities/.',
       ],
     },
@@ -20648,95 +20648,6 @@
       });
   }
 
-  function emailStaleUnclaimedGroups(triggerBtn) {
-    var msg = document.getElementById('group-email-stale-unclaimed-msg');
-    var defaultLabel = triggerBtn ? triggerBtn.textContent : '';
-    if (triggerBtn) {
-      triggerBtn.disabled = true;
-      triggerBtn.textContent = 'Checking…';
-    }
-    if (msg) {
-      msg.textContent =
-        'Finding browse-page groups that have not claimed and have not been contacted in the last 7 days…';
-      msg.className = 'text-xs text-slate-500';
-    }
-    adminPost('/api/admin/organisers', { action: 'list_unclaimed_stale_reminders' })
-      .then(function (data) {
-        if (!data || !data.ok) throw new Error((data && (data.message || data.error)) || 'Could not list groups');
-        var ids = data.ids || [];
-        if (!ids.length) {
-          if (msg) {
-            msg.textContent =
-              'No groups to email. Browse-page groups that have not claimed were contacted in the last 7 days, or have no email.';
-            msg.className = 'text-xs text-slate-600';
-          }
-          return null;
-        }
-        if (
-          !window.confirm(
-            'Email the unclaimed-page reminder to ' +
-              ids.length +
-              ' group' +
-              (ids.length === 1 ? '' : 's') +
-              ' on the browse page that have not claimed and have not been contacted in the last 7 days?'
-          )
-        ) {
-          if (msg) msg.textContent = '';
-          return null;
-        }
-        var sent = 0;
-        var failed = 0;
-        var index = 0;
-        function nextChunk() {
-          if (index >= ids.length) {
-            var text =
-              'Reminder emailed to ' +
-              sent +
-              ' group' +
-              (sent === 1 ? '' : 's') +
-              (failed ? '. ' + failed + ' failed.' : '.');
-            groupCleanupState.flash = { text: text, tone: failed ? 'warn' : 'ok' };
-            if (msg) {
-              msg.textContent = text;
-              msg.className = failed
-                ? 'text-xs text-amber-800 font-semibold'
-                : 'text-xs text-emerald-700 font-semibold';
-            }
-            return refreshGroupCleanupPage();
-          }
-          var chunk = ids.slice(index, index + 20);
-          index += chunk.length;
-          if (triggerBtn) triggerBtn.textContent = 'Sending ' + Math.min(index, ids.length) + ' / ' + ids.length;
-          if (msg) {
-            msg.textContent = 'Sending reminders… ' + Math.min(index, ids.length) + ' of ' + ids.length;
-            msg.className = 'text-xs text-slate-500';
-          }
-          return adminPost('/api/admin/organisers', {
-            action: 'send_unclaimed_followup',
-            ids: chunk,
-          }).then(function (batch) {
-            if (!batch || !batch.ok) throw new Error((batch && (batch.message || batch.error)) || 'Could not send reminder');
-            sent += (batch.sent && batch.sent.length) || 0;
-            failed += (batch.failed && batch.failed.length) || 0;
-            return nextChunk();
-          });
-        }
-        return nextChunk();
-      })
-      .catch(function (err) {
-        window.alert(err.message || 'Could not send reminders.');
-        if (msg) {
-          msg.textContent = err.message || 'Could not send reminders.';
-          msg.className = 'text-xs text-red-700 font-semibold';
-        }
-      })
-      .finally(function () {
-        if (!triggerBtn) return;
-        triggerBtn.disabled = false;
-        triggerBtn.textContent = defaultLabel || 'Email browse groups not contacted in 7 days';
-      });
-  }
-
   function saveGroupCleanupForm(form) {
     var id = form.getAttribute('data-organiser-id');
     var msg = form.querySelector('.group-cleanup-msg');
@@ -21894,11 +21805,6 @@
       return;
     }
 
-    if (e.target.closest('#group-email-stale-unclaimed-btn')) {
-      emailStaleUnclaimedGroups(document.getElementById('group-email-stale-unclaimed-btn'));
-      return;
-    }
-
     if (e.target.closest('#group-email-unclaimed-btn')) {
       var reminderIds = getSelectedGroupIds();
       if (!reminderIds.length) {
@@ -22780,12 +22686,6 @@
       '<button type="submit" class="rounded-lg border border-slate-300 bg-white text-slate-800 text-sm font-semibold px-4 py-2 hover:bg-slate-50">Create group</button>' +
       '<button type="submit" data-email-group="1" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Email this group</button>' +
       '<span id="group-create-msg" class="text-xs"></span></div></form></div>' +
-      '<section class="rounded-xl border border-violet-200 bg-white p-4 shadow-sm space-y-2">' +
-      '<h3 class="text-sm font-semibold text-brand-900">Unclaimed reminders</h3>' +
-      '<p class="text-xs text-slate-600">Emails the reminder to every group on the browse page that has not claimed their page and has not been contacted in the last 7 days. Claimed, disputed, hidden, off-browse, and opted-out groups are left out.</p>' +
-      '<div class="flex flex-wrap items-center gap-3">' +
-      '<button type="button" id="group-email-stale-unclaimed-btn" class="rounded-lg bg-violet-800 text-white text-sm font-semibold px-4 py-2 hover:bg-violet-950">Email browse groups not contacted in 7 days</button>' +
-      '<span id="group-email-stale-unclaimed-msg" class="text-xs"></span></div></section>' +
       '<div id="group-cleanup-bulk" class="hidden rounded-xl border border-brand-200 bg-brand-50 p-4 shadow-sm space-y-3">' +
       '<form id="group-bulk-form" class="space-y-3">' +
       '<div class="flex flex-wrap items-center justify-between gap-2">' +
@@ -26667,7 +26567,7 @@
     main.innerHTML =
       '<div class="space-y-4">' +
       '<div id="spotlight-slots-wrap" class="text-sm text-slate-500">Loading carousel slot usage…</div>' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Tick one date to put <strong>that event</strong> in the Premium Spotlight on <code class="text-[11px]">/events/</code>. A repeating series is a single carousel card — other dates in the series stay unticked. The bar shows the next upcoming featured date (up to 12 at a time).</p>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Tick one date to put <strong>that event</strong> first in the listings grid on <code class="text-[11px]">/events/</code> with a Premium badge. A repeating series shares one featured slot — other dates in the series stay unticked. Up to 12 featured events at a time.</p>' +
       '<div class="flex flex-wrap items-center gap-2">' +
       '<p id="featured-status" class="text-sm text-slate-500 flex-1 min-w-[12rem]">Loading approved events…</p>' +
       spotlightClearStaleBtnHtml('spotlight-clear-stale-events') +
@@ -26725,7 +26625,7 @@
     main.innerHTML =
       '<div class="space-y-4">' +
       '<div id="spotlight-slots-wrap" class="text-sm text-slate-500">Loading carousel slot usage…</div>' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Featured groups appear in the organiser spotlight carousel on the Events browse page. Set an end date when you feature them (or choose no end date).</p>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Featured groups sort first in the organisers listings grid with a Premium badge (same model as events). Set an end date when you feature them (or choose no end date).</p>' +
       '<div class="flex flex-wrap items-center gap-2">' +
       '<p id="spotlight-organisers-status" class="text-sm text-slate-500 flex-1 min-w-[12rem]">Loading organisers…</p>' +
       spotlightClearStaleBtnHtml('spotlight-clear-stale-organisers') +
@@ -26787,7 +26687,7 @@
     main.innerHTML =
       '<div class="space-y-4">' +
       '<div id="spotlight-slots-wrap" class="text-sm text-slate-500">Loading carousel slot usage…</div>' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Featured opportunities appear in the Premium Spotlight on <code class="text-[11px]">/opportunities/</code>. Slot usage matches the public carousel (Approved + live + paid; network marketing is never shown). Use <strong>Active in carousel</strong> to see only placements that show right now.</p>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Featured opportunities sort first in the listings grid on <code class="text-[11px]">/opportunities/</code> with a Premium badge (same model as events). Slot usage matches live featured placements (Approved + live + paid; network marketing is never shown). Use <strong>Active in carousel</strong> to see only placements that show right now.</p>' +
       '<div class="flex flex-wrap items-center gap-2">' +
       '<p id="spotlight-opportunities-status" class="text-sm text-slate-500 flex-1 min-w-[12rem]">Loading opportunities…</p>' +
       spotlightClearStaleBtnHtml('spotlight-clear-stale-opportunities') +

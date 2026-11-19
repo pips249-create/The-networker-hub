@@ -391,34 +391,16 @@
   }
 
   function renderSpotlight() {
-    if (!document.body.classList.contains('browse-mode-organisers')) return;
-
-    var track = getSpotlightTrack();
+    /* Match events: featured organisers use grid Premium badges only — no listing carousel. */
     var promo = document.getElementById('organisers-promo-section');
+    if (promo) promo.hidden = true;
+    stopSpotlightAuto();
+    var track = getSpotlightTrack();
     if (!track) return;
-
-    bindSpotlightViewAll();
-
-    var featured = getSpotlightFeatured();
-    if (!featured.length) {
-      track.innerHTML = '';
-      track.classList.remove('spotlight-track--carousel');
-      track.removeAttribute('data-loop-width');
-      track.scrollLeft = 0;
-      stopSpotlightAuto();
-      if (promo) promo.hidden = true;
-      return;
-    }
-
-    var cardsHtml = featured.map(premiumSpotlightCard).join('');
-    track.classList.add('spotlight-track--carousel');
-    if (promo) promo.hidden = false;
-    bindSpotlightCarousel();
-    requestAnimationFrame(function () {
-      layoutSpotlightTrack(cardsHtml, featured.length);
-      syncSpotlightLoopScroll();
-      startSpotlightAuto();
-    });
+    track.innerHTML = '';
+    track.classList.remove('spotlight-track--carousel');
+    track.removeAttribute('data-loop-width');
+    track.scrollLeft = 0;
   }
 
   function gridCard(org) {
@@ -427,13 +409,16 @@
     var reviewCount = Number(org.reviews) || 0;
     var href = organiserHref(org);
     var listingLabel = listingCountLabel(org.eventCount);
+    var isPremium = !!org.featured;
     // Avoid repeating “No upcoming listings” in both the count pill and the blurb.
     if (!cardDescriptionSnippet(org && org.description, 140) && Number(org.eventCount) === 0) {
       desc = 'Add events to appear in search and on this profile.';
     }
 
     return (
-      '<article class="organiser-grid-card" data-id="' +
+      '<article class="organiser-grid-card' +
+      (isPremium ? ' is-premium' : '') +
+      '" data-id="' +
       escapeHtml(org.id) +
       '" data-href="' +
       escapeHtml(href) +
@@ -441,11 +426,13 @@
       escapeHtml(org.name || 'organiser') +
       '">' +
       '<div class="organiser-card-header">' +
+      (isPremium ? '<span class="organiser-card-premium">Premium</span>' : '') +
       (industry
         ? '<span class="organiser-card-industry">' + escapeHtml(industry) + '</span>'
         : '') +
       '<span class="organiser-card-count' +
       (industry ? '' : ' organiser-card-count--solo') +
+      (isPremium ? ' organiser-card-count--below-premium' : '') +
       '">' +
       escapeHtml(listingLabel) +
       '</span>' +

@@ -18,6 +18,15 @@
   cursor: pointer;
 }
 
+.organiser-grid-card.is-premium {
+  border-color: #e8c96a;
+  box-shadow: 0 4px 18px rgba(212, 160, 23, 0.18);
+}
+
+.organiser-grid-card.is-premium:hover {
+  box-shadow: 0 8px 28px rgba(212, 160, 23, 0.22);
+}
+
 .organiser-grid-card:hover {
   box-shadow: 0 8px 28px rgba(45, 38, 54, 0.12);
   transform: translateY(-2px);
@@ -61,6 +70,22 @@
   text-overflow: ellipsis;
 }
 
+.organiser-card-premium {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #d4a017;
+  color: #1a1200;
+  box-shadow: 0 2px 10px rgba(42, 38, 40, 0.22);
+}
+
 .organiser-card-count {
   position: absolute;
   top: 10px;
@@ -76,6 +101,10 @@
   max-width: calc(100% - 24px);
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.organiser-card-count.organiser-card-count--below-premium {
+  top: 42px;
 }
 
 .organiser-card-count--solo {

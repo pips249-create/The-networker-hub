@@ -781,15 +781,13 @@
   }
 
   function renderSpotlight() {
-    if (!els.spotlightTrack) return;
-
-    var featured = getSpotlightVisible();
+    /* Match events: featured opportunities use grid Premium badges only — no listing carousel. */
     var promo =
       document.getElementById('opp-promo-section') ||
       document.querySelector('.opp-promo-section');
-
-    if (!featured.length) {
-      stopSpotlightAuto();
+    if (promo) promo.hidden = true;
+    stopSpotlightAuto();
+    if (els.spotlightTrack) {
       if (window.HubSpotlightCarousel && window.HubSpotlightCarousel.clearTrack) {
         window.HubSpotlightCarousel.clearTrack(els.spotlightTrack);
       } else {
@@ -799,32 +797,8 @@
       }
       els.spotlightTrack.classList.remove('spotlight-track--carousel');
       els.spotlightTrack.scrollLeft = 0;
-      spotlightRenderKey = '';
-      if (promo) promo.hidden = true;
-      return;
     }
-
-    var cardsHtml = featured.map(premiumSpotlightCard).join('');
-    var renderKey =
-      featured.length +
-      ':' +
-      featured
-        .map(function (item) {
-          return item.id || '';
-        })
-        .join(',');
-    if (renderKey === spotlightRenderKey && els.spotlightTrack.children.length) {
-      if (promo) promo.hidden = false;
-      return;
-    }
-    spotlightRenderKey = renderKey;
-    els.spotlightTrack.classList.add('spotlight-track--carousel');
-    if (promo) promo.hidden = false;
-    bindSpotlightCarousel();
-    /* Paint once — skip rAF second layout that caused mobile flicker. */
-    layoutSpotlightTrack(cardsHtml, featured.length);
-    syncSpotlightLoopScroll();
-    startSpotlightAuto();
+    spotlightRenderKey = '';
   }
 
   function syncClearFiltersVisibility() {

@@ -204,9 +204,25 @@ async function sendOpportunityListingPaymentReceipt(opportunity, opts) {
   const primaryCtaUrl = invoiceUrl || editUrl;
   const primaryCtaLabel = invoiceUrl ? 'Download VAT invoice (PDF)' : 'Open listing billing';
 
+  const invoiceId = String(invoice?.id || opts?.invoiceId || '').trim();
+  const sessionId = String(
+    (opts?.session && opts.session.id) || opts?.sessionId || ''
+  ).trim();
+  const opportunityId = String(opportunity?.id || '').trim();
+  const idempotencyKey =
+    String(opts?.idempotencyKey || '').trim() ||
+    (invoiceId
+      ? 'opp-listing-receipt-' + invoiceId
+      : sessionId
+        ? 'opp-listing-receipt-' + sessionId + (isRenewal ? '-renewal' : '')
+        : opportunityId
+          ? 'opp-listing-receipt-' + opportunityId + '-' + (isRenewal ? 'renewal' : 'first')
+          : '');
+
   await sendTemplatedEmail({
     slug: 'opportunity_listing_payment_receipt',
     to,
+    idempotencyKey: idempotencyKey || undefined,
     variables: {
       owner_name: ownerNameFromOpportunity(opportunity, to),
       opportunity_title: listing.opportunity_title,
@@ -244,6 +260,7 @@ async function sendOpportunityListingPaymentReceipt(opportunity, opts) {
     isRenewal,
     invoiceNumber: vatReceipt.invoiceNumber || null,
     invoiceUrl: invoiceUrl || null,
+    idempotencyKey: idempotencyKey || null,
   };
 }
 
