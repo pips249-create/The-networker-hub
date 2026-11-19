@@ -19105,10 +19105,19 @@
           '" placeholder="hello@chapter-leader.com"></div>'
         : '') +
       (seriesMode
-        ? '<div class="sm:col-span-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">' +
-          '<strong class="text-brand-900">Dates stay per occurrence.</strong> ' +
+        ? '<div class="sm:col-span-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 space-y-2">' +
+          '<p><strong class="text-brand-900">Dates stay per occurrence.</strong> ' +
           esc(eventCleanupSeriesDateRangePlain(opts.seriesMembers || [])) +
-          ' — use <em>Show dates</em> then Edit on one row to change a single day/time.</div>'
+          ' — use <em>Show dates</em> then Edit on one row to change a single day/time.</p>' +
+          '<div class="flex flex-wrap items-end gap-2 pt-1 border-t border-slate-100">' +
+          '<div class="min-w-[14rem] flex-1">' +
+          '<label class="block text-[11px] font-semibold text-slate-500 mb-1">Add another date</label>' +
+          '<input type="datetime-local" name="series_add_starts_at" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+          '</div>' +
+          '<button type="button" data-series-add-date="1" class="rounded-lg bg-brand-900 text-white text-xs font-semibold px-3 py-2 hover:bg-brand-800">Add date</button>' +
+          '</div>' +
+          '<p class="series-add-date-msg text-[11px] text-slate-500"></p>' +
+          '</div>'
         : '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Event date</label>' +
           '<input type="datetime-local" name="starts_at" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
           attrEsc(toDatetimeLocalValue(ev.starts_at)) +
@@ -19331,6 +19340,8 @@
 
     function setFile(file) {
       adminLogoPending[key] = { file: file };
+      // Clear the URL field so Save uses the uploaded file, not the previous logo URL.
+      if (urlInput) urlInput.value = '';
       var reader = new FileReader();
       reader.onload = function () {
         adminLogoPending[key].dataUrl = reader.result;
@@ -19387,6 +19398,7 @@
       name: o.name || 'Untitled',
       email: o.email || '',
       event_count: o.event_count || 0,
+      event_count_total: o.event_count_total != null ? o.event_count_total : o.event_count || 0,
       hub_suspended: Boolean(o.hub_suspended),
       listing_status: o.listing_status || '',
       ownership_claim_status: o.ownership_claim_status || '',
@@ -19482,16 +19494,12 @@
     var pending = adminLogoPending[key];
     if (pending && pending.file) {
       return readFileAsBase64(pending.file).then(function (b64) {
-        var payload = {
+        // Omit photo_url so a leftover form URL cannot win over the new upload.
+        return {
           logoBase64: b64,
           logoMime: pending.file.type,
           logoFilename: pending.file.name,
         };
-        if (form && formField(form, 'photo_url')) {
-          var url = formFieldVal(form, 'photo_url');
-          if (url) payload.photo_url = url;
-        }
-        return payload;
       });
     }
     var payload = {};
@@ -20392,7 +20400,7 @@
         '" data-group-name="' +
         attrEsc(o.name || '') +
         '" data-group-event-count="' +
-        String(o.event_count || 0) +
+        String(o.event_count_total != null ? o.event_count_total : o.event_count || 0) +
         '" class="admin-group-actions-item admin-group-actions-item--danger">Delete</button>'
     );
 
@@ -20687,6 +20695,19 @@
       .then(function (data) {
         if (!data.ok) throw new Error(data.message || data.error || 'Save failed');
         delete adminLogoPending[id];
+        var savedPhoto =
+          data.organiser && (data.organiser.photo_url || data.organiser.photoUrl);
+        if (savedPhoto) {
+          var urlInput = form.querySelector('input[name="photo_url"]');
+          var preview = form.querySelector('.admin-logo-preview');
+          var placeholder = form.querySelector('.admin-logo-placeholder');
+          if (urlInput) urlInput.value = savedPhoto;
+          if (preview) {
+            preview.src = savedPhoto;
+            preview.classList.remove('hidden');
+          }
+          if (placeholder) placeholder.classList.add('hidden');
+        }
         if (msg) {
           msg.textContent = 'Saved.';
           msg.className = 'group-cleanup-msg text-xs text-emerald-700 font-semibold';
@@ -21013,7 +21034,7 @@
     if (!ids.length) return;
     var rows = selectedGroupRows();
     var eventCount = rows.reduce(function (sum, o) {
-      return sum + (o.event_count || 0);
+      return sum + (o.event_count_total != null ? o.event_count_total : o.event_count || 0);
     }, 0);
     if (!window.confirm(groupDeleteConfirmMsg(ids.length, null, eventCount))) return;
     deleteGroupsByIds(ids, {
@@ -21243,6 +21264,76 @@
         /* keep page members */
       })
       .then(finish);
+  }
+
+  function addSeriesOccurrenceFromForm(form) {
+    var seriesKey = eventCleanupSeriesKeyFromAttr(form.getAttribute('data-series-key'));
+    var ids = String(form.getAttribute('data-series-ids') || '')
+      .split(',')
+      .map(function (id) {
+        return String(id || '').trim();
+      })
+      .filter(Boolean);
+    var leadId = ids[0] || form.getAttribute('data-event-id');
+    var dateInput = form.querySelector('[name="series_add_starts_at"]');
+    var startsAt = dateInput && dateInput.value ? String(dateInput.value).trim() : '';
+    var msg = form.querySelector('.series-add-date-msg');
+    var btn = form.querySelector('[data-series-add-date]');
+    if (!leadId) {
+      if (msg) {
+        msg.textContent = 'No series lead found.';
+        msg.className = 'series-add-date-msg text-[11px] text-red-700 font-semibold';
+      }
+      return;
+    }
+    if (!startsAt) {
+      if (msg) {
+        msg.textContent = 'Pick a date and time first.';
+        msg.className = 'series-add-date-msg text-[11px] text-red-700 font-semibold';
+      }
+      return;
+    }
+    if (btn) btn.disabled = true;
+    if (msg) {
+      msg.textContent = 'Adding date…';
+      msg.className = 'series-add-date-msg text-[11px] text-slate-500';
+    }
+    adminPost('/api/admin/events', {
+      action: 'add_series_occurrence',
+      id: leadId,
+      peer_ids: ids,
+      starts_at: startsAt,
+    })
+      .then(function (data) {
+        if (!data || !data.ok) {
+          throw new Error((data && (data.message || data.error)) || 'Could not add date');
+        }
+        if (dateInput) dateInput.value = '';
+        if (msg) {
+          msg.textContent = 'Date added to the series.';
+          msg.className = 'series-add-date-msg text-[11px] text-emerald-700 font-semibold';
+        }
+        var nextSeriesKey =
+          data.series_group_id && String(data.series_group_id).trim()
+            ? 'sg:' + String(data.series_group_id).trim()
+            : seriesKey;
+        delete eventCleanupState.seriesEditPeers[seriesKey];
+        delete eventCleanupState.seriesEditPeers[nextSeriesKey];
+        if (seriesKey && seriesKey !== nextSeriesKey) {
+          delete eventCleanupState.seriesEditExpanded[seriesKey];
+        }
+        eventCleanupState.seriesEditExpanded[nextSeriesKey] = true;
+        return refreshEventCleanupPage().then(function () {
+          if (nextSeriesKey) openEventSeriesEdit(nextSeriesKey);
+        });
+      })
+      .catch(function (err) {
+        if (msg) {
+          msg.textContent = err.message || 'Could not add date';
+          msg.className = 'series-add-date-msg text-[11px] text-red-700 font-semibold';
+        }
+        if (btn) btn.disabled = false;
+      });
   }
 
   function saveEventSeriesCleanupForm(form) {
@@ -22284,6 +22375,14 @@
         });
       return;
     }
+    var seriesAddDateBtn = e.target.closest('[data-series-add-date]');
+    if (seriesAddDateBtn) {
+      var seriesAddForm = seriesAddDateBtn.closest('.event-cleanup-form');
+      if (seriesAddForm && seriesAddForm.getAttribute('data-series-edit') === '1') {
+        addSeriesOccurrenceFromForm(seriesAddForm);
+      }
+      return;
+    }
     var seriesEditToggle = e.target.closest('[data-toggle-event-series-edit]');
     if (seriesEditToggle) {
       var seriesEditKey = eventCleanupSeriesKeyFromAttr(
@@ -22617,7 +22716,7 @@
             '<p class="text-xs text-slate-500 mt-0.5">' +
             (o.email ? esc(o.email) + ' · ' : '') +
             (o.event_count || 0) +
-            ' event' +
+            ' live event' +
             (o.event_count === 1 ? '' : 's') +
             ' · ' +
             missingHtml +

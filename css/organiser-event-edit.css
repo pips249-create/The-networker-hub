@@ -5760,6 +5760,24 @@ a.ee-btn.ee-btn-primary {
   box-shadow: 0 6px 22px rgba(13, 110, 122, 0.12);
 }
 
+.ee-hub-booking-choice-card {
+  border: 2px solid rgba(13, 110, 122, 0.22);
+  background: linear-gradient(180deg, rgba(13, 110, 122, 0.06) 0%, #fff 42%);
+}
+
+.ee-hub-booking-choice-card.is-active {
+  border-color: rgba(13, 110, 122, 0.55);
+  box-shadow: 0 6px 22px rgba(13, 110, 122, 0.12);
+}
+
+.ee-hub-booking-choice-card .ee-attendance-next {
+  margin-top: 12px;
+}
+
+.ee-link-out-choice {
+  margin: 12px 0 0;
+}
+
 .ee-hub-tickets-choice {
   display: flex;
   flex-wrap: wrap;

@@ -1162,6 +1162,205 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    if (body.action === 'add_series_occurrence') {
+      const leadId = String(body.id || body.lead_id || '').trim();
+      const startsRaw = String(body.starts_at || body.date || '').trim();
+      if (!leadId) return json(res, 400, { error: 'missing_id' });
+      if (!startsRaw) {
+        return json(res, 400, {
+          error: 'missing_starts_at',
+          message: 'Pick a date and time for the new occurrence.',
+        });
+      }
+      try {
+        const {
+          createEventsForOccurrences,
+          resolveSeriesGroupId,
+          createTicket,
+        } = require('../supabase-organiser-events');
+        const { londonDateKeyFromIso } = require('../event-timezone');
+        const sb = getSupabaseAdmin();
+        const { data: lead, error: leadErr } = await sb
+          .from('events')
+          .select('*')
+          .eq('id', leadId)
+          .maybeSingle();
+        if (leadErr) throw new Error(leadErr.message);
+        if (!lead) return json(res, 404, { error: 'not_found' });
+        if (!lead.organiser_id) {
+          return json(res, 400, {
+            error: 'missing_organiser',
+            message: 'Link an organiser before adding more series dates.',
+          });
+        }
+
+        const startsAt = parseEventDateInputToUtcIso(startsRaw) || startsRaw;
+        if (!startsAt || Number.isNaN(new Date(startsAt).getTime())) {
+          return json(res, 400, {
+            error: 'invalid_starts_at',
+            message: 'That date/time could not be parsed.',
+          });
+        }
+
+        let endsAt = '';
+        const endsRaw = String(body.ends_at || body.endDate || '').trim();
+        if (endsRaw) endsAt = parseEventDateInputToUtcIso(endsRaw) || endsRaw;
+        if (!endsAt && lead.starts_at && lead.ends_at) {
+          const dur = new Date(lead.ends_at).getTime() - new Date(lead.starts_at).getTime();
+          if (Number.isFinite(dur) && dur > 0 && dur <= 36 * 60 * 60 * 1000) {
+            endsAt = new Date(new Date(startsAt).getTime() + dur).toISOString();
+          }
+        }
+
+        const peerIds = [
+          ...new Set(
+            [leadId]
+              .concat(Array.isArray(body.peer_ids) ? body.peer_ids : [])
+              .concat(Array.isArray(body.ids) ? body.ids : [])
+              .map((id) => String(id || '').trim())
+              .filter(Boolean)
+          ),
+        ];
+
+        let seriesGroupId = String(lead.series_group_id || '').trim();
+        if (!seriesGroupId) {
+          seriesGroupId = resolveSeriesGroupId(null, Math.max(2, peerIds.length + 1));
+          const { error: stampErr } = await sb
+            .from('events')
+            .update({ series_group_id: seriesGroupId, updated_at: new Date().toISOString() })
+            .in('id', peerIds);
+          if (stampErr) throw new Error(stampErr.message);
+        }
+
+        const { data: peers, error: peersErr } = await sb
+          .from('events')
+          .select('id, starts_at, status')
+          .eq('series_group_id', seriesGroupId);
+        if (peersErr) throw new Error(peersErr.message);
+        const wantKey = londonDateKeyFromIso(startsAt);
+        const clash = (peers || []).find((row) => {
+          if (String(row.status || '').toLowerCase() === 'cancelled') return false;
+          return wantKey && londonDateKeyFromIso(row.starts_at) === wantKey;
+        });
+        if (clash) {
+          return json(res, 400, {
+            error: 'date_already_in_series',
+            message: 'That date is already in this series. Edit the existing occurrence instead.',
+          });
+        }
+
+        const base = {
+          title: lead.title || 'Untitled',
+          groupId: lead.organiser_id,
+          type: normalizeEventType(lead.event_type || 'Meeting'),
+          eventFormat: lead.meeting_type || 'In person',
+          listingStatus: lead.status || 'draft',
+          description: lead.description || '',
+          venue: lead.venue || '',
+          addressLine1: lead.address || '',
+          city: lead.city || '',
+          postcode: lead.postcode || '',
+          photoUrl: eventImageUrl(lead) || '',
+          onlineLink: lead.meeting_link || '',
+          checkoutMode: lead.checkout_mode || 'hub',
+          checkout_mode: lead.checkout_mode || 'hub',
+          externalBookingUrl: lead.external_booking_url || '',
+          external_booking_url: lead.external_booking_url || '',
+          externalPriceLabel: lead.external_price_label || '',
+          external_price_label: lead.external_price_label || '',
+          seriesGroupId,
+        };
+
+        const created = await createEventsForOccurrences(
+          base,
+          [{ date: startsAt, endDate: endsAt || '' }],
+          seriesGroupId,
+          leadId
+        );
+        const newEvent = created.event || (created.events && created.events[0]) || null;
+        const newId = newEvent && newEvent.id;
+
+        if (newId) {
+          try {
+            const { normalizeAttendanceMode } = require('../supabase-organiser-events');
+            const modePatch = {
+              attendance_mode: normalizeAttendanceMode(lead.attendance_mode),
+              guest_passes_disabled: Boolean(lead.guest_passes_disabled),
+            };
+            const vat = String(lead.vat_treatment || '').trim();
+            if (['included', 'added', 'none'].includes(vat)) modePatch.vat_treatment = vat;
+            if (lead.max_attendees != null && lead.max_attendees !== '') {
+              modePatch.max_attendees = lead.max_attendees;
+            }
+            // createEvent only maps published/unpublished/draft — keep series status
+            // (e.g. archived) aligned with the lead occurrence.
+            const leadStatus = String(lead.status || '').trim();
+            if (leadStatus) modePatch.status = leadStatus;
+            if (lead.approval_status != null && lead.approval_status !== '') {
+              modePatch.approval_status = lead.approval_status;
+            }
+            await sb.from('events').update(modePatch).eq('id', newId);
+          } catch (modeCopyErr) {
+            console.error(
+              '[admin-events] series add-date mode copy failed',
+              newId,
+              modeCopyErr?.message || modeCopyErr
+            );
+          }
+        }
+
+        let ticketCount = 0;
+        if (newId) {
+          try {
+            const { data: sourceTickets, error: ticketErr } = await sb
+              .from('tickets')
+              .select('*')
+              .eq('event_id', leadId)
+              .order('display_order', { ascending: true });
+            if (ticketErr) throw new Error(ticketErr.message);
+            for (const t of sourceTickets || []) {
+              await createTicket({
+                eventId: newId,
+                name: t.name,
+                price: t.price,
+                description: t.description,
+                status: 'Active',
+                quantityAvailable: t.quantity,
+                saleStart: t.sale_starts_at,
+                saleEnd: t.sale_ends_at,
+                ticketType: t.ticket_type,
+                displayOrder: t.display_order,
+                categoryExclusivity: t.ticket_type === 'Application-based',
+                visibility: t.visibility,
+                seriesScope: t.series_scope,
+              });
+              ticketCount += 1;
+            }
+          } catch (ticketCopyErr) {
+            console.error(
+              '[admin-events] series add-date ticket copy failed',
+              newId,
+              ticketCopyErr?.message || ticketCopyErr
+            );
+          }
+        }
+
+        return json(res, 200, {
+          ok: true,
+          event: newEvent,
+          eventId: newId || null,
+          series_group_id: seriesGroupId,
+          ticketCount,
+        });
+      } catch (e) {
+        return json(res, e.status || 500, {
+          ok: false,
+          error: e.message || 'add_series_occurrence_failed',
+          message: e.message || 'Could not add that date to the series.',
+        });
+      }
+    }
+
     if (body.action === 'bulk_delete') {
       const ids = [
         ...new Set(

@@ -116,23 +116,43 @@ function parseListQuery(query) {
   };
 }
 
-async function eventCountsForOrganisers(sb, organiserIds) {
-  const counts = {};
-  const ids = [...new Set((organiserIds || []).filter(Boolean))];
-  if (!ids.length) return counts;
-
-  for (let i = 0; i < ids.length; i += 80) {
-    const chunk = ids.slice(i, i + 80);
-    const res = await sb.from('events').select('organiser_id').in('organiser_id', chunk);
-    if (res.error) throw new Error(res.error.message);
-    (res.data || []).forEach((row) => {
-      counts[row.organiser_id] = (counts[row.organiser_id] || 0) + 1;
-    });
-  }
-  return counts;
+function isLiveAdminEventRow(row, nowMs) {
+  if (!row || !row.organiser_id) return false;
+  if (String(row.status || '').toLowerCase() !== 'published') return false;
+  if (String(row.approval_status || '').trim() !== 'Approved') return false;
+  if (!row.starts_at) return false;
+  const startMs = new Date(row.starts_at).getTime();
+  return Number.isFinite(startMs) && startMs > nowMs;
 }
 
-function mapOrganiserRow(row, eventCount, loginMeta, moderation) {
+/** Live = published + approved + upcoming. Total = every linked event row. */
+async function eventCountsForOrganisers(sb, organiserIds) {
+  const live = {};
+  const total = {};
+  const ids = [...new Set((organiserIds || []).filter(Boolean))];
+  if (!ids.length) return { live, total };
+
+  const nowMs = Date.now();
+  for (let i = 0; i < ids.length; i += 80) {
+    const chunk = ids.slice(i, i + 80);
+    const res = await sb
+      .from('events')
+      .select('organiser_id, status, approval_status, starts_at')
+      .in('organiser_id', chunk);
+    if (res.error) throw new Error(res.error.message);
+    (res.data || []).forEach((row) => {
+      const id = row.organiser_id;
+      if (!id) return;
+      total[id] = (total[id] || 0) + 1;
+      if (isLiveAdminEventRow(row, nowMs)) {
+        live[id] = (live[id] || 0) + 1;
+      }
+    });
+  }
+  return { live, total };
+}
+
+function mapOrganiserRow(row, eventCount, loginMeta, moderation, eventCountTotal) {
   const description = String(row.description || '').trim();
   const photoUrl = String(row.photo_url || '').trim();
   const website = String(row.website || '').trim();
@@ -151,6 +171,11 @@ function mapOrganiserRow(row, eventCount, loginMeta, moderation) {
     hub_suspended: false,
     recent: [],
   };
+  const liveCount = Number(eventCount) || 0;
+  const totalCount =
+    eventCountTotal != null && eventCountTotal !== ''
+      ? Number(eventCountTotal) || 0
+      : liveCount;
 
   return {
     id: row.id,
@@ -178,7 +203,8 @@ function mapOrganiserRow(row, eventCount, loginMeta, moderation) {
     featuredUntil: row.featured_until || null,
     city: String(row.city || '').trim(),
     slug: publicOrganiserSlug(row) || '',
-    event_count: eventCount || 0,
+    event_count: liveCount,
+    event_count_total: totalCount,
     missing,
     moderation: mod,
     warning_count: mod.warning_count,
@@ -565,9 +591,10 @@ async function enrichOrganiserListRows(sb, rows, communicationIndex) {
         : attachLastCommunication(withClaim, communicationIndex);
     return mapOrganiserRow(
       withComm,
-      counts[row.id] || 0,
+      (counts.live && counts.live[row.id]) || 0,
       loginMeta.get(row.id),
-      moderationById.get(row.id)
+      moderationById.get(row.id),
+      (counts.total && counts.total[row.id]) || 0
     );
   });
 }
@@ -1234,7 +1261,10 @@ async function deleteOrganisers(body) {
   await assertGroupCanBeRemoved(foundIds, { action: 'delete' });
 
   const eventCounts = await eventCountsForOrganisers(sb, foundIds);
-  const eventsUnlinked = foundIds.reduce((sum, id) => sum + (eventCounts[id] || 0), 0);
+  const eventsUnlinked = foundIds.reduce(
+    (sum, id) => sum + ((eventCounts.total && eventCounts.total[id]) || 0),
+    0
+  );
 
   await unlinkOrganiserRefs(sb, foundIds);
 
@@ -1421,7 +1451,13 @@ async function createOrganiserGroupFromAdmin(body, session) {
   }
 
   return {
-    organiser: mapOrganiserRow(row, counts[created.id] || 0, loginMeta.get(created.id)),
+    organiser: mapOrganiserRow(
+      row,
+      (counts.live && counts.live[created.id]) || 0,
+      loginMeta.get(created.id),
+      null,
+      (counts.total && counts.total[created.id]) || 0
+    ),
     provision,
     claimUrl,
     invite,
@@ -1456,6 +1492,12 @@ async function bulkUpdateOrganisers(body) {
   const { data, error } = await sb.from('organisers').update(patch).in('id', ids).select('*');
   if (error) throw new Error(error.message);
   invalidateIncompleteOrganiserCount();
+  try {
+    const { clearPublicOrganiserDirectoryCache } = require('../supabase-organisers-browse');
+    clearPublicOrganiserDirectoryCache();
+  } catch {
+    /* ignore */
+  }
 
   return {
     updated: (data || []).length,
@@ -2141,6 +2183,12 @@ module.exports = async function handler(req, res) {
     const { data, error } = await sb.from('organisers').update(patch).eq('id', id).select('*').single();
     if (error) throw new Error(error.message);
     invalidateIncompleteOrganiserCount();
+    try {
+      const { clearPublicOrganiserDirectoryCache } = require('../supabase-organisers-browse');
+      clearPublicOrganiserDirectoryCache();
+    } catch {
+      /* ignore */
+    }
     try {
       const { logFromSession } = require('../entity-activity-log');
       await logFromSession(session, null, {

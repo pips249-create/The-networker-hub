@@ -244,10 +244,37 @@
     if (window.hubSyncMobileFilterToggle) window.hubSyncMobileFilterToggle();
   }
 
+  function syncCityLandingChrome(mode) {
+    // /networking/:city shares this shell. Intro + FAQ are event-city SEO — hide
+    // them in Organisers mode (location filter can still use hubRegionalLanding).
+    var isOrganisers = mode === 'organisers';
+    ['networking-region-intro', 'networking-region-faq'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      if (isOrganisers) {
+        if (!el.hasAttribute('data-hub-hidden-for-organisers')) {
+          el.setAttribute(
+            'data-hub-hidden-for-organisers',
+            el.hidden || el.hasAttribute('hidden') ? 'was-hidden' : 'was-visible'
+          );
+        }
+        el.hidden = true;
+        el.setAttribute('aria-hidden', 'true');
+        return;
+      }
+      var prior = el.getAttribute('data-hub-hidden-for-organisers');
+      if (!prior) return;
+      el.removeAttribute('data-hub-hidden-for-organisers');
+      el.removeAttribute('aria-hidden');
+      el.hidden = prior === 'was-hidden';
+    });
+  }
+
   function setMode(mode, options) {
     options = options || {};
     var isOrganisers = mode === 'organisers';
     document.body.classList.toggle('browse-mode-organisers', isOrganisers);
+    syncCityLandingChrome(mode);
 
     ensureOrganiserSortOptions();
     updateSortOptions(mode);

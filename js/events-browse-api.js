@@ -47,6 +47,22 @@
     return document.getElementById(id);
   }
 
+  function browseSortSeed() {
+    try {
+      var key = 'hub_browse_sort_seed';
+      var existing = sessionStorage.getItem(key);
+      if (existing) return existing;
+      var seed =
+        String(Date.now()) +
+        '_' +
+        Math.random().toString(36).slice(2, 10);
+      sessionStorage.setItem(key, seed);
+      return seed;
+    } catch (e) {
+      return String(Date.now());
+    }
+  }
+
   function gatherParams(page) {
     var searchInput = el('search');
     var postcodeInput = el('postcode');
@@ -58,12 +74,13 @@
     var priceMinInput = el('price-min-input');
     var priceMaxInput = el('price-max-input');
     var locationRadius = el('location-radius');
+    var sortValue = (sortSelect && sortSelect.value) || 'recommended';
 
     var params = {
       page: page || 1,
       limit: window.hubBrowsePageSize || 12,
       meta: (page || 1) > 1 ? '0' : '1',
-      sort: (sortSelect && sortSelect.value) || 'recommended',
+      sort: sortValue,
       q: searchInput ? searchInput.value.trim() : '',
       inPerson: checkInPerson && checkInPerson.checked ? '1' : '0',
       online: checkOnline && checkOnline.checked ? '1' : '0',
@@ -71,6 +88,9 @@
       fiveStars: checkFiveStarsOnly && checkFiveStarsOnly.checked ? '1' : '0',
       location: postcodeInput ? postcodeInput.value.trim() : '',
     };
+    if (sortValue === 'recommended' || sortValue === 'random') {
+      params.sortSeed = browseSortSeed();
+    }
 
     if (priceMinInput && String(priceMinInput.value).trim() !== '') {
       params.priceMin = String(priceMinInput.value).trim();

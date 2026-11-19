@@ -100,8 +100,6 @@ module.exports = wrapHandler(async function handler(req, res) {
     return json(res, 405, { ok: false, error: 'method_not_allowed' });
   }
 
-  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=120, stale-while-revalidate=300');
-
   try {
     const slug = req.query?.slug;
     const id = req.query?.id;
@@ -110,6 +108,8 @@ module.exports = wrapHandler(async function handler(req, res) {
       .toLowerCase();
 
     if (slug || id) {
+      // Profile detail must reflect logo/bio edits immediately — do not CDN-cache.
+      res.setHeader('Cache-Control', 'private, no-store');
       const organiser = slug
         ? await getPublicOrganiserBySlug(slug)
         : await getPublicOrganiserById(id);
@@ -150,6 +150,7 @@ module.exports = wrapHandler(async function handler(req, res) {
       });
     }
 
+    res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=120, stale-while-revalidate=300');
     const organisers = await listPublicOrganisers();
     return res.status(200).json({ configured: true, provider: 'supabase', organisers });
   } catch (e) {

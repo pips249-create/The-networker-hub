@@ -308,7 +308,10 @@ body.browse-mode-organisers #events-map-hint,
 body.browse-mode-organisers .filter-event-only,
 body.browse-mode-organisers .events-type-tabs,
 /* Keep the shared Directory carousel visible; hide other event-only promos. */
-body.browse-mode-organisers .events-promo-section:not(.events-browse-ads) {
+body.browse-mode-organisers .events-promo-section:not(.events-browse-ads),
+/* City landing SEO (intro + FAQ + city sponsor) is for Events mode only. */
+body.browse-mode-organisers #networking-region-intro,
+body.browse-mode-organisers #networking-region-faq {
   display: none !important;
 }
 

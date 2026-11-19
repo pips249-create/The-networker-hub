@@ -117,14 +117,12 @@
 
   function sortOrganisers(list, options) {
     options = options || {};
-    if (!options.tabOverride && !hasActiveOrganiserFilters()) {
+    var sort = (sortSelect && sortSelect.value) || 'recommended';
+    if (sort === 'recommended' || sort === 'random') {
       return applyBrowseRandomOrder(list);
     }
-    if (!options.tabOverride && hasActiveOrganiserFilters()) {
-      browseRandomOrder = null;
-    }
+    if (!options.tabOverride) browseRandomOrder = null;
 
-    var sort = (sortSelect && sortSelect.value) || 'recommended';
     var copy = list.slice();
     copy.sort(function (a, b) {
       if (sort === 'best-rated' || sort === 'rating' || sort === 'rating-desc') {

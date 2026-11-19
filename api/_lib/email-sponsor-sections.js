@@ -68,7 +68,7 @@ const ORGANISER_EMAIL_SLUGS = new Set([
   'distributorship_claim_invite',
   'organiser_claim_confirmed',
   'organiser_launch_invite',
-  'organiser_directory_invite',
+  // First directory invite stays sponsor-free — later sequence emails keep the organiser sponsor.
   'organiser_directory_invite_nudge',
   'organiser_directory_invite_day7',
   'organiser_directory_invite_day21',

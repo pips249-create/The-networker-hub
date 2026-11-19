@@ -1079,8 +1079,48 @@
     return Number.isNaN(ts) ? null : ts;
   }
 
+  var browseRandomOrder = null;
+
+  function shuffleEventList(list) {
+    var copy = list.slice();
+    for (var i = copy.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = copy[i];
+      copy[i] = copy[j];
+      copy[j] = tmp;
+    }
+    return copy;
+  }
+
+  function applyBrowseRandomOrder(list) {
+    if (!browseRandomOrder) {
+      browseRandomOrder = shuffleEventList(list).map(function (ev) {
+        return ev.id;
+      });
+    }
+    var byId = {};
+    list.forEach(function (ev) {
+      byId[ev.id] = ev;
+    });
+    var ordered = [];
+    browseRandomOrder.forEach(function (id) {
+      if (byId[id]) {
+        ordered.push(byId[id]);
+        delete byId[id];
+      }
+    });
+    Object.keys(byId).forEach(function (id) {
+      ordered.push(byId[id]);
+    });
+    return ordered;
+  }
+
   function sortEvents(list) {
     var sort = (sortSelect && sortSelect.value) || 'recommended';
+    if (sort === 'recommended' || sort === 'random') {
+      return applyBrowseRandomOrder(list);
+    }
+    browseRandomOrder = null;
     var copy = list.slice();
     copy.sort(function (a, b) {
       if (sort === 'best-rated' || sort === 'rating' || sort === 'rating-desc') {

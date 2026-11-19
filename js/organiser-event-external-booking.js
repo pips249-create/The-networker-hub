@@ -44,8 +44,11 @@
   let providersLoadPromise = null;
   const accountStatusEl = document.getElementById('ee-connected-account-status');
   const guideNudgeEl = document.getElementById('ee-connected-guide-nudge');
+  const hubChoiceCard = document.getElementById('ee-hub-booking-choice-card');
   const hubChoiceEl = document.getElementById('ee-hub-tickets-choice');
+  const linkOutChoiceNudge = document.getElementById('ee-link-out-choice-nudge');
   const useHubBtn = document.getElementById('ee-use-hub-tickets');
+  const useHubBtnAlt = document.getElementById('ee-use-hub-tickets-alt');
   let preferHubTickets = false;
 
   function preferHubStorageKey(eventId) {
@@ -53,29 +56,45 @@
     return id ? 'hub_tickets_prefer_hub:' + id : '';
   }
 
+  function preferHubStorageExplicitOffKey(eventId) {
+    var id = String(eventId || '').trim();
+    return id ? 'hub_tickets_prefer_hub_off:' + id : '';
+  }
+
   function readPreferHubTickets() {
     try {
       var params = new URLSearchParams(window.location.search);
       if (params.get('preferHub') === '1' || params.get('hubTickets') === '1') return true;
+      if (params.get('preferHub') === '0' || params.get('linkOut') === '1') return false;
     } catch (e) {
       /* ignore */
     }
     try {
       var key = preferHubStorageKey(resolveEventId());
       if (key && sessionStorage.getItem(key) === '1') return true;
+      var offKey = preferHubStorageExplicitOffKey(resolveEventId());
+      if (offKey && sessionStorage.getItem(offKey) === '1') return false;
     } catch (e2) {
       /* ignore */
     }
-    return false;
+    // Default to Networker UK tickets (Option A) unless this listing already link-outs.
+    if (loadedEvent && eventUsesExternalBooking(loadedEvent)) return false;
+    return true;
   }
 
   function writePreferHubTickets(on) {
     preferHubTickets = Boolean(on);
     try {
       var key = preferHubStorageKey(resolveEventId());
+      var offKey = preferHubStorageExplicitOffKey(resolveEventId());
       if (!key) return;
-      if (preferHubTickets) sessionStorage.setItem(key, '1');
-      else sessionStorage.removeItem(key);
+      if (preferHubTickets) {
+        sessionStorage.setItem(key, '1');
+        if (offKey) sessionStorage.removeItem(offKey);
+      } else {
+        sessionStorage.removeItem(key);
+        if (offKey) sessionStorage.setItem(offKey, '1');
+      }
     } catch (e) {
       /* ignore */
     }
@@ -190,24 +209,30 @@
         cardTitle.textContent = linkOutOnly ? 'Link Out' : 'Booking system';
       } else if (linkOutOnly || billingActive) {
         cardTitle.textContent = linkOutOnly
-          ? 'Option A — Link Out (your booking page)'
-          : 'Option A — External booking system';
+          ? 'Option B — Link Out (your booking page)'
+          : 'Option B — External booking system';
       }
     }
     var intro = document.getElementById('ee-external-booking-intro');
     if (intro && linkOutOnly) {
       intro.innerHTML = on
         ? '<p>Buyers stay on The Networker UK listing, then go to <strong>your</strong> booking page. No webhook or attendee sync — just the redirect button.</p>'
-        : '<p>Send buyers to Eventbrite, your website, or an email-to-book address — or use <strong>Networker UK tickets</strong> below for checkout on our platform.</p>';
+        : '<p>Send buyers to Eventbrite, your website, or an email-to-book address. Prefer checkout on our platform? Use <strong>Option A</strong> above.</p>';
     }
-    // Hub choice stays visible even in Link Out-only layout so people can switch.
-    if (hubChoiceEl) hubChoiceEl.hidden = false;
+    // Option A card when both paths are offered; Option B footer switch when Link Out-only.
+    if (hubChoiceCard) hubChoiceCard.hidden = on;
+    if (hubChoiceEl) hubChoiceEl.hidden = !on;
+    if (linkOutChoiceNudge) linkOutChoiceNudge.hidden = on;
     // CTA label is set in refreshCardVisibility (depends on whether a URL exists).
   }
 
   function showHubTicketPanels() {
     writePreferHubTickets(true);
     setConnectedOnlyLayout(false);
+    if (hubChoiceCard) {
+      hubChoiceCard.classList.add('is-active');
+      card.classList.remove('is-active');
+    }
     if (hubPanels) {
       try {
         hubPanels.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -216,7 +241,7 @@
       }
     }
     showStatus(
-      'Using The Networker UK tickets for this event. Scroll down to choose how people get in, then add ticket types.',
+      'Using The Networker UK tickets (Option A). Choose how people get in below, then add ticket types.',
       'ok'
     );
   }
@@ -436,6 +461,7 @@
     if (!setupLink || setupLink.dataset.boundConnectedSetup) return;
     setupLink.dataset.boundConnectedSetup = '1';
     setupLink.addEventListener('click', function (e) {
+      writePreferHubTickets(false);
       const eid = resolveEventId();
       if (!eid) return;
       const ids = eventIdsFromQueryArray();
@@ -513,11 +539,14 @@
     const show = shouldShowCard();
     preferHubTickets = readPreferHubTickets();
     card.hidden = !show;
+    if (hubChoiceCard) hubChoiceCard.hidden = !show;
     if (!show) {
       setConnectedOnlyLayout(false);
       document.documentElement.classList.remove('ee-connected-tickets-checking');
       card.classList.remove('is-active');
+      if (hubChoiceCard) hubChoiceCard.classList.remove('is-active');
       if (hubChoiceEl) hubChoiceEl.hidden = true;
+      if (hubChoiceCard) hubChoiceCard.hidden = true;
       showStatus('');
       refreshCurrentBookingLinkUi();
       return;
@@ -572,8 +601,10 @@
     }
 
     setConnectedOnlyLayout(forceExternalOnly);
-    // Always offer Hub checkout — including when this listing already uses Link Out.
-    if (hubChoiceEl) hubChoiceEl.hidden = false;
+    if (hubChoiceCard) hubChoiceCard.hidden = forceExternalOnly;
+    // When Link Out-only, offer a switch back to Option A under Option B.
+    if (hubChoiceEl) hubChoiceEl.hidden = !forceExternalOnly;
+    if (linkOutChoiceNudge) linkOutChoiceNudge.hidden = forceExternalOnly;
     if (gate === 'ok' || gate === 'unknown' || gate === 'inactive') {
       initPlatformPicker();
       loadProviderCatalogForTickets();
@@ -585,10 +616,11 @@
 
     if (eventUsesExternalBooking(loadedEvent) && !preferHubTickets) {
       card.classList.add('is-active');
+      if (hubChoiceCard) hubChoiceCard.classList.remove('is-active');
       var mode = String((loadedEvent && loadedEvent.checkoutMode) || '').trim();
       if (linkOutOnly || (!billingActive && linkOutGranted)) {
         showStatus(
-          'This event sends buyers to your booking link. Open Change booking link / price to paste the correct Eventbrite (or other) URL for this date.',
+          'This event sends buyers to your booking link (Option B). Open Change booking link / price to paste the correct Eventbrite (or other) URL for this date.',
           'ok'
         );
       } else if (!billingActive && !linkOutGranted) {
@@ -599,13 +631,14 @@
       } else {
         showStatus(
           mode === 'external_link'
-            ? 'This event uses Link Out. Use Connected event setup to edit the display price and booking link.'
-            : 'This event uses Connected booking. Use Connected event setup to edit price and booking link.',
+            ? 'This event uses Link Out (Option B). Use Connected event setup to edit the display price and booking link.'
+            : 'This event uses Connected booking (Option B). Use Connected event setup to edit price and booking link.',
           'ok'
         );
       }
     } else {
       card.classList.remove('is-active');
+      if (hubChoiceCard) hubChoiceCard.classList.add('is-active');
       if (!billingActive && !linkOutGranted) {
         showStatus(
           'This event uses Connected booking but your plan is not active. Renew or contact us.',
@@ -613,13 +646,13 @@
         );
       } else if (preferHubTickets) {
         showStatus(
-          'Using The Networker UK tickets below. You can still set Link Out above if you prefer buyers leave for your own booking page.',
+          'Option A — Networker UK tickets. Continue below, or use Option B (Link Out) if buyers should leave for your own booking page.',
           'ok'
         );
       } else {
         showStatus(
           linkOutGranted && !billingActive
-            ? 'Choose Link Out above, or use Networker UK tickets below.'
+            ? 'Option A is Networker UK tickets; Option B is Link Out to your booking page.'
             : ''
         );
       }
@@ -639,12 +672,15 @@
   bindPlanLink();
   bindSetupLink();
 
-  if (useHubBtn && !useHubBtn.dataset.boundHubTickets) {
-    useHubBtn.dataset.boundHubTickets = '1';
-    useHubBtn.addEventListener('click', function () {
+  function bindUseHubButton(btn) {
+    if (!btn || btn.dataset.boundHubTickets) return;
+    btn.dataset.boundHubTickets = '1';
+    btn.addEventListener('click', function () {
       showHubTicketPanels();
     });
   }
+  bindUseHubButton(useHubBtn);
+  bindUseHubButton(useHubBtnAlt);
 
   if (setupLink) {
     setupLink.addEventListener('mouseenter', cacheSetupPrefetch);

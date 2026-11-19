@@ -1396,7 +1396,7 @@
     const fetchOrganiser = async () => {
       setStatus('', false);
       try {
-        var res = await fetch(url);
+        var res = await fetch(url, { credentials: 'include', cache: 'no-store' });
         var data = await res.json();
         if (!res.ok || !data.organiser) {
           setStatus(data.message || 'Organiser not found.', true);

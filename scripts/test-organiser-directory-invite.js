@@ -87,7 +87,8 @@ async function main() {
   assert(html.indexOf('Smart attendee tracking') !== -1, 'mentions visit tracking');
   assert(html.indexOf('Automated reminders') !== -1, 'mentions reminders');
   assert(html.indexOf('Already sell tickets elsewhere') !== -1, 'mentions linking an existing booking site');
-  assert(html.indexOf('already listed') !== -1, 'mentions editing any meetings already listed');
+  assert(html.indexOf('already added some of your events') !== -1, 'mentions events already listed for them');
+  assert(html.indexOf('Claim the page to edit those listings') !== -1, 'asks them to claim to edit listings');
   assert(html.indexOf('meetings and workshops') !== -1, 'mentions meetings and workshops');
   assert(html.indexOf('book a short tour') !== -1, 'offers a tour');
   assert(html.indexOf('Browse the events directory') === -1, 'no second directory button');
@@ -98,6 +99,10 @@ async function main() {
   assert(html.indexOf('https://www.thenetworkeruk.com/unsubscribe') !== -1, 'invite has an unsubscribe link');
   assert(!/[\u2013\u2014]|&ndash;|&mdash;/.test(html), 'invite uses hyphens, not en dashes');
   assert(html.indexOf('See your page') !== -1, 'page button');
+  assert(
+    html.indexOf('Powered by') === -1 && html.indexOf('organisers_sponsor') === -1,
+    'first invite has no organiser sponsor'
+  );
   pass('template builds — ' + subject);
 
   const followPreview = mergeEmailPreviewVariables(UNCLAIMED_FOLLOWUP_SLUG, {}, 'https://www.thenetworkeruk.com');

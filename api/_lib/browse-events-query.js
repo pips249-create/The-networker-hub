@@ -108,6 +108,7 @@ function parseBrowseQuery(query) {
 
   const sortOptions = [
     'recommended',
+    'random',
     'date',
     'price-asc',
     'price-desc',
@@ -124,6 +125,13 @@ function parseBrowseQuery(query) {
     .split(',')
     .map((s) => s.trim().toUpperCase())
     .filter(Boolean);
+
+  const sortRaw = String(q.sort || '').trim().toLowerCase();
+  const sort = sortOptions.includes(sortRaw)
+    ? sortRaw === 'random'
+      ? 'recommended'
+      : sortRaw
+    : 'recommended';
 
   return {
     limit,
@@ -157,7 +165,8 @@ function parseBrowseQuery(query) {
         : q.radiusMi != null
           ? Number(q.radiusMi)
           : null,
-    sort: sortOptions.includes(String(q.sort || '')) ? String(q.sort) : 'recommended',
+    sort,
+    sortSeed: String(q.sortSeed || q.randomSeed || '').trim().slice(0, 64),
   };
 }
 
@@ -633,9 +642,30 @@ function locationNameRelevance(row, location) {
   return 0;
 }
 
+function browseSortSeedHash(seed, id) {
+  const raw = String(seed || 'hub') + ':' + String(id || '');
+  let h = 2166136261;
+  for (let i = 0; i < raw.length; i++) {
+    h ^= raw.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
 function sortRows(rows, sort, params) {
   const list = rows.slice();
   const location = params && params.location;
+  // Default "Randomised" — seeded so pagination stays stable within a visit.
+  if (sort === 'recommended' || sort === 'random') {
+    const seed = String((params && params.sortSeed) || 'hub');
+    list.sort((a, b) => {
+      const ha = browseSortSeedHash(seed, a && a.id);
+      const hb = browseSortSeedHash(seed, b && b.id);
+      if (ha !== hb) return ha - hb;
+      return String((a && a.id) || '').localeCompare(String((b && b.id) || ''));
+    });
+    return list;
+  }
   list.sort((a, b) => {
     if (sort === 'best-rated' || sort === 'rating-desc') {
       const byRating = compareRatingDesc(a, b);

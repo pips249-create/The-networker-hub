@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20261110guestnav1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20261117hubchoice1" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20261119huboptA1" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-field-tip.css?v=20260711" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812doors2" />
@@ -67,8 +67,26 @@
       </div>
 
       <form id="ee-tickets-form">
+        <div class="ee-card ee-hub-booking-choice-card" id="ee-hub-booking-choice-card" hidden>
+          <h2 id="ee-hub-booking-choice-title">Option A — Networker UK tickets</h2>
+          <div class="ee-connected-booking-callout" id="ee-hub-booking-choice-intro" role="note">
+            <p>
+              Sell tickets and take payment <strong>on The Networker UK</strong> — attendees book from your listing
+              without leaving for another site.
+            </p>
+          </div>
+          <p class="ee-attendance-next">
+            <button type="button" class="ee-btn ee-btn-gold" id="ee-use-hub-tickets">
+              Continue with Networker UK tickets →
+            </button>
+          </p>
+          <p class="ee-hint ee-link-out-choice" id="ee-link-out-choice-nudge">
+            Prefer Eventbrite, your website, or email-to-book instead? See <strong>Option B</strong> below.
+          </p>
+        </div>
+
         <div class="ee-card ee-connected-booking-card" id="ee-external-booking-card" hidden>
-          <h2>Booking system</h2>
+          <h2>Option B — Link Out (your booking page)</h2>
           <div class="ee-connected-booking-callout" id="ee-external-booking-intro" role="note">
             <p>
               Payment stays on <strong>your</strong> booking system — not on The Networker UK. Choose a live option
@@ -104,9 +122,9 @@
               >Assign organiser pages</a
             >
           </p>
-          <p class="ee-hint ee-hub-tickets-choice" id="ee-hub-tickets-choice">
+          <p class="ee-hint ee-hub-tickets-choice" id="ee-hub-tickets-choice" hidden>
             Prefer tickets and checkout <strong>on The Networker UK</strong> instead?
-            <button type="button" class="ee-btn ee-btn-outline ee-btn-sm" id="ee-use-hub-tickets">
+            <button type="button" class="ee-btn ee-btn-outline ee-btn-sm" id="ee-use-hub-tickets-alt">
               Use Networker UK tickets →
             </button>
           </p>
@@ -789,6 +807,6 @@
     <script src="../js/organiser-launch-setup.js?v=20260820hubreview1" defer></script>
     <script src="../js/organiser-event-tickets.js?v=20260910tickets1" defer></script>
     <script src="../js/organiser-connected-platform.js?v=20261029book1" defer></script>
-    <script src="../js/organiser-event-external-booking.js?v=20261117hubchoice1" defer></script>
+    <script src="../js/organiser-event-external-booking.js?v=20261119huboptA1" defer></script>
   </body>
 </html>
