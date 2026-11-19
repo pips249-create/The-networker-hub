@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="../css/cms-carousel-ad.css?v=20260822adslot" />
   <link rel="stylesheet" href="../css/hub-ranking-badge.css?v=20260706">
   <link rel="stylesheet" href="../css/event-detail.css?v=20261118weekly3" />
-  <link rel="stylesheet" href="../css/weekly-picks-rail.css?v=20261118weekly3" />
+  <link rel="stylesheet" href="../css/weekly-picks-rail.css?v=20261119weekly4" />
   </head>
   <body class="event-detail-page">
     <div id="hub-site-nav"></div>
@@ -261,6 +261,39 @@
             <div class="reviews-feed" id="ev-reviews-feed" aria-live="polite"></div>
           </div>
         </section>
+
+        <aside class="weekly-picks-rail weekly-picks-rail--detail" id="weekly-picks-rail" aria-labelledby="weekly-picks-headline">
+          <button type="button" class="weekly-picks-rail-dismiss" id="weekly-picks-dismiss" aria-label="Dismiss weekly picks">×</button>
+          <div class="weekly-picks-rail-copy">
+            <p class="weekly-picks-rail-kicker" id="weekly-picks-kicker">Weekly picks · Fridays</p>
+            <h2 class="weekly-picks-rail-headline" id="weekly-picks-headline">The rooms worth being in, every Friday morning.</h2>
+          </div>
+          <form class="weekly-picks-rail-form" id="weekly-picks-form">
+            <label class="weekly-picks-rail-label" for="weekly-picks-email">Your email</label>
+            <div class="weekly-picks-rail-row">
+              <input
+                type="email"
+                id="weekly-picks-email"
+                name="email"
+                class="weekly-picks-rail-input"
+                autocomplete="email"
+                required
+                placeholder="you@company.com"
+              />
+              <button type="submit" class="weekly-picks-rail-submit" id="weekly-picks-submit">Subscribe</button>
+            </div>
+            <p class="weekly-picks-rail-fine">
+              Free. One email a week. Unsubscribe anytime.
+              <a href="/legal-policies#privacy">Privacy</a>
+            </p>
+            <p class="weekly-picks-rail-status" id="weekly-picks-status" hidden role="status"></p>
+          </form>
+          <div class="weekly-picks-rail-done" id="weekly-picks-done" hidden>
+            <p class="weekly-picks-rail-done-copy">You’re on the Friday list.</p>
+            <a class="weekly-picks-rail-account" id="weekly-picks-account-link" href="/register">Create a free account →</a>
+            <p class="weekly-picks-rail-fine">Save events, get reminders, and manage email prefs in your account.</p>
+          </div>
+        </aside>
       </div>
 
       <aside class="side-col">
@@ -587,39 +620,6 @@
         <p class="related-empty" id="ev-related-empty" hidden>No other upcoming events from this organiser yet.</p>
       </section>
 
-      <aside class="weekly-picks-rail weekly-picks-rail--detail" id="weekly-picks-rail" aria-labelledby="weekly-picks-headline">
-        <button type="button" class="weekly-picks-rail-dismiss" id="weekly-picks-dismiss" aria-label="Dismiss weekly picks">×</button>
-        <div class="weekly-picks-rail-copy">
-          <p class="weekly-picks-rail-kicker" id="weekly-picks-kicker">Weekly picks · Fridays</p>
-          <h2 class="weekly-picks-rail-headline" id="weekly-picks-headline">The rooms worth being in, every Friday morning.</h2>
-        </div>
-        <form class="weekly-picks-rail-form" id="weekly-picks-form">
-          <label class="weekly-picks-rail-label" for="weekly-picks-email">Your email</label>
-          <div class="weekly-picks-rail-row">
-            <input
-              type="email"
-              id="weekly-picks-email"
-              name="email"
-              class="weekly-picks-rail-input"
-              autocomplete="email"
-              required
-              placeholder="you@company.com"
-            />
-            <button type="submit" class="weekly-picks-rail-submit" id="weekly-picks-submit">Subscribe</button>
-          </div>
-          <p class="weekly-picks-rail-fine">
-            Free. One email a week. Unsubscribe anytime.
-            <a href="/legal-policies#privacy">Privacy</a>
-          </p>
-          <p class="weekly-picks-rail-status" id="weekly-picks-status" hidden role="status"></p>
-        </form>
-        <div class="weekly-picks-rail-done" id="weekly-picks-done" hidden>
-          <p class="weekly-picks-rail-done-copy">You’re on the Friday list.</p>
-          <a class="weekly-picks-rail-account" id="weekly-picks-account-link" href="/register">Create a free account →</a>
-          <p class="weekly-picks-rail-fine">Save events, get reminders, and manage email prefs in your account.</p>
-        </div>
-      </aside>
-
       <p class="listing-report-wrap event-listing-report-footer">
         <button type="button" class="listing-report-trigger" id="ev-report-btn">Report this listing</button>
       </p>
@@ -647,7 +647,7 @@
     <script src="../js/hub-profile-completion.js?v=20260902other1"></script>
     <script src="../js/hub-external-booking-url.js?v=20261117mailto1"></script>
     <script src="../js/event-detail.js?v=20261118weekly3"></script>
-    <script src="../js/weekly-picks-rail.js?v=20261118weekly3"></script>
+    <script src="../js/weekly-picks-rail.js?v=20261119weekly4"></script>
     <div id="hub-site-footer"></div>
 
     <div class="hub-rm-modal" id="hub-rm-modal" hidden>
