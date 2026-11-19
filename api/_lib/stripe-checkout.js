@@ -839,7 +839,7 @@ async function createMembershipBillingPortalSession(opts) {
 }
 
 /**
- * Events directory carousel — £55/mo + VAT subscription with uploaded creative in metadata.
+ * Directory carousel — £55/mo + VAT subscription with uploaded creative in metadata.
  */
 async function createDirectoryCarouselCheckoutSession(opts) {
   const stripe = getStripeClient();
@@ -868,7 +868,7 @@ async function createDirectoryCarouselCheckoutSession(opts) {
           price_data: {
             currency: 'gbp',
             product_data: {
-              name: 'Events directory carousel — ' + company,
+              name: 'Directory carousel — ' + company,
               description:
                 'Sponsored logo card on the events directory. £55 + VAT per month. Renews until cancelled.',
             },
@@ -884,7 +884,7 @@ async function createDirectoryCarouselCheckoutSession(opts) {
     revenue_category: 'events',
     placement: 'events_directory_carousel',
     cms_slot: 'events_browse_carousel_ads',
-    package_name: 'Events directory carousel',
+    package_name: 'Directory carousel',
     company_name: company.slice(0, 120),
     contact_email: email.slice(0, 120),
     cta_url: ctaUrl.slice(0, 500),

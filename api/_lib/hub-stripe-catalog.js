@@ -165,7 +165,7 @@ const HUB_STRIPE_CATALOG = [
     key: 'events_directory_carousel',
     priceEnvVar: 'STRIPE_EVENTS_DIRECTORY_CAROUSEL_PRICE_ID',
     paymentLinkEnvVar: 'STRIPE_EVENTS_DIRECTORY_CAROUSEL_PAYMENT_LINK',
-    productName: 'Events directory carousel advert',
+    productName: 'Directory carousel advert',
     description: 'Sponsored logo card on /events/ — £55 per month + VAT',
     amountPence: 6600,
     billing: 'recurring',
@@ -181,7 +181,7 @@ const HUB_STRIPE_CATALOG = [
       revenue_category: 'events',
       placement: 'events_directory_carousel',
       cms_slot: 'events_browse_carousel_ads',
-      package_name: 'Events directory carousel',
+      package_name: 'Directory carousel',
     },
   },
   {

@@ -41,7 +41,7 @@
 
   var params = new URLSearchParams(window.location.search || '');
   if (params.get('directory_carousel') === 'success') {
-    setStatus('Payment received — your logo card is going live on the events directory. Thank you.', 'ok');
+    setStatus('Payment received — your logo card is going live on the Directory carousel (Events, Opportunities & Organisers). Thank you.', 'ok');
   } else if (params.get('directory_carousel') === 'cancel') {
     setStatus('Checkout cancelled. Your card was not charged.', 'error');
   }

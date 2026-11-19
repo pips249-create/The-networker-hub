@@ -865,7 +865,7 @@
     {
       key: 'events_browse_carousel_ads',
       group: 'Browse pages',
-      label: 'Events directory — advert carousel (24 slots)',
+      label: 'Directory carousel — Events, Opportunities & Organisers (50 slots)',
       preview: 'carousel',
       help: 'Up to 24 sponsored cards on the events directory, in the row above the filters. Live cards shuffle on each visit. Each card shows a logo and a button underneath.',
       tagline: '',
@@ -14151,8 +14151,8 @@
       opportunity_page_carousel_ads: 'Opportunity Page Partner',
       opportunity_page_sidebar_ad: 'Opportunity Page Partner',
       email_mini_sponsors: 'Email mini sponsors',
-      events_browse_carousel: 'Events directory carousel',
-      events_browse_carousel_ads: 'Events directory carousel',
+      events_browse_carousel: 'Directory carousel',
+      events_browse_carousel_ads: 'Directory carousel',
       sponsor_sidebar: 'Sidebar sponsor',
       hub_partner_email: 'Partner emails',
     };
@@ -14194,7 +14194,7 @@
       '<option value="opportunities_page_partner">Opportunity Page Partner</option>' +
       '</optgroup>' +
       '<optgroup label="Directory carousel">' +
-      '<option value="events_browse_carousel">Events directory carousel</option>' +
+      '<option value="events_browse_carousel">Directory carousel</option>' +
       '</optgroup>' +
       '<optgroup label="Emails">' +
       '<option value="email_mini_sponsors">Page Partner emails</option>' +
@@ -15866,7 +15866,7 @@
     var adsState = [];
     var pendingLogos = {};
     var isBrowseCarousel = slotKey === 'events_browse_carousel_ads';
-    var CAROUSEL_SIZE = isBrowseCarousel ? 24 : 3;
+    var CAROUSEL_SIZE = isBrowseCarousel ? 50 : 3;
     var selectedBrowseIndex = 0;
 
     function setCarouselStatus(text, tone) {
@@ -20648,6 +20648,95 @@
       });
   }
 
+  function emailStaleUnclaimedGroups(triggerBtn) {
+    var msg = document.getElementById('group-email-stale-unclaimed-msg');
+    var defaultLabel = triggerBtn ? triggerBtn.textContent : '';
+    if (triggerBtn) {
+      triggerBtn.disabled = true;
+      triggerBtn.textContent = 'Checking…';
+    }
+    if (msg) {
+      msg.textContent =
+        'Finding browse-page groups that have not claimed and have not been contacted in the last 7 days…';
+      msg.className = 'text-xs text-slate-500';
+    }
+    adminPost('/api/admin/organisers', { action: 'list_unclaimed_stale_reminders' })
+      .then(function (data) {
+        if (!data || !data.ok) throw new Error((data && (data.message || data.error)) || 'Could not list groups');
+        var ids = data.ids || [];
+        if (!ids.length) {
+          if (msg) {
+            msg.textContent =
+              'No groups to email. Browse-page groups that have not claimed were contacted in the last 7 days, or have no email.';
+            msg.className = 'text-xs text-slate-600';
+          }
+          return null;
+        }
+        if (
+          !window.confirm(
+            'Email the unclaimed-page reminder to ' +
+              ids.length +
+              ' group' +
+              (ids.length === 1 ? '' : 's') +
+              ' on the browse page that have not claimed and have not been contacted in the last 7 days?'
+          )
+        ) {
+          if (msg) msg.textContent = '';
+          return null;
+        }
+        var sent = 0;
+        var failed = 0;
+        var index = 0;
+        function nextChunk() {
+          if (index >= ids.length) {
+            var text =
+              'Reminder emailed to ' +
+              sent +
+              ' group' +
+              (sent === 1 ? '' : 's') +
+              (failed ? '. ' + failed + ' failed.' : '.');
+            groupCleanupState.flash = { text: text, tone: failed ? 'warn' : 'ok' };
+            if (msg) {
+              msg.textContent = text;
+              msg.className = failed
+                ? 'text-xs text-amber-800 font-semibold'
+                : 'text-xs text-emerald-700 font-semibold';
+            }
+            return refreshGroupCleanupPage();
+          }
+          var chunk = ids.slice(index, index + 20);
+          index += chunk.length;
+          if (triggerBtn) triggerBtn.textContent = 'Sending ' + Math.min(index, ids.length) + ' / ' + ids.length;
+          if (msg) {
+            msg.textContent = 'Sending reminders… ' + Math.min(index, ids.length) + ' of ' + ids.length;
+            msg.className = 'text-xs text-slate-500';
+          }
+          return adminPost('/api/admin/organisers', {
+            action: 'send_unclaimed_followup',
+            ids: chunk,
+          }).then(function (batch) {
+            if (!batch || !batch.ok) throw new Error((batch && (batch.message || batch.error)) || 'Could not send reminder');
+            sent += (batch.sent && batch.sent.length) || 0;
+            failed += (batch.failed && batch.failed.length) || 0;
+            return nextChunk();
+          });
+        }
+        return nextChunk();
+      })
+      .catch(function (err) {
+        window.alert(err.message || 'Could not send reminders.');
+        if (msg) {
+          msg.textContent = err.message || 'Could not send reminders.';
+          msg.className = 'text-xs text-red-700 font-semibold';
+        }
+      })
+      .finally(function () {
+        if (!triggerBtn) return;
+        triggerBtn.disabled = false;
+        triggerBtn.textContent = defaultLabel || 'Email browse groups not contacted in 7 days';
+      });
+  }
+
   function saveGroupCleanupForm(form) {
     var id = form.getAttribute('data-organiser-id');
     var msg = form.querySelector('.group-cleanup-msg');
@@ -22686,6 +22775,12 @@
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1" for="group-create-website">Website <span class="font-normal text-slate-400">(optional)</span></label>' +
       '<input type="url" id="group-create-website" name="website" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="https://…"></div>' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1" for="group-create-description">Description <span class="font-normal text-slate-400">(optional)</span></label>' +
+      '<textarea id="group-create-description" name="description" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Short intro for this networking group"></textarea></div>' +
+      '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
+      '<button type="submit" class="rounded-lg border border-slate-300 bg-white text-slate-800 text-sm font-semibold px-4 py-2 hover:bg-slate-50">Create group</button>' +
+      '<button type="submit" data-email-group="1" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Email this group</button>' +
+      '<span id="group-create-msg" class="text-xs"></span></div></form></div>' +
+      '<section class="rounded-xl border border-violet-200 bg-white p-4 shadow-sm space-y-2">' +
       '<h3 class="text-sm font-semibold text-brand-900">Unclaimed reminders</h3>' +
       '<p class="text-xs text-slate-600">Emails the reminder to every group on the browse page that has not claimed their page and has not been contacted in the last 7 days. Claimed, disputed, hidden, off-browse, and opted-out groups are left out.</p>' +
       '<div class="flex flex-wrap items-center gap-3">' +

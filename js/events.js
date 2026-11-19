@@ -107,7 +107,6 @@
   var browseAdsActive = false;
   var browseAdCardsHtml = '';
   var browseAdCount = 0;
-  var BROWSE_AD_MAX = 24;
 
   function getSpotlightTrackItemCount() {
     if (browseAdsActive) return browseAdCount;
@@ -1237,162 +1236,14 @@
 
   var eventsBrowseAdsLoaded = false;
 
-  function browseAdAvailableHref() {
-    return '../advertising#ad-pkg-events-directory-carousel';
-  }
-
-  function browseAdAvailableCardHtml() {
-    const href = browseAdAvailableHref();
-    return (
-      '<article class="premium-card events-ad-card events-ad-card--available">' +
-      '<div class="events-ad-card-inner">' +
-      '<a class="events-ad-card-available-panel" href="' +
-      escapeHtml(href) +
-      '">' +
-      '<span class="events-ad-card-available-kicker">Available</span>' +
-      '<span class="events-ad-card-available-title">Put your logo here for thousands to see each month</span>' +
-      '<span class="events-ad-card-available-price">£55 <span>per month + VAT</span></span>' +
-      '</a>' +
-      '<a class="events-ad-card-cta events-ad-card-cta--available" href="' +
-      escapeHtml(href) +
-      '">Book a slot</a></div></article>'
-    );
-  }
-
-  function browseAdCardHtml(ad) {
-    const company = String(ad.company_name || 'Sponsored partner').trim() || 'Sponsored partner';
-    const label =
-      String(ad.cta_label || 'Find out more')
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean)
-        .slice(0, 5)
-        .join(' ') || 'Find out more';
-    const href = String(ad.cta_url || '').trim();
-    /* Directory ads always sit on white — saved Dark logo band flags were auto-set and looked wrong. */
-    const colorAttr = ad.cta_color
-      ? ' data-cta-color="' + escapeHtml(ad.cta_color) + '"'
-      : '';
-    return (
-      '<article class="premium-card events-ad-card">' +
-      '<div class="events-ad-card-inner">' +
-      '<a class="events-ad-card-logo" href="' +
-      escapeHtml(href) +
-      '" aria-label="' +
-      escapeHtml(company) +
-      '" data-sponsor-placement="events_browse_carousel" data-sponsor-company="' +
-      escapeHtml(company) +
-      '">' +
-      /* Empty alt — company name must not appear as fallback text when a logo fails to load. */
-      '<img src="' +
-      escapeHtml(ad.logo_url) +
-      '" alt=""></a>' +
-      '<a class="events-ad-card-cta" href="' +
-      escapeHtml(href) +
-      '" data-sponsor-placement="events_browse_carousel" data-sponsor-company="' +
-      escapeHtml(company) +
-      '"' +
-      colorAttr +
-      '>' +
-      escapeHtml(label) +
-      '</a></div></article>'
-    );
-  }
-
-  function paintBrowseAdCtaColor(card) {
-    if (!card || !window.CmsSponsorFields || !window.CmsSponsorFields.applyCtaColor) return;
-    const cta = card.querySelector('.events-ad-card-cta');
-    const img = card.querySelector('.events-ad-card-logo img');
-    if (!cta) return;
-    const stored = String(cta.getAttribute('data-cta-color') || '').trim();
-    if (stored) {
-      window.CmsSponsorFields.applyCtaColor(cta, stored);
-      return;
-    }
-    if (!img || !window.CmsSponsorFields.sampleLogoColorHex) return;
-
-    function applyFrom(sampleImg) {
-      const hex = window.CmsSponsorFields.sampleLogoColorHex(sampleImg);
-      if (hex) window.CmsSponsorFields.applyCtaColor(cta, hex);
-    }
-
-    const src = String(img.currentSrc || img.src || '').trim();
-    if (!src) return;
-    if (/^data:/i.test(src)) {
-      if (img.complete && img.naturalWidth) applyFrom(img);
-      else img.addEventListener('load', function () { applyFrom(img); }, { once: true });
-      return;
-    }
-    const probe = new Image();
-    probe.crossOrigin = 'anonymous';
-    probe.onload = function () {
-      applyFrom(probe);
-    };
-    probe.src = src;
-  }
-
-  function paintBrowseAdCarousel(ads) {
-    const list = shuffleList((Array.isArray(ads) ? ads : []).slice(0, BROWSE_AD_MAX));
-    const section = document.querySelector('.events-browse-ads');
-    const showAvailable = list.length < BROWSE_AD_MAX;
-    /* Paid logos shuffle every paint. Insert the Available card at a random index so the strip is not fixed. */
-    const cards = list.map(browseAdCardHtml);
-    if (showAvailable) {
-      const insertAt = Math.floor(Math.random() * (cards.length + 1));
-      cards.splice(insertAt, 0, browseAdAvailableCardHtml());
-    }
-    const html = cards.join('');
-    const itemCount = list.length + (showAvailable ? 1 : 0);
-    browseAdsActive = true;
-    browseAdCardsHtml = html;
-    browseAdCount = itemCount;
-    if (section) section.hidden = false;
-    if (!els.spotlightTrack) return;
-    els.spotlightTrack.classList.add('spotlight-track--carousel');
-    bindSpotlightCarousel();
-    layoutSpotlightTrack(html, browseAdCount);
-    if (window.CmsSponsorFields) {
-      els.spotlightTrack.querySelectorAll('.events-ad-card-logo, .events-ad-card-cta').forEach(function (el) {
-        if (!el.getAttribute('data-sponsor-placement')) return;
-        window.CmsSponsorFields.applyCtaLink(el, el.getAttribute('href'), {
-          placement: 'events_browse_carousel',
-          company: el.getAttribute('data-sponsor-company') || '',
-          campaign: 'events_browse_carousel',
-        });
-      });
-      els.spotlightTrack.querySelectorAll('.events-ad-card:not(.events-ad-card--available)').forEach(function (card) {
-        paintBrowseAdCtaColor(card);
-        const logo = card.querySelector('.events-ad-card-logo');
-        const company = logo && logo.getAttribute('data-sponsor-company');
-        if (logo && window.CmsSponsorFields.trackSponsorImpression) {
-          window.CmsSponsorFields.trackSponsorImpression('events_browse_carousel', company, {
-            el: logo,
-            path: window.location && window.location.pathname,
-          });
-        }
-      });
-    }
-    syncSpotlightLoopScroll();
-    startSpotlightAuto();
-  }
-
   function loadEventsBrowseAds(forceReload) {
     if (eventsBrowseAdsLoaded && !forceReload) return;
-    if (document.body.classList.contains('browse-mode-organisers')) return;
-    if (!els.spotlightTrack || !document.querySelector('.events-browse-ads')) return;
+    if (!document.querySelector('[data-directory-browse-carousel], .events-browse-ads')) return;
+    if (!window.HubDirectoryBrowseCarousel || !window.HubDirectoryBrowseCarousel.loadAll) return;
     eventsBrowseAdsLoaded = true;
-    const load =
-      window.CmsAdBlocks && window.CmsAdBlocks.loadCarouselAds
-        ? window.CmsAdBlocks.loadCarouselAds('events_browse_carousel_ads')
-        : Promise.resolve([]);
-    load
-      .then(function (ads) {
-        paintBrowseAdCarousel(ads);
-      })
-      .catch(function () {
-        eventsBrowseAdsLoaded = false;
-        paintBrowseAdCarousel([]);
-      });
+    window.HubDirectoryBrowseCarousel.loadAll(!!forceReload).catch(function () {
+      eventsBrowseAdsLoaded = false;
+    });
   }
 
   window.hubLoadEventsBrowseAds = loadEventsBrowseAds;

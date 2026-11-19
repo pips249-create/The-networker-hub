@@ -119,7 +119,7 @@ module.exports = wrapHandler(async function handler(req, res) {
         return json(res, 409, {
           ok: false,
           error: 'carousel_full',
-          message: 'All 24 directory carousel slots are taken. Email rosie@thenetworkeruk.com to join the waitlist.',
+          message: 'All 50 directory carousel slots are taken. Email rosie@thenetworkeruk.com to join the waitlist.',
         });
       }
 

@@ -254,6 +254,9 @@
     applyCopy(mode);
     reloadSponsorHub(mode);
 
+    /* Directory carousel is shared across Events + Organisers — keep it visible in both modes. */
+    if (window.hubLoadEventsBrowseAds) window.hubLoadEventsBrowseAds(!isOrganisers);
+
     if (isOrganisers) {
       if (window.hubToggleMapView && document.body.classList.contains('events-view-map')) {
         window.hubToggleMapView();
@@ -267,7 +270,6 @@
         window.hubRenderOrganiserSpotlight();
       }
     } else {
-      if (window.hubLoadEventsBrowseAds) window.hubLoadEventsBrowseAds(true);
       if (window.hubStopOrganiserSpotlight) window.hubStopOrganiserSpotlight();
       if (!options.skipEventsRefresh) {
         if (window.hubApplyFilters) window.hubApplyFilters();

@@ -125,7 +125,7 @@ async function activateDirectoryCarouselSlotFromCheckout(session) {
     return !isPublishableCarouselAd(ad);
   });
   if (emptyIndex < 0) {
-    return { ok: false, error: 'carousel_full', message: 'All 24 directory carousel slots are taken.' };
+    return { ok: false, error: 'carousel_full', message: 'All 50 directory carousel slots are taken.' };
   }
 
   const sessionId = String(session.id || '').trim();

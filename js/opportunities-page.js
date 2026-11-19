@@ -3705,6 +3705,9 @@
     renderSpotlight();
     renderListings();
     scrollToResultsAfterLanding();
+    if (window.HubDirectoryBrowseCarousel && window.HubDirectoryBrowseCarousel.loadAll) {
+      window.HubDirectoryBrowseCarousel.loadAll();
+    }
 
     if (catalog && catalog.loadCatalogAsync) {
       catalog
