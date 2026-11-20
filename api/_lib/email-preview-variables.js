@@ -621,6 +621,13 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
       '3 people have asked about tickets for your event (including this latest request) and are waiting for sales to open.';
     vars.interest_subject =
       vars.interest_subject || '3 people want tickets for ' + (vars.event_name || 'City Connectors Breakfast');
+    vars.interest_next_step =
+      vars.interest_next_step ||
+      'Ticket sales are not enabled yet — turn them on so we can email waiting people a booking link. You can also reply to the person below.';
+    vars.interest_cta_label = vars.interest_cta_label || 'Enable ticket sales →';
+    vars.requester_contact_html =
+      vars.requester_contact_html ||
+      '<tr><td class="mobile-pad" style="padding:0 40px 16px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f8f4ec;border-radius:14px;border:1px solid #e8d9a8;"><tr><td style="padding:18px 20px;"><p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;font-weight:700;color:#1c2040;margin:0 0 8px;text-transform:uppercase;letter-spacing:0.04em;">Reply to this person</p><p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;line-height:1.6;color:#635c5e;margin:0;"><strong style="color:#1c2040;">Alex Taylor</strong><br><a href="mailto:alex@example.com" style="color:#4aa8f0;text-decoration:none;">alex@example.com</a></p></td></tr></table></td></tr>';
   }
 
   if (slug === 'ticket_interest_received') {
@@ -628,6 +635,14 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.event_when = vars.event_when || 'Tue 12 May 2026 · 08:00';
     vars.organiser_name = vars.organiser_name || 'City Connectors';
     vars.events_url = vars.events_url || browseEventsUrl(site);
+    vars.interest_kicker = vars.interest_kicker || 'Ticket interest';
+    vars.interest_title = vars.interest_title || "You're on the list";
+    vars.interest_body =
+      vars.interest_body ||
+      'Hi Alex, we\'ve told <strong style="color:#452d5c;">City Connectors</strong> that you want tickets for <strong style="color:#452d5c;">City Connectors Breakfast</strong> (Tue 12 May 2026 · 08:00), and shared your contact details so they can reply.';
+    vars.interest_next =
+      vars.interest_next ||
+      'The organiser can reply to you directly, or turn on Hub ticket sales from their dashboard. As soon as they do, we can send you a booking link — this is not a booking yet.';
   }
 
   if (slug === 'opportunity_listing_rejected') {

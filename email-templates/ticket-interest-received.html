@@ -66,10 +66,10 @@
                 <td style="width:52px;height:52px;background:#ebe0f0;border-radius:50%;text-align:center;vertical-align:middle;font-size:24px;color:#9a7aa8;line-height:52px;">&#10003;</td>
               </tr>
             </table>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Ticket interest</p>
-            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#452d5c;margin:0 0 10px;line-height:1.15;">You're on the list</h1>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">{{interest_kicker}}</p>
+            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#452d5c;margin:0 0 10px;line-height:1.15;">{{interest_title}}</h1>
             <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">
-              Hi {{attendee_name}}, we've told <strong style="color:#452d5c;">{{organiser_name}}</strong> that you want tickets for <strong style="color:#452d5c;">{{event_name}}</strong> ({{event_when}}). We'll email you again when sales open.
+              {{interest_body}}
             </p>
           </td>
         </tr>
@@ -81,7 +81,7 @@
                 <td style="padding:20px 22px;">
                   <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#1c2040;margin:0 0 8px;">What happens next</p>
                   <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.65;color:#5c5557;margin:0;">
-                    The organiser can turn on Hub ticket sales from their dashboard. As soon as they do, we'll send you a link to book — this is not a booking yet.
+                    {{interest_next}}
                   </p>
                 </td>
               </tr>

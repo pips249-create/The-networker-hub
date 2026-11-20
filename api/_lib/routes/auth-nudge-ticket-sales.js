@@ -45,12 +45,13 @@ module.exports = async function handler(req, res) {
     .toLowerCase();
   const nudgerName = String(body.name || session?.name || '').trim();
   const message = String(body.message || '').trim();
+  const intent = String(body.intent || '').trim().toLowerCase() === 'price' ? 'price' : 'tickets';
 
   if (!nudgerEmail) {
     return json(res, 400, {
       ok: false,
       error: 'missing_email',
-      message: 'Enter your email so we can record your interest.',
+      message: 'Enter your email so the organiser can reply to you.',
     });
   }
 
@@ -60,11 +61,14 @@ module.exports = async function handler(req, res) {
       nudgerEmail,
       nudgerName,
       message,
+      intent,
     });
     return json(res, 200, {
       ok: true,
       message:
-        'Thanks — you are on the list. We have emailed the organiser, and we will email you when ticket sales open.',
+        intent === 'price'
+          ? 'Thanks — we have emailed the organiser with your details so they can reply about the price.'
+          : 'Thanks — we have emailed the organiser with your details so they can reply, and we will also email you if Hub ticket sales open.',
       nudgeId: result.nudgeId,
       waitingCount: result.waitingCount,
     });
@@ -75,7 +79,9 @@ module.exports = async function handler(req, res) {
         ok: false,
         error: 'nudge_rate_limited',
         message:
-          'You are already on the list for this event. We will email you when ticket sales open.',
+          intent === 'price'
+            ? 'We already emailed the organiser for you recently. Please wait for their reply.'
+            : 'You are already on the list for this event. We will email you when ticket sales open.',
       });
     }
     if (msg === 'ticket_sales_platform_closed') {

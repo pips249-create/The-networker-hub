@@ -3847,8 +3847,8 @@
       pendingHint.className = 'ticket-load-hint';
       pendingHint.textContent =
         ev.priceKey === 'enquire' || ev.hasTicketTiers === false
-          ? 'The organiser has not published a price yet. Use the button below to request it — we\u2019ll nudge them for you.'
-          : 'Ticket sales are not open on The Networker UK yet. Use the button below to nudge the organiser.';
+          ? 'The organiser has not published a price yet. Use the button below and we\u2019ll email them with your details so they can reply.'
+          : 'Ticket sales are not open on The Networker UK yet. Use the button below and we\u2019ll email the organiser for you.';
       tiersEl.appendChild(pendingHint);
       if (urgencyEl) urgencyEl.textContent = '';
       syncPaidCheckoutPanel('', 1, 0);
@@ -4683,14 +4683,17 @@
         window.HubBookingFees.listingPriceUnknown(ev));
     if (priceUnknown) {
       return {
+        intent: 'price',
         lead:
-          'The price isn\u2019t listed yet. Send a quick request and we\u2019ll nudge the organiser to share what it costs to attend.',
-        button: 'Request the price',
+          'The price isn\u2019t listed yet. Leave your details and we\u2019ll email the organiser so they can reply with what it costs to attend.',
+        button: 'Email the organiser',
       };
     }
     return {
-      lead: 'Interested in attending? Nudge the host to release tickets for this event.',
-      button: 'Nudge organiser to add tickets',
+      intent: 'tickets',
+      lead:
+        'Tickets aren\u2019t on sale here yet. Leave your details and we\u2019ll email the organiser to ask them to open booking.',
+      button: 'Email the organiser',
     };
   }
 
@@ -4761,30 +4764,37 @@
       btn.disabled = true;
       if (statusEl) statusEl.hidden = true;
       try {
+        const intent = pendingTicketSalesCopy(current).intent || 'tickets';
         const res = await fetch('/api/auth/nudge-ticket-sales', {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ eventId: eventId, email: email, name: name }),
+          body: JSON.stringify({
+            eventId: eventId,
+            email: email,
+            name: name,
+            intent: intent,
+          }),
         });
         const data = await res.json().catch(function () {
           return {};
         });
         if (!res.ok || !data.ok) {
-          throw new Error(data.message || data.error || 'Could not send nudge. Please try again.');
+          throw new Error(data.message || data.error || 'Could not email the organiser. Please try again.');
         }
         if (statusEl) {
           statusEl.hidden = false;
           statusEl.className = 'ticket-nudge-status is-ok';
-          statusEl.textContent = data.message || 'Nudge sent — thank you!';
+          statusEl.textContent =
+            data.message || 'Email sent — the organiser can reply to you directly.';
         }
-        btn.textContent = 'Nudge sent';
+        btn.textContent = 'Email sent';
         btn.dataset.sent = '1';
       } catch (e) {
         if (statusEl) {
           statusEl.hidden = false;
           statusEl.className = 'ticket-nudge-status is-error';
-          statusEl.textContent = e.message || 'Could not send nudge. Please try again.';
+          statusEl.textContent = e.message || 'Could not email the organiser. Please try again.';
         }
         btn.disabled = false;
       }
@@ -5539,10 +5549,7 @@
     if (registrationIsConfirmedGoing(eventApplicationState)) labelText = "You're already going";
     else if (ev.isEventPast) labelText = 'Event ended';
     else if (ev.isTicketSalesPending) {
-      labelText =
-        ev.priceKey === 'enquire' || ev.hasTicketTiers === false
-          ? 'Request the price'
-          : 'Nudge organiser';
+      labelText = 'Email the organiser';
     }
     else if (ev.isTicketSalesScheduled) labelText = 'Tickets opening soon';
     else if (ev.isSoldOut) labelText = 'Sold out';
@@ -5569,8 +5576,7 @@
         priceText &&
         labelText !== 'Sold out' &&
         labelText !== 'Registration closed' &&
-        labelText !== 'Nudge organiser' &&
-        labelText !== 'Request the price' &&
+        labelText !== 'Email the organiser' &&
         labelText !== 'Tickets opening soon' &&
         labelText !== 'Event ended' &&
         labelText !== "You're already going";

@@ -47,8 +47,39 @@ function firstName(name, email) {
   return local || 'there';
 }
 
-function interestCopy(waitingCount) {
+function escapeEmailText(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function interestCopy(waitingCount, intent) {
   const n = Math.max(1, Number(waitingCount) || 1);
+  const isPrice = String(intent || '').toLowerCase() === 'price';
+  if (isPrice) {
+    return {
+      interest_count: String(n),
+      interest_count_label: n === 1 ? 'person asking about price' : 'people asking about price',
+      interest_headline:
+        n === 1
+          ? 'Someone asked about the price for {{event_name}}'
+          : n + ' people asked about the price for {{event_name}}',
+      interest_summary:
+        n === 1
+          ? 'someone asked what it costs to attend your event.'
+          : n +
+            ' people have asked what it costs to attend your event (including this latest request).',
+      interest_subject:
+        n === 1
+          ? 'Someone asked about the price for {{event_name}}'
+          : n + ' people asked about the price for {{event_name}}',
+      interest_next_step:
+        'Reply to them directly using the contact below, or publish a price on your event so people can book.',
+      interest_cta_label: 'Open event tickets →',
+    };
+  }
   if (n === 1) {
     return {
       interest_count: '1',
@@ -57,6 +88,9 @@ function interestCopy(waitingCount) {
       interest_summary:
         'someone tried to get tickets for your event and is waiting to hear that sales are open.',
       interest_subject: 'Someone wants tickets for {{event_name}}',
+      interest_next_step:
+        'Ticket sales are not enabled yet — turn them on so we can email waiting people a booking link. You can also reply to the person below.',
+      interest_cta_label: 'Enable ticket sales →',
     };
   }
   return {
@@ -67,7 +101,36 @@ function interestCopy(waitingCount) {
       n +
       ' people have asked about tickets for your event (including this latest request) and are waiting for sales to open.',
     interest_subject: n + ' people want tickets for {{event_name}}',
+    interest_next_step:
+      'Ticket sales are not enabled yet — turn them on so we can email waiting people a booking link. You can also reply to the person below.',
+    interest_cta_label: 'Enable ticket sales →',
   };
+}
+
+function requesterContactHtml({ nudgerName, nudgerEmail }) {
+  const email = String(nudgerEmail || '')
+    .trim()
+    .toLowerCase();
+  if (!email) return '';
+  const name = String(nudgerName || '').trim() || email;
+  const safeName = escapeEmailText(name);
+  const safeEmail = escapeEmailText(email);
+  return (
+    '<tr><td class="mobile-pad" style="padding:0 40px 16px;">' +
+    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f8f4ec;border-radius:14px;border:1px solid #e8d9a8;">' +
+    '<tr><td style="padding:18px 20px;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;font-weight:700;color:#1c2040;margin:0 0 8px;text-transform:uppercase;letter-spacing:0.04em;">Reply to this person</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;line-height:1.6;color:#635c5e;margin:0;">' +
+    '<strong style="color:#1c2040;">' +
+    safeName +
+    '</strong><br>' +
+    '<a href="mailto:' +
+    safeEmail +
+    '" style="color:#4aa8f0;text-decoration:none;">' +
+    safeEmail +
+    '</a></p>' +
+    '</td></tr></table></td></tr>'
+  );
 }
 
 async function loadNudgeContext(eventId) {
@@ -152,7 +215,15 @@ async function recentNudgeExists(eventId, nudgerEmail, hours) {
   return (data || []).length > 0;
 }
 
-async function sendOrganiserTicketSalesNudgeEmail({ event, organiser, to, waitingCount }) {
+async function sendOrganiserTicketSalesNudgeEmail({
+  event,
+  organiser,
+  to,
+  waitingCount,
+  intent,
+  nudgerEmail,
+  nudgerName,
+}) {
   const siteUrl = String(process.env.SITE_URL || 'https://the-networker-hub.vercel.app').replace(/\/$/, '');
   const eventTitle = String(event.title || 'your event').trim();
   const organiserName = String(organiser?.name || 'there').trim();
@@ -162,47 +233,62 @@ async function sendOrganiserTicketSalesNudgeEmail({ event, organiser, to, waitin
     encodeURIComponent(event.id) +
     '#ticket-interest';
   const dashboardUrl = siteBase(siteUrl) + '/organiser/#events-list';
-  const copy = interestCopy(waitingCount);
+  const isPrice = String(intent || '').toLowerCase() === 'price';
+  const copy = interestCopy(waitingCount, intent);
+  const headline =
+    isPrice
+      ? Number(waitingCount) > 1
+        ? Number(waitingCount) + ' people asked about the price for ' + eventTitle
+        : 'Someone asked about the price for ' + eventTitle
+      : Number(waitingCount) > 1
+        ? Number(waitingCount) + ' people want tickets for ' + eventTitle
+        : 'Someone wants tickets for ' + eventTitle;
 
-  // Keep the requester anonymous in the email so organisers enable Hub sales
-  // rather than contacting the visitor off-platform. Name/email stay in DB / tickets panel.
   return sendTemplatedEmail({
     slug: 'organiser_ticket_sales_nudge',
     to,
+    replyTo: nudgerEmail || undefined,
     variables: {
       organiser_name: organiserName,
       event_name: eventTitle,
       tickets_url: ticketsUrl,
       dashboard_url: dashboardUrl,
       ...copy,
-      // Fill subject/headline after event_name is known (templates may nest poorly).
-      interest_headline:
-        Number(waitingCount) > 1
-          ? Number(waitingCount) + ' people want tickets for ' + eventTitle
-          : 'Someone wants tickets for ' + eventTitle,
-      interest_subject:
-        Number(waitingCount) > 1
-          ? Number(waitingCount) + ' people want tickets for ' + eventTitle
-          : 'Someone wants tickets for ' + eventTitle,
+      interest_headline: headline,
+      interest_subject: headline,
+      requester_contact_html: requesterContactHtml({ nudgerName, nudgerEmail }),
     },
     skipEmailCheck: true,
   });
 }
 
-async function sendVisitorTicketInterestReceivedEmail({ event, organiser, nudgerEmail, nudgerName }) {
+async function sendVisitorTicketInterestReceivedEmail({
+  event,
+  organiser,
+  nudgerEmail,
+  nudgerName,
+  intent,
+}) {
   const siteUrl = String(process.env.SITE_URL || 'https://the-networker-hub.vercel.app').replace(/\/$/, '');
   const site = siteBase(siteUrl);
   const { event_date, event_time } = formatEventDateTime(event.starts_at);
   const eventWhen = [event_date, event_time].filter(Boolean).join(' · ') || 'See event page';
   const organiserName = String(organiser?.name || 'the organiser').trim();
+  const isPrice = String(intent || '').toLowerCase() === 'price';
+  const attendee = firstName(nudgerName, nudgerEmail);
+  const eventName = String(event.title || 'Event').trim();
+  const safeAttendee = escapeEmailText(attendee);
+  const safeOrganiser = escapeEmailText(organiserName);
+  const safeEvent = escapeEmailText(eventName);
+  const safeWhen = escapeEmailText(eventWhen);
 
   return sendTemplatedEmail({
     slug: 'ticket_interest_received',
     to: nudgerEmail,
     skipEmailCheck: true,
     variables: {
-      attendee_name: firstName(nudgerName, nudgerEmail),
-      event_name: String(event.title || 'Event').trim(),
+      attendee_name: attendee,
+      event_name: eventName,
       event_when: eventWhen,
       event_url: eventPublicUrl(event, site),
       events_url: browseEventsUrl(site),
@@ -213,6 +299,30 @@ async function sendVisitorTicketInterestReceivedEmail({ event, organiser, nudger
       privacy_url: legalPolicyUrl(site, 'privacy'),
       terms_url: legalPolicyUrl(site, 'terms'),
       contact_url: contactUrl(site),
+      interest_kicker: isPrice ? 'Price enquiry' : 'Ticket interest',
+      interest_title: isPrice ? 'We emailed the organiser' : "You're on the list",
+      interest_body: isPrice
+        ? 'Hi ' +
+          safeAttendee +
+          ', we\'ve emailed <strong style="color:#452d5c;">' +
+          safeOrganiser +
+          '</strong> about the price for <strong style="color:#452d5c;">' +
+          safeEvent +
+          '</strong> (' +
+          safeWhen +
+          '), including your contact details so they can reply to you directly.'
+        : 'Hi ' +
+          safeAttendee +
+          ', we\'ve told <strong style="color:#452d5c;">' +
+          safeOrganiser +
+          '</strong> that you want tickets for <strong style="color:#452d5c;">' +
+          safeEvent +
+          '</strong> (' +
+          safeWhen +
+          '), and shared your contact details so they can reply. We\'ll also email you if Hub ticket sales open.',
+      interest_next: isPrice
+        ? 'If the organiser replies, it will come from their own email — keep an eye on your inbox (and spam folder). This is not a booking yet.'
+        : 'The organiser can reply to you directly, or turn on Hub ticket sales from their dashboard. As soon as they do, we can send you a booking link — this is not a booking yet.',
     },
   });
 }
@@ -234,7 +344,7 @@ async function recordTicketSalesNudge({ event, nudgerEmail, nudgerName, message 
   return data;
 }
 
-async function nudgeOrganiserForTicketSales({ eventId, nudgerEmail, nudgerName, message }) {
+async function nudgeOrganiserForTicketSales({ eventId, nudgerEmail, nudgerName, message, intent }) {
   const email = String(nudgerEmail || '')
     .trim()
     .toLowerCase();
@@ -252,6 +362,8 @@ async function nudgeOrganiserForTicketSales({ eventId, nudgerEmail, nudgerName, 
     throw err;
   }
 
+  const askIntent = String(intent || '').toLowerCase() === 'price' ? 'price' : 'tickets';
+
   const ctx = await loadNudgeContext(eventId);
   if (await recentNudgeExists(eventId, email, 24)) {
     const err = new Error('nudge_rate_limited');
@@ -267,7 +379,7 @@ async function nudgeOrganiserForTicketSales({ eventId, nudgerEmail, nudgerName, 
     event: ctx.event,
     nudgerEmail: email,
     nudgerName: name,
-    message: note,
+    message: note || (askIntent === 'price' ? 'Asked about the price' : null),
   });
 
   let waitingCount = 1;
@@ -283,6 +395,9 @@ async function nudgeOrganiserForTicketSales({ eventId, nudgerEmail, nudgerName, 
     organiser: ctx.organiser,
     to: ctx.to,
     waitingCount,
+    intent: askIntent,
+    nudgerEmail: email,
+    nudgerName: name,
   });
 
   try {
@@ -291,6 +406,7 @@ async function nudgeOrganiserForTicketSales({ eventId, nudgerEmail, nudgerName, 
       organiser: ctx.organiser,
       nudgerEmail: email,
       nudgerName: name,
+      intent: askIntent,
     });
   } catch (visitorErr) {
     console.warn(
@@ -304,6 +420,7 @@ async function nudgeOrganiserForTicketSales({ eventId, nudgerEmail, nudgerName, 
     emailResult,
     organiserEmail: ctx.to,
     waitingCount,
+    intent: askIntent,
   };
 }
 

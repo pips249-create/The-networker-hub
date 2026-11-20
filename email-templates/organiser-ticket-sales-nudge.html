@@ -53,7 +53,7 @@
             </table>
             <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#4aa8f0;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Ticket interest</p>
             <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#1c2040;margin:0 0 10px;line-height:1.15;">{{interest_headline}}</h1>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">Hi {{organiser_name}}, {{interest_summary}} Ticket sales are not enabled yet — turn them on so we can email waiting people a booking link.</p>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">Hi {{organiser_name}}, {{interest_summary}} {{interest_next_step}}</p>
           </td>
         </tr>
         <tr>
@@ -68,14 +68,15 @@
             </table>
           </td>
         </tr>
+        {{requester_contact_html}}
         <tr>
           <td class="mobile-pad email-cta" style="padding:0 40px 12px;text-align:center;">
-            <a href="{{tickets_url}}" style="display:inline-block;text-align:center;padding:14px 32px;background:#1c2040;border-radius:999px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;margin:0 6px 10px;">Enable ticket sales &rarr;</a>
+            <a href="{{tickets_url}}" style="display:inline-block;text-align:center;padding:14px 32px;background:#1c2040;border-radius:999px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;margin:0 6px 10px;">{{interest_cta_label}}</a>
           </td>
         </tr>
         <tr>
           <td class="mobile-pad" style="padding:0 40px 28px;text-align:center;">
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.65;color:#635c5e;margin:0;">Names and emails stay on your <a href="{{tickets_url}}" style="color:#4aa8f0;text-decoration:none;">tickets page</a> under Ticket interest. You can also <a href="{{dashboard_url}}" style="color:#4aa8f0;text-decoration:none;">open My Events</a> to see waiting counts on each listing.</p>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.65;color:#635c5e;margin:0;">You can also review waiting people on your <a href="{{tickets_url}}" style="color:#4aa8f0;text-decoration:none;">tickets page</a> under Ticket interest, or <a href="{{dashboard_url}}" style="color:#4aa8f0;text-decoration:none;">open My Events</a>.</p>
           </td>
         </tr>
         <!-- hub-email-layout-v3-purple -->
