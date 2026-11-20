@@ -36,6 +36,13 @@
     object-fit: cover;
   }
 
+  .hero img.is-logo-cover,
+  .event-grid-img.is-logo-cover,
+  .event-grid-media img.is-logo-cover,
+  .premium-card-img.is-logo-cover {
+    object-fit: contain;
+  }
+
   /* iOS Safari zooms focused inputs when font-size is below 16px */
   .auth-field > input[type='email'],
   .auth-field > input[type='text'],
@@ -3340,14 +3347,18 @@ body.nav-menu-open {
     order: 8;
   }
 
-  .event-detail-page #ev-related-section {
+  .event-detail-page .weekly-picks-rail--detail {
     order: 9;
+  }
+
+  .event-detail-page #ev-related-section {
+    order: 10;
     /* Clear sticky ticket jump so related cards stay tappable */
     padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
   }
 
   .event-detail-page .event-listing-report-footer {
-    order: 10;
+    order: 11;
   }
 
   .event-detail-page .content-section {

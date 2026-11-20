@@ -1,15 +1,21 @@
-/* Weekly picks — event detail signup band (in main column, above related) */
+/* Weekly picks — full-width event detail signup band */
 .weekly-picks-rail--detail {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 14px;
-  margin: 28px 0 0;
-  padding: 20px 20px 18px;
-  border-radius: 16px;
-  background: #1c2040;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 20px 32px;
+  align-items: center;
+  margin: 8px 0 0;
+  padding: 28px 28px 26px;
+  border-radius: 20px;
+  background:
+    radial-gradient(ellipse 80% 120% at 100% 0%, rgba(212, 168, 83, 0.22), transparent 55%),
+    linear-gradient(135deg, #151833 0%, #1c2040 48%, #2a1f3d 100%);
   color: #f4f2ef;
-  box-shadow: 0 2px 12px rgba(45, 38, 54, 0.06);
+  border: 1px solid rgba(212, 168, 83, 0.35);
+  box-shadow:
+    0 18px 48px rgba(28, 32, 64, 0.28),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
 }
 
 .weekly-picks-rail--detail[hidden] {
@@ -18,14 +24,14 @@
 
 .weekly-picks-rail-dismiss {
   position: absolute;
-  top: 10px;
-  right: 12px;
-  width: 28px;
-  height: 28px;
+  top: 12px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
   border: 0;
   border-radius: 999px;
-  background: transparent;
-  color: rgba(244, 242, 239, 0.55);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(244, 242, 239, 0.7);
   font-size: 1.25rem;
   line-height: 1;
   cursor: pointer;
@@ -33,35 +39,36 @@
 
 .weekly-picks-rail-dismiss:hover {
   color: #fff;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .weekly-picks-rail-kicker {
-  margin: 0 0 8px;
-  padding-right: 28px;
-  font-size: 11px;
+  margin: 0 0 10px;
+  padding-right: 36px;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #9fd4b5;
+  color: #d4a853;
 }
 
 .weekly-picks-rail-headline {
   margin: 0;
   font-family: 'DM Serif Display', Georgia, serif;
-  font-size: 1.25rem;
+  font-size: clamp(1.45rem, 2.4vw, 1.85rem);
   font-weight: 400;
-  line-height: 1.25;
+  line-height: 1.2;
   letter-spacing: -0.02em;
   color: #fff;
+  max-width: 18em;
 }
 
 .weekly-picks-rail-label {
   display: block;
-  margin-bottom: 6px;
-  font-size: 12px;
+  margin-bottom: 8px;
+  font-size: 13px;
   font-weight: 600;
-  color: rgba(244, 242, 239, 0.7);
+  color: rgba(244, 242, 239, 0.78);
 }
 
 .weekly-picks-rail-row {
@@ -72,43 +79,46 @@
 }
 
 .weekly-picks-rail-input {
-  flex: 1 1 180px;
+  flex: 1 1 200px;
   min-width: 0;
-  padding: 11px 12px;
-  border: 1px solid rgba(244, 242, 239, 0.22);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.04);
+  min-height: 48px;
+  padding: 12px 14px;
+  border: 1px solid rgba(244, 242, 239, 0.28);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
   color: #fff;
   font: inherit;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .weekly-picks-rail-input::placeholder {
-  color: rgba(244, 242, 239, 0.4);
+  color: rgba(244, 242, 239, 0.42);
 }
 
 .weekly-picks-rail-input:focus {
-  outline: 2px solid #9fd4b5;
+  outline: 2px solid #d4a853;
   outline-offset: 1px;
   border-color: transparent;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .weekly-picks-rail-submit {
   flex: 0 0 auto;
-  min-height: 44px;
-  padding: 0 18px;
+  min-height: 48px;
+  padding: 0 22px;
   border: 0;
-  border-radius: 10px;
-  background: #2d6a4f;
-  color: #fff;
+  border-radius: 12px;
+  background: #d4a853;
+  color: #1c2040;
   font: inherit;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   cursor: pointer;
+  box-shadow: 0 6px 18px rgba(212, 168, 83, 0.28);
 }
 
 .weekly-picks-rail-submit:hover {
-  background: #245a43;
+  background: #e0b96a;
 }
 
 .weekly-picks-rail-submit:disabled {
@@ -118,21 +128,21 @@
 
 .weekly-picks-rail-fine {
   margin: 0;
-  font-size: 11px;
-  line-height: 1.45;
-  color: rgba(244, 242, 239, 0.55);
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(244, 242, 239, 0.62);
 }
 
 .weekly-picks-rail-fine a {
-  color: #9fd4b5;
+  color: #e0c48a;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
 .weekly-picks-rail-status {
   margin: 8px 0 0;
-  font-size: 12px;
-  color: rgba(244, 242, 239, 0.8);
+  font-size: 13px;
+  color: rgba(244, 242, 239, 0.85);
 }
 
 .weekly-picks-rail-status.is-ok {
@@ -145,7 +155,7 @@
 
 .weekly-picks-rail-done-copy {
   margin: 0 0 12px;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   color: #fff;
 }
@@ -153,11 +163,11 @@
 .weekly-picks-rail-account {
   display: inline-flex;
   align-items: center;
-  min-height: 40px;
+  min-height: 44px;
   margin-bottom: 10px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
-  color: #9fd4b5;
+  color: #d4a853;
   text-decoration: none;
 }
 
@@ -165,11 +175,19 @@
   text-decoration: underline;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 860px) {
   .weekly-picks-rail--detail {
-    padding: 18px 16px 16px;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 22px 18px 20px;
   }
 
+  .weekly-picks-rail-headline {
+    max-width: none;
+  }
+}
+
+@media (max-width: 640px) {
   .weekly-picks-rail-submit {
     width: 100%;
   }

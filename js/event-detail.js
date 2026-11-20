@@ -3106,19 +3106,48 @@
       hero.loading = 'eager';
       hero.fetchPriority = 'high';
       hero.decoding = 'async';
+      hero.classList.remove('is-logo-cover');
       hero.src = resolvedSrc;
       hero.alt = ev.title;
       const ownPhoto = String(ev.photo || '').trim();
       const pos = String(ev.photoPosition || '').trim();
-      if (pos && /^\d{1,3}%\s+\d{1,3}%$/.test(pos) && ownPhoto && resolvedSrc === ownPhoto) {
+      const useFocal =
+        pos && /^\d{1,3}%\s+\d{1,3}%$/.test(pos) && ownPhoto && resolvedSrc === ownPhoto;
+      if (useFocal) {
         hero.style.objectPosition = pos;
       } else {
         hero.style.objectPosition = '';
+      }
+      function applyHeroFit() {
+        if (typeof window.hubMarkEventHeroFit === 'function') {
+          window.hubMarkEventHeroFit(hero, ev);
+        } else if (typeof window.hubMarkSmallEventCover === 'function') {
+          window.hubMarkSmallEventCover(hero);
+        }
+        /* Contain mode should centre the full graphic; ignore focal crop */
+        if (hero.classList.contains('is-logo-cover')) {
+          hero.style.objectPosition = '';
+        }
+      }
+      if (hero.complete && hero.naturalWidth > 0) {
+        applyHeroFit();
+      } else {
+        hero.addEventListener('load', applyHeroFit, { once: true });
       }
       hero.onerror = function () {
         hero.onerror = null;
         hero.src = fallbackSrc;
         hero.style.objectPosition = '';
+        hero.classList.remove('is-logo-cover');
+        hero.addEventListener(
+          'load',
+          function () {
+            if (typeof window.hubMarkEventHeroFit === 'function') {
+              window.hubMarkEventHeroFit(hero, ev);
+            }
+          },
+          { once: true }
+        );
       };
     }
 

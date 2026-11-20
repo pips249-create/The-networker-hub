@@ -200,4 +200,28 @@
       img.classList.add('is-logo-cover');
     }
   };
+
+  /**
+   * Event detail hero is 16:9 with object-fit:cover. Square/portrait posters and
+   * logos get clipped (e.g. city name on the side). Prefer contain for those.
+   */
+  window.hubMarkEventHeroFit = function (img, ev) {
+    if (!img) return;
+    img.classList.remove('is-logo-cover');
+    var url = String(img.currentSrc || img.getAttribute('src') || '').trim();
+    if (window.hubIsLogoStyleCover && window.hubIsLogoStyleCover(ev || null, url)) {
+      img.classList.add('is-logo-cover');
+      return;
+    }
+    if (img.naturalWidth <= 0 || img.naturalHeight <= 0) return;
+    if (img.naturalWidth < 640 || img.naturalHeight < 400) {
+      img.classList.add('is-logo-cover');
+      return;
+    }
+    var aspect = img.naturalWidth / img.naturalHeight;
+    /* Closer to square/portrait than a 16:9 photo → contain so side text stays visible */
+    if (aspect < 1.4 || aspect > 2.45) {
+      img.classList.add('is-logo-cover');
+    }
+  };
 })();

@@ -136,9 +136,15 @@ a:hover {
   grid-template-columns: minmax(0, 1fr) 380px;
   grid-template-areas:
     "main side"
-    "related side";
+    "weekly weekly"
+    "related related";
   gap: 40px;
   align-items: start;
+}
+
+.weekly-picks-rail--detail {
+  grid-area: weekly;
+  min-width: 0;
 }
 
 @media (max-width: 1024px) {
@@ -147,6 +153,7 @@ a:hover {
     grid-template-areas:
       "main"
       "side"
+      "weekly"
       "related";
     gap: 24px;
     padding: 16px 20px 60px;
@@ -216,6 +223,13 @@ a:hover {
   object-fit: cover;
   object-position: center center;
   display: block;
+}
+
+/* Designed posters, logos, and square graphics: show the full asset instead of cropping */
+.hero img.is-logo-cover {
+  object-fit: contain;
+  object-position: center center;
+  background: linear-gradient(145deg, #f6f1fa 0%, #e8eef6 55%, #dde7f2 100%);
 }
 
 .hero-badges {
