@@ -109,15 +109,33 @@ async function syncListingFromSubscription(subscription, options) {
 
   if (status === 'canceled' || status === 'incomplete_expired' || status === 'unpaid') {
     const now = new Date().toISOString();
+    // Clear the subscription id so the expiry cron can unpublish + email if needed,
+    // and so mid-cycle "listing due to expire" reminders stay reserved for prepaid/legacy rows.
     const { data, error } = await sb
       .from('business_opportunities')
       .update({
         listing_expires_at: now,
+        listing_stripe_subscription_id: null,
+        status: 'unpublished',
         updated_at: now,
       })
       .eq('id', id)
       .select('*')
       .single();
+    if (error && /listing_stripe_subscription_id/i.test(error.message || '')) {
+      const retry = await sb
+        .from('business_opportunities')
+        .update({
+          listing_expires_at: now,
+          status: 'unpublished',
+          updated_at: now,
+        })
+        .eq('id', id)
+        .select('*')
+        .single();
+      if (retry.error) throw new Error(retry.error.message);
+      return { ok: true, opportunityId: id, expired: true, listing: rowToListing(retry.data) };
+    }
     if (error) throw new Error(error.message);
     return { ok: true, opportunityId: id, expired: true, listing: rowToListing(data) };
   }

@@ -159,6 +159,7 @@
     const overlay = document.getElementById(overlayId);
     if (!overlay) return;
     const img = overlay.querySelector('.hub-page-buffer-visual');
+    const title = overlay.querySelector('.hub-page-buffer-title');
     const message = overlay.querySelector('.hub-page-buffer-message');
     if (img) {
       if (preview && preview.image) {
@@ -169,6 +170,9 @@
       } else {
         resetOverlayImage(img);
       }
+    }
+    if (title) {
+      title.textContent = (preview && preview.title) || 'Loading this event';
     }
     if (message) {
       message.textContent =

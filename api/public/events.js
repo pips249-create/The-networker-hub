@@ -9,16 +9,17 @@ const { siteOrigin } = require('../_lib/hubert-seo');
 
 module.exports = wrapHandler(async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('X-Content-Type-Options', 'nosniff');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'GET') {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
     return res.status(405).json({ ok: false, error: 'method_not_allowed' });
   }
 
   if (!isSupabaseConfigured()) {
+    if (req.method === 'HEAD') return res.status(503).end();
     return res.status(503).json({
       ok: false,
       error: 'not_configured',
@@ -32,8 +33,10 @@ module.exports = wrapHandler(async function handler(req, res) {
     const origin = siteOrigin(process.env.SITE_URL);
     const feed = await fetchPublicEventsFeed(sb, req.query || {}, origin);
     res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=120, stale-while-revalidate=600');
+    if (req.method === 'HEAD') return res.status(200).end();
     return res.status(200).json(feed);
   } catch (e) {
+    if (req.method === 'HEAD') return res.status(500).end();
     return res.status(500).json({
       ok: false,
       error: 'server_error',

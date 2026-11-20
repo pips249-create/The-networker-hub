@@ -717,15 +717,16 @@ function absolutizeDirectoryTemplateAssets(html) {
     .replace(/(data-root\s*=\s*["'])\.\.\/(["'])/gi, '$1/$2');
 }
 
-function setElementTextById(html, id, text) {
-  if (!text) return html;
+function setElementTextById(html, id, text, options) {
+  const allowEmpty = options && options.allowEmpty;
+  if (!allowEmpty && (text == null || text === '')) return html;
   const safeId = String(id || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const re = new RegExp(
     '(<(?:h1|h2|h3|span|div|p|strong|a)[^>]*\\bid=["\']' + safeId + '["\'][^>]*>)([\\s\\S]*?)(</(?:h1|h2|h3|span|div|p|strong|a)>)',
     'i'
   );
   if (!re.test(html)) return html;
-  return html.replace(re, '$1' + escapeHtml(text) + '$3');
+  return html.replace(re, '$1' + escapeHtml(text == null ? '' : String(text)) + '$3');
 }
 
 function unhideElementById(html, id) {
@@ -735,6 +736,16 @@ function unhideElementById(html, id) {
     'i'
   );
   return html.replace(re, '$1$2');
+}
+
+function hideElementById(html, id) {
+  const safeId = String(id || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp('(<[^>]*\\bid=["\']' + safeId + '["\'][^>]*)(>)', 'i');
+  if (!re.test(html)) return html;
+  return html.replace(re, function (_m, before, close) {
+    if (/\bhidden\b/i.test(before)) return before + close;
+    return before + ' hidden' + close;
+  });
 }
 
 function setImgSrcById(html, id, src, alt) {
@@ -803,6 +814,23 @@ function injectEventDetailContent(html, meta) {
     out = setElementTextById(out, 'ev-ended-banner-title', ssr.endedTitle || 'This event has ended');
     out = setElementTextById(out, 'ev-ended-banner-text', ssr.endedText || '');
   }
+
+  // Crawlers often ignore `hidden` and still read shell placeholders — clear them once SSR has real facts.
+  out = hideElementById(out, 'event-detail-load-overlay');
+  out = out.replace(
+    /(<h2[^>]*class=["'][^"']*hub-page-buffer-title[^"']*["'][^>]*>)([\s\S]*?)(<\/h2>)/i,
+    '$1$3'
+  );
+  out = out.replace(
+    /(<p[^>]*class=["'][^"']*hub-page-buffer-message[^"']*["'][^>]*>)([\s\S]*?)(<\/p>)/i,
+    '$1$3'
+  );
+  out = out.replace(
+    /(<p[^>]*class=["'][^"']*ticket-load-hint[^"']*["'][^>]*>)([\s\S]*?)(<\/p>)/i,
+    ssr.price
+      ? '$1' + escapeHtml(String(ssr.price)) + '$3'
+      : '$1$3'
+  );
 
   // Strip any legacy crawl-only facts block from older deploys / cached HTML.
   out = out.replace(

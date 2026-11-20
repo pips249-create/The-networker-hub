@@ -58,14 +58,12 @@
         data-buffer-host="event-detail-shell"
         role="status"
         aria-live="polite"
-        aria-busy="true"
+        aria-busy="false"
       >
         <div class="hub-page-buffer-card">
           <div class="hub-page-buffer-spinner" aria-hidden="true"></div>
-          <h2 class="hub-page-buffer-title">Loading this event</h2>
-          <p class="hub-page-buffer-message">
-            We're fetching the details — bear with us, it won't take long.
-          </p>
+          <h2 class="hub-page-buffer-title"></h2>
+          <p class="hub-page-buffer-message"></p>
           <img
             class="hub-page-buffer-visual"
             src="../assets/event-placeholder.svg"
@@ -337,7 +335,7 @@
 
           <div id="ticket-purchase-view">
           <div class="ticket-tiers" id="ticket-tiers">
-            <p class="ticket-load-hint">Loading tickets…</p>
+            <p class="ticket-load-hint"></p>
           </div>
 
           <div class="external-booking-signin-nudge" id="external-booking-signin-nudge" hidden>

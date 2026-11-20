@@ -6742,8 +6742,18 @@
   function showEventLoadOverlayNow() {
     const overlay = document.getElementById('event-detail-load-overlay');
     const shell = document.getElementById('event-detail-shell');
-    if (window.hubLoading) window.hubLoading.show('event-detail-load-overlay');
-    else if (overlay) {
+    if (window.hubLoading) {
+      window.hubLoading.show('event-detail-load-overlay', {
+        title: 'Loading this event',
+        message: "We're fetching the details — bear with us, it won't take long.",
+      });
+    } else if (overlay) {
+      const titleEl = overlay.querySelector('.hub-page-buffer-title');
+      const msgEl = overlay.querySelector('.hub-page-buffer-message');
+      if (titleEl) titleEl.textContent = 'Loading this event';
+      if (msgEl) {
+        msgEl.textContent = "We're fetching the details — bear with us, it won't take long.";
+      }
       overlay.classList.add('is-active');
       overlay.hidden = false;
       if (shell) shell.classList.add('is-loading');

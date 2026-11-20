@@ -35,6 +35,11 @@ function ownerEmail(row) {
   return String(row.owner_email || row.contact_email || '').trim().toLowerCase();
 }
 
+/** Monthly Stripe listings auto-renew; period end is not a hard expiry. */
+function hasListingSubscription(row) {
+  return Boolean(String((row && row.listing_stripe_subscription_id) || '').trim());
+}
+
 async function sendListingExpiryReminders(sb) {
   const client = sb || getSupabaseAdmin();
   const { start, end } = reminderWindow(LISTING_REMINDER_DAYS);
@@ -42,7 +47,9 @@ async function sendListingExpiryReminders(sb) {
 
   const { data: rows, error } = await client
     .from('business_opportunities')
-    .select('id, title, host, owner_email, contact_email, listing_expires_at')
+    .select(
+      'id, title, host, owner_email, contact_email, listing_expires_at, listing_stripe_subscription_id'
+    )
     .eq('status', 'published')
     .is('listing_expiry_reminder_sent_at', null)
     .not('listing_expires_at', 'is', null)
@@ -53,6 +60,13 @@ async function sendListingExpiryReminders(sb) {
   const result = { sent: 0, skipped: 0, errors: [] };
 
   for (const row of rows || []) {
+    // Active monthly subscriptions extend listing_expires_at on each invoice —
+    // do not scare owners with "renew or you'll disappear" mid-cycle.
+    if (hasListingSubscription(row)) {
+      result.skipped += 1;
+      continue;
+    }
+
     const to = ownerEmail(row);
     if (!to) {
       result.skipped += 1;
@@ -254,7 +268,9 @@ async function expireOpportunityListings(sb) {
 
   const { data: rows, error: fetchErr } = await client
     .from('business_opportunities')
-    .select('id, title, host, owner_email, contact_email, listing_expires_at')
+    .select(
+      'id, title, host, owner_email, contact_email, listing_expires_at, listing_stripe_subscription_id'
+    )
     .eq('status', 'published')
     .not('listing_expires_at', 'is', null)
     .lt('listing_expires_at', now)
@@ -264,6 +280,13 @@ async function expireOpportunityListings(sb) {
   const result = { expired: 0, emailsSent: 0, skipped: 0, errors: [] };
 
   for (const row of rows || []) {
+    // Still subscribed: wait for the renewal webhook (or cancel handler) — do not
+    // unpublish during the brief gap between period end and invoice.paid.
+    if (hasListingSubscription(row)) {
+      result.skipped += 1;
+      continue;
+    }
+
     const { error: updErr } = await client
       .from('business_opportunities')
       .update({ status: 'unpublished', updated_at: now })
