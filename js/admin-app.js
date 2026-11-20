@@ -19099,7 +19099,7 @@
           : '') +
       '</div>' +
       (ev.organiser_id
-        ? '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser contact email</label>' +
+        ? '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser contact email</label>' +
           '<input type="email" name="organiser_contact_email" autocomplete="email" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
           attrEsc(ev.organiser_email || '') +
           '" placeholder="hello@chapter-leader.com"></div>'
@@ -19112,9 +19112,12 @@
           '<div class="flex flex-wrap items-end gap-2 pt-1 border-t border-slate-100">' +
           '<div class="min-w-[14rem] flex-1">' +
           '<label class="block text-[11px] font-semibold text-slate-500 mb-1">Add another date</label>' +
-          '<input type="datetime-local" name="series_add_starts_at" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+          '<input type="datetime-local" name="series_add_starts_at" class="w-full h-10 rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
           '</div>' +
-          '<button type="button" data-series-add-date="1" class="rounded-lg bg-brand-900 text-white text-xs font-semibold px-3 py-2 hover:bg-brand-800">Add date</button>' +
+          '<div class="shrink-0">' +
+          '<span class="block text-[11px] font-semibold text-slate-500 mb-1 invisible select-none" aria-hidden="true">Add</span>' +
+          '<button type="button" data-series-add-date="1" class="h-10 rounded-lg bg-brand-900 text-white text-xs font-semibold px-3 hover:bg-brand-800">Add date</button>' +
+          '</div>' +
           '</div>' +
           '<p class="series-add-date-msg text-[11px] text-slate-500"></p>' +
           '</div>'
