@@ -38,6 +38,7 @@ Code foundations are live (schema in HTML, discovery files, sitemap). **Search C
 - `llms.txt` built from Hubert FAQs
 - `agents.txt` → machine discovery endpoints
 - `/api/hubert-schema` + `/api/seo-meta`
+- **Live feeds for assistants:** `/api/public/events` and `/api/public/organisers` (read-only JSON; filters for city, date, free, guest visits)
 - FAQPage schema synced with `faq.html`
 - Rebuild: `npm run build-seo`
 - While the preview gate is on, crawlers see `Disallow: /` and discovery files return 403 — intentional
@@ -57,26 +58,28 @@ Code foundations are live (schema in HTML, discovery files, sitemap). **Search C
 
 ---
 
-## Browse / launch week — status (updated 7 Oct 2026)
+## Browse / launch week — status (updated 19 Nov 2026)
 
 1. ~~Remove `SITE_ACCESS_PASSWORD`~~ ✅ public browsing on.
 2. ~~Confirm `/robots.txt` Allow, `/sitemap.xml` 200, `/llms.txt` + `/agents.txt` 200~~ ✅
-3. **Search Console (do this now — needs your Google login):**
+3. ~~Explicit Allow for ChatGPT / Claude / Perplexity search crawlers in `robots.txt`~~ ✅
+4. **Why ChatGPT / Gemini still may not “recommend” you**
+   - `llms.txt` is navigation for agents — **not** a confirmed ranking lever for ChatGPT or Gemini.
+   - **Gemini / Google AI Overviews** ≈ normal Google indexing (Search Console + crawlable pages).
+   - **ChatGPT Search / Copilot** lean on **Bing** index + `OAI-SearchBot` / `bingbot` access.
+   - Assistants cite brands with **third-party mentions** (press, LinkedIn, directories). Own-site SEO alone is rarely enough for “best UK networking site” style answers.
+5. **Search Console (Google → Gemini path — needs your Google login):**
    1. Open [Google Search Console](https://search.google.com/search-console) → property `thenetworkeruk.com` (or `www.thenetworkeruk.com`).
    2. **Sitemaps** → submit: `https://www.thenetworkeruk.com/sitemap.xml`
-   3. **URL inspection** → Request indexing for each of:
-      - `https://www.thenetworkeruk.com/`
-      - `https://www.thenetworkeruk.com/events/`
-      - `https://www.thenetworkeruk.com/opportunities/`
-      - `https://www.thenetworkeruk.com/faq`
-      - `https://www.thenetworkeruk.com/networking/liverpool`
-      - `https://www.thenetworkeruk.com/networking/birmingham`
-      - `https://www.thenetworkeruk.com/networking/manchester`
-      - `https://www.thenetworkeruk.com/networking/central-london`
-   4. Optional: Rich Results Test on one event URL from the sitemap.
-4. Tickets / enquiries — follow current product state (no longer blocked on SEO gate).
-5. If GBP exists: website = hub URL; no Magpas Maps pin. Otherwise skip — GSC is enough.
-6. Ongoing: watch Page indexing; fix 404s; confirm Event schema on sample listings.
+   3. **URL inspection** → Request indexing for home, `/events/`, `/opportunities/`, `/faq`, top city hubs under `/networking/`.
+6. **Bing Webmaster (ChatGPT / Copilot path — do this if not done):**
+   1. Open [Bing Webmaster Tools](https://www.bing.com/webmasters) → add `https://www.thenetworkeruk.com`.
+   2. Import from Google Search Console if offered, or verify via DNS/meta.
+   3. Submit the same sitemap: `https://www.thenetworkeruk.com/sitemap.xml`
+   4. Optional: enable **IndexNow** for faster refresh when events/organisers change.
+7. Tickets / enquiries are live — keep FAQ / `llms.txt` copy current (no “opens 1 September” leftovers).
+8. If GBP exists: website = hub URL; no Magpas Maps pin. Otherwise skip — GSC + Bing are enough.
+9. Ongoing: watch Page indexing; fix 404s; earn citations (organiser blogs, LinkedIn, niche directories) pointing at hub URLs.
 
 ## Tickets week (1st September)
 

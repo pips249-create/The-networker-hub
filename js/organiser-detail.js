@@ -87,65 +87,13 @@
     };
   }
 
-  /** Email 2 path B: claim invite banner + Claim / Edit → free account. */
-  function bindClaimCtaBusy(btn) {
-    if (!btn || btn.dataset.claimBusyBound === '1') return;
-    btn.dataset.claimBusyBound = '1';
-    btn.addEventListener('click', function () {
-      if (btn.classList.contains('is-busy')) return;
-      btn.classList.add('is-busy');
-      btn.setAttribute('aria-busy', 'true');
-    });
-  }
-
+  /** Claim-link arrivals: keep focus + sibling groups; no soft-launch preview chrome. */
   function initClaimInviteFromEmail(org, siblings) {
     var q = queryParams();
     if (!q.isClaim) return;
 
-    var invite = document.getElementById('org-claim-invite');
-    var kicker = document.getElementById('org-claim-invite-kicker');
-    var titleEl = document.getElementById('org-claim-invite-title');
-    var textEl = document.getElementById('org-claim-invite-text');
-    var btn = document.getElementById('org-claim-edit-btn');
     var claimSection = document.getElementById('org-claim-section');
-    var breadcrumb = document.getElementById('org-breadcrumb');
-    var reviewSection = document.querySelector('.org-profile-section--cta');
-    var regionCta = document.getElementById('org-region-cta');
-    var saveBtn = document.getElementById('org-save-btn');
-    var shareBtn = document.getElementById('org-share-btn');
-    var reportBtn = document.getElementById('org-report-btn');
 
-    var safeNext =
-      q.next && q.next.charAt(0) === '/' ? q.next : '/organiser/?onboard=claim';
-    // Always start on sign-up — account holders use “Already have an account? Sign in”.
-    var authHref =
-      '/register?intent=organiser-claim&next=' +
-      encodeURIComponent(safeNext) +
-      (q.email ? '&email=' + encodeURIComponent(q.email) : '');
-
-    if (breadcrumb) breadcrumb.hidden = true;
-    if (invite) invite.hidden = false;
-    if (kicker) kicker.textContent = 'Preview \u2014 not claimed yet';
-    if (titleEl && org && org.name) {
-      titleEl.textContent = 'This is a preview of ' + org.name;
-    } else if (titleEl) {
-      titleEl.textContent = 'This is a preview of your page';
-    }
-    if (textEl) {
-      textEl.textContent =
-        'Have a look at the details below. Claiming this page is free, and listing your meetings is free \u2014 no fee, and you keep the ticket price. Last year more than 17,000 networkers used the site. An account takes about a minute, then you can edit this page.';
-    }
-    if (btn) {
-      btn.setAttribute('href', authHref);
-      var label = btn.querySelector('.org-claim-cta-label');
-      if (label) {
-        label.textContent = 'You must claim your page to edit it \u2192';
-      } else {
-        btn.textContent = 'You must claim your page to edit it \u2192';
-      }
-      bindClaimCtaBusy(btn);
-    }
-    bindClaimStickyBar(authHref);
     // Keep request-access available when the email on file is wrong / outdated.
     if (claimSection) {
       claimSection.hidden = false;
@@ -161,21 +109,8 @@
         if (emailInput && !emailInput.value) emailInput.placeholder = 'Your current email';
       }
     }
-    if (reviewSection) reviewSection.hidden = true;
-    if (regionCta) regionCta.hidden = true;
-    if (saveBtn) saveBtn.hidden = true;
-    if (shareBtn) shareBtn.hidden = true;
-    if (reportBtn) reportBtn.hidden = true;
 
     renderSiblingGroups(siblings || [], q);
-
-    try {
-      document.title =
-        (org && org.name ? org.name + ' — ' : '') +
-        'Claim your organiser page – The Networker UK';
-    } catch (e) {}
-
-    document.body.classList.add('org-claim-invite-active');
 
     try {
       sessionStorage.setItem(
@@ -189,184 +124,6 @@
     } catch (e) {
       /* ignore */
     }
-
-    loadClaimPeerStrip(org);
-  }
-
-  function bindClaimStickyBar(authHref) {
-    var sticky = document.getElementById('org-claim-sticky');
-    var stickyBtn = document.getElementById('org-claim-sticky-btn');
-    var sentinel = document.getElementById('org-claim-invite-actions')
-      || document.getElementById('org-claim-edit-btn');
-    if (!sticky) return;
-
-    if (stickyBtn) {
-      stickyBtn.setAttribute('href', authHref);
-      bindClaimCtaBusy(stickyBtn);
-    }
-
-    function setStickyVisible(visible) {
-      sticky.hidden = !visible;
-      document.body.classList.toggle('org-claim-sticky-visible', visible);
-    }
-
-    if (!sentinel || typeof IntersectionObserver !== 'function') {
-      setStickyVisible(true);
-      return;
-    }
-
-    setStickyVisible(false);
-    var observer = new IntersectionObserver(
-      function (entries) {
-        var entry = entries && entries[0];
-        var inviteCtaVisible = !!(entry && entry.isIntersecting);
-        setStickyVisible(!inviteCtaVisible);
-      },
-      { threshold: 0.15, rootMargin: '0px 0px -8px 0px' }
-    );
-    observer.observe(sentinel);
-  }
-
-  var CLAIM_PEERS_MIN = 4;
-
-  function claimPeerItemHtml(org) {
-    var name = String((org && org.name) || 'Organiser').trim() || 'Organiser';
-    var photo = String((org && (org.photoUrl || org.photo_url)) || '').trim();
-    var href = String((org && (org.href || org.website)) || '').trim();
-    var initial = name.charAt(0).toUpperCase() || '?';
-    var dark = org && (org.logoBandDark || org.logo_band_dark);
-    var classes =
-      'org-claim-peer-item' +
-      (dark ? ' org-claim-peer-item--dark' : '') +
-      (photo ? '' : ' org-claim-peer-item--fallback');
-    var inner;
-    if (photo) {
-      inner =
-        '<img class="org-claim-peer-logo" src="' +
-        escapeHtml(photo) +
-        '" alt="' +
-        escapeHtml(name) +
-        '" loading="lazy" decoding="async" onerror="var p=this.parentElement;this.remove();if(!p)return;var s=document.createElement(\'span\');s.className=\'org-claim-peer-initial\';s.setAttribute(\'aria-hidden\',\'true\');s.textContent=this.alt?this.alt.charAt(0).toUpperCase():\'?\';p.classList.add(\'org-claim-peer-item--fallback\');p.classList.remove(\'org-claim-peer-item--dark\');p.appendChild(s);" />';
-    } else {
-      inner =
-        '<span class="org-claim-peer-initial" aria-hidden="true">' +
-        escapeHtml(initial) +
-        '</span>';
-    }
-    if (href && /^https?:\/\//i.test(href)) {
-      return (
-        '<a class="' +
-        classes +
-        '" href="' +
-        escapeHtml(href) +
-        '" target="_blank" rel="noopener noreferrer" title="' +
-        escapeHtml(name) +
-        '">' +
-        inner +
-        '</a>'
-      );
-    }
-    return (
-      '<div class="' +
-      classes +
-      '" title="' +
-      escapeHtml(name) +
-      '">' +
-      inner +
-      '</div>'
-    );
-  }
-
-  function renderClaimPeerStrip(list, totalCount) {
-    var wrap = document.getElementById('org-claim-peers');
-    var track = document.getElementById('org-claim-peers-track');
-    var marquee = document.getElementById('org-claim-peers-marquee');
-    var lede = document.getElementById('org-claim-peers-lede');
-    if (!wrap || !track) return;
-
-    var count =
-      typeof totalCount === 'number' && totalCount >= 0 ? totalCount : list.length;
-
-    if (!list || list.length < CLAIM_PEERS_MIN || count < CLAIM_PEERS_MIN) {
-      wrap.hidden = true;
-      track.innerHTML = '';
-      return;
-    }
-
-    wrap.hidden = false;
-    if (lede) {
-      lede.textContent =
-        count === 1
-          ? 'Another group has already confirmed their page on The Networker UK.'
-          : count +
-            ' groups have already confirmed their pages on The Networker UK.';
-    }
-
-    var items = list.map(claimPeerItemHtml).join('');
-    var prefersReducedMotion = false;
-    try {
-      prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    } catch (e) {
-      /* ignore */
-    }
-    var useMarquee = list.length >= 5 && !prefersReducedMotion;
-    track.classList.toggle('org-claim-peers-track--marquee', useMarquee);
-    track.innerHTML = useMarquee ? items + items : items;
-    if (useMarquee) {
-      track.style.setProperty(
-        '--org-claim-peers-duration',
-        Math.max(140, list.length * 8) + 's'
-      );
-    }
-    if (marquee) {
-      marquee.setAttribute(
-        'aria-label',
-        'Organisers already on The Networker UK'
-      );
-    }
-  }
-
-  function loadClaimPeerStrip(currentOrg) {
-    var wrap = document.getElementById('org-claim-peers');
-    if (!wrap) return;
-    var currentId = String((currentOrg && currentOrg.id) || '').trim();
-    var currentSlug = String((currentOrg && currentOrg.slug) || '').trim().toLowerCase();
-    var currentName = String((currentOrg && currentOrg.name) || '')
-      .trim()
-      .toLowerCase();
-
-    fetch('/api/founding-organisers?for=gateway', {
-      credentials: 'include',
-    })
-      .then(function (res) {
-        return res.ok ? res.json() : null;
-      })
-      .then(function (data) {
-        var rows = data && Array.isArray(data.organisers) ? data.organisers : [];
-        var filtered = rows.filter(function (row) {
-          if (!row) return false;
-          var id = String(row.id || '').trim();
-          var slug = String(row.slug || '').trim().toLowerCase();
-          var name = String(row.name || '').trim().toLowerCase();
-          if (currentId && id && id === currentId) return false;
-          if (currentSlug && slug && slug === currentSlug) return false;
-          if (currentName && name && name === currentName) return false;
-          return true;
-        });
-        // Prefer logo tiles when we have them; keep enough for a strip.
-        var withLogo = filtered.filter(function (row) {
-          return String(row.photoUrl || row.photo_url || '').trim();
-        });
-        var pool = withLogo.length >= CLAIM_PEERS_MIN ? withLogo : filtered;
-        var confirmedCount =
-          data && typeof data.confirmedCount === 'number' && data.confirmedCount >= 0
-            ? data.confirmedCount
-            : filtered.length;
-        renderClaimPeerStrip(pool.slice(0, 24), confirmedCount);
-      })
-      .catch(function () {
-        renderClaimPeerStrip([]);
-      });
   }
 
   function renderSiblingGroups(siblings, q) {
@@ -544,10 +301,7 @@
     var leadEl = document.getElementById('org-reviews-lead');
     var feed = document.getElementById('org-reviews-feed');
     var emptyEl = document.getElementById('org-reviews-empty');
-    var claimPreview = document.getElementById('org-reviews-claim-preview');
-    var headingEl = document.getElementById('org-showcase-heading');
     var ratingWrap = document.getElementById('org-rating-wrap');
-    var isClaimPreview = queryParams().isClaim || document.body.classList.contains('org-claim-invite-active');
 
     if (starsEl) starsEl.innerHTML = starsHtml(rating);
     if (summaryEl) {
@@ -570,8 +324,6 @@
           ' rating' +
           (count === 1 ? '' : 's') +
           '</strong>.';
-      } else if (isClaimPreview) {
-        leadEl.textContent = 'Reviews from people who attend your events will appear here.';
       } else {
         leadEl.textContent = 'Reviews appear here after attendees share feedback from events.';
       }
@@ -583,22 +335,11 @@
     var items = resolveReviewItems(org);
     if (items.length) {
       if (emptyEl) emptyEl.hidden = true;
-      if (claimPreview) claimPreview.hidden = true;
       items.forEach(function (review) {
         appendReviewCard(feed, review, { organiserId: org.id });
       });
       return;
     }
-
-    if (isClaimPreview) {
-      if (emptyEl) emptyEl.hidden = true;
-      if (claimPreview) claimPreview.hidden = false;
-      if (headingEl) headingEl.textContent = 'Reviews';
-      if (ratingWrap) ratingWrap.hidden = true;
-      return;
-    }
-
-    if (claimPreview) claimPreview.hidden = true;
 
     if (count > 0) {
       if (emptyEl) emptyEl.hidden = true;
@@ -907,10 +648,7 @@
   function renderEvents(events) {
     var list = document.getElementById('org-events');
     var empty = document.getElementById('org-events-empty');
-    var claimPreview = document.getElementById('org-events-claim-preview');
     var moreWrap = document.getElementById('org-events-more-wrap');
-    var heading = document.getElementById('org-upcoming-heading');
-    var isClaimPreview = queryParams().isClaim || document.body.classList.contains('org-claim-invite-active');
     if (!list) return;
 
     upcomingEvents = Array.isArray(events) ? events : [];
@@ -919,19 +657,11 @@
     if (!upcomingEvents.length) {
       list.innerHTML = '';
       if (moreWrap) moreWrap.hidden = true;
-      if (isClaimPreview) {
-        if (empty) empty.hidden = true;
-        if (claimPreview) claimPreview.hidden = false;
-        if (heading) heading.textContent = 'Upcoming listings';
-      } else {
-        if (empty) empty.hidden = false;
-        if (claimPreview) claimPreview.hidden = true;
-      }
+      if (empty) empty.hidden = false;
       applyOrganiserRegionCta([]);
       return;
     }
     if (empty) empty.hidden = true;
-    if (claimPreview) claimPreview.hidden = true;
 
     upcomingShown = Math.min(UPCOMING_PAGE_SIZE, upcomingEvents.length);
     paintUpcomingEvents();

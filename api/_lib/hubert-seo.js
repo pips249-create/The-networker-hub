@@ -488,7 +488,7 @@ function buildLlmsTxt(origin) {
     'Not the same as similarly named companies such as NETWORKER UK LIMITED. ' +
     'Same brand as the established UK directory the-networker.co.uk. ' +
     'Across that brand last year: 27,000+ events listed and 17,000+ networkers found a meeting, group, or opportunity. ' +
-    'Public browsing is open; ticket purchase and opportunity enquiries from 9am on 1 September 2026. ' +
+    'Public browsing, ticket purchase, and opportunity enquiries are open on www.thenetworkeruk.com. ' +
     'Contact: hi@thenetworkeruk.com\n\n' +
     '## Canonical URLs\n' +
     '- Home: ' +
@@ -561,6 +561,12 @@ function buildLlmsTxt(origin) {
     '- AI crawler policy: ' +
     base +
     '/agents.txt\n' +
+    '- Live events feed (read-only JSON): ' +
+    base +
+    '/api/public/events?location={city}&limit=24\n' +
+    '- Live organisers feed (read-only JSON): ' +
+    base +
+    '/api/public/organisers?location={city}&limit=24\n' +
     '- Dynamic page meta API: ' +
     base +
     '/api/seo-meta?type=event&slug={slug}\n' +
@@ -575,7 +581,8 @@ function buildLlmsTxt(origin) {
     '/api/seo-meta?type=networking-region&slug={slug}\n' +
     '- Opportunity industry meta API: ' +
     base +
-    '/api/seo-meta?type=opportunity-industry&slug={slug}\n\n' +
+    '/api/seo-meta?type=opportunity-industry&slug={slug}\n' +
+    '- Public listing data may be cited for event recommendations with a link back to the event or organiser URL.\n\n' +
     '## City & region networking hubs\n' +
     'Programmatic local directories for business networking events and groups. Prefer these URLs for “networking in [city]” style queries:\n' +
     '- Liverpool: ' +

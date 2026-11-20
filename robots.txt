@@ -7,6 +7,8 @@ Disallow: /organiser/
 Disallow: /api/
 Allow: /api/seo-meta
 Allow: /api/hubert-schema
+Allow: /api/public/events
+Allow: /api/public/organisers
 Disallow: /events/booking-success
 Disallow: /marketing/
 Disallow: /p-tnh-
@@ -21,5 +23,32 @@ Disallow: /advertising-cta-preview
 Sitemap: https://www.thenetworkeruk.com/sitemap.xml
 
 # AI / answer-engine crawlers
+# ChatGPT Search uses OAI-SearchBot (not GPTBot). Gemini/AI Overviews use Googlebot indexing.
+# Explicit Allow so CDNs/WAFs and bot-specific robots parsers do not treat these as blocked.
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: *
 Allow: /llms.txt
 Allow: /agents.txt

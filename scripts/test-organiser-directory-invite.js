@@ -84,13 +84,13 @@ async function main() {
   assert(html.indexOf("haven't heard of us") === -1, 'old headline is gone');
   assert(html.indexOf('17,000') !== -1, 'mentions last year audience');
   assert(html.indexOf('Zero fees') !== -1, 'says listing keeps the ticket price');
-  assert(html.indexOf('Smart attendee tracking') !== -1, 'mentions visit tracking');
-  assert(html.indexOf('Automated reminders') !== -1, 'mentions reminders');
-  assert(html.indexOf('Already sell tickets elsewhere') !== -1, 'mentions linking an existing booking site');
+  assert(html.indexOf('Know your room') !== -1, 'mentions visit tracking');
+  assert(html.indexOf('Reminders that help') !== -1, 'mentions reminders');
+  assert(html.indexOf('Already book elsewhere') !== -1, 'mentions linking an existing booking site');
   assert(html.indexOf('already added some of your events') !== -1, 'mentions events already listed for them');
-  assert(html.indexOf('Claim the page to edit those listings') !== -1, 'asks them to claim to edit listings');
+  assert(html.indexOf('Claim the page when you') !== -1, 'asks them to claim when ready');
   assert(html.indexOf('meetings and workshops') !== -1, 'mentions meetings and workshops');
-  assert(html.indexOf('book a short tour') !== -1, 'offers a tour');
+  assert(html.indexOf('Book a short tour') !== -1, 'offers a tour');
   assert(html.indexOf('Browse the events directory') === -1, 'no second directory button');
   assert(html.indexOf('speaking with you soon') === -1, 'drops the extra sign-off');
   assert(html.indexOf('/organisers/city-connectors') !== -1, 'page link substituted');

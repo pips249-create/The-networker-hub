@@ -166,9 +166,11 @@ async function main() {
     mergeEmailPreviewVariables(DIRECTORY_DAY35_SLUG, {}, 'https://www.thenetworkeruk.com')
   );
   const day35Html = day35.html;
-  assert(day35.subject.indexOf('Should we keep this page open for City Connectors?') !== -1, 'day 35 subject: ' + day35.subject);
-  assert(day35Html.indexOf('stop clogging up your inbox') !== -1, 'day 35 is the last note');
-  assert(day35Html.indexOf('co-organisers') !== -1, 'day 35 uses British spelling');
+  assert(day35.subject.indexOf('Your page for City Connectors is still here') !== -1, 'day 35 subject: ' + day35.subject);
+  assert(day35Html.indexOf("won't keep nudging") !== -1, 'day 35 is a quiet close');
+  assert(day35Html.indexOf('clogging') === -1, 'day 35 avoids aggressive breakup copy');
+  assert(day35Html.indexOf('isn\'t a priority') === -1, 'day 35 does not assume directory is not a priority');
+  assert(day35Html.indexOf('co-organiser') !== -1, 'day 35 uses British spelling');
   assert(day35Html.indexOf('Take a look at your page') !== -1, 'day 35 has one page button');
   assert(day35Html.indexOf('Send us the details') !== -1, 'day 35 offers the event form');
   assert(day35Html.indexOf('link the booking site you already use') !== -1, 'day 35 mentions linking booking');

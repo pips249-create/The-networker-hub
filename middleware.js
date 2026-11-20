@@ -31,7 +31,7 @@ const NOINDEX_HEADER = 'noindex, nofollow';
 
 /** Social scrapers that need OG tags on listing pages while the site gate is on. */
 const SOCIAL_CRAWLER_UA =
-  /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Discordbot|WhatsApp|TelegramBot|Pinterest|vkShare|Applebot|redditbot|embedly|Quora Link Preview|Showyoubot|outbrain|opengraph|Googlebot-Image|bingbot/i;
+  /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Discordbot|WhatsApp|TelegramBot|Pinterest|vkShare|Applebot|redditbot|embedly|Quora Link Preview|Showyoubot|outbrain|opengraph|Googlebot-Image|bingbot|OAI-SearchBot|ChatGPT-User|GPTBot|Claude-SearchBot|Claude-User|ClaudeBot|PerplexityBot|Perplexity-User|Google-Extended/i;
 
 function isSiteAccessGateActive() {
   const flag = String(process.env.DISABLE_SITE_ACCESS_GATE || '').trim().toLowerCase();
@@ -174,6 +174,8 @@ const GATE_BYPASS_PREFIXES = [
   '/api/international-interest-stats',
   // Non-secret client bootstrap (Turnstile site key) — needed on gated + early-access forms.
   '/api/public-config',
+  // Read-only AI / answer-engine catalogue feeds (no private fields).
+  '/api/public/',
 ];
 
 /** Unlisted internal sales decks — not linked from nav; noindex in page HTML. */
