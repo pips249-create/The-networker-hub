@@ -1047,24 +1047,7 @@
       return;
     }
 
-    const rangeStart = listingTotal ? start + 1 : 0;
-    const rangeEnd = Math.min(start + pageItems.length, listingTotal);
-    const dateSuffix = browseDateSuffix(listingTotal);
-    const rangeHtml =
-      listingTotal > PAGE_SIZE
-        ? '<p class="listings-range">Showing ' +
-          rangeStart +
-          '–' +
-          rangeEnd +
-          ' of ' +
-          listingTotal +
-          ' listings' +
-          dateSuffix +
-          '</p>'
-        : '';
-
     els.listings.innerHTML =
-      rangeHtml +
       '<div class="event-grid">' +
       pageItems.map(gridCard).join('') +
       '</div>' +
@@ -1089,13 +1072,6 @@
     const pagination = window.hubBrowsePagination;
     if (!pagination || pagination.total == null) return 0;
     return Number(pagination.total) || 0;
-  }
-
-  function browseDateSuffix(listingTotal) {
-    const listings = Number(listingTotal) || 0;
-    const dates = browseDateTotal();
-    if (!(dates > listings && listings > 0)) return '';
-    return ' · ' + dates + ' dates';
   }
 
   function applyResultCountLabels(listingTotal) {

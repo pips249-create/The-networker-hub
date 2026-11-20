@@ -87,7 +87,9 @@ async function main() {
   assert(html.indexOf('Know your room') !== -1, 'mentions visit tracking');
   assert(html.indexOf('Reminders that help') !== -1, 'mentions reminders');
   assert(html.indexOf('Already book elsewhere') !== -1, 'mentions linking an existing booking site');
+  assert(html.indexOf('We know how busy you are') !== -1, 'acknowledges they are busy');
   assert(html.indexOf('already added some of your events') !== -1, 'mentions events already listed for them');
+  assert(html.indexOf('17,000+ directory users') !== -1, 'ties pre-listed events to directory users');
   assert(html.indexOf('Claim the page when you') !== -1, 'asks them to claim when ready');
   assert(html.indexOf('meetings and workshops') !== -1, 'mentions meetings and workshops');
   assert(html.indexOf('Book a short tour') !== -1, 'offers a tour');

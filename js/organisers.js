@@ -598,21 +598,7 @@
       return;
     }
 
-    var rangeStart = start + 1;
-    var rangeEnd = Math.min(start + PAGE_SIZE, rows.length);
-    var rangeHtml =
-      rows.length > PAGE_SIZE
-        ? '<p class="listings-range">Showing ' +
-          rangeStart +
-          '–' +
-          rangeEnd +
-          ' of ' +
-          rows.length +
-          '</p>'
-        : '';
-
     els.listings.innerHTML =
-      rangeHtml +
       '<div class="organiser-grid">' +
       pageItems.map(gridCard).join('') +
       '</div>' +
