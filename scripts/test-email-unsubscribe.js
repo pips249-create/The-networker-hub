@@ -74,4 +74,35 @@ assert.strictEqual(unsubscribeReasonLabel('never_signed_up'), "I didn't sign up"
 const adminSource = require('fs').readFileSync(require('path').join(__dirname, '../api/admin.js'), 'utf8');
 assert.ok(adminSource.includes("unsubscribes: require('./_lib/routes/admin-unsubscribes')"));
 
-console.log('email unsubscribe checks passed');
+const { shouldAttachListUnsubscribe, sendTemplatedEmail } = require('../api/_lib/send-template-email');
+assert.strictEqual(shouldAttachListUnsubscribe('organiser_directory_invite'), true);
+assert.strictEqual(shouldAttachListUnsubscribe('organiser_directory_invite_day35'), true);
+assert.strictEqual(shouldAttachListUnsubscribe('organiser_claim_invite'), true);
+assert.strictEqual(shouldAttachListUnsubscribe('booking_confirmation'), false);
+assert.strictEqual(shouldAttachListUnsubscribe('password_reset'), false);
+
+const unsub = require('../api/_lib/email-unsubscribe');
+const originalSuppressed = unsub.isEmailSuppressed;
+unsub.isEmailSuppressed = async function (address) {
+  assert.strictEqual(String(address).toLowerCase(), 'gone@example.com');
+  return true;
+};
+(async function () {
+  try {
+    await sendTemplatedEmail({
+      slug: 'organiser_directory_invite',
+      to: 'gone@example.com',
+      skipEmailCheck: true,
+      variables: {},
+    });
+    assert.fail('unsubscribed address should not receive a directory invite');
+  } catch (e) {
+    assert.strictEqual(e.code, 'emails_disabled');
+  } finally {
+    unsub.isEmailSuppressed = originalSuppressed;
+  }
+  console.log('email unsubscribe checks passed');
+})().catch(function (err) {
+  console.error(err);
+  process.exit(1);
+});

@@ -223,6 +223,7 @@ module.exports = async function handler(req, res) {
           to,
           variables: previewVars,
           skipEmailCheck: true,
+          skipUnsubscribeCheck: true,
         });
         return json(res, 200, { ok: true, sent: true, ...result });
       } catch (e) {

@@ -898,11 +898,22 @@ function shouldAttachListUnsubscribe(slug) {
   return false;
 }
 
+async function assertListUnsubscribeHonored(slug, to) {
+  if (!shouldAttachListUnsubscribe(slug)) return;
+  const { isEmailSuppressed } = require('./email-unsubscribe');
+  if (await isEmailSuppressed(to)) {
+    const err = new Error('emails_disabled');
+    err.code = 'emails_disabled';
+    throw err;
+  }
+}
+
 async function sendTemplatedEmail({
   slug,
   to,
   variables,
   skipEmailCheck,
+  skipUnsubscribeCheck,
   subject,
   resendTags,
   replyTo,
@@ -915,6 +926,11 @@ async function sendTemplatedEmail({
   forceClaimInvite,
   claimInviteSource,
 }) {
+  // skipEmailCheck only skips the PECR default (emails_enabled=false on a new login).
+  // A recorded unsubscribe still stops every email that offers an unsubscribe link.
+  if (!skipUnsubscribeCheck) {
+    await assertListUnsubscribeHonored(slug, to);
+  }
   if (isOpportunityClaimInviteSlug(slug)) {
     await assertOpportunityClaimInviteAllowed({
       slug,

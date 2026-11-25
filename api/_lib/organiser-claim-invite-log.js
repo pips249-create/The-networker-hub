@@ -87,8 +87,11 @@ async function logClaimInviteSent(opts) {
       const id = String(org.id || '').trim();
       if (!id) continue;
       const name = String(org.name || options.organiserName || '').trim() || 'group';
-      const summaryLead =
-        slug === 'organiser_ownership_transfer' ? 'ownership email sent to ' : 'claim invite emailed to ';
+      const summaryLead = options.suppressed
+        ? 'claim invite skipped, unsubscribed: '
+        : slug === 'organiser_ownership_transfer'
+          ? 'ownership email sent to '
+          : 'claim invite emailed to ';
       const row = {
         actor_email: actorEmail,
         actor_role: 'system',
@@ -103,6 +106,7 @@ async function logClaimInviteSent(opts) {
           source,
           campaign,
           organiserName: name,
+          suppressed: options.suppressed === true ? true : undefined,
         },
       };
       if (createdAt) row.created_at = createdAt;

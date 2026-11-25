@@ -149,6 +149,7 @@ async function sendOutreachEmail({
     .toLowerCase();
   const name = String((extraVariables && extraVariables.group_name) || (organiser && organiser.name) || 'your group').trim() || 'your group';
   if (!email) return { sent: false, error: 'missing_email' };
+  const organiserId = organiser && organiser.id ? String(organiser.id) : '';
   const variables = {
     ...directoryInviteVariables({
       host,
@@ -161,10 +162,9 @@ async function sendOutreachEmail({
   try {
     const { sendTemplatedEmail } = require('./send-template-email');
     const { supportEmail } = require('./hub-email-urls');
-    const organiserId = organiser && organiser.id ? String(organiser.id) : '';
-    // Admin/system claim outreach must reach newly provisioned logins.
-    // provisionOrganiserLogin sets emails_enabled=false (PECR default), which
-    // would otherwise block the invite that starts the day 3/7/21/35 sequence.
+    // Newly provisioned logins have emails_enabled=false (PECR default).
+    // skipEmailCheck lets this invite through that default.
+    // sendTemplatedEmail still stops the send when the address has unsubscribed.
     await sendTemplatedEmail({
       slug,
       to: email,
@@ -194,6 +194,29 @@ async function sendOutreachEmail({
     }
     return { sent: true, to: email, name, organisers: outreachLogTargets(organiser, siblingOrganisers).length || 1 };
   } catch (e) {
+    if (e && e.code === 'emails_disabled') {
+      try {
+        const { logClaimInviteSent } = require('./organiser-claim-invite-log');
+        const targets = outreachLogTargets(organiser, siblingOrganisers);
+        const logged = targets.length ? targets : [{ id: organiserId, name }];
+        for (const target of logged) {
+          if (!target.id) continue;
+          await logClaimInviteSent({
+            email,
+            organiserId: target.id,
+            organiserName: target.name,
+            slug,
+            source: source || 'admin',
+            campaign: campaign || slug,
+            actorEmail: actorEmail || undefined,
+            suppressed: true,
+          });
+        }
+      } catch {
+        /* a missed skip log only means the next run tries again and stops again */
+      }
+      return { sent: false, to: email, name, error: 'emails_disabled' };
+    }
     console.error('[organiser-directory-invite]', e && e.message ? e.message : e);
     return { sent: false, to: email, name, error: (e && e.message) || 'send_failed' };
   }
