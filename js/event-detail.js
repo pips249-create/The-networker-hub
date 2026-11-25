@@ -1721,6 +1721,49 @@
     );
   }
 
+  function isVenueTbcText(raw) {
+    const s = String(raw || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
+    if (!s) return false;
+    if (
+      s === 'tbc' ||
+      s === 'tba' ||
+      s === 'tbd' ||
+      s === 'venue tbc' ||
+      s === 'location tbc' ||
+      s === 'venue tba' ||
+      s === 'location tba' ||
+      s === 'to be confirmed' ||
+      s === 'to be announced'
+    ) {
+      return true;
+    }
+    return /\bvenue\s+tbc\b/.test(s) || /\blocation\s+tbc\b/.test(s) || /announced to registrants/.test(s);
+  }
+
+  function cityFromVenueTbcLabel(raw) {
+    const original = String(raw || '').trim();
+    if (!original || !isVenueTbcText(original)) return '';
+    const paren = original.match(/^(.+?)\s*\(\s*venue\s+tbc\b/i);
+    if (paren && paren[1].trim() && !isVenueTbcText(paren[1])) return paren[1].trim();
+    const parts = original
+      .split(',')
+      .map(function (part) {
+        return part.trim();
+      })
+      .filter(function (part) {
+        return part && !isVenueTbcText(part);
+      });
+    return parts[0] || '';
+  }
+
+  function eventVenueIsTbc(ev) {
+    if (!ev) return false;
+    return [ev.venue, ev.venueName, ev.location, ev.locationShort, ev.location_label].some(isVenueTbcText);
+  }
+
   function firstRealLocationPart(parts) {
     for (let i = 0; i < parts.length; i++) {
       const part = String(parts[i] || '').trim();
@@ -1811,6 +1854,27 @@
     const regionCta = document.getElementById('ev-region-cta');
     if (online) {
       if (regionCta) regionCta.hidden = true;
+      return;
+    }
+
+    // Venue TBC: show the city and say the building is sent after registration. No map.
+    if (eventVenueIsTbc(ev)) {
+      const tbcCity =
+        firstRealLocationPart([ev.city, ev.outcode]) ||
+        cityFromVenueTbcLabel(ev.venue) ||
+        cityFromVenueTbcLabel(ev.venueName) ||
+        cityFromVenueTbcLabel(ev.location) ||
+        cityFromVenueTbcLabel(ev.locationShort);
+      setText('ev-meta-city', tbcCity || 'Location TBC');
+      setText('ev-venue-name', tbcCity || 'Venue TBC');
+      setText('ev-venue-addr', 'Venue announced to people who register.');
+      applyMapAndDirections(Object.assign({}, ev, { venueTbc: true }));
+      if (window.HUB_applyDetailRegionCta) {
+        window.HUB_applyDetailRegionCta(document.getElementById('ev-region-cta'), {
+          context: 'events',
+          locationTexts: [tbcCity, ev.city, ev.outcode],
+        });
+      }
       return;
     }
 
@@ -2014,12 +2078,14 @@
 
   function applyMapAndDirections(ev) {
     const online = isOnlineOnlyEvent(ev);
-    const q = online ? '' : venueQuery(ev);
+    const venueTbc = !online && (ev.venueTbc || eventVenueIsTbc(ev));
+    const q = online || venueTbc ? '' : venueQuery(ev);
     const dir = document.getElementById('ev-directions');
     if (dir) {
       if (q) {
+        dir.hidden = false;
         dir.href = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(q);
-      } else if (online) {
+      } else if (online || venueTbc) {
         dir.removeAttribute('href');
         dir.hidden = true;
       }
@@ -2029,8 +2095,8 @@
     const mapWrap = iframe ? iframe.closest('.map-embed') : null;
     const pin = document.getElementById('ev-map-pin');
     if (iframe) {
-      const coords = online ? null : eventMapCoords(ev);
-      const src = online ? '' : mapEmbedSrc(ev, q);
+      const coords = online || venueTbc ? null : eventMapCoords(ev);
+      const src = online || venueTbc ? '' : mapEmbedSrc(ev, q);
       if (src) {
         iframe.src = src;
         iframe.hidden = false;
@@ -2040,7 +2106,7 @@
       } else {
         iframe.removeAttribute('src');
         iframe.hidden = true;
-        if (mapWrap) mapWrap.hidden = online;
+        if (mapWrap) mapWrap.hidden = online || venueTbc;
         if (pin) pin.hidden = true;
       }
     }

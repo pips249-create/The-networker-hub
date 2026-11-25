@@ -36,6 +36,31 @@ assert.strictEqual(isPlaceholderLocationText('Venue TBC'), true);
 assert.strictEqual(isPlaceholderLocationText('TBC'), true);
 assert.strictEqual(isPlaceholderLocationText('Convene 155 Bishopsgate'), false);
 
+const { isVenueTbcText, cityFromVenueTbcLabel, applyVenueTbcFields } = require('../api/_lib/venue-tbc');
+assert.strictEqual(isVenueTbcText('Milton Keynes (venue TBC – announced to registrants)'), true);
+assert.strictEqual(isVenueTbcText('The Exchange'), false);
+assert.strictEqual(
+  cityFromVenueTbcLabel('Milton Keynes (venue TBC – announced to registrants)'),
+  'Milton Keynes'
+);
+const tbcRow = applyVenueTbcFields(
+  {
+    venue: 'Milton Keynes (venue TBC – announced to registrants)',
+    address: 'Midsummer Boulevard',
+    postcode: 'MK9 1AA',
+    latitude: 52.04,
+    longitude: -0.76,
+    city: 'Milton Keynes',
+  },
+  'Milton Keynes'
+);
+assert.strictEqual(tbcRow.venue, 'Venue TBC');
+assert.strictEqual(tbcRow.city, 'Milton Keynes');
+assert.strictEqual(tbcRow.address, null);
+assert.strictEqual(tbcRow.postcode, null);
+assert.strictEqual(tbcRow.latitude, null);
+assert.strictEqual(tbcRow.location_label, 'Milton Keynes');
+
 const wiped = {
   venue: '',
   venueName: 'TBC',

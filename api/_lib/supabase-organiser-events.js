@@ -11,6 +11,7 @@ const { findUserByEmail } = require('./supabase-auth');
 
 const sbOrg = require('./supabase-organiser');
 const { geocodeUkPostcode } = require('./postcode-geocode');
+const { isVenueTbcText, applyVenueTbcFields, cityFromVenueTbcLabel } = require('./venue-tbc');
 const { resolveOrganiserAccess, groupVisibleInOrganiserWorkspace, emailMatchedOrganiserIdsForSession, mergeEmailMatchedGroups } = require('./supabase-organiser-access');
 const {
   sanitizeWorkspaceForMarketing,
@@ -1004,6 +1005,13 @@ async function buildEventRow(payload, eventId, mode) {
       }
       row.location_label =
         [row.venue, row.address, row.city, row.postcode].filter(Boolean).join(', ') || null;
+      if (payload.venueTbc || isVenueTbcText(row.venue) || isVenueTbcText(payload.venue)) {
+        const cityHint =
+          String(row.city || payload.city || '').trim() ||
+          cityFromVenueTbcLabel(payload.venue) ||
+          cityFromVenueTbcLabel(row.venue);
+        applyVenueTbcFields(row, cityHint);
+      }
       row.region_slug =
         resolveRegionSlug({
           outcode: row.outcode,

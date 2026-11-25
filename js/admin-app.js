@@ -18765,9 +18765,41 @@
     );
   }
 
+  function isVenueTbcText(raw) {
+    var s = String(raw || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
+    if (!s) return false;
+    if (
+      s === 'tbc' ||
+      s === 'tba' ||
+      s === 'tbd' ||
+      s === 'venue tbc' ||
+      s === 'location tbc' ||
+      s === 'venue tba' ||
+      s === 'location tba' ||
+      s === 'to be confirmed' ||
+      s === 'to be announced'
+    ) {
+      return true;
+    }
+    return /\bvenue\s+tbc\b/.test(s) || /\blocation\s+tbc\b/.test(s) || /announced to registrants/.test(s);
+  }
+
+  function eventVenueIsTbc(ev) {
+    ev = ev || {};
+    return (
+      isVenueTbcText(ev.venue) ||
+      isVenueTbcText(ev.location_label) ||
+      isVenueTbcText(ev.location)
+    );
+  }
+
   function eventLocationFieldsHtml(ev, className) {
     ev = ev || {};
     var hidden = !isInPersonMeetingFormat(ev.meeting_type);
+    var venueTbc = eventVenueIsTbc(ev);
     return (
       '<div class="' +
       (className || 'event-location-fields') +
@@ -18775,22 +18807,30 @@
       (hidden ? ' hidden' : '') +
       '">' +
       '<div class="sm:col-span-2"><p class="text-xs font-semibold text-slate-500">In-person location</p></div>' +
+      '<label class="sm:col-span-2 flex items-start gap-2 text-sm text-slate-700">' +
+      '<input type="checkbox" name="venue_tbc" class="event-venue-tbc mt-0.5" value="1"' +
+      (venueTbc ? ' checked' : '') +
+      '> <span><span class="font-semibold">Venue TBC</span>' +
+      '<span class="block text-[11px] text-slate-500">The public page shows the city only. The venue is sent to people who register. No map.</span></span></label>' +
+      '<div class="event-venue-specific sm:col-span-2 grid sm:grid-cols-2 gap-3' +
+      (venueTbc ? ' hidden' : '') +
+      '">' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Venue name</label>' +
       '<input type="text" name="venue" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
-      attrEsc(ev.venue || '') +
+      attrEsc(venueTbc ? '' : ev.venue || '') +
       '" placeholder="e.g. The Exchange"></div>' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Street address</label>' +
       '<input type="text" name="address" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
-      attrEsc(ev.address || '') +
+      attrEsc(venueTbc ? '' : ev.address || '') +
       '" placeholder="Street address" autocomplete="street-address"></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">City</label>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Postcode</label>' +
+      '<input type="text" name="postcode" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(venueTbc ? '' : ev.postcode || '') +
+      '" placeholder="e.g. LS1 4DY" autocomplete="postal-code"></div></div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">City</label>' +
       '<input type="text" name="city" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
       attrEsc(ev.city || '') +
-      '" placeholder="e.g. Leeds" autocomplete="address-level2"></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Postcode</label>' +
-      '<input type="text" name="postcode" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
-      attrEsc(ev.postcode || '') +
-      '" placeholder="e.g. LS1 4DY" autocomplete="postal-code"></div></div>'
+      '" placeholder="e.g. Milton Keynes" autocomplete="address-level2"></div></div>'
     );
   }
 
@@ -18838,13 +18878,26 @@
     return Promise.resolve(payload);
   }
 
+  function eventVenueTbcChecked(form) {
+    var box = form ? form.querySelector('input[name="venue_tbc"]') : null;
+    return !!(box && box.checked);
+  }
+
+  function syncEventVenueTbc(form) {
+    if (!form) return;
+    var specific = form.querySelector('.event-venue-specific');
+    if (specific) specific.classList.toggle('hidden', eventVenueTbcChecked(form));
+  }
+
   function eventDetailsPayloadFromForm(form) {
+    var venueTbc = eventVenueTbcChecked(form);
     return {
       description: formFieldVal(form, 'description'),
-      venue: formFieldVal(form, 'venue'),
-      address: formFieldVal(form, 'address'),
+      venue_tbc: venueTbc,
+      venue: venueTbc ? 'Venue TBC' : formFieldVal(form, 'venue'),
+      address: venueTbc ? '' : formFieldVal(form, 'address'),
       city: formFieldVal(form, 'city'),
-      postcode: formFieldVal(form, 'postcode'),
+      postcode: venueTbc ? '' : formFieldVal(form, 'postcode'),
     };
   }
 
@@ -18868,6 +18921,14 @@
           locationBlock.classList.toggle('hidden', !isInPersonMeetingFormat(select.value));
         }
       });
+    });
+    (root || main).querySelectorAll('input[name="venue_tbc"]').forEach(function (box) {
+      if (box.dataset.venueTbcBound === '1') return;
+      box.dataset.venueTbcBound = '1';
+      box.addEventListener('change', function () {
+        syncEventVenueTbc(box.closest('form'));
+      });
+      syncEventVenueTbc(box.closest('form'));
     });
   }
 
@@ -31705,6 +31766,9 @@
     if (String(row.freeTrialVisits || '').toLowerCase() === 'yes' && row.freeTrialDetails) {
       descParts.push('Free trial visits: ' + String(row.freeTrialDetails).trim());
     }
+    var linkPriceLabel = String(row.ticketDetails || '').trim();
+    if (!linkPriceLabel && paid && ticketPrice) linkPriceLabel = '£' + ticketPrice;
+    if (!linkPriceLabel && !paid) linkPriceLabel = 'Free';
 
     return (
       '<form class="ei-create-form hidden mt-3 rounded-lg border border-brand-200 bg-brand-50/40 p-3" hidden data-intake-id="' +
@@ -31748,7 +31812,11 @@
       (row.phone ? ' · ' + esc(row.phone) : '') +
       '</p>' +
       (row.organiserWebsiteUrl
-        ? '<p><strong>Website:</strong> ' + esc(row.organiserWebsiteUrl) + '</p>'
+        ? '<p><strong>Website:</strong> <a class="text-brand-700 hover:underline break-all" href="' +
+          attrEsc(row.organiserWebsiteUrl) +
+          '" target="_blank" rel="noopener">' +
+          esc(row.organiserWebsiteUrl) +
+          '</a></p>'
         : '') +
       (row.ticketDetails ? '<p><strong>Tickets:</strong> ' + esc(row.ticketDetails) + '</p>' : '') +
       '</div>' +
@@ -31803,7 +31871,7 @@
       '<input type="url" name="meeting_link" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
       attrEsc(row.meetingLink || '') +
       '" placeholder="https://zoom.us/j/…"></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">How people get in</label>' +
+      '<div class="ei-create-hub-ticket"><label class="block text-xs font-semibold text-slate-500 mb-1">How people get in</label>' +
       '<select name="attendance_door" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
       '<option value="general"' +
       (door === 'general' ? ' selected' : '') +
@@ -31815,15 +31883,30 @@
       '<input type="text" readonly class="w-full rounded-lg border border-slate-200 px-3 py-2 bg-slate-50 text-sm" value="' +
       attrEsc(intakePayHowLabel(payHow, row.pricing)) +
       '"></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Max places</label>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Booking</label>' +
+      '<select name="booking_mode" class="ei-create-booking-mode w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      '<option value="hub">Hub tickets</option>' +
+      '<option value="link_out">Link Out (book on their site)</option></select>' +
+      '<p class="text-[11px] text-slate-500 mt-1">Link Out sends visitors to their page instead of Hub checkout.</p></div>' +
+      '<div class="ei-create-linkout hidden sm:col-span-2 grid sm:grid-cols-2 gap-3">' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Link Out booking URL or email</label>' +
+      '<input type="text" name="external_booking_url" inputmode="url" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(row.organiserWebsiteUrl || '') +
+      '" placeholder="https://… or book@theircompany.com" spellcheck="false">' +
+      '<p class="text-[11px] text-slate-500 mt-1">Prefilled from the organiser website. Change it if the booking page is different.</p></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Price label on listing</label>' +
+      '<input type="text" name="external_price_label" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(linkPriceLabel) +
+      '" placeholder="£29 or Free" maxlength="80"></div></div>' +
+      '<div class="ei-create-hub-ticket"><label class="block text-xs font-semibold text-slate-500 mb-1">Max places</label>' +
       '<input type="number" name="max_places" min="1" step="1" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
       attrEsc(row.maxPlaces ? String(row.maxPlaces) : '') +
       '" placeholder="Optional"></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Ticket name</label>' +
+      '<div class="ei-create-hub-ticket"><label class="block text-xs font-semibold text-slate-500 mb-1">Ticket name</label>' +
       '<input type="text" name="ticket_name" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
       attrEsc(ticketName) +
       '"></div>' +
-      '<div class="ei-create-price"' +
+      '<div class="ei-create-hub-ticket ei-create-price"' +
       (paid ? '' : ' hidden') +
       '><label class="block text-xs font-semibold text-slate-500 mb-1">Ticket price (£)</label>' +
       '<input type="number" name="ticket_price" min="0" step="0.01" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
@@ -32480,11 +32563,39 @@
           if (search) search.value = btn.getAttribute('data-name') || '';
         });
       }
+      var bookingMode = form.querySelector('.ei-create-booking-mode');
+      if (bookingMode) {
+        bookingMode.addEventListener('change', function () {
+          syncIntakeCreateBooking(form);
+        });
+        syncIntakeCreateBooking(form);
+      }
       form.addEventListener('submit', function (e) {
         e.preventDefault();
         submitEventIntakeCreateForm(form);
       });
     });
+  }
+
+  function syncIntakeCreateBooking(form) {
+    if (!form) return;
+    var isLinkOut = formFieldVal(form, 'booking_mode') === 'link_out';
+    var payHow = form.getAttribute('data-pay-how') || '';
+    var paid = payHow === 'paid_tickets' || payHow === 'both';
+    form.querySelectorAll('.ei-create-hub-ticket').forEach(function (el) {
+      if (el.classList.contains('ei-create-price')) {
+        el.classList.toggle('hidden', isLinkOut || !paid);
+        return;
+      }
+      el.classList.toggle('hidden', isLinkOut);
+    });
+    var linkFields = form.querySelector('.ei-create-linkout');
+    if (linkFields) linkFields.classList.toggle('hidden', !isLinkOut);
+    var door = form.querySelector('select[name="attendance_door"]');
+    if (door) {
+      door.disabled = isLinkOut;
+      if (isLinkOut) door.value = 'general';
+    }
   }
 
   function submitEventIntakeCreateForm(form) {
@@ -32503,24 +32614,39 @@
       setMsg('Add at least one date before publishing.');
       return;
     }
+    var isLinkOut = formFieldVal(form, 'booking_mode') === 'link_out';
+    var externalBookingUrl = formFieldVal(form, 'external_booking_url');
+    var externalPriceLabel = formFieldVal(form, 'external_price_label');
+    if (isLinkOut) {
+      if (!externalBookingUrl) {
+        setMsg('Add the Link Out booking URL or email.');
+        return;
+      }
+      if (status !== 'draft' && !externalPriceLabel) {
+        setMsg('Add a price label (e.g. Free or £29) before publishing Link Out.');
+        return;
+      }
+    }
     var paid = payHow === 'paid_tickets' || payHow === 'both';
     var price = paid ? Number(formFieldVal(form, 'ticket_price')) : 0;
-    if (paid && (!Number.isFinite(price) || price < 0)) {
+    if (!isLinkOut && paid && (!Number.isFinite(price) || price < 0)) {
       setMsg('Enter a ticket price (0 is allowed).');
       return;
     }
-    var door = formFieldVal(form, 'attendance_door') || 'general';
+    var door = isLinkOut ? 'general' : formFieldVal(form, 'attendance_door') || 'general';
     var ticketName = formFieldVal(form, 'ticket_name') || (paid ? 'Standard ticket' : 'Free ticket');
     var maxPlaces = formFieldVal(form, 'max_places');
-    var tickets = [
-      {
-        name: ticketName,
-        price: paid ? price : 0,
-        quantityAvailable: maxPlaces || null,
-        categoryExclusivity: door === 'category_exclusivity',
-        ticketType: door === 'category_exclusivity' ? 'Application-based' : 'Standard',
-      },
-    ];
+    var tickets = isLinkOut
+      ? []
+      : [
+          {
+            name: ticketName,
+            price: paid ? price : 0,
+            quantityAvailable: maxPlaces || null,
+            categoryExclusivity: door === 'category_exclusivity',
+            ticketType: door === 'category_exclusivity' ? 'Application-based' : 'Standard',
+          },
+        ];
     if (btn) btn.disabled = true;
     setMsg('Matching group…');
     msg.className = 'ei-create-msg text-xs text-slate-500';
@@ -32541,8 +32667,11 @@
               status: status,
               meeting_link: formFieldVal(form, 'meeting_link'),
               attendance_mode: door === 'category_exclusivity' ? 'category_exclusivity' : 'tickets',
-              max_attendees: maxPlaces,
-              tickets: tickets,
+              max_attendees: !isLinkOut && maxPlaces ? maxPlaces : undefined,
+              tickets: tickets.length ? tickets : undefined,
+              checkout_mode: isLinkOut ? 'external_link' : 'hub',
+              external_booking_url: isLinkOut ? externalBookingUrl : undefined,
+              external_price_label: isLinkOut ? externalPriceLabel : undefined,
               photo_url: formFieldVal(form, 'photo_url'),
               intake_id: intakeId || undefined,
             },
@@ -32567,9 +32696,13 @@
               ? ' Listing created — review email could not be sent (check logs).'
               : '';
         setMsg(
-          (count > 1 ? count + ' dates listed. ' : 'Listing created. ') +
-            'They still need to review tickets, add Stripe if paid, VAT, refunds, and terms.' +
-            emailed,
+          isLinkOut
+            ? (count > 1 ? count + ' dates listed as Link Out. ' : 'Listing created as Link Out. ') +
+              'Visitors book on their site.' +
+              emailed
+            : (count > 1 ? count + ' dates listed. ' : 'Listing created. ') +
+              'They still need to review tickets, add Stripe if paid, VAT, refunds, and terms.' +
+              emailed,
           true
         );
         if (btn) btn.disabled = false;

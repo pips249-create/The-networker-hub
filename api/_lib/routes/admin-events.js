@@ -10,6 +10,7 @@ const { evaluateReinstateEligibility } = require('../admin-event-reinstate');
 const { plainEventDescription } = require('../event-description');
 const { ukOutcode } = require('../supabase-events');
 const { deriveLocationFields, resolveRegionSlug } = require('../uk-outcode');
+const { venueTbcRequested, applyVenueTbcFields, cityFromVenueTbcLabel } = require('../venue-tbc');
 const { geocodeUkPostcode } = require('../postcode-geocode');
 const { profileEmail } = require('../supabase-organiser-profile-email');
 const { parseEventDateInputToUtcIso } = require('../event-timezone');
@@ -333,9 +334,15 @@ async function listEventsForAdmin(query) {
 }
 
 function eventDetailsFromAdminBody(body) {
+  const venueTbc = venueTbcRequested(body);
   return {
     description: body.description != null ? String(body.description || '').trim() : undefined,
-    venue: body.venue != null ? String(body.venue || '').trim() : undefined,
+    venueTbc,
+    venue: venueTbc
+      ? 'Venue TBC'
+      : body.venue != null
+        ? String(body.venue || '').trim()
+        : undefined,
     addressLine1:
       body.address != null
         ? String(body.address || body.address_line1 || '').trim()
@@ -423,6 +430,17 @@ async function buildEventPatchFromBody(body) {
         outcode: patch.outcode,
         postcode: patch.postcode != null ? patch.postcode : body.postcode,
         city: patch.city != null ? patch.city : body.city,
+        location: patch.location_label,
+      }) || null;
+  }
+  if (venueTbcRequested(body)) {
+    const cityHint =
+      String(patch.city != null ? patch.city : body.city || '').trim() ||
+      cityFromVenueTbcLabel(body.venue);
+    applyVenueTbcFields(patch, cityHint);
+    patch.region_slug =
+      resolveRegionSlug({
+        city: patch.city,
         location: patch.location_label,
       }) || null;
   }
@@ -595,8 +613,20 @@ async function applyEventPatch(sb, id, patch) {
     String(current.status || '').trim() === 'published' &&
     String(current.approval_status || '').trim() === 'Approved';
 
-  const { data, error } = await sb.from('events').update(patch).eq('id', id).select('*').single();
+  // Do not use .select().single() here. PostgREST returns
+  // "Cannot coerce the result to a single JSON object" when that
+  // representation is not exactly one object, and the update has already
+  // been written — the admin form then shows a failure for a save that stuck.
+  const { error } = await sb.from('events').update(patch).eq('id', id);
   if (error) throw new Error(error.message);
+
+  const { data, error: readErr } = await sb.from('events').select('*').eq('id', id).maybeSingle();
+  if (readErr) throw new Error(readErr.message);
+  if (!data) {
+    const err = new Error('not_found');
+    err.status = 404;
+    throw err;
+  }
 
   const isLive =
     String(data.status || '').trim() === 'published' &&
@@ -931,9 +961,12 @@ module.exports = async function handler(req, res) {
           listingStatus,
           description: details.description != null ? details.description : '',
           venue: details.venue != null ? details.venue : '',
-          addressLine1: details.addressLine1 != null ? details.addressLine1 : '',
-          city: details.city != null ? details.city : '',
-          postcode: details.postcode != null ? details.postcode : '',
+          venueTbc: Boolean(details.venueTbc),
+          addressLine1: details.venueTbc ? '' : details.addressLine1 != null ? details.addressLine1 : '',
+          city:
+            (details.city != null ? details.city : '') ||
+            (details.venueTbc ? cityFromVenueTbcLabel(body.venue) : ''),
+          postcode: details.venueTbc ? '' : details.postcode != null ? details.postcode : '',
           photoUrl: details.photoUrl != null ? details.photoUrl : '',
           photoBase64: details.photoBase64,
           photoMime: details.photoMime,

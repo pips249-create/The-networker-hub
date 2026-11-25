@@ -4,6 +4,7 @@
  */
 const { siteOrigin } = require('./hubert-seo');
 const { publicEventSlug } = require('./event-slug');
+const { isVenueTbcText, cityFromVenueTbcLabel } = require('./venue-tbc');
 
 function escapeHtml(text) {
   return String(text || '')
@@ -78,16 +79,28 @@ function buildEventDetailSsr(ev, origin) {
   const slug = ev.slug || publicEventSlug(ev);
   const organiserSlug = ev.organiserSlug || '';
   const about = trimText(ev.description, 600);
-  const city = firstRealLocationPart([ev.city, ev.locationShort, ev.location]);
-  const venue = firstRealLocationPart([ev.venue, ev.venueName, ev.location, ev.locationShort, ev.city]);
-  const address = firstRealLocationPart([
-    [ev.address, ev.city, ev.postcode].filter(Boolean).join(', '),
-    ev.venueAddress,
-    ev.location,
-  ]);
-  const locationLine =
-    firstRealLocationPart([[venue, city, ev.postcode].filter(Boolean).join(', '), ev.location]) ||
-    city;
+  const venueTbc = [ev.venue, ev.venueName, ev.location, ev.locationShort, ev.location_label].some(
+    isVenueTbcText
+  );
+  const city =
+    firstRealLocationPart([ev.city, ev.outcode]) ||
+    cityFromVenueTbcLabel(ev.venue) ||
+    cityFromVenueTbcLabel(ev.location) ||
+    firstRealLocationPart([ev.locationShort, ev.location]);
+  const venue = venueTbc
+    ? city || 'Venue TBC'
+    : firstRealLocationPart([ev.venue, ev.venueName, ev.location, ev.locationShort, ev.city]);
+  const address = venueTbc
+    ? 'Venue announced to people who register.'
+    : firstRealLocationPart([
+        [ev.address, ev.city, ev.postcode].filter(Boolean).join(', '),
+        ev.venueAddress,
+        ev.location,
+      ]);
+  const locationLine = venueTbc
+    ? city || 'Venue TBC'
+    : firstRealLocationPart([[venue, city, ev.postcode].filter(Boolean).join(', '), ev.location]) ||
+      city;
   const dateLine = String(ev.date || ev.dateLine || '').trim();
   const timeLine = String(ev.time || '').trim();
   const ended = Boolean(ev.isEventPast || ev.salesClosedReason === 'ended');
