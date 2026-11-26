@@ -1648,11 +1648,15 @@
 
       syncSectionPicks(target);
 
+      var activePanel = null;
       panels.forEach(function (panel) {
         var show = panel.getAttribute('data-ad-panel') === target;
         panel.hidden = !show;
         panel.classList.toggle('is-active', show);
-        if (show) refreshPackageReveal(panel);
+        if (show) {
+          activePanel = panel;
+          refreshPackageReveal(panel);
+        }
       });
 
       syncSectionPackages(target);
@@ -1666,11 +1670,16 @@
 
       if (anchor) {
         window.setTimeout(function () {
-          activatePackageInPanel(
-            document.querySelector('[data-ad-panel="' + target + '"]'),
-            anchor,
-            { scroll: true }
-          );
+          activatePackageInPanel(activePanel, anchor, { scroll: true });
+        }, 40);
+        return;
+      }
+
+      // Section picks sit above the media-recommendation form; without a scroll,
+      // tapping Opportunities (etc.) only restyles the card and looks broken.
+      if (!preserveHash && activePanel) {
+        window.setTimeout(function () {
+          activePanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 40);
       }
     }
