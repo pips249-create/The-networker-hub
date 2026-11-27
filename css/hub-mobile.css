@@ -62,7 +62,10 @@
   .org-filter-bar input,
   .org-table-search,
   .org-reviews-toolbar select,
-  .org-reviews-toolbar .org-select {
+  .org-reviews-toolbar .org-select,
+  .event-intake-page .ei-field input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
+  .event-intake-page .ei-field select,
+  .event-intake-page .ei-field textarea {
     font-size: 16px;
   }
 }

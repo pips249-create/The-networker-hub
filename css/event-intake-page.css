@@ -453,6 +453,13 @@ html:has(.event-intake-page) {
   gap: 6px;
 }
 
+/* Author display rules beat UA [hidden] — keep toggled sections actually hidden. */
+.event-intake-page .ei-grid[hidden],
+.event-intake-page .ei-field[hidden],
+.event-intake-page .ei-location[hidden] {
+  display: none !important;
+}
+
 .ei-field--full {
   grid-column: 1 / -1;
 }
@@ -483,7 +490,8 @@ html:has(.event-intake-page) {
   border-radius: 10px;
   background: var(--ei-bg);
   font: inherit;
-  font-size: 0.95rem;
+  /* ≥16px stops iOS Safari zooming/skewing the page on focus */
+  font-size: 16px;
   color: var(--ei-ink);
   transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
@@ -681,11 +689,20 @@ html:has(.event-intake-page) {
   padding: 0 22px;
   background: var(--ei-teal);
   border-color: var(--ei-teal);
+  color: #fff !important;
+  box-shadow: 0 8px 22px rgba(13, 110, 122, 0.28);
 }
 
 .ei-submit:hover:not(:disabled) {
   background: var(--ei-teal-dark);
   border-color: var(--ei-teal-dark);
+  color: #fff !important;
+}
+
+.ei-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .ei-status {
@@ -998,6 +1015,9 @@ html:has(.event-intake-page) {
   .ei-hero-actions .btn {
     width: 100%;
     justify-content: center;
+    text-align: center;
+    white-space: normal;
+    line-height: 1.25;
   }
 
   .ei-form,
@@ -1016,5 +1036,10 @@ html:has(.event-intake-page) {
   .ei-cards,
   .ei-cards--2x2 {
     grid-template-columns: 1fr;
+  }
+
+  .ei-submit {
+    width: 100%;
+    justify-content: center;
   }
 }
